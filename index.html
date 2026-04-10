@@ -1,309 +1,528 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CS · 품질관리 대시보드</title>
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background: #f1f5f9; }
-.h1 { background: #0f1f3d; height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
-.h2 { background: #1a2f52; height: 38px; display: flex; align-items: center; padding: 0 24px; gap: 2px; }
-.htitle { font-size: 14px; font-weight: 700; color: #fff; }
-.dinfo { font-size: 11px; color: rgba(255,255,255,.35); margin-right: 10px; }
-.pbtn, .tbtn { cursor: pointer; font-weight: 600; transition: all .15s; border-radius: 4px; }
-.pbtn { padding: 4px 12px; font-size: 12px; background: transparent; color: rgba(255,255,255,.45); border: 1px solid rgba(255,255,255,.15); }
-.pbtn.on { background: rgba(255,255,255,.15); color: #fff; border-color: rgba(255,255,255,.5); }
-.tbtn { padding: 6px 16px; border: none; font-size: 12px; background: transparent; color: rgba(255,255,255,.45); }
-.tbtn.on { background: rgba(255,255,255,.15); color: #fff; }
-.wrap { padding: 20px 24px; }
-.loading { display: flex; align-items: center; justify-content: center; height: 300px; color: #64748b; font-size: 14px; flex-direction: column; gap: 14px; }
-.spin { width: 36px; height: 36px; border: 3px solid #e2e8f0; border-top-color: #1e40af; border-radius: 50%; animation: sp .8s linear infinite; }
-@keyframes sp { to { transform: rotate(360deg); } }
-.errbx { background: #fee2e2; border: 1px solid #fca5a5; border-radius: 8px; padding: 16px 20px; color: #991b1b; font-size: 13px; line-height: 1.7; }
-.g4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 14px; }
-.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-.g32 { display: grid; grid-template-columns: 3fr 2fr; gap: 12px; margin-bottom: 12px; }
-.kpi { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px 18px; }
-.klb { font-size: 11px; font-weight: 600; color: #64748b; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px; }
-.kval { font-size: 26px; font-weight: 700; color: #0f1f3d; line-height: 1; }
-.ksub { font-size: 12px; color: #64748b; margin-top: 5px; }
-.card { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 18px 20px; margin-bottom: 12px; }
-.ctitle { font-size: 13px; font-weight: 600; color: #0f1f3d; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0; margin-bottom: 14px; }
-.hrow { display: grid; grid-template-columns: 140px 1fr 60px; align-items: center; gap: 8px; margin-bottom: 7px; }
-.hlb { font-size: 12px; color: #334155; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.htrk { background: #f1f5f9; border-radius: 2px; height: 16px; overflow: hidden; }
-.hfil { height: 100%; border-radius: 2px; }
-.hval { font-size: 12px; font-weight: 600; color: #0f1f3d; text-align: right; }
-.bdg { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 4px; margin-bottom: 6px; }
-.bpct { font-size: 11px; font-weight: 600; border: 1px solid; border-radius: 3px; padding: 1px 7px; background: #fff; }
-.bval { font-size: 14px; font-weight: 700; color: #0f1f3d; }
-.slb { font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: .07em; text-transform: uppercase; margin: 16px 0 10px; }
-.tc { display: none; }
-.tc.on { display: block; }
-.nodata { color: #64748b; font-size: 13px; padding: 8px 0; }
-.kg { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: 10px; }
-.ki { background: #fff; border: 1px solid #e2e8f0; border-left: 4px solid #cbd5e1; border-radius: 6px; padding: 14px 16px; }
-.updated { font-size: 11px; color: #94a3b8; margin-bottom: 16px; }
-</style>
-</head>
-<body>
 
-<div class="h1">
-  <div class="htitle">CS · 품질관리 대시보드</div>
-  <div style="display:flex;align-items:center;gap:10px">
-    <div class="dinfo" id="dinfo"></div>
-    <div style="display:flex;gap:2px">
-      <button class="pbtn on" onclick="sp('주간',this)">주간</button>
-      <button class="pbtn" onclick="sp('월간',this)">월간</button>
-      <button class="pbtn" onclick="sp('연간',this)">연간</button>
-    </div>
-  </div>
-</div>
-<div class="h2">
-  <button class="tbtn on" onclick="st('kpi',this)">주요KPI</button>
-  <button class="tbtn" onclick="st('cs',this)">상담실적</button>
-  <button class="tbtn" onclick="st('ret',this)">반품현황</button>
-  <button class="tbtn" onclick="st('proc',this)">처리현황</button>
-  <button class="tbtn" onclick="st('qual',this)">품질관리</button>
-</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
-<div class="wrap">
-  <div id="loading" class="loading"><div class="spin"></div><div>데이터 불러오는 중...</div></div>
-  <div id="err" class="errbx" style="display:none"></div>
-  <div id="main" style="display:none">
-
-    <!-- 주요KPI -->
-    <div id="t-kpi" class="tc on">
-      <div style="font-size:12px;color:#64748b;margin-bottom:14px;font-weight:500">데이터 연결 예정 항목 — 틀 구성 (2026년)</div>
-      <div class="kg" id="kpiGrid"></div>
-    </div>
-
-    <!-- 상담실적 -->
-    <div id="t-cs" class="tc">
-      <div class="g4" id="csKpi"></div>
-      <div class="g2">
-        <div class="card"><div class="ctitle">인입태그별 통계</div><div id="inTag"></div></div>
-        <div class="card"><div class="ctitle">상담태그별 통계</div><div id="csTag"></div></div>
-      </div>
-      <div class="g2">
-        <div class="card"><div class="ctitle">통화성공율</div><div id="callRate"></div></div>
-        <div class="card"><div class="ctitle">만족도 월별 추이</div><div id="satisfy"></div></div>
-      </div>
-    </div>
-
-    <!-- 반품현황 -->
-    <div id="t-ret" class="tc">
-      <div class="g4" id="retKpi"></div>
-      <div class="g2">
-        <div class="card"><div class="ctitle">꿈비 — 교환/반품 유형별</div><div id="ggType"></div></div>
-        <div class="card"><div class="ctitle">소브 — 교환/반품 유형별</div><div id="sbType"></div></div>
-      </div>
-      <div class="g2">
-        <div class="card"><div class="ctitle">꿈비 — 반품 사유</div><div id="ggReason"></div></div>
-        <div class="card"><div class="ctitle">소브 — 반품 사유</div><div id="sbReason"></div></div>
-      </div>
-    </div>
-
-    <!-- 처리현황 -->
-    <div id="t-proc" class="tc">
-      <div class="slb">가전</div>
-      <div class="g4" id="procKpi"></div>
-      <div class="g2">
-        <div class="card"><div class="ctitle">자재출고 — 제품별</div><div id="partModel"></div></div>
-        <div class="card"><div class="ctitle">자재출고 — 부품별</div><div id="partItem"></div></div>
-      </div>
-      <div class="slb">가전외</div>
-      <div class="g4" id="extKpi"></div>
-      <div class="card"><div class="ctitle">가전외 처리 모델 비율</div><div id="extModel"></div></div>
-    </div>
-
-    <!-- 품질관리 -->
-    <div id="t-qual" class="tc">
-      <div class="g4" id="qualKpi"></div>
-      <div class="g32">
-        <div class="card"><div class="ctitle">불량 TOP5 — 제품별 비율</div><div id="top5"></div></div>
-        <div class="card"><div class="ctitle">불량접수 현황 (구분별)</div><div id="defType"></div></div>
-      </div>
-      <div class="card"><div class="ctitle">접수불량 유형 TOP10</div><div id="def10"></div></div>
-    </div>
-
-  </div>
-</div>
+<div id="root" style="font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;min-height:100vh;background:var(--color-background-tertiary);padding-bottom:40px;"></div>
 
 <script>
-const REPO = 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/data/dashboard.json';
-const KPI_ITEMS = [
-  '신제품 출시 2주전 Q&A 30건 이상 작성',
-  'Q&A 업데이트 후 24시간 내 AI 학습 반영',
-  'VOC, A/S 불량율 주 1회 업데이트',
-  '불량 예측지표 도입 : 위험품목 TOP5 선정',
-  'AI 처리율 70% 이상',
-  '주요 가전 품목 불량율 현황 공유',
-  '가전 수리접수 7일이내 처리',
-  '반복 A/S 품목 TOP3 분기별 개선안 제출'
-];
+const TABS=["주요KPI","상담실적","반품현황","처리현황","품질관리","Issue"];
+const PERIODS=["주간","월간","2026년"];
+const EXCLUDE_STATUS=["취소","수리제외"];
 
-let D = {}, period = '주간';
+const C={
+  navy:"#0f1f3d",navyL:"#1a2f52",
+  blue:"#1e40af",blueXL:"#dbeafe",
+  teal:"#0f766e",tealXL:"#ccfbf1",
+  amber:"#b45309",amberXL:"#fef3c7",
+  red:"#991b1b",redXL:"#fee2e2",
+  purple:"#6d28d9",purpleXL:"#ede9fe",
+  slate:"#334155",slateL:"#64748b",slateXL:"#f1f5f9",
+  white:"#ffffff",border:"#e2e8f0",
+};
 
-// 탭 전환
-function st(t, btn) {
-  document.querySelectorAll('.tc').forEach(e => e.classList.remove('on'));
-  document.querySelectorAll('.tbtn').forEach(b => b.classList.remove('on'));
-  document.getElementById('t-' + t).classList.add('on');
-  btn.classList.add('on');
+let state={tab:"반품현황",period:"월간",DB:null,loading:true};
+
+function parseDate(v){
+  if(!v)return null;
+  let s=String(v).trim();
+  s=s.replace(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/,(_,y,m,d)=>`${y}-${m.padStart(2,"0")}-${d.padStart(2,"0")}`);
+  const d=new Date(s);
+  return isNaN(d)?null:d;
+}
+function is2026(v){const d=parseDate(v);return d&&d.getFullYear()===2026;}
+
+function filterByPW(rows,period,pwCol,회차Col){
+  const rows2026=rows.filter(r=>Number(r["년"]||0)===2026||!r["년"]);
+  if(period==="2026년")return rows2026;
+  const pw값=period==="주간"?"주간":"월간";
+  const filtered=rows2026.filter(r=>String(r[pwCol]||"").trim()===pw값);
+  if(!filtered.length)return[];
+  const 회차목록=[...new Set(filtered.map(r=>String(r[회차Col]||"")).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
+  return filtered.filter(r=>String(r[회차Col]||"")===회차목록[0]);
 }
 
-// 주기 전환
-function sp(p, btn) {
-  period = p;
-  document.querySelectorAll('.pbtn').forEach(b => b.classList.remove('on'));
-  btn.classList.add('on');
+function filterReturn(rows,period){
+  const rows2026=rows.filter(r=>{const mc=String(r["마감회차"]||"").trim();return mc.startsWith("26.")||mc.startsWith("2026-");});
+  if(period==="2026년")return rows2026;
+  const pw값=period==="주간"?"주간":"월간";
+  const filtered=rows2026.filter(r=>String(r["주/월"]||"").trim()===pw값);
+  if(!filtered.length)return[];
+  const 회차목록=[...new Set(filtered.map(r=>String(r["마감회차"]||"")).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
+  return filtered.filter(r=>String(r["마감회차"]||"")===회차목록[0]);
+}
+
+function filterByDate(rows,period,dateCol){
+  if(period==="2026년")return rows;
+  const dates=rows.map(r=>parseDate(r[dateCol])).filter(d=>d&&d.getFullYear()===2026);
+  if(!dates.length)return[];
+  if(period==="월간"){
+    const latest=new Date(Math.max(...dates.map(d=>d.getTime())));
+    return rows.filter(r=>{const d=parseDate(r[dateCol]);return d&&d.getFullYear()===2026&&d.getMonth()===latest.getMonth();});
+  }
+  if(period==="주간"){
+    const maxT=Math.max(...dates.map(d=>d.getTime()));
+    return rows.filter(r=>{const d=parseDate(r[dateCol]);return d&&d.getFullYear()===2026&&(maxT-d.getTime())<=7*24*60*60*1000;});
+  }
+  return rows;
+}
+
+function filterGajeon(rows,period,mode){
+  const rows2026=rows.filter(r=>is2026(r["접수일"]));
+  if(mode==="수리출고"){
+    const valid=rows2026.filter(r=>String(r["구분"]||"").trim()==="수리출고"&&!EXCLUDE_STATUS.includes(String(r["진행상황"]||"").trim())&&r["처리일"]);
+    return filterByDate(valid,period,"처리일");
+  }
+  if(mode==="자재출고"){
+    const valid=rows2026.filter(r=>String(r["구분"]||"").trim()==="자재출고"&&!EXCLUDE_STATUS.includes(String(r["진행상황"]||"").trim())&&String(r["사용부품"]||"").trim()!==""&&!String(r["사용부품"]||"").includes("대체품"));
+    return filterByDate(valid,period,"처리일");
+  }
+  if(mode==="품질"){
+    const valid=rows2026.filter(r=>["수리출고","자재출고","교환/환불"].includes(String(r["구분"]||"").trim())&&!EXCLUDE_STATUS.includes(String(r["진행상황"]||"").trim()));
+    return filterByDate(valid,period,"접수일");
+  }
+  return[];
+}
+
+function filterExt(rows,period){
+  const valid=rows.filter(r=>is2026(r["접수일자"]));
+  return filterByDate(valid,period,"완료일자");
+}
+
+function getRateVal(row){
+  const keys=Object.keys(row||{});
+  const k=keys.find(k=>k.includes("교환율")||(k.includes("반품")&&k.includes("율")));
+  return k?row[k]:null;
+}
+
+function fmtRate(val){
+  if(val==null||val==="")return"-";
+  const n=Number(String(val).replace(/[^0-9.]/g,""));
+  if(isNaN(n)||n===0)return"-";
+  return n<1?`${(n*100).toFixed(1)}%`:`${n.toFixed(1)}%`;
+}
+
+function gSum(arr,kg,kv){const m={};arr.forEach(r=>{const k=String(r[kg]||"기타").trim();m[k]=(m[k]||0)+(Number(r[kv])||0);});return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([l,v])=>({l,v}));}
+function gTag(arr,kt,kv){const m={};arr.forEach(r=>{const k=String(r[kt]||"기타").trim();m[k]=(m[k]||0)+(Number(r[kv])||0);});return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([l,v])=>({l,v}));}
+
+function groupByMonthCount(rows,dateCol){
+  const m={};
+  rows.forEach(r=>{
+    const d=parseDate(r[dateCol]);
+    if(!d||d.getFullYear()!==2026)return;
+    const k=`26.${String(d.getMonth()+1).padStart(2,"0")}월`;
+    m[k]=(m[k]||0)+1;
+  });
+  return Object.entries(m).sort((a,b)=>a[0].localeCompare(b[0])).map(([l,v])=>({l,v}));
+}
+
+function h(tag,attrs,children){
+  const el=document.createElement(tag);
+  if(attrs)Object.entries(attrs).forEach(([k,v])=>{
+    if(k==="style"&&typeof v==="object")Object.assign(el.style,v);
+    else if(k==="onclick")el.onclick=v;
+    else el.setAttribute(k,v);
+  });
+  (children||[]).forEach(c=>{
+    if(c==null)return;
+    if(typeof c==="string")el.appendChild(document.createTextNode(c));
+    else el.appendChild(c);
+  });
+  return el;
+}
+
+function Kpi(label,value,sub,accent){
+  return h("div",{style:{background:C.white,border:`1px solid ${C.border}`,borderTop:`3px solid ${accent||C.blue}`,borderRadius:6,padding:"14px 16px",minWidth:0}},[
+    h("div",{style:{fontSize:11,fontWeight:600,color:C.slateL,letterSpacing:".06em",textTransform:"uppercase",marginBottom:6}},[label]),
+    h("div",{style:{fontSize:22,fontWeight:700,color:C.navy,lineHeight:1}},[String(value)]),
+    sub?h("div",{style:{fontSize:12,color:C.slateL,marginTop:4}},[String(sub)]):null,
+  ]);
+}
+
+function HBar(data,accent,maxV,unit){
+  if(!data||!data.length){
+    return h("div",{style:{color:C.slateL,fontSize:13,padding:"8px 0"}},["데이터 없음"]);
+  }
+  const m=maxV||Math.max(...data.map(d=>d.v),1);
+  const wrap=h("div",{style:{display:"flex",flexDirection:"column",gap:6}},[]);
+  data.slice(0,12).forEach(d=>{
+    const row=h("div",{style:{display:"grid",gridTemplateColumns:"130px 1fr 56px",alignItems:"center",gap:8}},[
+      h("div",{style:{fontSize:12,color:C.slate,textAlign:"right",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},[d.l]),
+      h("div",{style:{background:C.slateXL,borderRadius:2,height:16,overflow:"hidden"}},[
+        h("div",{style:{width:`${Math.max(Math.round(d.v/m*100),d.v>0?2:0)}%`,background:accent||C.blue,height:"100%",borderRadius:2}},[])
+      ]),
+      h("div",{style:{fontSize:12,fontWeight:600,color:C.navy,textAlign:"right"}},[`${Number(d.v).toLocaleString()}${unit||""}`]),
+    ]);
+    wrap.appendChild(row);
+  });
+  return wrap;
+}
+
+function Card(title,sub,children){
+  return h("div",{style:{background:C.white,border:`1px solid ${C.border}`,borderRadius:6,padding:"16px 18px",marginBottom:12}},[
+    h("div",{style:{paddingBottom:10,borderBottom:`1px solid ${C.border}`,marginBottom:14}},[
+      h("div",{style:{fontSize:13,fontWeight:600,color:C.navy}},[title]),
+      sub?h("div",{style:{fontSize:11,color:C.slateL,marginTop:2}},[sub]):null,
+    ]),
+    children,
+  ]);
+}
+
+function SectionTitle(text,color){
+  return h("div",{style:{fontSize:12,fontWeight:700,color:C.white,background:color||C.navy,padding:"6px 14px",borderRadius:4,marginBottom:12,marginTop:4}},[text]);
+}
+
+function Badge(label,value,pct,accent){
+  return h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 14px",background:accent||C.blue,borderRadius:6,marginBottom:8}},[
+    h("span",{style:{fontSize:13,fontWeight:700,color:"#fff"}},[label]),
+    h("div",{style:{display:"flex",gap:10,alignItems:"center"}},[
+      pct!=null?h("span",{style:{fontSize:12,fontWeight:700,color:accent,background:"#fff",borderRadius:4,padding:"2px 9px"}},[`${pct}%`]):null,
+      h("span",{style:{fontSize:16,fontWeight:700,color:"#fff"}},[typeof value==="number"?value.toLocaleString():String(value)]),
+    ]),
+  ]);
+}
+
+function GaugCard(label,total,가전,가전외,accent1,accent2){
+  const pct1=total?Math.round(가전/total*100):0;
+  const pct2=total?Math.round(가전외/total*100):0;
+  return h("div",{style:{background:C.white,border:`1px solid ${C.border}`,borderTop:`3px solid ${accent1}`,borderRadius:6,padding:"14px 16px",minWidth:0}},[
+    h("div",{style:{fontSize:11,fontWeight:600,color:C.slateL,letterSpacing:".06em",textTransform:"uppercase",marginBottom:8}},[label]),
+    h("div",{style:{display:"flex",gap:6,alignItems:"flex-end",marginBottom:10}},[
+      h("span",{style:{fontSize:24,fontWeight:700,color:accent1}},[가전.toLocaleString()]),
+      h("span",{style:{fontSize:13,color:C.slateL,marginBottom:3}},[`/ ${가전외.toLocaleString()}`]),
+    ]),
+    h("div",{style:{display:"flex",borderRadius:4,overflow:"hidden",height:10}},[
+      h("div",{style:{width:`${pct1}%`,background:accent1}},[]),
+      h("div",{style:{flex:1,background:accent2}},[]),
+    ]),
+    h("div",{style:{display:"flex",justifyContent:"space-between",marginTop:5,fontSize:11}},[
+      h("span",{style:{fontWeight:600,color:accent1}},[`가전 ${pct1}%`]),
+      h("span",{style:{fontWeight:600,color:accent2}},[`가전외 ${pct2}%`]),
+    ]),
+  ]);
+}
+
+function PrepareScreen(){
+  return h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:300,gap:16}},[
+    h("div",{style:{fontSize:36}}),
+    h("div",{style:{fontSize:20,fontWeight:700,color:C.navy}},["준비중"]),
+    h("div",{style:{fontSize:14,color:C.slateL,textAlign:"center",lineHeight:1.7}},["해당 섹션은 현재 데이터 연결 작업 중입니다."]),
+    h("div",{style:{background:C.blueXL,border:`1px solid ${C.blue}`,borderRadius:8,padding:"8px 20px",fontSize:12,color:C.blue,fontWeight:600}},["Coming Soon"]),
+  ]);
+}
+
+function StackBar(data,c1,c2){
+  if(!data||!data.length)return h("div",{style:{color:C.slateL,fontSize:13}},["데이터 없음"]);
+  const maxV=Math.max(...data.map(d=>d.total),1);
+  const wrap=h("div",{style:{display:"flex",flexDirection:"column",gap:10}},[]);
+  data.forEach(d=>{
+    const item=h("div",{},[
+      h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:4}},[
+        h("span",{style:{fontSize:12,color:C.slate,fontWeight:500}},[d.l]),
+        h("span",{style:{fontSize:12,fontWeight:700,color:C.navy}},[`${d.total.toLocaleString()}건`]),
+      ]),
+      h("div",{style:{display:"flex",borderRadius:3,overflow:"hidden",height:18,background:C.slateXL}},[
+        d.segments[0].v>0?h("div",{style:{width:`${Math.round(d.segments[0].v/maxV*100)}%`,background:c1,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#fff",fontWeight:600}},[d.segments[0].v>d.total*0.1?String(d.segments[0].v):""]):null,
+        d.segments[1].v>0?h("div",{style:{width:`${Math.round(d.segments[1].v/maxV*100)}%`,background:c2,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#fff",fontWeight:600}},[d.segments[1].v>d.total*0.1?String(d.segments[1].v):""]):null,
+      ]),
+      h("div",{style:{display:"flex",gap:12,marginTop:3}},[
+        ...d.segments.map((s,j)=>h("span",{style:{fontSize:11,color:C.slateL}},[
+          h("span",{style:{display:"inline-block",width:8,height:8,borderRadius:2,background:[c1,c2][j],marginRight:3}},[]),
+          `${s.l} ${s.v.toLocaleString()}`
+        ]))
+      ]),
+    ]);
+    wrap.appendChild(item);
+  });
+  return wrap;
+}
+
+function grid(cols,gap,items){
+  const el=h("div",{style:{display:"grid",gridTemplateColumns:cols,gap:gap||12,marginBottom:12}},[]);
+  items.forEach(i=>{if(i)el.appendChild(i);});
+  return el;
+}
+
+function render(){
+  const root=document.getElementById("root");
+  root.innerHTML="";
+
+  if(state.loading){
+    const spinner=h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:300,flexDirection:"column",gap:12}},[
+      h("div",{style:{width:32,height:32,border:"3px solid #e2e8f0",borderTopColor:"#1e40af",borderRadius:"50%",animation:"sp .8s linear infinite"}},[]),
+      h("div",{style:{fontSize:14,color:C.slateL}},["데이터 불러오는 중..."]),
+    ]);
+    root.appendChild(spinner);
+    return;
+  }
+
+  const {tab,period,DB}=state;
+  const 가전=DB["가전마감.csv"]||[];
+  const 가전외=DB["가전외마감.csv"]||[];
+  const 반품현황r=DB["반품현황.csv"]||[];
+  const 반품교환율r=DB["반품교환율.csv"]||[];
+  const 상담태그r=DB["상담태그.csv"]||[];
+  const 인입태그r=DB["인입태그.csv"]||[];
+  const 통화성공율r=DB["통화성공율.csv"]||[];
+  const 관여해결율r=DB["관여해결율.csv"]||[];
+  const 만족도조사r=DB["만족도조사.csv"]||[];
+
+  // 상담실적
+  const 인입rows=filterByPW(인입태그r,period,"주/월","회차");
+  const 상담rows=filterByPW(상담태그r,period,"주/월","회차");
+  const 통화rows=filterByPW(통화성공율r,period,"주기","회차");
+  const 총인입수=인입rows.reduce((s,r)=>s+(Number(r["인입수"])||0),0);
+  const 관여2026=관여해결율r.filter(r=>Number(r["년"]||0)===2026);
+  const 만족2026=만족도조사r.filter(r=>{const d=parseDate(r["마감일"]);return d&&d.getFullYear()===2026;});
+  const 만족최신=[...만족2026].sort((a,b)=>parseDate(b["마감일"])-parseDate(a["마감일"]))[0];
+  const 관여최신=[...관여2026].sort((a,b)=>b["관여건"]-a["관여건"])[0];
+  const 통화데이터=통화rows.map(r=>({l:String(r["회차"]||r["마감일"]||""),v:parseFloat(String(r["통화성공률(IN)"]||r["통화 call"]||"0").replace(/[^0-9.]/g,""))||0})).filter(r=>r.v>0);
+  const 인입회차=[...new Set(인입rows.map(r=>String(r["회차"]||"")))].join(", ");
+
+  // 반품현황
+  const 반품rows=filterReturn(반품현황r,period);
+  const 꿈비반품=반품rows.filter(r=>String(r["구분"]||"")==="꿈비");
+  const 소브반품=반품rows.filter(r=>String(r["구분"]||"")==="소브");
+  const 꿈비가전=꿈비반품.filter(r=>String(r["품목"]||"")==="가전");
+  const 꿈비가전외=꿈비반품.filter(r=>String(r["품목"]||"")==="가전외");
+  const 소브가전=소브반품.filter(r=>String(r["품목"]||"")==="가전");
+  const 소브가전외=소브반품.filter(r=>String(r["품목"]||"")==="가전외");
+  const 꿈비총=꿈비반품.reduce((s,r)=>s+(Number(r["건수"])||0),0);
+  const 꿈비가전총=꿈비가전.reduce((s,r)=>s+(Number(r["건수"])||0),0);
+  const 꿈비가전외총=꿈비가전외.reduce((s,r)=>s+(Number(r["건수"])||0),0);
+  const 소브총=소브반품.reduce((s,r)=>s+(Number(r["건수"])||0),0);
+  const 소브가전총=소브가전.reduce((s,r)=>s+(Number(r["건수"])||0),0);
+  const 소브가전외총=소브가전외.reduce((s,r)=>s+(Number(r["건수"])||0),0);
+  const 반품회차=[...new Set(반품rows.map(r=>String(r["마감회차"]||"")))].join(", ");
+  const 율2026=반품교환율r.filter(r=>String(r["마감월"]||"").startsWith("26."));
+  const 율월목록=[...new Set(율2026.map(r=>String(r["마감월"]||"")))].sort((a,b)=>b.localeCompare(a));
+  const 최근율월=period==="2026년"?null:율월목록[0];
+  const 율필터=최근율월?율2026.filter(r=>String(r["마감월"]||"")===최근율월):율2026;
+  const 꿈비율row=율필터.find(r=>String(r["구분"]||"")==="꿈비");
+  const 소브율row=율필터.find(r=>String(r["구분"]||"")==="소브");
+  const 꿈비교환율=fmtRate(꿈비율row?(getRateVal(꿈비율row)??꿈비율row["반품/교환율"]):null);
+  const 소브교환율=fmtRate(소브율row?(getRateVal(소브율row)??소브율row["반품/교환율"]):null);
+
+  const 꿈비월별=(()=>{
+    const monthly=반품현황r.filter(r=>String(r["구분"]||"")==="꿈비"&&String(r["주/월"]||"")==="월간"&&String(r["마감회차"]||"").startsWith("26."));
+    const m={};
+    monthly.forEach(r=>{const k=String(r["마감회차"]||"");const 품목=String(r["품목"]||"기타");if(!m[k])m[k]={가전:0,가전외:0};m[k][품목]=(m[k][품목]||0)+(Number(r["건수"])||0);});
+    return Object.entries(m).sort((a,b)=>a[0].localeCompare(b[0])).map(([l,v])=>({l,total:v.가전+(v.가전외||0),segments:[{l:"가전",v:v.가전},{l:"가전외",v:v.가전외||0}]}));
+  })();
+
+  const 소브월별=(()=>{
+    const monthly=반품현황r.filter(r=>String(r["구분"]||"")==="소브"&&String(r["주/월"]||"")==="월간"&&String(r["마감회차"]||"").startsWith("26."));
+    const m={};
+    monthly.forEach(r=>{const k=String(r["마감회차"]||"");const 품목=String(r["품목"]||"기타");if(!m[k])m[k]={가전:0,가전외:0};m[k][품목]=(m[k][품목]||0)+(Number(r["건수"])||0);});
+    return Object.entries(m).sort((a,b)=>a[0].localeCompare(b[0])).map(([l,v])=>({l,total:v.가전+(v.가전외||0),segments:[{l:"가전",v:v.가전},{l:"가전외",v:v.가전외||0}]}));
+  })();
+
+  // 처리현황
+  const 수리rows=filterGajeon(가전,period,"수리출고");
+  const 무상=수리rows.filter(r=>String(r["유/무상"]||"").includes("무상")).length;
+  const 유상=수리rows.filter(r=>String(r["유/무상"]||"").includes("유상")).length;
+  const 유상금액=수리rows.filter(r=>String(r["유/무상"]||"").includes("유상")).reduce((s,r)=>s+(parseFloat(String(r["유상AS비용"]||"0").replace(/,/g,""))||0),0);
+  const 자재rows=filterGajeon(가전,period,"자재출고");
+  const 자재모델={},자재부품={};
+  자재rows.forEach(r=>{const k=String(r["제품명"]||"기타");자재모델[k]=(자재모델[k]||0)+1;String(r["사용부품"]||"").split(",").forEach(p=>{const pk=p.trim();if(pk&&pk!=="대체품")자재부품[pk]=(자재부품[pk]||0)+1;});});
+  const 수리all=가전.filter(r=>is2026(r["처리일"])&&String(r["구분"]||"").trim()==="수리출고"&&!EXCLUDE_STATUS.includes(String(r["진행상황"]||"").trim())&&r["처리일"]);
+  const 수리월별=groupByMonthCount(수리all,"처리일");
+  const 가전외rows=filterExt(가전외,period);
+  const 가전외유상=가전외rows.filter(r=>String(r["유/무상"]||"").includes("유상"));
+  const 가전외금액=가전외유상.reduce((s,r)=>s+(parseFloat(String(r["비용"]||"0").replace(/,/g,""))||0),0);
+  const 가전외모델={};
+  가전외rows.forEach(r=>{const k=String(r["상품명"]||"기타");가전외모델[k]=(가전외모델[k]||0)+1;});
+  const 소요평균=가전외rows.length?(가전외rows.reduce((s,r)=>s+(Number(r["소요기간"])||0),0)/가전외rows.length).toFixed(1):"-";
+
+  // 품질관리
+  const 품질rows=filterGajeon(가전,period,"품질");
+  const 불량집계={};
+  품질rows.forEach(r=>{const k=String(r["제품명"]||"기타").trim();불량집계[k]=(불량집계[k]||0)+1;});
+  const top5=Object.entries(불량집계).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const 총불량=Object.values(불량집계).reduce((a,b)=>a+b,0);
+  const 불량접수집계={};
+  품질rows.forEach(r=>{String(r["접수불량"]||"").split(",").forEach(t=>{const k=t.trim();if(k)불량접수집계[k]=(불량접수집계[k]||0)+1;});});
+  const 불량접수top=Object.entries(불량접수집계).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([l,v])=>({l,v}));
+  const 품질월별=groupByMonthCount(filterGajeon(가전,"2026년","품질"),"접수일");
+  const 구분별집계=["수리출고","자재출고","교환/환불"].map(구분=>({l:구분,v:filterByDate(가전.filter(r=>is2026(r["접수일"])&&String(r["구분"]||"").trim()===구분&&!EXCLUDE_STATUS.includes(String(r["진행상황"]||"").trim())),period,"접수일").length}));
+
+  const now=new Date();
+  const dateStr=`${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,"0")}.${String(now.getDate()).padStart(2,"0")} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+
+  // 헤더1
+  const hdr1=h("div",{style:{background:C.navy,height:44,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 20px"}},[
+    h("div",{style:{fontSize:14,fontWeight:700,color:C.white,letterSpacing:"-0.02em"}},["CS · 품질관리 대시보드"]),
+    h("div",{style:{display:"flex",alignItems:"center",gap:10}},[
+      h("div",{style:{fontSize:11,color:"rgba(255,255,255,.35)"}},[`2026년 기준 · ${dateStr}`]),
+      h("div",{style:{display:"flex",gap:2}},[
+        ...PERIODS.map(p=>h("button",{style:{padding:"4px 12px",border:`1px solid ${period===p?"rgba(255,255,255,.5)":"rgba(255,255,255,.15)"}`,borderRadius:4,cursor:"pointer",fontSize:11,fontWeight:600,background:period===p?"rgba(255,255,255,.15)":"transparent",color:period===p?C.white:"rgba(255,255,255,.4)"},onclick:()=>{state.period=p;render();}},[p]))
+      ]),
+    ]),
+  ]);
+
+  // 헤더2 탭
+  const hdr2=h("div",{style:{background:C.navyL,height:38,display:"flex",alignItems:"center",padding:"0 20px",gap:2}},[
+    ...TABS.map(t=>h("button",{style:{padding:"5px 16px",border:"none",borderRadius:4,cursor:"pointer",fontSize:12,fontWeight:600,background:tab===t?"rgba(255,255,255,.18)":"transparent",color:tab===t?C.white:"rgba(255,255,255,.45)"},onclick:()=>{state.tab=t;render();}},[t+(t==="Issue"?" ❗":"")]))
+  ]);
+
+  // 콘텐츠
+  const content=h("div",{style:{padding:"16px 20px"}},[]);
+
+  if(tab==="주요KPI"||tab==="Issue"){
+    content.appendChild(PrepareScreen());
+  }
+
+  if(tab==="상담실적"){
+    content.appendChild(grid("repeat(4,1fr)",10,[
+      Kpi("총 인입수",총인입수.toLocaleString(),인입회차,C.blue),
+      Kpi("ALF 관여건",관여최신?.["관여건"]??"-","2026년 최근",C.teal),
+      Kpi("만족도",만족최신?`${Number(만족최신["만족도"]||0).toFixed(1)}점`:"-",만족최신?`참여율 ${만족최신["참여율"]||"-"}`:"데이터 없음",C.amber),
+      Kpi("통화성공율",통화데이터.length?`${통화데이터[통화데이터.length-1]?.v}%`:"-","최근 마감 기준",C.purple),
+    ]));
+    content.appendChild(grid("1fr 1fr",12,[
+      Card("서비스별 인입 비율",`${period} · 총 ${총인입수.toLocaleString()}건`,HBar(gTag(인입rows,"서비스태그","인입수"),C.blue)),
+      Card("상담 태그별 인입 비율",null,HBar(gTag(상담rows,"상담태그","인입수"),C.teal)),
+    ]));
+    content.appendChild(grid("1fr 1fr",12,[
+      Card("통화성공율","통화성공률(IN) 기준",통화데이터.length>0?HBar(통화데이터,C.purple,100,"%"):h("div",{style:{color:C.slateL,fontSize:13}},["데이터 없음"])),
+      Card("만족도 월별 추이",null,HBar(만족2026.map(r=>({l:String(r["월별"]||""),v:Number(r["만족도"])||0})),C.amber,5,"점")),
+    ]));
+  }
+
+  if(tab==="반품현황"){
+    content.appendChild(SectionTitle("1. 꿈비",C.blue));
+    content.appendChild(grid("repeat(3,1fr)",10,[
+      Kpi("반품/교환 총계",꿈비총.toLocaleString(),`${period} 기준`,C.blue),
+      GaugCard("가전 / 가전외",꿈비총,꿈비가전총,꿈비가전외총,C.navy,C.blue),
+      Kpi("반품/교환율",꿈비교환율,최근율월||"",C.red),
+    ]));
+    if(period==="2026년"){
+      content.appendChild(Card("꿈비 — 월별 반품/교환 현황","마감회차 기준",StackBar(꿈비월별,C.navy,C.blue)));
+    } else {
+      const 꿈비유형wrap=h("div",{},[]);
+      ["가전","가전외"].forEach(품목=>{
+        const v=꿈비반품.filter(r=>String(r["품목"]||"")===품목).reduce((s,r)=>s+(Number(r["건수"])||0),0);
+        꿈비유형wrap.appendChild(Badge(품목,v,꿈비총?Math.round(v/꿈비총*100):0,C.blue));
+      });
+      꿈비유형wrap.appendChild(HBar(gSum(꿈비반품,"교환/반품","건수"),C.blue));
+      content.appendChild(grid("1fr 1fr",12,[
+        Card("꿈비 — 교환/반품 유형별",null,꿈비유형wrap),
+        Card("꿈비 — 반품 사유",null,HBar(gSum(꿈비반품,"사유","건수"),C.blue)),
+      ]));
+    }
+    content.appendChild(SectionTitle("2. 소브",C.teal));
+    content.appendChild(grid("repeat(3,1fr)",10,[
+      Kpi("반품/교환 총계",소브총.toLocaleString(),`${period} 기준`,C.teal),
+      GaugCard("가전 / 가전외",소브총,소브가전총,소브가전외총,C.teal,"#0d9488"),
+      Kpi("반품/교환율",소브교환율,최근율월||"",C.red),
+    ]));
+    if(period==="2026년"){
+      content.appendChild(Card("소브 — 월별 반품/교환 현황","마감회차 기준",StackBar(소브월별,C.teal,"#0d9488")));
+    } else {
+      const 소브유형wrap=h("div",{},[]);
+      ["가전","가전외"].forEach(품목=>{
+        const v=소브반품.filter(r=>String(r["품목"]||"")===품목).reduce((s,r)=>s+(Number(r["건수"])||0),0);
+        소브유형wrap.appendChild(Badge(품목,v,소브총?Math.round(v/소브총*100):0,C.teal));
+      });
+      소브유형wrap.appendChild(HBar(gSum(소브반품,"교환/반품","건수"),C.teal));
+      content.appendChild(grid("1fr 1fr",12,[
+        Card("소브 — 교환/반품 유형별",null,소브유형wrap),
+        Card("소브 — 반품 사유",null,HBar(gSum(소브반품,"사유","건수"),C.teal)),
+      ]));
+    }
+  }
+
+  if(tab==="처리현황"){
+    content.appendChild(SectionTitle("1. 전자제품",C.blue));
+    content.appendChild(h("div",{style:{background:"rgba(30,64,175,0.07)",borderRadius:6,padding:"8px 14px",marginBottom:12,fontSize:11,color:C.blue,fontWeight:700}},["1-1. 수리출고 (처리일 기준)"]));
+    content.appendChild(grid("repeat(4,1fr)",10,[
+      Kpi("수리 총건",수리rows.length.toLocaleString(),null,C.blue),
+      Kpi("무상수리",무상.toLocaleString(),`${수리rows.length?Math.round(무상/수리rows.length*100):0}%`,C.teal),
+      Kpi("유상수리",유상.toLocaleString(),`${수리rows.length?Math.round(유상/수리rows.length*100):0}%`,C.amber),
+      Kpi("유상 처리금액",`${Math.round(유상금액/10000).toLocaleString()}만원`,null,C.red),
+    ]));
+    content.appendChild(grid("1fr 1fr",12,[
+      Card("월별 수리현황 추이","처리일 기준 · 2026년",HBar(수리월별,C.blue)),
+      Card("불량부품 현황","자재출고 기준 (대체품 제외)",HBar(Object.entries(자재부품).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([l,v])=>({l,v})),C.red)),
+    ]));
+    content.appendChild(h("div",{style:{background:"rgba(30,64,175,0.07)",borderRadius:6,padding:"8px 14px",marginBottom:12,fontSize:11,color:C.blue,fontWeight:700}},["1-2. 자재출고 (처리일 기준 · 대체품 제외)"]));
+    content.appendChild(grid("repeat(3,1fr)",10,[
+      Kpi("자재출고 총건",자재rows.length.toLocaleString(),null,C.blue),
+      Kpi("모델 종류",Object.keys(자재모델).length,null,C.teal),
+      Kpi("부품 종류",Object.keys(자재부품).length,null,C.amber),
+    ]));
+    content.appendChild(grid("1fr 1fr",12,[
+      Card("자재출고 — 모델별",null,HBar(Object.entries(자재모델).sort((a,b)=>b[1]-a[1]).map(([l,v])=>({l,v})),C.blue)),
+      Card("자재출고 — 자재별",null,HBar(Object.entries(자재부품).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([l,v])=>({l,v})),C.teal)),
+    ]));
+    content.appendChild(SectionTitle("2. 전자제품 外",C.teal));
+    content.appendChild(grid("repeat(4,1fr)",10,[
+      Kpi("접수 건수",가전외rows.length.toLocaleString(),null,C.teal),
+      Kpi("유상 건수",가전외유상.length.toLocaleString(),`${가전외rows.length?Math.round(가전외유상.length/가전외rows.length*100):0}%`,C.amber),
+      Kpi("유상 처리금액",`${Math.round(가전외금액/10000).toLocaleString()}만원`,null,C.red),
+      Kpi("평균 소요기간",`${소요평균}일`,null,C.teal),
+    ]));
+    content.appendChild(Card("가전외 처리 모델 비율",null,HBar(Object.entries(가전외모델).sort((a,b)=>b[1]-a[1]).map(([l,v])=>({l,v})),C.teal)));
+  }
+
+  if(tab==="품질관리"){
+    content.appendChild(SectionTitle("1. 불량인입 TOP.5 (접수일 기준)",C.red));
+    content.appendChild(grid("repeat(4,1fr)",10,[
+      Kpi("불량인입 총건",총불량.toLocaleString(),null,C.red),
+      ...top5.slice(0,3).map(([l,v],i)=>Kpi(`TOP${i+1}`,l.replace("[꿈비] ","").slice(0,14),`${v.toLocaleString()}건 · ${총불량?Math.round(v/총불량*100):0}%`,[C.red,C.amber,C.blue][i])),
+    ]));
+    const top5card=h("div",{},[]);
+    top5.forEach(([l,v],i)=>{
+      const colors=[C.redXL,C.amberXL,C.blueXL,C.tealXL,C.slateXL];
+      const fgColors=[C.red,C.amber,C.blue,C.teal,C.slate];
+      top5card.appendChild(h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",background:colors[i],borderRadius:4,marginBottom:6}},[
+        h("span",{style:{fontSize:13,fontWeight:600,color:C.navy}},[`${i+1}. ${l.replace("[꿈비] ","")}`]),
+        h("div",{style:{display:"flex",gap:8,alignItems:"center"}},[
+          h("span",{style:{fontSize:11,fontWeight:600,color:fgColors[i],border:`1px solid ${fgColors[i]}`,borderRadius:3,padding:"1px 7px",background:"#fff"}},[`${총불량?Math.round(v/총불량*100):0}%`]),
+          h("span",{style:{fontSize:14,fontWeight:700,color:C.navy}},[String(v.toLocaleString())]),
+        ]),
+      ]));
+    });
+    const 구분card=h("div",{},[]);
+    구분별집계.forEach((d,i)=>{
+      const colors=[C.blueXL,C.tealXL,C.amberXL];
+      const fgColors=[C.blue,C.teal,C.amber];
+      구분card.appendChild(h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",background:colors[i],borderRadius:4,marginBottom:6}},[
+        h("span",{style:{fontSize:13,fontWeight:600,color:C.navy}},[d.l]),
+        h("div",{style:{display:"flex",gap:8,alignItems:"center"}},[
+          h("span",{style:{fontSize:11,fontWeight:600,color:fgColors[i],border:`1px solid ${fgColors[i]}`,borderRadius:3,padding:"1px 7px",background:"#fff"}},[`${총불량?Math.round(d.v/총불량*100):0}%`]),
+          h("span",{style:{fontSize:14,fontWeight:700,color:C.navy}},[String(d.v.toLocaleString())]),
+        ]),
+      ]));
+    });
+    content.appendChild(grid("3fr 2fr",12,[
+      Card("불량 TOP5 — 제품별 비율",`${period} · 총 ${총불량.toLocaleString()}건`,top5card),
+      Card("불량접수 현황 (구분별)",null,구분card),
+    ]));
+    content.appendChild(grid("1fr 1fr",12,[
+      Card("접수불량 유형 TOP10",null,HBar(불량접수top,C.red)),
+      Card("월별 불량 추이","2026년 전체 · 접수일 기준",HBar(품질월별,C.amber)),
+    ]));
+  }
+
+  root.appendChild(hdr1);
+  root.appendChild(hdr2);
+  root.appendChild(content);
+}
+
+async function loadData(){
+  const files=["가전마감.csv","가전외마감.csv","관여해결율.csv","만족도조사.csv","반품교환율.csv","반품현황.csv","상담태그.csv","인입태그.csv","통화성공율.csv"];
+  const DB={};
+  await Promise.all(files.map(async f=>{
+    try{
+      const buf=await window.fs.readFile(f,{encoding:"utf8"});
+      DB[f]=Papa.parse(buf,{header:true,skipEmptyLines:true,dynamicTyping:true}).data;
+    }catch{DB[f]=[];}
+  }));
+  state.DB=DB;
+  state.loading=false;
   render();
 }
 
-// UI 헬퍼
-function kpi(label, val, sub, accent) {
-  return `<div class="kpi" style="border-top:3px solid ${accent}">
-    <div class="klb">${label}</div>
-    <div class="kval">${val}</div>
-    ${sub ? `<div class="ksub">${sub}</div>` : ''}
-  </div>`;
-}
-
-function hbar(arr, accent, maxV, unit='') {
-  if (!arr || !arr.length) return '<div class="nodata">데이터 없음</div>';
-  const m = maxV || Math.max(...arr.map(d => d.v), 1);
-  return arr.slice(0,12).map(d => `
-    <div class="hrow">
-      <div class="hlb" title="${d.l}">${d.l}</div>
-      <div class="htrk"><div class="hfil" style="width:${Math.max(Math.round(d.v/m*100), d.v>0?2:0)}%;background:${accent}"></div></div>
-      <div class="hval">${Number(d.v).toLocaleString()}${unit}</div>
-    </div>`).join('');
-}
-
-function bdg(label, val, pct, accent, bg) {
-  return `<div class="bdg" style="background:${bg}">
-    <span style="font-size:13px;font-weight:500;color:#0f1f3d">${label}</span>
-    <div style="display:flex;gap:10px;align-items:center">
-      ${pct!=null?`<span class="bpct" style="color:${accent};border-color:${accent}">${pct}%</span>`:''}
-      <span class="bval">${typeof val==='number'?val.toLocaleString():val}</span>
-    </div>
-  </div>`;
-}
-
-function get(obj, key) {
-  // period에 맞는 데이터 반환
-  if (!obj) return null;
-  return obj[period] ?? obj['월간'] ?? obj['연간'] ?? obj;
-}
-
-function render() {
-  if (!D || !D.updated) return;
-
-  // 날짜 표시
-  const now = new Date();
-  document.getElementById('dinfo').textContent =
-    `2026년 기준 · 데이터 기준일: ${D.updated} · 조회: ${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
-
-  // ── 주요KPI ─────────────────────────────────────────
-  document.getElementById('kpiGrid').innerHTML = KPI_ITEMS.map((k,i) => `
-    <div class="ki">
-      <div style="font-size:11px;font-weight:600;color:#64748b;letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px">KPI ${String(i+1).padStart(2,'0')}</div>
-      <div style="font-size:13px;color:#334155;line-height:1.5">${k}</div>
-      <div style="font-size:22px;font-weight:700;color:#cbd5e1;margin-top:10px">—</div>
-    </div>`).join('');
-
-  // ── 상담실적 ─────────────────────────────────────────
-  const cs = D.상담실적?.[period] || D.상담실적?.월간 || {};
-  document.getElementById('csKpi').innerHTML =
-    kpi('총 인입수', (cs.총인입수||0).toLocaleString(), '', '#1e40af') +
-    kpi('총 상담수', (cs.총상담수||0).toLocaleString(), '', '#0f766e') +
-    kpi('ALF 관여건', cs.ALF관여건??'-', '', '#b45309') +
-    kpi('만족도', cs.만족도?`${cs.만족도}점`:'-', cs.만족도참여율?`참여율 ${cs.만족도참여율}`:'', '#1e40af');
-
-  document.getElementById('inTag').innerHTML = hbar(cs.인입태그||[], '#1e40af');
-  document.getElementById('csTag').innerHTML = hbar(cs.상담태그||[], '#0f766e');
-  document.getElementById('callRate').innerHTML = hbar(cs.통화성공율||[], '#b45309');
-  document.getElementById('satisfy').innerHTML = hbar(cs.만족도추이||[], '#1e40af', 5, '점');
-
-  // ── 반품현황 ─────────────────────────────────────────
-  const ret = D.반품현황?.[period] || D.반품현황?.월간 || {};
-  document.getElementById('retKpi').innerHTML =
-    kpi('꿈비 반품/교환', (ret.꿈비총건||0).toLocaleString(), '건', '#1e40af') +
-    kpi('소브 반품/교환', (ret.소브총건||0).toLocaleString(), '건', '#0f766e') +
-    kpi('꿈비 반품/교환율', ret.꿈비교환율||'-', '', '#991b1b') +
-    kpi('소브 반품/교환율', ret.소브교환율||'-', '', '#b45309');
-
-  document.getElementById('ggType').innerHTML = hbar(ret.꿈비유형||[], '#1e40af');
-  document.getElementById('sbType').innerHTML = hbar(ret.소브유형||[], '#0f766e');
-  document.getElementById('ggReason').innerHTML = hbar(ret.꿈비사유||[], '#0f1f3d');
-  document.getElementById('sbReason').innerHTML = hbar(ret.소브사유||[], '#334155');
-
-  // ── 처리현황 ─────────────────────────────────────────
-  const proc = D.처리현황?.[period] || D.처리현황?.월간 || {};
-  document.getElementById('procKpi').innerHTML =
-    kpi('수리 총건', (proc.수리총건||0).toLocaleString(), '', '#1e40af') +
-    kpi('무상수리', (proc.무상||0).toLocaleString(), proc.무상율?`${proc.무상율}%`:'', '#0f766e') +
-    kpi('유상수리', (proc.유상||0).toLocaleString(), proc.유상율?`${proc.유상율}%`:'', '#b45309') +
-    kpi('유상 처리금액', proc.유상금액?`${proc.유상금액}만`:'-', '', '#991b1b');
-
-  document.getElementById('partModel').innerHTML = hbar(proc.자재모델||[], '#1e40af');
-  document.getElementById('partItem').innerHTML = hbar(proc.자재부품||[], '#0f766e');
-
-  const ext = proc.가전외 || {};
-  document.getElementById('extKpi').innerHTML =
-    kpi('접수 건수', (ext.접수||0).toLocaleString(), '', '#1e40af') +
-    kpi('유상 건수', (ext.유상||0).toLocaleString(), ext.유상율?`${ext.유상율}%`:'', '#b45309') +
-    kpi('유상 금액', ext.금액?`${ext.금액}만`:'-', '', '#991b1b') +
-    kpi('평균 소요기간', ext.소요평균?`${ext.소요평균}일`:'-', '', '#0f766e');
-
-  document.getElementById('extModel').innerHTML = hbar(ext.모델||[], '#0f1f3d');
-
-  // ── 품질관리 ─────────────────────────────────────────
-  const qual = D.품질관리?.[period] || D.품질관리?.월간 || {};
-  const top5 = qual.top5 || [];
-  const 총 = qual.총불량 || 0;
-  const qC = ['#991b1b','#b45309','#1e40af'];
-  const qB = ['#fee2e2','#fef3c7','#dbeafe','#ccfbf1','#f1f5f9'];
-
-  document.getElementById('qualKpi').innerHTML =
-    kpi('불량 접수 총건', 총.toLocaleString(), '', '#991b1b') +
-    top5.slice(0,3).map(([l,v],i) =>
-      kpi(`불량 ${i+1}위`, l.replace('[꿈비] ','').slice(0,14), `${v.toLocaleString()}건 · ${총?Math.round(v/총*100):0}%`, qC[i])
-    ).join('');
-
-  document.getElementById('top5').innerHTML = top5.map(([l,v],i) =>
-    bdg(`${i+1}. ${l.replace('[꿈비] ','')}`, v, 총?Math.round(v/총*100):0, qC[i]||'#334155', qB[i])
-  ).join('');
-
-  document.getElementById('defType').innerHTML = (qual.구분별||[]).map((d,i) =>
-    bdg(d.l, d.v, 총?Math.round(d.v/총*100):0, ['#1e40af','#0f766e','#b45309'][i], ['#dbeafe','#ccfbf1','#fef3c7'][i])
-  ).join('');
-
-  document.getElementById('def10').innerHTML = hbar(qual.접수불량top10||[], '#991b1b');
-}
-
-// ── JSON 로드 ─────────────────────────────────────────
-async function load() {
-  try {
-    const res = await fetch(REPO + '?t=' + Date.now()); // 캐시 방지
-    if (!res.ok) throw new Error(`dashboard.json 불러오기 실패 (${res.status})`);
-    D = await res.json();
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('main').style.display = 'block';
-    render();
-  } catch(e) {
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('err').style.display = 'block';
-    document.getElementById('err').innerHTML =
-      `⚠️ 데이터를 불러오지 못했습니다.<br>
-       GitHub <code>data/dashboard.json</code> 파일이 업로드되어 있는지 확인해 주세요.<br>
-       <small>${e.message}</small>`;
-  }
-}
-
-load();
+render();
+loadData();
 </script>
-</body>
-</html>
+<style>@keyframes sp{to{transform:rotate(360deg)}}</style>

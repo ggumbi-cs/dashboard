@@ -1,528 +1,366 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CS · 품질관리 대시보드</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f1f5f9;min-height:100vh;}
+button{cursor:pointer;font-family:inherit;}
+@keyframes sp{to{transform:rotate(360deg)}}
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+#hdr1{background:#0f1f3d;height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:100;}
+#hdr1 .title{font-size:14px;font-weight:700;color:#fff;letter-spacing:-0.02em;}
+#hdr1 .period-btns button{padding:4px 12px;border-radius:4px;font-size:11px;font-weight:600;background:transparent;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.15);margin-left:2px;}
+#hdr1 .period-btns button.active{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.5);}
+#hdr2{background:#1a2f52;height:38px;display:flex;align-items:center;padding:0 20px;gap:2px;position:sticky;top:44px;z-index:100;}
+#hdr2 button{padding:5px 16px;border:none;border-radius:4px;font-size:12px;font-weight:600;background:transparent;color:rgba(255,255,255,.45);}
+#hdr2 button.active{background:rgba(255,255,255,.18);color:#fff;}
+#content{padding:16px 20px 40px;}
 
-<div id="root" style="font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;min-height:100vh;background:var(--color-background-tertiary);padding-bottom:40px;"></div>
+.kpi-grid{display:grid;gap:10px;margin-bottom:14px;}
+.kpi-grid.col4{grid-template-columns:repeat(4,1fr);}
+.kpi-grid.col3{grid-template-columns:repeat(3,1fr);}
+.kpi-card{background:#fff;border:1px solid #e2e8f0;border-top:3px solid #1e40af;border-radius:6px;padding:14px 16px;min-width:0;}
+.kpi-label{font-size:11px;font-weight:600;color:#64748b;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;}
+.kpi-value{font-size:22px;font-weight:700;color:#0f1f3d;line-height:1;}
+.kpi-sub{font-size:12px;color:#64748b;margin-top:4px;}
+
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:16px 18px;margin-bottom:12px;}
+.card-header{padding-bottom:10px;border-bottom:1px solid #e2e8f0;margin-bottom:14px;}
+.card-title{font-size:13px;font-weight:600;color:#0f1f3d;}
+.card-sub{font-size:11px;color:#64748b;margin-top:2px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.grid32{display:grid;grid-template-columns:3fr 2fr;gap:12px;margin-bottom:12px;}
+
+.hbar-wrap{display:flex;flex-direction:column;gap:6px;}
+.hbar-row{display:grid;grid-template-columns:130px 1fr 56px;align-items:center;gap:8px;}
+.hbar-label{font-size:12px;color:#334155;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.hbar-track{background:#f1f5f9;border-radius:2px;height:16px;overflow:hidden;}
+.hbar-fill{height:100%;border-radius:2px;}
+.hbar-val{font-size:12px;font-weight:600;color:#0f1f3d;text-align:right;}
+.no-data{color:#64748b;font-size:13px;padding:8px 0;}
+
+.section-title{font-size:12px;font-weight:700;color:#fff;padding:6px 14px;border-radius:4px;margin-bottom:12px;margin-top:4px;}
+.sub-label{background:rgba(30,64,175,0.07);border-radius:6px;padding:8px 14px;margin-bottom:12px;font-size:11px;color:#1e40af;font-weight:700;}
+
+.badge{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:6px;margin-bottom:8px;}
+.badge-label{font-size:13px;font-weight:700;color:#fff;}
+.badge-pct{font-size:12px;font-weight:700;border-radius:4px;padding:2px 9px;background:#fff;}
+.badge-val{font-size:16px;font-weight:700;color:#fff;}
+
+.gaug-card{background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:14px 16px;min-width:0;}
+.gaug-label{font-size:11px;font-weight:600;color:#64748b;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;}
+.gaug-nums{display:flex;gap:6px;align-items:flex-end;margin-bottom:10px;}
+.gaug-main{font-size:24px;font-weight:700;}
+.gaug-sub-num{font-size:13px;color:#64748b;margin-bottom:3px;}
+.gaug-bar{display:flex;border-radius:4px;overflow:hidden;height:10px;}
+.gaug-legend{display:flex;justify-content:space-between;margin-top:5px;font-size:11px;font-weight:600;}
+
+.stackbar-wrap{display:flex;flex-direction:column;gap:10px;}
+.stackbar-bar{display:flex;border-radius:3px;overflow:hidden;height:18px;background:#f1f5f9;}
+.stackbar-seg{display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:600;}
+.stackbar-legend{display:flex;gap:12px;margin-top:3px;}
+.stackbar-dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:3px;vertical-align:middle;}
+
+.rank-item{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:4px;margin-bottom:6px;}
+.rank-right{display:flex;gap:8px;align-items:center;}
+.rank-pct{font-size:11px;font-weight:600;border-radius:3px;padding:1px 7px;background:#fff;}
+.rank-val{font-size:14px;font-weight:700;color:#0f1f3d;}
+
+.prepare{display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;gap:16px;}
+.prepare h2{font-size:20px;font-weight:700;color:#0f1f3d;}
+.prepare p{font-size:14px;color:#64748b;text-align:center;line-height:1.7;}
+.soon{background:#dbeafe;border:1px solid #1e40af;border-radius:8px;padding:8px 20px;font-size:12px;color:#1e40af;font-weight:600;}
+</style>
+</head>
+<body>
+<div id="hdr1">
+  <div class="title">CS · 품질관리 대시보드</div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div id="date-str" style="font-size:11px;color:rgba(255,255,255,.35);"></div>
+    <div class="period-btns" id="period-btns"></div>
+  </div>
+</div>
+<div id="hdr2"></div>
+<div id="content"></div>
 
 <script>
+const DATA = {"updated": "2026.04.12", "상담실적": {"주간": {"총인입수": 1152, "총상담수": 1153, "ALF관여건": 2049, "ALF해결건": 1037, "관여월": "26.03월", "만족도": 4.47, "만족도참여율": "22.49%", "만족도월": "26.03월", "인입회차": ["260403"], "인입태그": [{"l": "채널톡 메시지", "v": 626}, {"l": "카카오", "v": 229}, {"l": "네이버 톡톡", "v": 157}, {"l": "전화", "v": 140}], "상담태그": [{"l": "기타", "v": 397}, {"l": "휴대용분유포트", "v": 192}, {"l": "교환/불량", "v": 168}, {"l": "분유쉐이커", "v": 115}, {"l": "회수/요청", "v": 113}, {"l": "AS/접수", "v": 107}, {"l": "상품", "v": 61}], "통화성공율": [{"l": "260403", "v": 74.69}], "만족도추이": [{"l": "26.01월", "v": 4.73}, {"l": "26.02월", "v": 4.6}, {"l": "26.03월", "v": 4.47}]}, "월간": {"총인입수": 6109, "총상담수": 7308, "ALF관여건": 2049, "ALF해결건": 1037, "관여월": "26.03월", "만족도": 4.47, "만족도참여율": "22.49%", "만족도월": "26.03월", "인입회차": ["26.03월"], "인입태그": [{"l": "채널톡 메시지", "v": 3701}, {"l": "카카오", "v": 1240}, {"l": "네이버 톡톡", "v": 942}, {"l": "전화", "v": 226}], "상담태그": [{"l": "기타", "v": 1704}, {"l": "상품", "v": 869}, {"l": "낮잠이불", "v": 858}, {"l": "휴대용분유포트", "v": 841}, {"l": "리콜", "v": 835}, {"l": "교환/불량", "v": 766}, {"l": "분유쉐이커", "v": 587}, {"l": "회수/요청", "v": 448}, {"l": "AS/접수", "v": 400}], "통화성공율": [], "만족도추이": [{"l": "26.01월", "v": 4.73}, {"l": "26.02월", "v": 4.6}, {"l": "26.03월", "v": 4.47}]}, "2026년": {"총인입수": 22913, "총상담수": 23110, "ALF관여건": 2049, "ALF해결건": 1037, "관여월": "26.03월", "만족도": 4.47, "만족도참여율": "22.49%", "만족도월": "26.03월", "인입회차": ["26.01월", "260327", "260320", "260403", "26.02월", "26.03월", "260313"], "인입태그": [{"l": "채널톡 메시지", "v": 10893}, {"l": "카카오", "v": 4398}, {"l": "전화", "v": 4299}, {"l": "네이버 톡톡", "v": 3323}], "상담태그": [{"l": "기타", "v": 5841}, {"l": "휴대용분유포트", "v": 2942}, {"l": "교환/불량", "v": 2785}, {"l": "분유쉐이커", "v": 2204}, {"l": "상품", "v": 2204}, {"l": "회수/요청", "v": 1824}, {"l": "낮잠이불", "v": 1714}, {"l": "리콜", "v": 1640}, {"l": "상품/사용방법", "v": 621}, {"l": "LED분유쉐이커", "v": 571}, {"l": "AS/접수", "v": 568}, {"l": "AS접수", "v": 145}, {"l": "반품/환불", "v": 51}], "통화성공율": [{"l": "26.01월", "v": 75.7}, {"l": "26.02월", "v": 75.07}, {"l": "260327", "v": 63.85}, {"l": "260403", "v": 74.69}], "만족도추이": [{"l": "26.01월", "v": 4.73}, {"l": "26.02월", "v": 4.6}, {"l": "26.03월", "v": 4.47}]}}, "반품현황": {"주간": {"꿈비총건": 310, "꿈비가전총": 182, "꿈비가전외총": 128, "소브총건": 6, "소브가전총": 0, "소브가전외총": 6, "꿈비교환율": 3.3, "소브교환율": 2.44, "기준월": "26.03월", "반품회차": ["2026-04-03"], "꿈비유형": [{"l": "교환", "v": 195}, {"l": "반품", "v": 115}], "소브유형": [{"l": "반품", "v": 5}, {"l": "교환", "v": 1}], "꿈비사유": [{"l": "작동불량", "v": 150}, {"l": "단순변심", "v": 89}, {"l": "기타(제품불량)", "v": 17}, {"l": "매칭/전산오류", "v": 16}, {"l": "오염/이염", "v": 8}, {"l": "기타(미사유)", "v": 7}, {"l": "배송사고", "v": 5}, {"l": "오출고(물류)", "v": 3}, {"l": "파손/스크래치", "v": 3}, {"l": "오가닉불량(제형)", "v": 2}, {"l": "이물질", "v": 2}, {"l": "오가닉불량(용기)", "v": 2}, {"l": "주름/봉제불량", "v": 2}, {"l": "CS오류", "v": 1}, {"l": "폼/합지불량", "v": 1}, {"l": "오출고(업체)", "v": 1}, {"l": "기출고처리", "v": 1}], "소브사유": [{"l": "단순변심", "v": 5}, {"l": "기타(미사유)", "v": 1}], "꿈비월별": [{"l": "26.01월", "total": 2455, "segments": [{"l": "가전", "v": 1299}, {"l": "가전외", "v": 1156}]}, {"l": "26.02월", "total": 1173, "segments": [{"l": "가전", "v": 725}, {"l": "가전외", "v": 448}]}, {"l": "26.03월", "total": 1319, "segments": [{"l": "가전", "v": 678}, {"l": "가전외", "v": 641}]}], "소브월별": [{"l": "26.01월", "total": 138, "segments": [{"l": "가전", "v": 0}, {"l": "가전외", "v": 138}]}, {"l": "26.02월", "total": 85, "segments": [{"l": "가전", "v": 0}, {"l": "가전외", "v": 85}]}, {"l": "26.03월", "total": 104, "segments": [{"l": "가전", "v": 0}, {"l": "가전외", "v": 104}]}]}, "월간": {"꿈비총건": 1319, "꿈비가전총": 678, "꿈비가전외총": 641, "소브총건": 104, "소브가전총": 0, "소브가전외총": 104, "꿈비교환율": 3.3, "소브교환율": 2.44, "기준월": "26.03월", "반품회차": ["26.03월"], "꿈비유형": [{"l": "교환", "v": 741}, {"l": "반품", "v": 578}], "소브유형": [{"l": "반품", "v": 67}, {"l": "교환", "v": 37}], "꿈비사유": [{"l": "작동불량", "v": 560}, {"l": "단순변심", "v": 369}, {"l": "기타(미사유)", "v": 152}, {"l": "파손/스크래치", "v": 50}, {"l": "기타(제품불량)", "v": 49}, {"l": "매칭/전산오류", "v": 40}, {"l": "오염/이염", "v": 27}, {"l": "오출고(물류)", "v": 24}, {"l": "배송사고", "v": 15}, {"l": "오출고(업체)", "v": 6}, {"l": "주름/봉제불량", "v": 6}, {"l": "출고전취소", "v": 5}, {"l": "CS오류", "v": 3}, {"l": "사이즈불량", "v": 3}, {"l": "폼/합지불량", "v": 2}, {"l": "이물질", "v": 2}, {"l": "오가닉불량(제형)", "v": 2}, {"l": "품절", "v": 2}, {"l": "배송지연", "v": 1}, {"l": "기출고처리", "v": 1}], "소브사유": [{"l": "단순변심", "v": 62}, {"l": "매칭/전산오류", "v": 25}, {"l": "배송사고", "v": 4}, {"l": "기타(제품불량)", "v": 3}, {"l": "기타(미사유)", "v": 3}, {"l": "주름/봉제불량", "v": 2}, {"l": "오염/이염", "v": 2}, {"l": "오출고(물류)", "v": 1}, {"l": "오출고(업체)", "v": 1}, {"l": "파손/스크래치", "v": 1}], "꿈비월별": [{"l": "26.01월", "total": 2455, "segments": [{"l": "가전", "v": 1299}, {"l": "가전외", "v": 1156}]}, {"l": "26.02월", "total": 1173, "segments": [{"l": "가전", "v": 725}, {"l": "가전외", "v": 448}]}, {"l": "26.03월", "total": 1319, "segments": [{"l": "가전", "v": 678}, {"l": "가전외", "v": 641}]}], "소브월별": [{"l": "26.01월", "total": 138, "segments": [{"l": "가전", "v": 0}, {"l": "가전외", "v": 138}]}, {"l": "26.02월", "total": 85, "segments": [{"l": "가전", "v": 0}, {"l": "가전외", "v": 85}]}, {"l": "26.03월", "total": 104, "segments": [{"l": "가전", "v": 0}, {"l": "가전외", "v": 104}]}]}, "2026년": {"꿈비총건": 10070, "꿈비가전총": 5486, "꿈비가전외총": 4584, "소브총건": 657, "소브가전총": 0, "소브가전외총": 657, "꿈비교환율": 3.3, "소브교환율": 2.44, "기준월": "26.03월", "반품회차": ["2026-01-09", "2026-03-06", "26.01월", "2026-03-13", "2026-02-13", "2026-03-20", "2026-03-27", "2026-02-06", "2026-02-27", "2026-02-20", "2026-01-16", "2026-01-23", "2026-01-02", "26.02월", "26.03월", "2026-04-03", "2026-01-30"], "꿈비유형": [{"l": "교환", "v": 5731}, {"l": "반품", "v": 4339}], "소브유형": [{"l": "반품", "v": 528}, {"l": "교환", "v": 129}], "꿈비사유": [{"l": "작동불량", "v": 3956}, {"l": "단순변심", "v": 3266}, {"l": "기타(미사유)", "v": 702}, {"l": "기타(제품불량)", "v": 586}, {"l": "매칭/전산오류", "v": 448}, {"l": "파손/스크래치", "v": 262}, {"l": "오염/이염", "v": 191}, {"l": "배송사고", "v": 145}, {"l": "오출고(물류)", "v": 111}, {"l": "주름/봉제불량", "v": 105}, {"l": "기출고처리", "v": 65}, {"l": "CS오류", "v": 59}, {"l": "폼/합지불량", "v": 41}, {"l": "출고전취소", "v": 30}, {"l": "오출고(업체)", "v": 27}, {"l": "오가닉불량(용기)", "v": 20}, {"l": "배송지연", "v": 14}, {"l": "오가닉불량(제형)", "v": 12}, {"l": "품절", "v": 10}, {"l": "이물질", "v": 10}, {"l": "사이즈불량", "v": 10}], "소브사유": [{"l": "단순변심", "v": 492}, {"l": "매칭/전산오류", "v": 68}, {"l": "배송사고", "v": 24}, {"l": "기타(제품불량)", "v": 16}, {"l": "파손/스크래치", "v": 14}, {"l": "기타(미사유)", "v": 13}, {"l": "주름/봉제불량", "v": 8}, {"l": "배송지연", "v": 6}, {"l": "오염/이염", "v": 4}, {"l": "오출고(업체)", "v": 4}, {"l": "오출고(물류)", "v": 4}, {"l": "폼/합지불량", "v": 2}, {"l": "기출고처리", "v": 2}], "꿈비월별": [{"l": "26.01월", "total": 2455, "segments": [{"l": "가전", "v": 1299}, {"l": "가전외", "v": 1156}]}, {"l": "26.02월", "total": 1173, "segments": [{"l": "가전", "v": 725}, {"l": "가전외", "v": 448}]}, {"l": "26.03월", "total": 1319, "segments": [{"l": "가전", "v": 678}, {"l": "가전외", "v": 641}]}], "소브월별": [{"l": "26.01월", "total": 138, "segments": [{"l": "가전", "v": 0}, {"l": "가전외", "v": 138}]}, {"l": "26.02월", "total": 85, "segments": [{"l": "가전", "v": 0}, {"l": "가전외", "v": 85}]}, {"l": "26.03월", "total": 104, "segments": [{"l": "가전", "v": 0}, {"l": "가전외", "v": 104}]}]}}, "처리현황": {"주간": {"수리총건": 47, "무상": 19, "유상": 28, "무상율": 40, "유상율": 60, "유상금액만원": 83, "수리월별": [{"l": "26.01월", "v": 162}, {"l": "26.02월", "v": 128}, {"l": "26.03월", "v": 150}, {"l": "26.04월", "v": 49}], "자재총건": 23, "자재모델": [{"l": "[꿈비] 휴대용 분유포트", "v": 21}, {"l": "[꿈비] 분유쉐이커", "v": 2}], "자재부품": [{"l": "뚜껑", "v": 21}, {"l": "바스켓", "v": 1}, {"l": "실리콘", "v": 1}], "가전외": {"접수": 1, "유상": 1, "유상율": 100, "금액만원": 17, "소요평균": 1.0, "모델": [{"l": "[AS] 양면이중코팅 클린롤매트 자이언트 252x200x4cm 커버_크림화이트", "v": 1}]}}, "월간": {"수리총건": 49, "무상": 19, "유상": 30, "무상율": 39, "유상율": 61, "유상금액만원": 85, "수리월별": [{"l": "26.01월", "v": 162}, {"l": "26.02월", "v": 128}, {"l": "26.03월", "v": 150}, {"l": "26.04월", "v": 49}], "자재총건": 13, "자재모델": [{"l": "[꿈비] 휴대용 분유포트", "v": 11}, {"l": "[꿈비] 분유쉐이커", "v": 2}], "자재부품": [{"l": "뚜껑", "v": 11}, {"l": "바스켓", "v": 1}, {"l": "실리콘", "v": 1}], "가전외": {"접수": 1, "유상": 1, "유상율": 100, "금액만원": 17, "소요평균": 1.0, "모델": [{"l": "[AS] 양면이중코팅 클린롤매트 자이언트 252x200x4cm 커버_크림화이트", "v": 1}]}}, "2026년": {"수리총건": 427, "무상": 201, "유상": 226, "무상율": 47, "유상율": 53, "유상금액만원": 717, "수리월별": [{"l": "26.01월", "v": 162}, {"l": "26.02월", "v": 128}, {"l": "26.03월", "v": 150}, {"l": "26.04월", "v": 49}], "자재총건": 319, "자재모델": [{"l": "[꿈비] 휴대용 분유포트", "v": 297}, {"l": "[꿈비] 분유쉐이커", "v": 16}, {"l": "[꿈비] 장난감 살균기 60L 세트 클린베이지", "v": 3}, {"l": "[꿈비] 뭉침없이 조용한 분유쉐이커", "v": 1}, {"l": "[집계] 젖병살균세척기", "v": 1}, {"l": "[꿈비] 젖병세척기 스팀플러스", "v": 1}], "자재부품": [{"l": "뚜껑", "v": 287}, {"l": "실리콘", "v": 15}, {"l": "충전케이블", "v": 5}, {"l": "내부실리콘", "v": 4}, {"l": "휴대용살균기", "v": 3}, {"l": "바스켓", "v": 2}, {"l": "부자재", "v": 1}, {"l": "젖병홀더", "v": 1}, {"l": "흡착판", "v": 1}, {"l": "세척홀더", "v": 1}], "가전외": {"접수": 78, "유상": 73, "유상율": 94, "금액만원": 1563, "소요평균": 6.3, "모델": [{"l": "[AS] 양면이중코팅 클린롤매트 슈퍼자이언트 323x230x4cm 커버_크림화이트", "v": 11}, {"l": "[AS] 양면이중코팅 클린롤매트 자이언트 252x200x4cm 커버_크림화이트", "v": 8}, {"l": "[AS] 양면이중코팅 클린롤매트 자이언트 292x200x4cm 커버_크림화이트", "v": 8}, {"l": "[AS] 양면이중코팅 클린롤매트 자이언트 323x200x4cm 커버_크림화이트", "v": 7}, {"l": "[AS] 양면이중코팅 더블 원피스매트 323x252x4cm 커버_크림화이트", "v": 4}, {"l": "[AS] 양면이중코팅 더블 원피스매트 382x282x4cm 커버_크림화이트", "v": 3}, {"l": "[AS] 더블 원피스매트 292x252x4cm 커버_크림화이트", "v": 3}, {"l": "[AS] 양면이중코팅 클린롤매트 자이언트 252x200x4cm 커버_크림화이트 2개", "v": 2}, {"l": "[AS] 클린롤매트 plus 자이언트 323x200x4cm 커버_크림화이트", "v": 2}, {"l": "[AS] 클린롤매트 plus 자이언트 292x200x4cm 커버_크림화이트", "v": 2}, {"l": "[AS] 더블 원피스매트 382x282x4cm 커버_크림화이트", "v": 2}, {"l": "[AS] 더블 원피스 복도매트 690x110x4cm 커버_크림화이트", "v": 2}, {"l": "[AS] 클린롤매트 plus 200x140x4cm 커버_크림화이트", "v": 2}, {"l": "[리코코] 양면이중코팅 클린롤매트 자이언트 252x200x4cm_크림화이트", "v": 1}, {"l": "[AS] 클린롤매트 plus 슈퍼자이언트 323x230x4cm 커버_크림화이트", "v": 1}, {"l": "[리코코] 양면이중코팅 더블 원피스 복도매트 690x110x4cm_크림화이트_폼", "v": 1}, {"l": "클린롤매트 자이언트 292X200_크림화이트_폼", "v": 1}, {"l": "[리코코] 양면이중코팅 더블원피스매트 252x200x4cm", "v": 1}, {"l": "[리코코] 양면이중코팅 더블 원피스매트 382x282x4cm_매트 폼", "v": 1}, {"l": "[AS] 양면이중코팅 클린롤매트 자이언트 252x200x4cm 커버_크림화이트 1개", "v": 1}, {"l": "[리코코] 양면이중코팅 더블원피스매트 220x280x4cm", "v": 1}, {"l": "[AS] 양면이중코팅 더블 원피스매트 252x252x4cm 커버_크림화이트", "v": 1}, {"l": "[리코코] 양면이중코팅 더블원피스매트 252x200x4cm 폼 1개", "v": 1}, {"l": "[AS] 클린롤매트 plus 자이언트 343x200x4cm 커버_크림화이트", "v": 1}, {"l": "[꿈비] 하이가드 범퍼침대 대형 크림화이트_폼", "v": 1}, {"l": "[AS] 양면이중코팅 클린롤매트 자이언트 292x200x4cm 커버_크림화이트_2P", "v": 1}, {"l": "[리코코] 양면이중코팅 클린롤매트 슈퍼자이언트 323x230x4cm_크림화이트_폼", "v": 1}, {"l": "[AS] 클린롤매트 plus 자이언트 252x200x4cm 커버_크림화이트", "v": 1}, {"l": "[AS] 양면이중코팅 더블 원피스매트 284x240x4cm 커버_크림화이트", "v": 1}, {"l": "[AS] 더블 원피스매트 323x252x4cm 커버_크림화이트", "v": 1}, {"l": "[꿈비] 하이가드 범퍼침대 크림화이트", "v": 1}, {"l": "[꿈비] 하이가드 범퍼침대 슈퍼특대형 크림화이트 뮤트그린", "v": 1}, {"l": "[AS] 클린롤매트 plus 자이언트 252x200x4cm 커버_크림화이트 2개", "v": 1}, {"l": "[AS] 양면이중코팅 더블원피스매트 252x200x4cm 커버", "v": 1}, {"l": "[AS] 양면이중코팅 클린롤매트 292x140x4cm 커버", "v": 1}]}}}, "품질관리": {"주간": {"총불량": 118, "top5": [{"l": "[꿈비] 휴대용 분유포트", "v": 71}, {"l": "[꿈비] 분유쉐이커", "v": 18}, {"l": "[꿈비] 뭉침없이 조용한 분유쉐이커", "v": 11}, {"l": "[집계] 젖병살균세척기", "v": 6}, {"l": "[꿈비] 젖병세척기 스팀플러스", "v": 5}], "구분별": [{"l": "수리출고", "v": 33}, {"l": "자재출고", "v": 23}, {"l": "교환/환불", "v": 185}], "접수불량top10": [{"l": "회전불량", "v": 16}, {"l": "누수", "v": 14}, {"l": "파손", "v": 13}, {"l": "미작동", "v": 13}, {"l": "충전불량", "v": 8}, {"l": "기구불량", "v": 8}, {"l": "전원불량", "v": 7}, {"l": "디스플레이불량", "v": 7}, {"l": "소음", "v": 6}, {"l": "온도센서불량", "v": 4}], "월별추이": [{"l": "26.01월", "v": 730}, {"l": "26.02월", "v": 725}, {"l": "26.03월", "v": 851}, {"l": "26.04월", "v": 118}]}, "월간": {"총불량": 118, "top5": [{"l": "[꿈비] 휴대용 분유포트", "v": 71}, {"l": "[꿈비] 분유쉐이커", "v": 18}, {"l": "[꿈비] 뭉침없이 조용한 분유쉐이커", "v": 11}, {"l": "[집계] 젖병살균세척기", "v": 6}, {"l": "[꿈비] 젖병세척기 스팀플러스", "v": 5}], "구분별": [{"l": "수리출고", "v": 33}, {"l": "자재출고", "v": 11}, {"l": "교환/환불", "v": 74}], "접수불량top10": [{"l": "회전불량", "v": 16}, {"l": "누수", "v": 14}, {"l": "파손", "v": 13}, {"l": "미작동", "v": 13}, {"l": "충전불량", "v": 8}, {"l": "기구불량", "v": 8}, {"l": "전원불량", "v": 7}, {"l": "디스플레이불량", "v": 7}, {"l": "소음", "v": 6}, {"l": "온도센서불량", "v": 4}], "월별추이": [{"l": "26.01월", "v": 730}, {"l": "26.02월", "v": 725}, {"l": "26.03월", "v": 851}, {"l": "26.04월", "v": 118}]}, "2026년": {"총불량": 2424, "top5": [{"l": "[꿈비] 휴대용 분유포트", "v": 1232}, {"l": "[꿈비] 분유쉐이커", "v": 575}, {"l": "[꿈비] 뭉침없이 조용한 분유쉐이커", "v": 269}, {"l": "[집계] 젖병살균세척기", "v": 170}, {"l": "[꿈비] 출수형 분유포트", "v": 73}], "구분별": [{"l": "수리출고", "v": 464}, {"l": "자재출고", "v": 320}, {"l": "교환/환불", "v": 1640}], "접수불량top10": [{"l": "누수", "v": 360}, {"l": "충전불량", "v": 341}, {"l": "회전불량", "v": 340}, {"l": "미작동", "v": 241}, {"l": "파손", "v": 163}, {"l": "전원불량", "v": 135}, {"l": "오작동", "v": 119}, {"l": "소음", "v": 110}, {"l": "기구불량", "v": 73}, {"l": "디스플레이불량", "v": 53}], "월별추이": [{"l": "26.01월", "v": 730}, {"l": "26.02월", "v": 725}, {"l": "26.03월", "v": 851}, {"l": "26.04월", "v": 118}]}}};
+
 const TABS=["주요KPI","상담실적","반품현황","처리현황","품질관리","Issue"];
 const PERIODS=["주간","월간","2026년"];
-const EXCLUDE_STATUS=["취소","수리제외"];
+const C={navy:"#0f1f3d",blue:"#1e40af",blueXL:"#dbeafe",teal:"#0f766e",tealXL:"#ccfbf1",amber:"#b45309",amberXL:"#fef3c7",red:"#991b1b",redXL:"#fee2e2",purple:"#6d28d9",purpleXL:"#ede9fe",slate:"#334155",slateL:"#64748b",slateXL:"#f1f5f9",border:"#e2e8f0"};
 
-const C={
-  navy:"#0f1f3d",navyL:"#1a2f52",
-  blue:"#1e40af",blueXL:"#dbeafe",
-  teal:"#0f766e",tealXL:"#ccfbf1",
-  amber:"#b45309",amberXL:"#fef3c7",
-  red:"#991b1b",redXL:"#fee2e2",
-  purple:"#6d28d9",purpleXL:"#ede9fe",
-  slate:"#334155",slateL:"#64748b",slateXL:"#f1f5f9",
-  white:"#ffffff",border:"#e2e8f0",
-};
+let state={tab:"반품현황",period:"월간"};
 
-let state={tab:"반품현황",period:"월간",DB:null,loading:true};
-
-function parseDate(v){
-  if(!v)return null;
-  let s=String(v).trim();
-  s=s.replace(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/,(_,y,m,d)=>`${y}-${m.padStart(2,"0")}-${d.padStart(2,"0")}`);
-  const d=new Date(s);
-  return isNaN(d)?null:d;
+function el(tag,cls,style,html){
+  const e=document.createElement(tag);
+  if(cls)e.className=cls;
+  if(style)Object.assign(e.style,typeof style==='string'?{cssText:style}:style);
+  if(html!==undefined)e.innerHTML=html;
+  return e;
 }
-function is2026(v){const d=parseDate(v);return d&&d.getFullYear()===2026;}
+function app(parent,...children){children.forEach(c=>{if(c)parent.appendChild(c);});return parent;}
 
-function filterByPW(rows,period,pwCol,회차Col){
-  const rows2026=rows.filter(r=>Number(r["년"]||0)===2026||!r["년"]);
-  if(period==="2026년")return rows2026;
-  const pw값=period==="주간"?"주간":"월간";
-  const filtered=rows2026.filter(r=>String(r[pwCol]||"").trim()===pw값);
-  if(!filtered.length)return[];
-  const 회차목록=[...new Set(filtered.map(r=>String(r[회차Col]||"")).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
-  return filtered.filter(r=>String(r[회차Col]||"")===회차목록[0]);
+function kpiCard(label,value,sub,accent){
+  const d=el("div","kpi-card");
+  d.style.borderTopColor=accent||C.blue;
+  d.innerHTML=`<div class="kpi-label">${label}</div><div class="kpi-value">${value??"-"}</div>${sub?`<div class="kpi-sub">${sub}</div>`:""}`;
+  return d;
 }
 
-function filterReturn(rows,period){
-  const rows2026=rows.filter(r=>{const mc=String(r["마감회차"]||"").trim();return mc.startsWith("26.")||mc.startsWith("2026-");});
-  if(period==="2026년")return rows2026;
-  const pw값=period==="주간"?"주간":"월간";
-  const filtered=rows2026.filter(r=>String(r["주/월"]||"").trim()===pw값);
-  if(!filtered.length)return[];
-  const 회차목록=[...new Set(filtered.map(r=>String(r["마감회차"]||"")).filter(Boolean))].sort((a,b)=>b.localeCompare(a));
-  return filtered.filter(r=>String(r["마감회차"]||"")===회차목록[0]);
-}
-
-function filterByDate(rows,period,dateCol){
-  if(period==="2026년")return rows;
-  const dates=rows.map(r=>parseDate(r[dateCol])).filter(d=>d&&d.getFullYear()===2026);
-  if(!dates.length)return[];
-  if(period==="월간"){
-    const latest=new Date(Math.max(...dates.map(d=>d.getTime())));
-    return rows.filter(r=>{const d=parseDate(r[dateCol]);return d&&d.getFullYear()===2026&&d.getMonth()===latest.getMonth();});
-  }
-  if(period==="주간"){
-    const maxT=Math.max(...dates.map(d=>d.getTime()));
-    return rows.filter(r=>{const d=parseDate(r[dateCol]);return d&&d.getFullYear()===2026&&(maxT-d.getTime())<=7*24*60*60*1000;});
-  }
-  return rows;
-}
-
-function filterGajeon(rows,period,mode){
-  const rows2026=rows.filter(r=>is2026(r["접수일"]));
-  if(mode==="수리출고"){
-    const valid=rows2026.filter(r=>String(r["구분"]||"").trim()==="수리출고"&&!EXCLUDE_STATUS.includes(String(r["진행상황"]||"").trim())&&r["처리일"]);
-    return filterByDate(valid,period,"처리일");
-  }
-  if(mode==="자재출고"){
-    const valid=rows2026.filter(r=>String(r["구분"]||"").trim()==="자재출고"&&!EXCLUDE_STATUS.includes(String(r["진행상황"]||"").trim())&&String(r["사용부품"]||"").trim()!==""&&!String(r["사용부품"]||"").includes("대체품"));
-    return filterByDate(valid,period,"처리일");
-  }
-  if(mode==="품질"){
-    const valid=rows2026.filter(r=>["수리출고","자재출고","교환/환불"].includes(String(r["구분"]||"").trim())&&!EXCLUDE_STATUS.includes(String(r["진행상황"]||"").trim()));
-    return filterByDate(valid,period,"접수일");
-  }
-  return[];
-}
-
-function filterExt(rows,period){
-  const valid=rows.filter(r=>is2026(r["접수일자"]));
-  return filterByDate(valid,period,"완료일자");
-}
-
-function getRateVal(row){
-  const keys=Object.keys(row||{});
-  const k=keys.find(k=>k.includes("교환율")||(k.includes("반품")&&k.includes("율")));
-  return k?row[k]:null;
-}
-
-function fmtRate(val){
-  if(val==null||val==="")return"-";
-  const n=Number(String(val).replace(/[^0-9.]/g,""));
-  if(isNaN(n)||n===0)return"-";
-  return n<1?`${(n*100).toFixed(1)}%`:`${n.toFixed(1)}%`;
-}
-
-function gSum(arr,kg,kv){const m={};arr.forEach(r=>{const k=String(r[kg]||"기타").trim();m[k]=(m[k]||0)+(Number(r[kv])||0);});return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([l,v])=>({l,v}));}
-function gTag(arr,kt,kv){const m={};arr.forEach(r=>{const k=String(r[kt]||"기타").trim();m[k]=(m[k]||0)+(Number(r[kv])||0);});return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([l,v])=>({l,v}));}
-
-function groupByMonthCount(rows,dateCol){
-  const m={};
-  rows.forEach(r=>{
-    const d=parseDate(r[dateCol]);
-    if(!d||d.getFullYear()!==2026)return;
-    const k=`26.${String(d.getMonth()+1).padStart(2,"0")}월`;
-    m[k]=(m[k]||0)+1;
-  });
-  return Object.entries(m).sort((a,b)=>a[0].localeCompare(b[0])).map(([l,v])=>({l,v}));
-}
-
-function h(tag,attrs,children){
-  const el=document.createElement(tag);
-  if(attrs)Object.entries(attrs).forEach(([k,v])=>{
-    if(k==="style"&&typeof v==="object")Object.assign(el.style,v);
-    else if(k==="onclick")el.onclick=v;
-    else el.setAttribute(k,v);
-  });
-  (children||[]).forEach(c=>{
-    if(c==null)return;
-    if(typeof c==="string")el.appendChild(document.createTextNode(c));
-    else el.appendChild(c);
-  });
-  return el;
-}
-
-function Kpi(label,value,sub,accent){
-  return h("div",{style:{background:C.white,border:`1px solid ${C.border}`,borderTop:`3px solid ${accent||C.blue}`,borderRadius:6,padding:"14px 16px",minWidth:0}},[
-    h("div",{style:{fontSize:11,fontWeight:600,color:C.slateL,letterSpacing:".06em",textTransform:"uppercase",marginBottom:6}},[label]),
-    h("div",{style:{fontSize:22,fontWeight:700,color:C.navy,lineHeight:1}},[String(value)]),
-    sub?h("div",{style:{fontSize:12,color:C.slateL,marginTop:4}},[String(sub)]):null,
-  ]);
-}
-
-function HBar(data,accent,maxV,unit){
-  if(!data||!data.length){
-    return h("div",{style:{color:C.slateL,fontSize:13,padding:"8px 0"}},["데이터 없음"]);
-  }
+function hbar(data,accent,maxV,unit){
+  if(!data||!data.length)return el("div","no-data",{},"데이터 없음");
   const m=maxV||Math.max(...data.map(d=>d.v),1);
-  const wrap=h("div",{style:{display:"flex",flexDirection:"column",gap:6}},[]);
+  const wrap=el("div","hbar-wrap");
   data.slice(0,12).forEach(d=>{
-    const row=h("div",{style:{display:"grid",gridTemplateColumns:"130px 1fr 56px",alignItems:"center",gap:8}},[
-      h("div",{style:{fontSize:12,color:C.slate,textAlign:"right",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},[d.l]),
-      h("div",{style:{background:C.slateXL,borderRadius:2,height:16,overflow:"hidden"}},[
-        h("div",{style:{width:`${Math.max(Math.round(d.v/m*100),d.v>0?2:0)}%`,background:accent||C.blue,height:"100%",borderRadius:2}},[])
-      ]),
-      h("div",{style:{fontSize:12,fontWeight:600,color:C.navy,textAlign:"right"}},[`${Number(d.v).toLocaleString()}${unit||""}`]),
-    ]);
-    wrap.appendChild(row);
+    wrap.innerHTML+=`<div class="hbar-row"><div class="hbar-label" title="${d.l}">${d.l}</div><div class="hbar-track"><div class="hbar-fill" style="width:${Math.max(Math.round(d.v/m*100),d.v>0?2:0)}%;background:${accent||C.blue}"></div></div><div class="hbar-val">${Number(d.v).toLocaleString()}${unit||""}</div></div>`;
   });
   return wrap;
 }
 
-function Card(title,sub,children){
-  return h("div",{style:{background:C.white,border:`1px solid ${C.border}`,borderRadius:6,padding:"16px 18px",marginBottom:12}},[
-    h("div",{style:{paddingBottom:10,borderBottom:`1px solid ${C.border}`,marginBottom:14}},[
-      h("div",{style:{fontSize:13,fontWeight:600,color:C.navy}},[title]),
-      sub?h("div",{style:{fontSize:11,color:C.slateL,marginTop:2}},[sub]):null,
-    ]),
-    children,
-  ]);
+function card(title,sub,children){
+  const d=el("div","card");
+  const hdr=el("div","card-header","",`<div class="card-title">${title}</div>${sub?`<div class="card-sub">${sub}</div>`:""}`);
+  d.appendChild(hdr);
+  if(children)d.appendChild(children);
+  return d;
 }
 
-function SectionTitle(text,color){
-  return h("div",{style:{fontSize:12,fontWeight:700,color:C.white,background:color||C.navy,padding:"6px 14px",borderRadius:4,marginBottom:12,marginTop:4}},[text]);
+function grid(cols,gap,items){
+  const d=el("div");
+  d.style.cssText=`display:grid;grid-template-columns:${cols};gap:${gap||12}px;margin-bottom:12px;`;
+  items.forEach(i=>{if(i)d.appendChild(i);});
+  return d;
 }
 
-function Badge(label,value,pct,accent){
-  return h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 14px",background:accent||C.blue,borderRadius:6,marginBottom:8}},[
-    h("span",{style:{fontSize:13,fontWeight:700,color:"#fff"}},[label]),
-    h("div",{style:{display:"flex",gap:10,alignItems:"center"}},[
-      pct!=null?h("span",{style:{fontSize:12,fontWeight:700,color:accent,background:"#fff",borderRadius:4,padding:"2px 9px"}},[`${pct}%`]):null,
-      h("span",{style:{fontSize:16,fontWeight:700,color:"#fff"}},[typeof value==="number"?value.toLocaleString():String(value)]),
-    ]),
-  ]);
+function sectionTitle(text,color){
+  const d=el("div","section-title","",text);
+  d.style.background=color||C.navy;
+  return d;
 }
 
-function GaugCard(label,total,가전,가전외,accent1,accent2){
-  const pct1=total?Math.round(가전/total*100):0;
-  const pct2=total?Math.round(가전외/total*100):0;
-  return h("div",{style:{background:C.white,border:`1px solid ${C.border}`,borderTop:`3px solid ${accent1}`,borderRadius:6,padding:"14px 16px",minWidth:0}},[
-    h("div",{style:{fontSize:11,fontWeight:600,color:C.slateL,letterSpacing:".06em",textTransform:"uppercase",marginBottom:8}},[label]),
-    h("div",{style:{display:"flex",gap:6,alignItems:"flex-end",marginBottom:10}},[
-      h("span",{style:{fontSize:24,fontWeight:700,color:accent1}},[가전.toLocaleString()]),
-      h("span",{style:{fontSize:13,color:C.slateL,marginBottom:3}},[`/ ${가전외.toLocaleString()}`]),
-    ]),
-    h("div",{style:{display:"flex",borderRadius:4,overflow:"hidden",height:10}},[
-      h("div",{style:{width:`${pct1}%`,background:accent1}},[]),
-      h("div",{style:{flex:1,background:accent2}},[]),
-    ]),
-    h("div",{style:{display:"flex",justifyContent:"space-between",marginTop:5,fontSize:11}},[
-      h("span",{style:{fontWeight:600,color:accent1}},[`가전 ${pct1}%`]),
-      h("span",{style:{fontWeight:600,color:accent2}},[`가전외 ${pct2}%`]),
-    ]),
-  ]);
+function badge(label,value,pct,accent){
+  const d=el("div","badge");
+  d.style.background=accent||C.blue;
+  d.innerHTML=`<span class="badge-label">${label}</span><div style="display:flex;gap:10px;align-items:center;">${pct!=null?`<span class="badge-pct" style="color:${accent||C.blue}">${pct}%</span>`:""}<span class="badge-val">${typeof value==="number"?value.toLocaleString():value}</span></div>`;
+  return d;
 }
 
-function PrepareScreen(){
-  return h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:300,gap:16}},[
-    h("div",{style:{fontSize:36}}),
-    h("div",{style:{fontSize:20,fontWeight:700,color:C.navy}},["준비중"]),
-    h("div",{style:{fontSize:14,color:C.slateL,textAlign:"center",lineHeight:1.7}},["해당 섹션은 현재 데이터 연결 작업 중입니다."]),
-    h("div",{style:{background:C.blueXL,border:`1px solid ${C.blue}`,borderRadius:8,padding:"8px 20px",fontSize:12,color:C.blue,fontWeight:600}},["Coming Soon"]),
-  ]);
+function gaugCard(label,total,가전,가전외,accent1,accent2){
+  const p1=total?Math.round(가전/total*100):0, p2=total?Math.round(가전외/total*100):0;
+  const d=el("div","gaug-card");
+  d.style.borderTop=`3px solid ${accent1}`;
+  d.innerHTML=`<div class="gaug-label">${label}</div><div class="gaug-nums"><span class="gaug-main" style="color:${accent1}">${가전.toLocaleString()}</span><span class="gaug-sub-num">/ ${가전외.toLocaleString()}</span></div><div class="gaug-bar"><div style="width:${p1}%;background:${accent1}"></div><div style="flex:1;background:${accent2}"></div></div><div class="gaug-legend"><span style="color:${accent1}">가전 ${p1}%</span><span style="color:${accent2}">가전외 ${p2}%</span></div>`;
+  return d;
 }
 
-function StackBar(data,c1,c2){
-  if(!data||!data.length)return h("div",{style:{color:C.slateL,fontSize:13}},["데이터 없음"]);
+function stackBar(data,c1,c2){
+  if(!data||!data.length)return el("div","no-data",{},"데이터 없음");
   const maxV=Math.max(...data.map(d=>d.total),1);
-  const wrap=h("div",{style:{display:"flex",flexDirection:"column",gap:10}},[]);
+  const wrap=el("div","stackbar-wrap");
   data.forEach(d=>{
-    const item=h("div",{},[
-      h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:4}},[
-        h("span",{style:{fontSize:12,color:C.slate,fontWeight:500}},[d.l]),
-        h("span",{style:{fontSize:12,fontWeight:700,color:C.navy}},[`${d.total.toLocaleString()}건`]),
-      ]),
-      h("div",{style:{display:"flex",borderRadius:3,overflow:"hidden",height:18,background:C.slateXL}},[
-        d.segments[0].v>0?h("div",{style:{width:`${Math.round(d.segments[0].v/maxV*100)}%`,background:c1,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#fff",fontWeight:600}},[d.segments[0].v>d.total*0.1?String(d.segments[0].v):""]):null,
-        d.segments[1].v>0?h("div",{style:{width:`${Math.round(d.segments[1].v/maxV*100)}%`,background:c2,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#fff",fontWeight:600}},[d.segments[1].v>d.total*0.1?String(d.segments[1].v):""]):null,
-      ]),
-      h("div",{style:{display:"flex",gap:12,marginTop:3}},[
-        ...d.segments.map((s,j)=>h("span",{style:{fontSize:11,color:C.slateL}},[
-          h("span",{style:{display:"inline-block",width:8,height:8,borderRadius:2,background:[c1,c2][j],marginRight:3}},[]),
-          `${s.l} ${s.v.toLocaleString()}`
-        ]))
-      ]),
-    ]);
+    const w0=Math.round(d.segments[0].v/maxV*100), w1=Math.round(d.segments[1].v/maxV*100);
+    const item=document.createElement("div");
+    item.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:12px;color:#334155;font-weight:500">${d.l}</span><span style="font-size:12px;font-weight:700;color:#0f1f3d">${d.total.toLocaleString()}건</span></div><div class="stackbar-bar">${d.segments[0].v>0?`<div class="stackbar-seg" style="width:${w0}%;background:${c1}">${d.segments[0].v>d.total*0.1?d.segments[0].v:""}</div>`:""} ${d.segments[1].v>0?`<div class="stackbar-seg" style="width:${w1}%;background:${c2}">${d.segments[1].v>d.total*0.1?d.segments[1].v:""}</div>`:""}</div><div class="stackbar-legend"><span style="font-size:11px;color:#64748b"><span class="stackbar-dot" style="background:${c1}"></span>가전 ${d.segments[0].v.toLocaleString()}</span><span style="font-size:11px;color:#64748b"><span class="stackbar-dot" style="background:${c2}"></span>가전외 ${d.segments[1].v.toLocaleString()}</span></div>`;
     wrap.appendChild(item);
   });
   return wrap;
 }
 
-function grid(cols,gap,items){
-  const el=h("div",{style:{display:"grid",gridTemplateColumns:cols,gap:gap||12,marginBottom:12}},[]);
-  items.forEach(i=>{if(i)el.appendChild(i);});
-  return el;
+function subLabel(text,color){
+  const d=el("div","sub-label","",text);
+  if(color)d.style.color=color;
+  return d;
+}
+
+function prepareScreen(){
+  return el("div","prepare",{},"<h2>준비중</h2><p>해당 섹션은 현재 데이터 연결 작업 중입니다.</p><div class='soon'>Coming Soon</div>");
 }
 
 function render(){
-  const root=document.getElementById("root");
-  root.innerHTML="";
-
-  if(state.loading){
-    const spinner=h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:300,flexDirection:"column",gap:12}},[
-      h("div",{style:{width:32,height:32,border:"3px solid #e2e8f0",borderTopColor:"#1e40af",borderRadius:"50%",animation:"sp .8s linear infinite"}},[]),
-      h("div",{style:{fontSize:14,color:C.slateL}},["데이터 불러오는 중..."]),
-    ]);
-    root.appendChild(spinner);
-    return;
-  }
-
-  const {tab,period,DB}=state;
-  const 가전=DB["가전마감.csv"]||[];
-  const 가전외=DB["가전외마감.csv"]||[];
-  const 반품현황r=DB["반품현황.csv"]||[];
-  const 반품교환율r=DB["반품교환율.csv"]||[];
-  const 상담태그r=DB["상담태그.csv"]||[];
-  const 인입태그r=DB["인입태그.csv"]||[];
-  const 통화성공율r=DB["통화성공율.csv"]||[];
-  const 관여해결율r=DB["관여해결율.csv"]||[];
-  const 만족도조사r=DB["만족도조사.csv"]||[];
-
-  // 상담실적
-  const 인입rows=filterByPW(인입태그r,period,"주/월","회차");
-  const 상담rows=filterByPW(상담태그r,period,"주/월","회차");
-  const 통화rows=filterByPW(통화성공율r,period,"주기","회차");
-  const 총인입수=인입rows.reduce((s,r)=>s+(Number(r["인입수"])||0),0);
-  const 관여2026=관여해결율r.filter(r=>Number(r["년"]||0)===2026);
-  const 만족2026=만족도조사r.filter(r=>{const d=parseDate(r["마감일"]);return d&&d.getFullYear()===2026;});
-  const 만족최신=[...만족2026].sort((a,b)=>parseDate(b["마감일"])-parseDate(a["마감일"]))[0];
-  const 관여최신=[...관여2026].sort((a,b)=>b["관여건"]-a["관여건"])[0];
-  const 통화데이터=통화rows.map(r=>({l:String(r["회차"]||r["마감일"]||""),v:parseFloat(String(r["통화성공률(IN)"]||r["통화 call"]||"0").replace(/[^0-9.]/g,""))||0})).filter(r=>r.v>0);
-  const 인입회차=[...new Set(인입rows.map(r=>String(r["회차"]||"")))].join(", ");
-
-  // 반품현황
-  const 반품rows=filterReturn(반품현황r,period);
-  const 꿈비반품=반품rows.filter(r=>String(r["구분"]||"")==="꿈비");
-  const 소브반품=반품rows.filter(r=>String(r["구분"]||"")==="소브");
-  const 꿈비가전=꿈비반품.filter(r=>String(r["품목"]||"")==="가전");
-  const 꿈비가전외=꿈비반품.filter(r=>String(r["품목"]||"")==="가전외");
-  const 소브가전=소브반품.filter(r=>String(r["품목"]||"")==="가전");
-  const 소브가전외=소브반품.filter(r=>String(r["품목"]||"")==="가전외");
-  const 꿈비총=꿈비반품.reduce((s,r)=>s+(Number(r["건수"])||0),0);
-  const 꿈비가전총=꿈비가전.reduce((s,r)=>s+(Number(r["건수"])||0),0);
-  const 꿈비가전외총=꿈비가전외.reduce((s,r)=>s+(Number(r["건수"])||0),0);
-  const 소브총=소브반품.reduce((s,r)=>s+(Number(r["건수"])||0),0);
-  const 소브가전총=소브가전.reduce((s,r)=>s+(Number(r["건수"])||0),0);
-  const 소브가전외총=소브가전외.reduce((s,r)=>s+(Number(r["건수"])||0),0);
-  const 반품회차=[...new Set(반품rows.map(r=>String(r["마감회차"]||"")))].join(", ");
-  const 율2026=반품교환율r.filter(r=>String(r["마감월"]||"").startsWith("26."));
-  const 율월목록=[...new Set(율2026.map(r=>String(r["마감월"]||"")))].sort((a,b)=>b.localeCompare(a));
-  const 최근율월=period==="2026년"?null:율월목록[0];
-  const 율필터=최근율월?율2026.filter(r=>String(r["마감월"]||"")===최근율월):율2026;
-  const 꿈비율row=율필터.find(r=>String(r["구분"]||"")==="꿈비");
-  const 소브율row=율필터.find(r=>String(r["구분"]||"")==="소브");
-  const 꿈비교환율=fmtRate(꿈비율row?(getRateVal(꿈비율row)??꿈비율row["반품/교환율"]):null);
-  const 소브교환율=fmtRate(소브율row?(getRateVal(소브율row)??소브율row["반품/교환율"]):null);
-
-  const 꿈비월별=(()=>{
-    const monthly=반품현황r.filter(r=>String(r["구분"]||"")==="꿈비"&&String(r["주/월"]||"")==="월간"&&String(r["마감회차"]||"").startsWith("26."));
-    const m={};
-    monthly.forEach(r=>{const k=String(r["마감회차"]||"");const 품목=String(r["품목"]||"기타");if(!m[k])m[k]={가전:0,가전외:0};m[k][품목]=(m[k][품목]||0)+(Number(r["건수"])||0);});
-    return Object.entries(m).sort((a,b)=>a[0].localeCompare(b[0])).map(([l,v])=>({l,total:v.가전+(v.가전외||0),segments:[{l:"가전",v:v.가전},{l:"가전외",v:v.가전외||0}]}));
-  })();
-
-  const 소브월별=(()=>{
-    const monthly=반품현황r.filter(r=>String(r["구분"]||"")==="소브"&&String(r["주/월"]||"")==="월간"&&String(r["마감회차"]||"").startsWith("26."));
-    const m={};
-    monthly.forEach(r=>{const k=String(r["마감회차"]||"");const 품목=String(r["품목"]||"기타");if(!m[k])m[k]={가전:0,가전외:0};m[k][품목]=(m[k][품목]||0)+(Number(r["건수"])||0);});
-    return Object.entries(m).sort((a,b)=>a[0].localeCompare(b[0])).map(([l,v])=>({l,total:v.가전+(v.가전외||0),segments:[{l:"가전",v:v.가전},{l:"가전외",v:v.가전외||0}]}));
-  })();
-
-  // 처리현황
-  const 수리rows=filterGajeon(가전,period,"수리출고");
-  const 무상=수리rows.filter(r=>String(r["유/무상"]||"").includes("무상")).length;
-  const 유상=수리rows.filter(r=>String(r["유/무상"]||"").includes("유상")).length;
-  const 유상금액=수리rows.filter(r=>String(r["유/무상"]||"").includes("유상")).reduce((s,r)=>s+(parseFloat(String(r["유상AS비용"]||"0").replace(/,/g,""))||0),0);
-  const 자재rows=filterGajeon(가전,period,"자재출고");
-  const 자재모델={},자재부품={};
-  자재rows.forEach(r=>{const k=String(r["제품명"]||"기타");자재모델[k]=(자재모델[k]||0)+1;String(r["사용부품"]||"").split(",").forEach(p=>{const pk=p.trim();if(pk&&pk!=="대체품")자재부품[pk]=(자재부품[pk]||0)+1;});});
-  const 수리all=가전.filter(r=>is2026(r["처리일"])&&String(r["구분"]||"").trim()==="수리출고"&&!EXCLUDE_STATUS.includes(String(r["진행상황"]||"").trim())&&r["처리일"]);
-  const 수리월별=groupByMonthCount(수리all,"처리일");
-  const 가전외rows=filterExt(가전외,period);
-  const 가전외유상=가전외rows.filter(r=>String(r["유/무상"]||"").includes("유상"));
-  const 가전외금액=가전외유상.reduce((s,r)=>s+(parseFloat(String(r["비용"]||"0").replace(/,/g,""))||0),0);
-  const 가전외모델={};
-  가전외rows.forEach(r=>{const k=String(r["상품명"]||"기타");가전외모델[k]=(가전외모델[k]||0)+1;});
-  const 소요평균=가전외rows.length?(가전외rows.reduce((s,r)=>s+(Number(r["소요기간"])||0),0)/가전외rows.length).toFixed(1):"-";
-
-  // 품질관리
-  const 품질rows=filterGajeon(가전,period,"품질");
-  const 불량집계={};
-  품질rows.forEach(r=>{const k=String(r["제품명"]||"기타").trim();불량집계[k]=(불량집계[k]||0)+1;});
-  const top5=Object.entries(불량집계).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  const 총불량=Object.values(불량집계).reduce((a,b)=>a+b,0);
-  const 불량접수집계={};
-  품질rows.forEach(r=>{String(r["접수불량"]||"").split(",").forEach(t=>{const k=t.trim();if(k)불량접수집계[k]=(불량접수집계[k]||0)+1;});});
-  const 불량접수top=Object.entries(불량접수집계).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([l,v])=>({l,v}));
-  const 품질월별=groupByMonthCount(filterGajeon(가전,"2026년","품질"),"접수일");
-  const 구분별집계=["수리출고","자재출고","교환/환불"].map(구분=>({l:구분,v:filterByDate(가전.filter(r=>is2026(r["접수일"])&&String(r["구분"]||"").trim()===구분&&!EXCLUDE_STATUS.includes(String(r["진행상황"]||"").trim())),period,"접수일").length}));
-
   const now=new Date();
-  const dateStr=`${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,"0")}.${String(now.getDate()).padStart(2,"0")} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+  document.getElementById("date-str").textContent=`2026년 기준 · ${DATA.updated} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
 
-  // 헤더1
-  const hdr1=h("div",{style:{background:C.navy,height:44,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 20px"}},[
-    h("div",{style:{fontSize:14,fontWeight:700,color:C.white,letterSpacing:"-0.02em"}},["CS · 품질관리 대시보드"]),
-    h("div",{style:{display:"flex",alignItems:"center",gap:10}},[
-      h("div",{style:{fontSize:11,color:"rgba(255,255,255,.35)"}},[`2026년 기준 · ${dateStr}`]),
-      h("div",{style:{display:"flex",gap:2}},[
-        ...PERIODS.map(p=>h("button",{style:{padding:"4px 12px",border:`1px solid ${period===p?"rgba(255,255,255,.5)":"rgba(255,255,255,.15)"}`,borderRadius:4,cursor:"pointer",fontSize:11,fontWeight:600,background:period===p?"rgba(255,255,255,.15)":"transparent",color:period===p?C.white:"rgba(255,255,255,.4)"},onclick:()=>{state.period=p;render();}},[p]))
-      ]),
-    ]),
-  ]);
+  const pb=document.getElementById("period-btns");
+  pb.innerHTML="";
+  PERIODS.forEach(p=>{
+    const b=el("button","","",p);
+    if(state.period===p)b.classList.add("active");
+    b.onclick=()=>{state.period=p;render();};
+    pb.appendChild(b);
+  });
 
-  // 헤더2 탭
-  const hdr2=h("div",{style:{background:C.navyL,height:38,display:"flex",alignItems:"center",padding:"0 20px",gap:2}},[
-    ...TABS.map(t=>h("button",{style:{padding:"5px 16px",border:"none",borderRadius:4,cursor:"pointer",fontSize:12,fontWeight:600,background:tab===t?"rgba(255,255,255,.18)":"transparent",color:tab===t?C.white:"rgba(255,255,255,.45)"},onclick:()=>{state.tab=t;render();}},[t+(t==="Issue"?" ❗":"")]))
-  ]);
+  const hdr2=document.getElementById("hdr2");
+  hdr2.innerHTML="";
+  TABS.forEach(t=>{
+    const b=el("button","","",t+(t==="Issue"?" ❗":""));
+    if(state.tab===t)b.classList.add("active");
+    b.onclick=()=>{state.tab=t;render();};
+    hdr2.appendChild(b);
+  });
 
-  // 콘텐츠
-  const content=h("div",{style:{padding:"16px 20px"}},[]);
+  const cnt=document.getElementById("content");
+  cnt.innerHTML="";
 
-  if(tab==="주요KPI"||tab==="Issue"){
-    content.appendChild(PrepareScreen());
-  }
+  const {tab,period}=state;
+  const S=DATA["상담실적"][period]||{};
+  const R=DATA["반품현황"][period]||{};
+  const P=DATA["처리현황"][period]||{};
+  const Q=DATA["품질관리"][period]||{};
 
+  if(tab==="주요KPI"||tab==="Issue"){cnt.appendChild(prepareScreen());return;}
+
+  // ── 상담실적 ──
   if(tab==="상담실적"){
-    content.appendChild(grid("repeat(4,1fr)",10,[
-      Kpi("총 인입수",총인입수.toLocaleString(),인입회차,C.blue),
-      Kpi("ALF 관여건",관여최신?.["관여건"]??"-","2026년 최근",C.teal),
-      Kpi("만족도",만족최신?`${Number(만족최신["만족도"]||0).toFixed(1)}점`:"-",만족최신?`참여율 ${만족최신["참여율"]||"-"}`:"데이터 없음",C.amber),
-      Kpi("통화성공율",통화데이터.length?`${통화데이터[통화데이터.length-1]?.v}%`:"-","최근 마감 기준",C.purple),
-    ]));
-    content.appendChild(grid("1fr 1fr",12,[
-      Card("서비스별 인입 비율",`${period} · 총 ${총인입수.toLocaleString()}건`,HBar(gTag(인입rows,"서비스태그","인입수"),C.blue)),
-      Card("상담 태그별 인입 비율",null,HBar(gTag(상담rows,"상담태그","인입수"),C.teal)),
-    ]));
-    content.appendChild(grid("1fr 1fr",12,[
-      Card("통화성공율","통화성공률(IN) 기준",통화데이터.length>0?HBar(통화데이터,C.purple,100,"%"):h("div",{style:{color:C.slateL,fontSize:13}},["데이터 없음"])),
-      Card("만족도 월별 추이",null,HBar(만족2026.map(r=>({l:String(r["월별"]||""),v:Number(r["만족도"])||0})),C.amber,5,"점")),
-    ]));
+    app(cnt,
+      grid("repeat(4,1fr)",10,[
+        kpiCard("총 인입수",(S.총인입수||0).toLocaleString(),S.인입회차?S.인입회차.join(", "):"",C.blue),
+        kpiCard("ALF 관여건",S.ALF관여건?S.ALF관여건.toLocaleString():"-",S.관여월||"",C.teal),
+        kpiCard("만족도",S.만족도?`${S.만족도}점`:"-",S.만족도참여율?`참여율 ${S.만족도참여율}`:"",C.amber),
+        kpiCard("통화성공율",S.통화성공율&&S.통화성공율.length?`${S.통화성공율[S.통화성공율.length-1].v}%`:"-","최근 마감 기준",C.purple),
+      ]),
+      grid("1fr 1fr",12,[
+        card("서비스별 인입 비율",`${period} · 총 ${(S.총인입수||0).toLocaleString()}건`,hbar(S.인입태그,C.blue)),
+        card("상담 태그별 인입 비율",null,hbar(S.상담태그,C.teal)),
+      ]),
+      grid("1fr 1fr",12,[
+        card("통화성공율","통화성공률(IN) 기준",hbar(S.통화성공율,C.purple,100,"%")),
+        card("만족도 월별 추이",null,hbar(S.만족도추이,C.amber,5,"점")),
+      ])
+    );
   }
 
+  // ── 반품현황 ──
   if(tab==="반품현황"){
-    content.appendChild(SectionTitle("1. 꿈비",C.blue));
-    content.appendChild(grid("repeat(3,1fr)",10,[
-      Kpi("반품/교환 총계",꿈비총.toLocaleString(),`${period} 기준`,C.blue),
-      GaugCard("가전 / 가전외",꿈비총,꿈비가전총,꿈비가전외총,C.navy,C.blue),
-      Kpi("반품/교환율",꿈비교환율,최근율월||"",C.red),
+    const 꿈비총=R.꿈비총건||0, 꿈비가전총=R.꿈비가전총||0, 꿈비가전외총=R.꿈비가전외총||0;
+    const 소브총=R.소브총건||0, 소브가전총=R.소브가전총||0, 소브가전외총=R.소브가전외총||0;
+    const 기준월=R.기준월||"";
+    const 꿈비교환율=R.꿈비교환율!=null?`${R.꿈비교환율}%`:"-";
+    const 소브교환율=R.소브교환율!=null?`${R.소브교환율}%`:"-";
+
+    app(cnt, sectionTitle("1. 꿈비",C.blue));
+    app(cnt, grid("repeat(3,1fr)",10,[
+      kpiCard("반품/교환 총계",꿈비총.toLocaleString(),`${period} 기준`,C.blue),
+      gaugCard("가전 / 가전외",꿈비총,꿈비가전총,꿈비가전외총,C.navy,C.blue),
+      kpiCard("반품/교환율",꿈비교환율,기준월,C.red),
     ]));
+
     if(period==="2026년"){
-      content.appendChild(Card("꿈비 — 월별 반품/교환 현황","마감회차 기준",StackBar(꿈비월별,C.navy,C.blue)));
+      app(cnt, card("꿈비 — 월별 반품/교환 현황","마감회차 기준",stackBar(R.꿈비월별,C.navy,C.blue)));
     } else {
-      const 꿈비유형wrap=h("div",{},[]);
-      ["가전","가전외"].forEach(품목=>{
-        const v=꿈비반품.filter(r=>String(r["품목"]||"")===품목).reduce((s,r)=>s+(Number(r["건수"])||0),0);
-        꿈비유형wrap.appendChild(Badge(품목,v,꿈비총?Math.round(v/꿈비총*100):0,C.blue));
+      const 꿈비유형wrap=document.createElement("div");
+      // 품목 배지
+      const 꿈비가전유형총=꿈비가전총; const 꿈비가전외유형총=꿈비가전외총;
+      [["가전",꿈비가전유형총],["가전외",꿈비가전외유형총]].forEach(([품목,v])=>{
+        꿈비유형wrap.appendChild(badge(품목,v,꿈비총?Math.round(v/꿈비총*100):0,C.blue));
       });
-      꿈비유형wrap.appendChild(HBar(gSum(꿈비반품,"교환/반품","건수"),C.blue));
-      content.appendChild(grid("1fr 1fr",12,[
-        Card("꿈비 — 교환/반품 유형별",null,꿈비유형wrap),
-        Card("꿈비 — 반품 사유",null,HBar(gSum(꿈비반품,"사유","건수"),C.blue)),
+      꿈비유형wrap.appendChild(hbar(R.꿈비유형,C.blue));
+      app(cnt, grid("1fr 1fr",12,[
+        card("꿈비 — 교환/반품 유형별",null,꿈비유형wrap),
+        card("꿈비 — 반품 사유",null,hbar(R.꿈비사유,C.blue)),
       ]));
     }
-    content.appendChild(SectionTitle("2. 소브",C.teal));
-    content.appendChild(grid("repeat(3,1fr)",10,[
-      Kpi("반품/교환 총계",소브총.toLocaleString(),`${period} 기준`,C.teal),
-      GaugCard("가전 / 가전외",소브총,소브가전총,소브가전외총,C.teal,"#0d9488"),
-      Kpi("반품/교환율",소브교환율,최근율월||"",C.red),
+
+    app(cnt, sectionTitle("2. 소브",C.teal));
+    app(cnt, grid("repeat(3,1fr)",10,[
+      kpiCard("반품/교환 총계",소브총.toLocaleString(),`${period} 기준`,C.teal),
+      gaugCard("가전 / 가전외",소브총,소브가전총,소브가전외총,C.teal,"#0d9488"),
+      kpiCard("반품/교환율",소브교환율,기준월,C.red),
     ]));
+
     if(period==="2026년"){
-      content.appendChild(Card("소브 — 월별 반품/교환 현황","마감회차 기준",StackBar(소브월별,C.teal,"#0d9488")));
+      app(cnt, card("소브 — 월별 반품/교환 현황","마감회차 기준",stackBar(R.소브월별,C.teal,"#0d9488")));
     } else {
-      const 소브유형wrap=h("div",{},[]);
-      ["가전","가전외"].forEach(품목=>{
-        const v=소브반품.filter(r=>String(r["품목"]||"")===품목).reduce((s,r)=>s+(Number(r["건수"])||0),0);
-        소브유형wrap.appendChild(Badge(품목,v,소브총?Math.round(v/소브총*100):0,C.teal));
+      const 소브유형wrap=document.createElement("div");
+      [["가전",소브가전총],["가전외",소브가전외총]].forEach(([품목,v])=>{
+        소브유형wrap.appendChild(badge(품목,v,소브총?Math.round(v/소브총*100):0,C.teal));
       });
-      소브유형wrap.appendChild(HBar(gSum(소브반품,"교환/반품","건수"),C.teal));
-      content.appendChild(grid("1fr 1fr",12,[
-        Card("소브 — 교환/반품 유형별",null,소브유형wrap),
-        Card("소브 — 반품 사유",null,HBar(gSum(소브반품,"사유","건수"),C.teal)),
+      소브유형wrap.appendChild(hbar(R.소브유형,C.teal));
+      app(cnt, grid("1fr 1fr",12,[
+        card("소브 — 교환/반품 유형별",null,소브유형wrap),
+        card("소브 — 반품 사유",null,hbar(R.소브사유,C.teal)),
       ]));
     }
   }
 
+  // ── 처리현황 ──
   if(tab==="처리현황"){
-    content.appendChild(SectionTitle("1. 전자제품",C.blue));
-    content.appendChild(h("div",{style:{background:"rgba(30,64,175,0.07)",borderRadius:6,padding:"8px 14px",marginBottom:12,fontSize:11,color:C.blue,fontWeight:700}},["1-1. 수리출고 (처리일 기준)"]));
-    content.appendChild(grid("repeat(4,1fr)",10,[
-      Kpi("수리 총건",수리rows.length.toLocaleString(),null,C.blue),
-      Kpi("무상수리",무상.toLocaleString(),`${수리rows.length?Math.round(무상/수리rows.length*100):0}%`,C.teal),
-      Kpi("유상수리",유상.toLocaleString(),`${수리rows.length?Math.round(유상/수리rows.length*100):0}%`,C.amber),
-      Kpi("유상 처리금액",`${Math.round(유상금액/10000).toLocaleString()}만원`,null,C.red),
-    ]));
-    content.appendChild(grid("1fr 1fr",12,[
-      Card("월별 수리현황 추이","처리일 기준 · 2026년",HBar(수리월별,C.blue)),
-      Card("불량부품 현황","자재출고 기준 (대체품 제외)",HBar(Object.entries(자재부품).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([l,v])=>({l,v})),C.red)),
-    ]));
-    content.appendChild(h("div",{style:{background:"rgba(30,64,175,0.07)",borderRadius:6,padding:"8px 14px",marginBottom:12,fontSize:11,color:C.blue,fontWeight:700}},["1-2. 자재출고 (처리일 기준 · 대체품 제외)"]));
-    content.appendChild(grid("repeat(3,1fr)",10,[
-      Kpi("자재출고 총건",자재rows.length.toLocaleString(),null,C.blue),
-      Kpi("모델 종류",Object.keys(자재모델).length,null,C.teal),
-      Kpi("부품 종류",Object.keys(자재부품).length,null,C.amber),
-    ]));
-    content.appendChild(grid("1fr 1fr",12,[
-      Card("자재출고 — 모델별",null,HBar(Object.entries(자재모델).sort((a,b)=>b[1]-a[1]).map(([l,v])=>({l,v})),C.blue)),
-      Card("자재출고 — 자재별",null,HBar(Object.entries(자재부품).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([l,v])=>({l,v})),C.teal)),
-    ]));
-    content.appendChild(SectionTitle("2. 전자제품 外",C.teal));
-    content.appendChild(grid("repeat(4,1fr)",10,[
-      Kpi("접수 건수",가전외rows.length.toLocaleString(),null,C.teal),
-      Kpi("유상 건수",가전외유상.length.toLocaleString(),`${가전외rows.length?Math.round(가전외유상.length/가전외rows.length*100):0}%`,C.amber),
-      Kpi("유상 처리금액",`${Math.round(가전외금액/10000).toLocaleString()}만원`,null,C.red),
-      Kpi("평균 소요기간",`${소요평균}일`,null,C.teal),
-    ]));
-    content.appendChild(Card("가전외 처리 모델 비율",null,HBar(Object.entries(가전외모델).sort((a,b)=>b[1]-a[1]).map(([l,v])=>({l,v})),C.teal)));
+    const 수리총=P.수리총건||0, 무상=P.무상||0, 유상=P.유상||0;
+    const 가전외=P.가전외||{};
+    app(cnt,
+      sectionTitle("1. 전자제품",C.blue),
+      subLabel("1-1. 수리출고 (처리일 기준)"),
+      grid("repeat(4,1fr)",10,[
+        kpiCard("수리 총건",수리총.toLocaleString(),null,C.blue),
+        kpiCard("무상수리",무상.toLocaleString(),`${P.무상율||0}%`,C.teal),
+        kpiCard("유상수리",유상.toLocaleString(),`${P.유상율||0}%`,C.amber),
+        kpiCard("유상 처리금액",`${(P.유상금액만원||0).toLocaleString()}만원`,null,C.red),
+      ]),
+      grid("1fr 1fr",12,[
+        card("월별 수리현황 추이","처리일 기준 · 2026년",hbar(P.수리월별,C.blue)),
+        card("불량부품 현황","자재출고 기준 (대체품 제외)",hbar(P.자재부품,C.red)),
+      ]),
+      subLabel("1-2. 자재출고 (처리일 기준 · 대체품 제외)"),
+      grid("repeat(3,1fr)",10,[
+        kpiCard("자재출고 총건",(P.자재총건||0).toLocaleString(),null,C.blue),
+        kpiCard("모델 종류",(P.자재모델||[]).length,null,C.teal),
+        kpiCard("부품 종류",(P.자재부품||[]).length,null,C.amber),
+      ]),
+      grid("1fr 1fr",12,[
+        card("자재출고 — 모델별",null,hbar(P.자재모델,C.blue)),
+        card("자재출고 — 자재별",null,hbar(P.자재부품,C.teal)),
+      ]),
+      sectionTitle("2. 전자제품 外",C.teal),
+      grid("repeat(4,1fr)",10,[
+        kpiCard("접수 건수",(가전외.접수||0).toLocaleString(),null,C.teal),
+        kpiCard("유상 건수",(가전외.유상||0).toLocaleString(),`${가전외.유상율||0}%`,C.amber),
+        kpiCard("유상 처리금액",`${(가전외.금액만원||0).toLocaleString()}만원`,null,C.red),
+        kpiCard("평균 소요기간",가전외.소요평균?`${가전외.소요평균}일`:"-",null,C.teal),
+      ]),
+      card("가전외 처리 모델 비율",null,hbar(가전외.모델,C.teal))
+    );
   }
 
+  // ── 품질관리 ──
   if(tab==="품질관리"){
-    content.appendChild(SectionTitle("1. 불량인입 TOP.5 (접수일 기준)",C.red));
-    content.appendChild(grid("repeat(4,1fr)",10,[
-      Kpi("불량인입 총건",총불량.toLocaleString(),null,C.red),
-      ...top5.slice(0,3).map(([l,v],i)=>Kpi(`TOP${i+1}`,l.replace("[꿈비] ","").slice(0,14),`${v.toLocaleString()}건 · ${총불량?Math.round(v/총불량*100):0}%`,[C.red,C.amber,C.blue][i])),
-    ]));
-    const top5card=h("div",{},[]);
-    top5.forEach(([l,v],i)=>{
-      const colors=[C.redXL,C.amberXL,C.blueXL,C.tealXL,C.slateXL];
-      const fgColors=[C.red,C.amber,C.blue,C.teal,C.slate];
-      top5card.appendChild(h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",background:colors[i],borderRadius:4,marginBottom:6}},[
-        h("span",{style:{fontSize:13,fontWeight:600,color:C.navy}},[`${i+1}. ${l.replace("[꿈비] ","")}`]),
-        h("div",{style:{display:"flex",gap:8,alignItems:"center"}},[
-          h("span",{style:{fontSize:11,fontWeight:600,color:fgColors[i],border:`1px solid ${fgColors[i]}`,borderRadius:3,padding:"1px 7px",background:"#fff"}},[`${총불량?Math.round(v/총불량*100):0}%`]),
-          h("span",{style:{fontSize:14,fontWeight:700,color:C.navy}},[String(v.toLocaleString())]),
-        ]),
-      ]));
+    const top5=Q.top5||[], 총불량=Q.총불량||0;
+    const bgColors=[C.redXL,C.amberXL,C.blueXL,C.tealXL,"#f1f5f9"];
+    const fgColors=[C.red,C.amber,C.blue,C.teal,C.slate];
+    const 구분fgColors=[C.blue,C.teal,C.amber];
+    const 구분bgColors=[C.blueXL,C.tealXL,C.amberXL];
+
+    const top5card=document.createElement("div");
+    top5.forEach((d,i)=>{
+      top5card.innerHTML+=`<div class="rank-item" style="background:${bgColors[i]}"><span style="font-size:13px;font-weight:600;color:#0f1f3d">${i+1}. ${d.l.replace("[꿈비] ","")}</span><div class="rank-right"><span class="rank-pct" style="color:${fgColors[i]};border:1px solid ${fgColors[i]}">${총불량?Math.round(d.v/총불량*100):0}%</span><span class="rank-val">${d.v.toLocaleString()}</span></div></div>`;
     });
-    const 구분card=h("div",{},[]);
-    구분별집계.forEach((d,i)=>{
-      const colors=[C.blueXL,C.tealXL,C.amberXL];
-      const fgColors=[C.blue,C.teal,C.amber];
-      구분card.appendChild(h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 12px",background:colors[i],borderRadius:4,marginBottom:6}},[
-        h("span",{style:{fontSize:13,fontWeight:600,color:C.navy}},[d.l]),
-        h("div",{style:{display:"flex",gap:8,alignItems:"center"}},[
-          h("span",{style:{fontSize:11,fontWeight:600,color:fgColors[i],border:`1px solid ${fgColors[i]}`,borderRadius:3,padding:"1px 7px",background:"#fff"}},[`${총불량?Math.round(d.v/총불량*100):0}%`]),
-          h("span",{style:{fontSize:14,fontWeight:700,color:C.navy}},[String(d.v.toLocaleString())]),
-        ]),
-      ]));
+
+    const 구분card=document.createElement("div");
+    (Q.구분별||[]).forEach((d,i)=>{
+      구분card.innerHTML+=`<div class="rank-item" style="background:${구분bgColors[i]}"><span style="font-size:13px;font-weight:600;color:#0f1f3d">${d.l}</span><div class="rank-right"><span class="rank-pct" style="color:${구분fgColors[i]};border:1px solid ${구분fgColors[i]}">${총불량?Math.round(d.v/총불량*100):0}%</span><span class="rank-val">${d.v.toLocaleString()}</span></div></div>`;
     });
-    content.appendChild(grid("3fr 2fr",12,[
-      Card("불량 TOP5 — 제품별 비율",`${period} · 총 ${총불량.toLocaleString()}건`,top5card),
-      Card("불량접수 현황 (구분별)",null,구분card),
-    ]));
-    content.appendChild(grid("1fr 1fr",12,[
-      Card("접수불량 유형 TOP10",null,HBar(불량접수top,C.red)),
-      Card("월별 불량 추이","2026년 전체 · 접수일 기준",HBar(품질월별,C.amber)),
-    ]));
+
+    app(cnt,
+      sectionTitle("1. 불량인입 TOP.5 (접수일 기준)",C.red),
+      grid("repeat(4,1fr)",10,[
+        kpiCard("불량인입 총건",총불량.toLocaleString(),null,C.red),
+        ...top5.slice(0,3).map((d,i)=>kpiCard(`TOP${i+1}`,d.l.replace("[꿈비] ","").slice(0,14),`${d.v.toLocaleString()}건 · ${총불량?Math.round(d.v/총불량*100):0}%`,[C.red,C.amber,C.blue][i]))
+      ]),
+      grid("3fr 2fr",12,[
+        card("불량 TOP5 — 제품별 비율",`${period} · 총 ${총불량.toLocaleString()}건`,top5card),
+        card("불량접수 현황 (구분별)",null,구분card),
+      ]),
+      grid("1fr 1fr",12,[
+        card("접수불량 유형 TOP10",null,hbar(Q.접수불량top10,C.red)),
+        card("월별 불량 추이","2026년 전체 · 접수일 기준",hbar(Q.월별추이,C.amber)),
+      ])
+    );
   }
-
-  root.appendChild(hdr1);
-  root.appendChild(hdr2);
-  root.appendChild(content);
-}
-
-async function loadData(){
-  const files=["가전마감.csv","가전외마감.csv","관여해결율.csv","만족도조사.csv","반품교환율.csv","반품현황.csv","상담태그.csv","인입태그.csv","통화성공율.csv"];
-  const DB={};
-  await Promise.all(files.map(async f=>{
-    try{
-      const buf=await window.fs.readFile(f,{encoding:"utf8"});
-      DB[f]=Papa.parse(buf,{header:true,skipEmptyLines:true,dynamicTyping:true}).data;
-    }catch{DB[f]=[];}
-  }));
-  state.DB=DB;
-  state.loading=false;
-  render();
 }
 
 render();
-loadData();
 </script>
-<style>@keyframes sp{to{transform:rotate(360deg)}}</style>
+</body>
+</html>

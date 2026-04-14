@@ -563,7 +563,145 @@ function returnRateLineChart(월별data, 주간data, period, a1, title){
   return card(title,"월별 반품/교환건 추이",wrap);
 }
 
-// ── 반품현황 브랜드 렌더 ─────────────────────────────────
+// ── 반품현황: 꿈비+소브 2열 동시 렌더 ─────────────────────
+function renderBothBrands(cnt, R, period){
+  function buildBrand(prefix, a1, a2){
+    const 총건=safeNum(R[prefix+"총건"]);
+    const 가전총=safeNum(R[prefix+"가전총"]);
+    const 가전외총=safeNum(R[prefix+"가전외총"]);
+    const 유형=safeArr(R[prefix+"유형"]);
+    const 교환=safeNum(유형.find(d=>d.l==="교환")?.v);
+    const 반품=safeNum(유형.find(d=>d.l==="반품")?.v);
+    const 교환율=R[prefix+"교환율"]!=null?`${R[prefix+"교환율"]}%`:"-";
+    const 기준월=R["기준월"]||"";
+    const 사유=safeArr(R[prefix+"사유"]).filter(d=>safeNum(d.v)>0);
+    const 월별=safeArr(R[prefix+"월별"]);
+    const 주간추이=safeArr(R[prefix+"주간추이"]);
+
+    const PIE_꿈비=["#1e40af","#3b82f6","#60a5fa","#93c5fd","#1e3a8a","#1d4ed8","#6d28d9","#7c3aed","#2563eb","#bfdbfe"];
+    const PIE_소브=["#0f766e","#14b8a6","#2dd4bf","#0d9488","#115e59","#0891b2","#0ea5e9","#99f6e4","#134e4a","#ccfbf1"];
+    const PIE=prefix==="꿈비"?PIE_꿈비:PIE_소브;
+
+    // ── 세련된 꺾은선 차트 ────────────────────────────────
+    function buildLineChart(data, color){
+      const arr=safeArr(data).filter(d=>safeNum(d.total)>0||safeNum(d.v)>0);
+      const wrap=el("div","card"); wrap.style.cssText="padding:14px 16px;margin-bottom:0;flex:1;";
+      const hdrDiv=el("div"); hdrDiv.style.cssText="margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #e2e8f0;";
+      hdrDiv.innerHTML=`<div class="card-title">${prefix} — 월별 추이</div><div class="card-sub">월별 반품/교환건 추이</div>`;
+      wrap.appendChild(hdrDiv);
+      if(!arr.length){wrap.appendChild(el("div","no-data",null,"데이터 없음"));return wrap;}
+      const vals=arr.map(d=>safeNum(d.total||d.v));
+      const maxV=Math.max(...vals,1);
+      const w=360,h=160,pL=42,pR=16,pT=28,pB=32;
+      const cW=w-pL-pR,cH=h-pT-pB;
+      const n=arr.length;
+      function px(i){return pL+(n>1?i*(cW/(n-1)):cW/2);}
+      function py(v){return pT+cH-Math.round((v/maxV)*cH);}
+      // Y 눈금
+      let yLines="",yLabels="";
+      const ticks=4;
+      for(let i=0;i<=ticks;i++){
+        const v=Math.round(maxV/ticks*i);
+        const y=py(v);
+        yLines+=`<line x1="${pL}" y1="${y}" x2="${w-pR}" y2="${y}" stroke="#f0f4f8" stroke-width="1"/>`;
+        const lbl=v>=1000?(v/1000).toFixed(1)+"k":v;
+        yLabels+=`<text x="${pL-6}" y="${y+4}" text-anchor="end" fill="#94a3b8" font-size="9" font-family="Apple SD Gothic Neo,sans-serif">${lbl}</text>`;
+      }
+      // 면적 그라데이션
+      const pts=arr.map((d,i)=>`${px(i)},${py(vals[i])}`).join(" ");
+      const areaBot=pT+cH;
+      const areaPts=`${px(0)},${areaBot} ${pts} ${px(n-1)},${areaBot}`;
+      // 데이터 포인트 + 라벨
+      const circles=arr.map((d,i)=>{
+        const v=vals[i]; const x=px(i),y=py(v);
+        return `<circle cx="${x}" cy="${y}" r="4" fill="${color}" stroke="#fff" stroke-width="2"/>`
+          +`<text x="${x}" y="${y-10}" text-anchor="middle" fill="${color}" font-size="10" font-weight="700" font-family="Apple SD Gothic Neo,sans-serif">${v.toLocaleString()}</text>`;
+      }).join("");
+      // X 라벨
+      const xLabels=arr.map((d,i)=>{
+        const lbl=(d.l||"").replace("26.","").replace("월","월");
+        return `<text x="${px(i)}" y="${h-6}" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="Apple SD Gothic Neo,sans-serif">${lbl}</text>`;
+      }).join("");
+      // 그라데이션 ID
+      const gid="lg_"+prefix;
+      const svgContent=`
+        <defs>
+          <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${color}" stop-opacity="0.18"/>
+            <stop offset="100%" stop-color="${color}" stop-opacity="0.01"/>
+          </linearGradient>
+        </defs>
+        ${yLines}${yLabels}
+        <polygon points="${areaPts}" fill="url(#${gid})"/>
+        <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+        ${circles}${xLabels}`;
+      const svgEl=el("div");
+      svgEl.innerHTML=`<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;overflow:visible;">${svgContent}</svg>`;
+      wrap.appendChild(svgEl);
+      return wrap;
+    }
+
+    // 추이 데이터: 모든 period에서 월별 데이터 사용
+    const trendData=월별.map(d=>({l:d.l,total:d.total||0,v:d.total||0}));
+    const trendCard=buildLineChart(trendData,a1);
+
+    // ── 파이차트 ─────────────────────────────────────────
+    const pieCard=pieSection(사유.slice(0,9),PIE,`${prefix} — 반품 사유 비율`,null);
+    pieCard.style.marginBottom="0";
+
+    // ── 우측(6): 꺾은선 위 + 파이 아래 ──────────────────
+    const rightCol=el("div");
+    rightCol.style.cssText="display:flex;flex-direction:column;gap:10px;flex:6;min-width:0;";
+    rightCol.appendChild(trendCard);
+    rightCol.appendChild(pieCard);
+
+    // ── 좌측(4): KPI 세로 ────────────────────────────────
+    const leftCol=el("div");
+    leftCol.style.cssText="display:flex;flex-direction:column;gap:8px;flex:4;min-width:0;";
+
+    const kpi총계=el("div","kpi-card");
+    kpi총계.style.cssText+="margin-bottom:0;";
+    kpi총계.style.borderTopColor=a1;
+    kpi총계.innerHTML=`<div class="kpi-label">반품/교환 총계</div><div class="kpi-value">${총건.toLocaleString()}</div><div class="kpi-sub">${period} 기준</div>`;
+
+    const gCard=gaugCard("가전 / 가전외",총건,가전총,가전외총,a1,a2);
+    gCard.style.marginBottom="0";
+
+    const kpi율=el("div","kpi-card");
+    kpi율.style.borderTopColor=C.red;
+    kpi율.style.cssText+="margin-bottom:0;";
+    kpi율.innerHTML=`<div class="kpi-label">반품/교환율</div><div class="kpi-value" style="color:${C.red};font-size:24px;">${교환율}</div><div class="kpi-sub">${기준월}</div>`;
+
+    const dCard=donutCard("교환 / 반품",총건,교환,반품,a1);
+    dCard.style.marginBottom="0";
+
+    app(leftCol,kpi총계,gCard,kpi율,dCard);
+
+    // ── 브랜드 전체 박스 ─────────────────────────────────
+    const box=el("div");
+    box.style.cssText="display:flex;flex-direction:column;min-width:0;";
+
+    const title=el("div","section-title");
+    title.style.cssText+=`background:${a1};margin-bottom:8px;margin-top:0;`;
+    title.textContent=prefix==="꿈비"?"1. 꿈비":"2. 소브";
+    box.appendChild(title);
+
+    const inner=el("div");
+    inner.style.cssText="display:flex;gap:10px;align-items:stretch;";
+    app(inner,leftCol,rightCol);
+    box.appendChild(inner);
+    return box;
+  }
+
+  // 꿈비/소브 2열 grid
+  const wrapper=el("div");
+  wrapper.style.cssText="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:10px;";
+  wrapper.appendChild(buildBrand("꿈비",C.blue,"#3b82f6"));
+  wrapper.appendChild(buildBrand("소브",C.teal,C.teal2));
+  cnt.appendChild(wrapper);
+}
+
+// ── 반품현황 브랜드 렌더 (하위호환용) ───────────────────────
 function renderBrand(cnt, R, period, prefix, a1, a2){
   const 총건=safeNum(R[prefix+"총건"]);
   const 가전총=safeNum(R[prefix+"가전총"]);
@@ -671,6 +809,22 @@ function render(){
   const Q=DATA["품질관리"]?.[period]||{};
 
   if(tab==="주요KPI"||tab==="Issue"){cnt.appendChild(prepareScreen());return;}
+
+  // ── 주간/2026년 비공개 처리 ──────────────────────────────
+  if(period==="주간"||period==="2026년"){
+    const lockDiv=el("div");
+    lockDiv.style.cssText="display:flex;flex-direction:column;align-items:center;justify-content:center;height:320px;gap:16px;";
+    lockDiv.innerHTML=`
+      <div style="font-size:40px;">🔒</div>
+      <div style="font-size:18px;font-weight:700;color:#0f1f3d;">비공개 · 준비중</div>
+      <div style="font-size:13px;color:#64748b;text-align:center;line-height:1.8;">
+        현재 교정 작업 중인 데이터입니다.<br>빠른 시일 내 공개 예정입니다.
+      </div>
+      <div style="background:#fef3c7;border:1px solid #b45309;border-radius:8px;padding:8px 22px;font-size:12px;color:#b45309;font-weight:600;">교정작업 중</div>
+    `;
+    cnt.appendChild(lockDiv);
+    return;
+  }
 
   // ── 품질관리 ──────────────────────────────────────────
   if(tab==="품질관리"){
@@ -1121,10 +1275,7 @@ function render(){
   }
 
   if(tab==="반품현황"){
-    app(cnt,sectionTitle("1. 꿈비",C.blue));
-    renderBrand(cnt,R,period,"꿈비",C.blue,"#3b82f6");
-    app(cnt,sectionTitle("2. 소브",C.teal));
-    renderBrand(cnt,R,period,"소브",C.teal,C.teal2);
+    renderBothBrands(cnt,R,period);
   }
 
   if(tab==="처리현황"){

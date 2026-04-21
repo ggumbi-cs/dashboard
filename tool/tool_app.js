@@ -219,4 +219,4 @@ function initASModule() {
 // =========================
 // 실행 (GitHub Pages 경로 대응)
 // =========================
-loadModule("panel-1", "as.html");
+loadModule("panel-1", "tool/as.html");

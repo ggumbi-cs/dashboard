@@ -22,14 +22,19 @@ html, body {
 
 .panel {
     border: 1px solid #ccc;
-    overflow: hidden;
+}
+
+.panel-left {
+    overflow: auto;
 }
 
 .panel-right {
     display: grid;
     grid-template-columns: 55% 45%;
+    overflow: hidden;
 }
 
+.panel-left iframe,
 .panel-right iframe {
     width: 100%;
     height: 100%;
@@ -39,6 +44,7 @@ html, body {
 .result-side {
     padding: 20px;
     background: #f9f9f9;
+    border-left: 1px solid #ddd;
 }
 
 .result-box {
@@ -53,19 +59,20 @@ html, body {
     margin-top: 10px;
 }
 </style>
+
 </head>
 
 <body>
 
 <div class="grid">
     
-    <div class="panel">
-        <iframe src="./as.html"></iframe>
+    <div class="panel panel-left">
+        <iframe id="asFrame"></iframe>
     </div>
 
     <div class="panel panel-right">
 
-        <iframe src="./as2.html"></iframe>
+        <iframe id="as2Frame"></iframe>
 
         <div class="result-side">
 
@@ -96,6 +103,15 @@ html, body {
 </div>
 
 <script>
+/* 🔥 환경 자동 감지 */
+const isLocal = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+
+const base = isLocal ? "./" : "/dashboard/tool/";
+
+document.getElementById("asFrame").src = base + "as.html";
+document.getElementById("as2Frame").src = base + "as2.html";
+
+/* 결과 */
 let currentText = "";
 
 window.addEventListener("message", (e)=>{

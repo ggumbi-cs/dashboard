@@ -242,15 +242,18 @@ function showWeekCalendar(anchor, availableWeeks){
 function updateSidebar(){
   // 주요KPI 탭일 때 월간/주간 섹션 숨김
   const isKPI = state.tab === "주요KPI";
+  const hideSidebar = state.tab === "팀Tool";
+  const sidebar = document.getElementById("sidebar");
+  if(sidebar) sidebar.style.display = hideSidebar ? "none" : "";
   const hideIds = ["sb-section-월간","sb-월간","sb-month-1","sb-month-2","sb-month-3",
                    "sb-divider-주간","sb-section-주간","sb-주간","sb-week-list"];
   hideIds.forEach(id=>{
     const el2 = document.getElementById(id);
-    if(el2) el2.style.display = isKPI ? "none" : "";
+    if(el2) el2.style.display = (isKPI || hideSidebar) ? "none" : "";
   });
   // sb-sub-month들도 숨김
   document.querySelectorAll(".sb-sub-month").forEach(el2=>{
-    el2.style.display = isKPI ? "none" : "";
+    el2.style.display = (isKPI || hideSidebar) ? "none" : "";
   });
   // 섹션 헤더 active (period 기준)
   ["주간","월간","2026년"].forEach(p=>{

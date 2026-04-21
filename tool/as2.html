@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>회수접수도우미</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 10px;
+}
+
+h2 {
+    margin: 5px 0 8px 0;
+    font-size: 19px;
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 4px;
+}
+
+input, select {
+    width: 95%;
+    padding: 6px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+</style>
+</head>
+
+<body>
+
+<h2>회수접수도우미</h2>
+
+<label>모델명 입력방식</label>
+<select id="modelType">
+    <option>3종 선택</option>
+    <option>직접입력</option>
+</select>
+
+<!-- 3종 선택 -->
+<div id="selectWrap">
+    <label>3종 선택</label>
+    <select id="productSelect">
+        <option>분유쉐이커</option>
+        <option>LED분유쉐이커</option>
+        <option>휴대용분유포트</option>
+    </select>
+</div>
+
+<!-- 직접입력 -->
+<div id="inputWrap" style="display:none;">
+    <label>모델명 입력</label>
+    <input type="text" id="productInput">
+</div>
+
+<label>회수사유</label>
+<select id="reason">
+    <option>일반반품</option>
+    <option>변심반품</option>
+    <option>불량반품</option>
+    <option>불량교환</option>
+    <option>AS</option>
+    <option>검수</option>
+</select>
+
+<div id="symptomWrap">
+    <label>증상</label>
+    <input type="text" id="symptom">
+</div>
+
+<div id="orderWrap">
+    <label>주문번호</label>
+    <input type="text" id="order">
+</div>
+
+<div id="customerWrap">
+    <label>고객명</label>
+    <input type="text" id="customer">
+</div>
+
+<script>
+const LINKMOM = ["분유쉐이커","LED분유쉐이커","휴대용분유포트"];
+
+const modelType = document.getElementById("modelType");
+const selectWrap = document.getElementById("selectWrap");
+const inputWrap = document.getElementById("inputWrap");
+
+const reason = document.getElementById("reason");
+
+const symptomWrap = document.getElementById("symptomWrap");
+const orderWrap = document.getElementById("orderWrap");
+const customerWrap = document.getElementById("customerWrap");
+
+const productSelect = document.getElementById("productSelect");
+const productInput = document.getElementById("productInput");
+
+const symptom = document.getElementById("symptom");
+const order = document.getElementById("order");
+const customer = document.getElementById("customer");
+
+function getProduct(){
+    return modelType.value === "3종 선택"
+        ? productSelect.value.trim()
+        : productInput.value.trim();
+}
+
+function isLinkmom(p){
+    return LINKMOM.includes(p);
+}
+
+function updateFields(){
+    const r = reason.value;
+
+    symptomWrap.style.display =
+        ["불량반품","불량교환","AS","검수"].includes(r) ? "block" : "none";
+
+    orderWrap.style.display =
+        ["일반반품","변심반품","불량반품","불량교환"].includes(r) ? "block" : "none";
+
+    customerWrap.style.display =
+        ["AS","검수"].includes(r) ? "block" : "none";
+}
+
+function buildMemo(){
+    const p = getProduct();
+    const r = reason.value;
+    const s = symptom.value.trim();
+    const o = order.value.trim();
+    const c = customer.value.trim();
+
+    const link = isLinkmom(p);
+
+    if(link){
+        if(r==="일반반품") return o ? `★일반반품 링크맘 엄감★${o}` : "주문번호를 입력해주세요.";
+        if(r==="변심반품") return o ? `★변심반품 링크맘 엄감★${o}` : "주문번호를 입력해주세요.";
+        if(r==="불량반품"||r==="불량교환"){
+            if(!o) return "주문번호를 입력해주세요.";
+            if(!p) return "모델명을 입력해주세요.";
+            if(!s) return "증상을 입력해주세요.";
+            return `★${r}★${o} / ${p} / ${s}`;
+        }
+        if(r==="AS"||r==="검수"){
+            if(!c) return "고객명을 입력해주세요.";
+            if(!s) return "증상을 입력해주세요.";
+            return `★${r} 링크맘 엄감★ ${c}고객님 / ${s}`;
+        }
+    }
+
+    if(r==="일반반품"||r==="변심반품"){
+        if(!o) return "주문번호를 입력해주세요.";
+        if(!p) return "모델명을 입력해주세요.";
+        return `★${r}★${o} / ${p}`;
+    }
+
+    if(r==="불량반품"||r==="불량교환"){
+        if(!o) return "주문번호를 입력해주세요.";
+        if(!p) return "모델명을 입력해주세요.";
+        if(!s) return "증상을 입력해주세요.";
+        return `★${r}★${o} / ${p} / ${s}`;
+    }
+
+    if(r==="AS"||r==="검수"){
+        if(!c) return "고객명을 입력해주세요.";
+        if(!p) return "모델명을 입력해주세요.";
+        if(!s) return "증상을 입력해주세요.";
+        return `★${r} 링크맘 엄감★${c}고객님 / ${p} / ${s}`;
+    }
+
+    return "";
+}
+
+function sendToParent(){
+    const memo = buildMemo();
+    window.parent.postMessage({memo}, "*");
+}
+
+document.querySelectorAll("input, select").forEach(el=>{
+    el.addEventListener("input", ()=>{
+        updateFields();
+        sendToParent();
+    });
+    el.addEventListener("change", ()=>{
+        updateFields();
+        sendToParent();
+    });
+});
+
+modelType.addEventListener("change", ()=>{
+    if(modelType.value==="3종 선택"){
+        selectWrap.style.display="block";
+        inputWrap.style.display="none";
+    }else{
+        selectWrap.style.display="none";
+        inputWrap.style.display="block";
+    }
+});
+
+updateFields();
+</script>
+
+</body>
+</html>

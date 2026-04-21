@@ -23,10 +23,8 @@ function initASModule() {
 
     const productEl = document.getElementById("product");
     const symptomEl = document.getElementById("symptom");
-    const fileInputEl = document.getElementById("fileInput");
     const statusEl = document.getElementById("status");
     const resultBox = document.getElementById("resultBox");
-    const dropZone = document.getElementById("dropZone");
 
 
     // =========================
@@ -169,61 +167,41 @@ function initASModule() {
 
 
     // =========================
-    // 공통 파일 처리
+    // 🔥 GitHub CSV 자동 로드
     // =========================
-    function handleFile(file) {
+    const csvUrl = "https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/data/가전마감.csv";
 
-        if (!file) return;
+    fetch(csvUrl)
+        .then(res => res.text())
+        .then(text => {
 
-        statusEl.textContent = `${file.name} 로딩중...`;
-
-        const reader = new FileReader();
-
-        reader.onload = function(evt) {
-
-            const parsed = parseCSV(evt.target.result);
+            const parsed = parseCSV(text);
             rawData = preprocess(parsed);
 
             updateProducts();
 
-            statusEl.textContent = `완료: ${rawData.length}건`;
-        };
-
-        reader.readAsText(file, "utf-8");
-    }
+        });
 
 
     // =========================
-    // 파일 선택
+    // 🔥 GitHub 업데이트 시간 가져오기
     // =========================
-    fileInputEl.addEventListener("change", e => {
-        handleFile(e.target.files[0]);
-    });
+    fetch("https://api.github.com/repos/ggumbi-cs/dashboard/commits?path=data/가전마감.csv")
+        .then(res => res.json())
+        .then(data => {
 
+            const lastCommit = data[0].commit.author.date;
+            const date = new Date(lastCommit);
 
-    // =========================
-    // 드래그 업로드
-    // =========================
-    dropZone.addEventListener("dragover", e => {
-        e.preventDefault();
-        dropZone.style.borderColor = "#007bff";
-        dropZone.style.background = "#f0f8ff";
-    });
+            const timeStr =
+                date.getFullYear() + "-" +
+                String(date.getMonth() + 1).padStart(2, "0") + "-" +
+                String(date.getDate()).padStart(2, "0") + " " +
+                String(date.getHours()).padStart(2, "0") + ":" +
+                String(date.getMinutes()).padStart(2, "0");
 
-    dropZone.addEventListener("dragleave", () => {
-        dropZone.style.borderColor = "#ccc";
-        dropZone.style.background = "";
-    });
-
-    dropZone.addEventListener("drop", e => {
-        e.preventDefault();
-
-        dropZone.style.borderColor = "#ccc";
-        dropZone.style.background = "";
-
-        const file = e.dataTransfer.files[0];
-        handleFile(file);
-    });
+            statusEl.textContent = `GitHub 자동 로드 완료 (${timeStr} 업데이트)`;
+        });
 
 }
 

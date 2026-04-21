@@ -1,15 +1,23 @@
 // =========================
-// 모듈 로딩
+// 모듈 로딩 (GitHub Pages 대응)
 // =========================
 async function loadModule(targetId, file) {
     const target = document.getElementById(targetId);
 
-    const res = await fetch(file);
-    const html = await res.text();
-    target.innerHTML = html;
+    try {
+        const res = await fetch(file);
+        if (!res.ok) throw new Error("HTML 로드 실패");
 
-    if (file === "as.html") {
-        initASModule();
+        const html = await res.text();
+        target.innerHTML = html;
+
+        if (file.includes("as.html")) {
+            initASModule();
+        }
+
+    } catch (err) {
+        console.error(err);
+        target.innerHTML = "화면 로드 실패";
     }
 }
 
@@ -149,13 +157,7 @@ function initASModule() {
             const percent = Math.round(count / total * 100);
 
             html += `
-            <div style="
-                margin-bottom:8px;
-                padding:10px;
-                border-radius:6px;
-                background:#fff;
-                border:1px solid #ddd;
-            ">
+            <div style="margin-bottom:8px;padding:10px;border-radius:6px;background:#fff;border:1px solid #ddd;">
                 <div style="font-weight:bold;">${part}</div>
                 <div style="color:#007bff; font-weight:bold;">${percent}%</div>
             </div>
@@ -167,12 +169,15 @@ function initASModule() {
 
 
     // =========================
-    // 🔥 GitHub CSV 자동 로드
+    // 🔥 GitHub CSV 자동 로드 (핵심)
     // =========================
     const csvUrl = "https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/data/가전마감.csv";
 
     fetch(csvUrl)
-        .then(res => res.text())
+        .then(res => {
+            if (!res.ok) throw new Error("CSV 로드 실패");
+            return res.text();
+        })
         .then(text => {
 
             const parsed = parseCSV(text);
@@ -180,25 +185,30 @@ function initASModule() {
 
             updateProducts();
 
+            console.log("CSV OK:", rawData.length);
+        })
+        .catch(err => {
+            console.error(err);
+            statusEl.textContent = "데이터 로드 실패";
         });
 
 
     // =========================
-    // 🔥 GitHub 업데이트 시간 가져오기
+    // 🔥 GitHub 업데이트 시간
     // =========================
     fetch("https://api.github.com/repos/ggumbi-cs/dashboard/commits?path=data/가전마감.csv")
         .then(res => res.json())
         .then(data => {
 
-            const lastCommit = data[0].commit.author.date;
-            const date = new Date(lastCommit);
+            const last = data[0].commit.author.date;
+            const d = new Date(last);
 
             const timeStr =
-                date.getFullYear() + "-" +
-                String(date.getMonth() + 1).padStart(2, "0") + "-" +
-                String(date.getDate()).padStart(2, "0") + " " +
-                String(date.getHours()).padStart(2, "0") + ":" +
-                String(date.getMinutes()).padStart(2, "0");
+                d.getFullYear() + "-" +
+                String(d.getMonth()+1).padStart(2,"0") + "-" +
+                String(d.getDate()).padStart(2,"0") + " " +
+                String(d.getHours()).padStart(2,"0") + ":" +
+                String(d.getMinutes()).padStart(2,"0");
 
             statusEl.textContent = `GitHub 자동 로드 완료 (${timeStr} 업데이트)`;
         });
@@ -207,4 +217,6 @@ function initASModule() {
 
 
 // =========================
-loadModule("panel-1", "as.html");
+// 실행 (GitHub Pages 경로 대응)
+// =========================
+loadModule("panel-1", "/dashboard/as.html");

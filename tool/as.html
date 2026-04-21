@@ -1,51 +1,31 @@
 <div style="padding:10px; font-family:Arial;">
 
-    <h2 style="margin-bottom:15px;">AS 기술 진단 어시스턴트</h2>
+    <h2>AS 기술 진단 어시스턴트</h2>
 
-    <!-- 선택 영역 -->
-    <div style="margin-bottom:10px;">
-        <label>① 제품 모델 선택</label>
-        <select id="product" style="margin-left:5px; padding:3px;">
+    <div>
+        ① 제품 모델 선택
+        <select id="product">
             <option>선택</option>
         </select>
 
-        <label style="margin-left:10px;">② 불량 증상 선택</label>
-        <select id="symptom" style="margin-left:5px; padding:3px;">
+        ② 불량 증상 선택
+        <select id="symptom">
             <option>선택</option>
         </select>
 
-        <label style="margin-left:10px;">③ 진단 결과</label>
+        ③ 진단 결과
     </div>
 
-    <!-- 결과 영역 -->
     <div id="resultBox" style="
-        width:100%;
-        height:220px;
+        margin-top:10px;
         padding:10px;
         border:1px solid #ccc;
-        border-radius:6px;
-        background:#f9fafb;
+        height:200px;
         overflow:auto;
     "></div>
 
-    <!-- 파일 선택 -->
     <div style="margin-top:10px;">
-        <input type="file" id="fileInput" accept=".csv">
-        <span id="status" style="margin-left:10px; color:#666;">
-            CSV 파일을 선택해 주세요.
-        </span>
-    </div>
-
-    <!-- 드래그 영역 -->
-    <div id="dropZone" style="
-        margin-top:12px;
-        padding:20px;
-        border:2px dashed #ccc;
-        border-radius:8px;
-        text-align:center;
-        color:#888;
-    ">
-        여기에 CSV 파일을 드래그하세요
+        <span id="status">CSV 파일을 선택해 주세요.</span>
     </div>
 
 </div>

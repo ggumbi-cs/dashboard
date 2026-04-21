@@ -1220,220 +1220,181 @@ function render(){
   }
 
   if(tab==="Issue"){
-    // ── Issue 탭: 낮잠이불 리콜 현황 ──────────────────────
-    app(cnt, sectionTitle("1. 낮잠이불 리콜 현황", C.navy));
+    // ── Issue 탭: 26년 3월 낮잠이불 리콜 현황 (정적 데이터) ──
 
-    // 로딩 표시
-    const issueWrap = el("div");
-    issueWrap.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:12px;";
-    cnt.appendChild(issueWrap);
+    const issueRoot = el("div");
+    issueRoot.style.cssText = "display:grid;grid-template-rows:auto 1fr 1fr;gap:12px;";
+    cnt.appendChild(issueRoot);
 
-    const loadMsg = el("div");
-    loadMsg.style.cssText = "grid-column:1/-1;text-align:center;padding:40px;color:#64748b;font-size:13px;";
-    loadMsg.textContent = "노션 데이터 로딩 중...";
-    issueWrap.appendChild(loadMsg);
+    // ── 섹션 타이틀 ──
+    app(issueRoot, sectionTitle("1. 낮잠이불 리콜 현황", C.navy));
 
-    // Notion API 호출
-    const DB_ID = "3148bca2-d219-805e-931c-000b238b0e49";
-    const API_URL = "https://api.anthropic.com/v1/messages";
+    // ── 데이터 ──
+    const 일자별 = [
+      {l:"3/3",v:398},{l:"3/5",v:490},{l:"3/6",v:128},{l:"3/9",v:41},
+      {l:"3/10",v:32},{l:"3/11",v:9},{l:"3/12",v:6},{l:"3/13",v:19},
+      {l:"3/16",v:26},{l:"3/17",v:53},{l:"3/18",v:18},{l:"3/19",v:18},
+      {l:"3/20",v:10},{l:"3/23",v:13},{l:"3/24",v:8},{l:"3/25",v:6},
+      {l:"3/27",v:7},{l:"3/30",v:6},{l:"3/31",v:6},{l:"4/1",v:3},
+      {l:"4/2",v:5},{l:"4/7",v:2},{l:"4/9",v:4}
+    ];
+    const 네이버폼 = [
+      {l:"회수완료건",v:1317,pct:82.2,color:"#f97316"},
+      {l:"중복",v:148,pct:9.2,color:"#22c55e"},
+      {l:"타음선",v:78,pct:4.9,color:"#3b82f6"},
+      {l:"회수정보없음",v:29,pct:1.8,color:"#a855f7"},
+      {l:"주문내역확인불가",v:26,pct:1.6,color:"#ec4899"},
+      {l:"기타",v:5,pct:0.3,color:"#94a3b8"},
+    ];
+    const 네이버폼total = 1603;
+    const 환불현황 = [
+      {l:"현금환불",v:71250000,color:"#f97316"},
+      {l:"실결제수단환불",v:23620000,color:"#a78bfa"},
+      {l:"개별환불-실결제수단",v:11780000,color:"#60a5fa"},
+      {l:"개별환불-현금",v:910000,color:"#fbbf24"},
+      {l:"금액조정 현금환불",v:400000,color:"#34d399"},
+    ];
+    const 환불비율 = [
+      {l:"현금환불",v:970,pct:68.2,color:"#f97316"},
+      {l:"실결제수단환불",v:300,pct:21.1,color:"#a78bfa"},
+      {l:"개별환불-실결제수단",v:110,pct:7.7,color:"#60a5fa"},
+      {l:"금액조정 현금환불",v:29,pct:2.0,color:"#34d399"},
+      {l:"개별환불-현금",v:13,pct:0.9,color:"#fbbf24"},
+    ];
+    const 환불비율total = 1422;
 
-    async function fetchNotionData(){
-      try{
-        const res = await fetch(API_URL, {
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({
-            model:"claude-sonnet-4-20250514",
-            max_tokens:1000,
-            system:"노션 데이터베이스에서 데이터를 집계하여 JSON으로만 반환하세요. 설명 없이 JSON만.",
-            messages:[{role:"user", content:`
-노션 DB collection://3148bca2-d219-805e-931c-000b238b0e49 의 입고현황 데이터를 집계해서 아래 JSON 형식으로만 반환:
-{
-  "일자별회수": [{"l":"날짜","v":건수합계},...],
-  "네이버폼접수": [{"l":"구분2","v":건수합계},...],
-  "환불현황": [{"l":"구분2","v":금액합계},...],
-  "환불이율": [{"l":"구분2","v":건수합계},...]
-}
-필터: 네이버폼접수=구분이 환불접수, 환불이율=구분이 환불완료, 일자별회수=회수접수일 기준 일별집계
-`}]
-          })
-        });
-        const data = await res.json();
-        return data;
-      }catch(e){return null;}
+    // ── 공통 도넛 SVG ──
+    function issueDonut(arr, total, size){
+      const cx=size/2, cy=size/2, r=size/2-6, ri=r*0.52;
+      let paths="", angle=-Math.PI/2;
+      arr.forEach(d=>{
+        const sweep=(d.v/total)*Math.PI*2;
+        if(sweep<0.01)return;
+        const x1=cx+r*Math.cos(angle),y1=cy+r*Math.sin(angle);
+        const x2=cx+r*Math.cos(angle+sweep),y2=cy+r*Math.sin(angle+sweep);
+        const xi1=cx+ri*Math.cos(angle),yi1=cy+ri*Math.sin(angle);
+        const xi2=cx+ri*Math.cos(angle+sweep),yi2=cy+ri*Math.sin(angle+sweep);
+        const lg=sweep>Math.PI?1:0;
+        paths+=`<path d="M ${xi1} ${yi1} L ${x1} ${y1} A ${r} ${r} 0 ${lg} 1 ${x2} ${y2} L ${xi2} ${yi2} A ${ri} ${ri} 0 ${lg} 0 ${xi1} ${yi1} Z" fill="${d.color}" stroke="#fff" stroke-width="1.5"/>`;
+        angle+=sweep;
+      });
+      paths+=`<text x="${cx}" y="${cy-4}" text-anchor="middle" fill="#0f1f3d" font-size="${size>120?15:12}" font-weight="700" font-family="Apple SD Gothic Neo,sans-serif">${total.toLocaleString()}</text>`;
+      paths+=`<text x="${cx}" y="${cy+12}" text-anchor="middle" fill="#64748b" font-size="9" font-family="Apple SD Gothic Neo,sans-serif">합계 건수</text>`;
+      return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="display:block;flex-shrink:0;">${paths}</svg>`;
     }
 
-    // 실제 데이터: 노션 MCP로 이미 조회한 스키마 기반으로 Anthropic API 활용
-    async function buildIssueCharts(){
-      issueWrap.innerHTML = "";
-
-      // ── 색상 팔레트 ──
-      const COLORS = ["#1e40af","#0f766e","#b45309","#991b1b","#6d28d9","#0891b2","#065f46","#92400e","#1e3a8a","#134e4a","#d97706","#dc2626"];
-
-      // Anthropic API로 노션 데이터 집계 요청
-      let 집계 = null;
-      try{
-        const res = await fetch(API_URL, {
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({
-            model:"claude-sonnet-4-20250514",
-            max_tokens:4000,
-            messages:[{role:"user", content:`
-노션 MCP 도구를 사용해서 collection://3148bca2-d219-805e-931c-000b238b0e49 DB의 모든 데이터를 가져와서
-아래 4가지를 집계한 JSON만 반환하세요 (설명 없이):
-
-{
-  "일자별회수": [{"l":"MM/DD","v":숫자}],
-  "네이버폼접수": [{"l":"구분2값","v":건수합계}],
-  "환불현황": [{"l":"구분2값","v":금액합계}],
-  "환불이율": [{"l":"구분2값","v":건수합계}]
-}
-
-규칙:
-- 일자별회수: 구분=회수접수인 행, 회수접수일 기준 일별 건수 sum
-- 네이버폼접수: 구분=환불접수인 행, 구분2별 건수 sum
-- 환불현황: 모든 행, 구분2별 금액 sum
-- 환불이율: 구분=환불완료인 행, 구분2별 건수 sum
-`}]
-          })
-        });
-        const d = await res.json();
-        const txt = d.content?.[0]?.text || "";
-        const clean = txt.replace(/```json|```/g,"").trim();
-        집계 = JSON.parse(clean);
-      }catch(e){ 집계 = null; }
-
-      // ── 차트 렌더 함수들 ──────────────────────────────────
-
-      // 꺾은선 차트
-      function makeLineChart(arr, color, title, sub){
-        const w=el("div","card"); w.style.cssText="padding:14px 16px;margin-bottom:0;";
-        app(w,el("div","card-header",null,`<div class="card-title">${title}</div>${sub?`<div class="card-sub">${sub}</div>`:""}`));
-        if(!arr||!arr.length){w.appendChild(el("div","no-data",null,noDataMsg));return w;}
-        const vals=arr.map(d=>d.v||0);
-        const maxV=Math.max(...vals,1);
-        const ww=460,h=160,pL=44,pR=12,pT=20,pB=32;
-        const cW=ww-pL-pR,cH=h-pT-pB;
-        const n=arr.length;
-        const px=i=>pL+(n>1?i*(cW/(n-1)):cW/2);
-        const py=v=>pT+cH-Math.round((v/maxV)*cH);
-        let yLines="",yLabels="";
-        for(let i=0;i<=4;i++){
-          const v=Math.round(maxV/4*i);const y=py(v);
-          yLines+=`<line x1="${pL}" y1="${y}" x2="${ww-pR}" y2="${y}" stroke="#f0f4f8" stroke-width="1"/>`;
-          yLabels+=`<text x="${pL-6}" y="${y+4}" text-anchor="end" fill="#94a3b8" font-size="9" font-family="Apple SD Gothic Neo,sans-serif">${v>=1000?(v/1000).toFixed(1)+"k":v}</text>`;
-        }
-        const pts=arr.map((d,i)=>`${px(i)},${py(d.v||0)}`).join(" ");
-        const areaBot=pT+cH;
-        const areaPts=`${px(0)},${areaBot} ${pts} ${px(n-1)},${areaBot}`;
-        const circles=arr.map((d,i)=>{
-          const x=px(i),y=py(d.v||0);
-          return `<circle cx="${x}" cy="${y}" r="3.5" fill="${color}" stroke="#e2e8f0" stroke-width="2"/>
-<text x="${x}" y="${y-8}" text-anchor="middle" fill="${color}" font-size="9" font-weight="700" font-family="Apple SD Gothic Neo,sans-serif">${d.v||0}</text>`;
-        }).join("");
-        const xLabels=arr.map((d,i)=>`<text x="${px(i)}" y="${h-4}" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="Apple SD Gothic Neo,sans-serif">${d.l||""}</text>`).join("");
-        const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-        svg.setAttribute("viewBox",`0 0 ${ww} ${h}`);
-        svg.style.cssText="width:100%;height:auto;";
-        svg.innerHTML=`${yLines}${yLabels}<polygon points="${areaPts}" fill="${color}22"/><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${circles}${xLabels}`;
-        w.appendChild(svg);
-        return w;
-      }
-
-      // 도넛 차트
-      function makeDonutChart(arr, colors, title, sub){
-        const w=el("div","card"); w.style.cssText="padding:14px 16px;margin-bottom:0;";
-        app(w,el("div","card-header",null,`<div class="card-title">${title}</div>${sub?`<div class="card-sub">${sub}</div>`:""}`));
-        if(!arr||!arr.length){w.appendChild(el("div","no-data",null,noDataMsg));return w;}
-        const data=arr.filter(d=>(d.v||0)>0);
-        const total=data.reduce((s,d)=>s+(d.v||0),0)||1;
-        const size=130,cx=65,cy=65,r=55,ri=35;
-        let paths="",angle=-Math.PI/2;
-        data.slice(0,10).forEach((d,i)=>{
-          const sweep=(d.v/total)*Math.PI*2;
-          if(sweep<=0.01)return;
-          const x1=cx+r*Math.cos(angle),y1=cy+r*Math.sin(angle);
-          const x2=cx+r*Math.cos(angle+sweep),y2=cy+r*Math.sin(angle+sweep);
-          const xi1=cx+ri*Math.cos(angle),yi1=cy+ri*Math.sin(angle);
-          const xi2=cx+ri*Math.cos(angle+sweep),yi2=cy+ri*Math.sin(angle+sweep);
-          const lg=sweep>Math.PI?1:0;
-          paths+=`<path d="M ${xi1} ${yi1} L ${x1} ${y1} A ${r} ${r} 0 ${lg} 1 ${x2} ${y2} L ${xi2} ${yi2} A ${ri} ${ri} 0 ${lg} 0 ${xi1} ${yi1} Z" fill="${colors[i%colors.length]}" stroke="#e2e8f0" stroke-width="1.5"/>`;
-          angle+=sweep;
-        });
-        paths+=`<text x="${cx}" y="${cy-3}" text-anchor="middle" fill="#0f1f3d" font-size="12" font-weight="700" font-family="Apple SD Gothic Neo,sans-serif">${total.toLocaleString()}</text>`;
-        paths+=`<text x="${cx}" y="${cy+11}" text-anchor="middle" fill="#64748b" font-size="9" font-family="Apple SD Gothic Neo,sans-serif">건</text>`;
-        const wrap=el("div"); wrap.style.cssText="display:flex;gap:12px;align-items:flex-start;";
-        const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-        svg.setAttribute("viewBox",`0 0 ${size} ${size}`);
-        svg.style.cssText=`width:${size}px;height:${size}px;flex-shrink:0;`;
-        svg.innerHTML=paths;
-        const leg=el("div"); leg.style.cssText="flex:1;display:flex;flex-direction:column;gap:4px;justify-content:center;overflow:hidden;";
-        data.slice(0,8).forEach((d,i)=>{
-          const pct=((d.v||0)/total*100).toFixed(1);
-          const row=el("div"); row.style.cssText="display:flex;align-items:center;gap:5px;";
-          row.innerHTML=`<span style="width:8px;height:8px;border-radius:50%;background:${colors[i%colors.length]};flex-shrink:0;"></span><span style="font-size:10px;color:#334155;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.l||""}</span><span style="font-size:10px;font-weight:600;color:#0f1f3d;flex-shrink:0;">${pct}%</span>`;
-          leg.appendChild(row);
-        });
-        app(wrap,svg,leg);
-        w.appendChild(wrap);
-        return w;
-      }
-
-      // 세로 막대 차트
-      function makeColChart(arr, colors, title, sub, unitFn){
-        const w=el("div","card"); w.style.cssText="padding:14px 16px;margin-bottom:0;";
-        app(w,el("div","card-header",null,`<div class="card-title">${title}</div>${sub?`<div class="card-sub">${sub}</div>`:""}`));
-        if(!arr||!arr.length){w.appendChild(el("div","no-data",null,noDataMsg));return w;}
-        const data=arr.filter(d=>(d.v||0)>0);
-        const maxV=Math.max(...data.map(d=>d.v||0),1);
-        const chartH=130;
-        const barsWrap=el("div"); barsWrap.style.cssText=`display:flex;align-items:flex-end;gap:8px;height:${chartH+32}px;padding:0 4px;flex-wrap:wrap;`;
-        data.slice(0,12).forEach((d,i)=>{
-          const v=d.v||0;
-          const barH=Math.max(Math.round((v/maxV)*chartH),v>0?3:0);
-          const col=el("div"); col.style.cssText="display:flex;flex-direction:column;align-items:center;min-width:40px;flex:1;max-width:80px;";
-          const vl=el("div"); vl.style.cssText="font-size:9px;font-weight:700;color:#0f1f3d;text-align:center;margin-bottom:2px;";
-          vl.textContent=unitFn?unitFn(v):v.toLocaleString();
-          const bar=el("div"); bar.style.cssText=`width:100%;height:${barH}px;background:${colors[i%colors.length]};border-radius:3px 3px 0 0;`;
-          const xl=el("div"); xl.style.cssText="font-size:8px;color:#64748b;text-align:center;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;";
-          xl.textContent=(d.l||"").length>8?(d.l||"").slice(0,8)+"…":(d.l||"");
-          app(col,vl,bar,xl); barsWrap.appendChild(col);
-        });
-        w.appendChild(barsWrap);
-        return w;
-      }
-
-      // ── 4개 차트 렌더 ──────────────────────────────────────
-      if(집계){
-        const c1=makeLineChart(집계.일자별회수||[], C.blue, "일자별 회수현황", "회수접수일 기준 · 건수");
-        const c2=makeDonutChart(집계.네이버폼접수||[], COLORS, "네이버폼 접수현황", "환불접수 · 구분별");
-        const c3=makeColChart(집계.환불현황||[], COLORS, "환불현황", "구분2별 금액", v=>{
-          if(v>=100000000) return (v/100000000).toFixed(1)+"억";
-          if(v>=10000) return Math.round(v/10000)+"만";
-          return v.toLocaleString();
-        });
-        const c4=makeDonutChart(집계.환불이율||[], COLORS, "환불이율", "환불완료 · 구분별");
-        [c1,c2,c3,c4].forEach(ch=>issueWrap.appendChild(ch));
-      } else {
-        // 데이터 로드 실패 시 안내
-        const errDiv=el("div");
-        errDiv.style.cssText="grid-column:1/-1;text-align:center;padding:60px;color:#64748b;";
-        errDiv.innerHTML=`
-          <div style="font-size:32px;margin-bottom:12px;">📋</div>
-          <div style="font-size:15px;font-weight:600;color:#0f1f3d;margin-bottom:8px;">낮잠이불 리콜 현황</div>
-          <div style="font-size:13px;margin-bottom:16px;">노션 데이터를 직접 가져올 수 없습니다.<br>아래 링크에서 확인하세요.</div>
-          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-            <a href="https://www.notion.so/bizmekacom/3388bca2d219811e8abdd775eac3f688?v=3388bca2d21981a8bc07000cf2608583" target="_blank" style="background:#1e40af;color:#fff;padding:8px 16px;border-radius:6px;font-size:12px;text-decoration:none;">📈 일자별 회수현황</a>
-            <a href="https://www.notion.so/bizmekacom/3388bca2d21981c8bab2fc30b72a500e?v=3388bca2d219818bb1e7000c21c60fc2" target="_blank" style="background:#0f766e;color:#fff;padding:8px 16px;border-radius:6px;font-size:12px;text-decoration:none;">🍩 네이버폼 접수현황</a>
-            <a href="https://www.notion.so/bizmekacom/3388bca2d21981c8b479c2c69aa74f04?v=3388bca2d219810f9dd5000cbfc76d10" target="_blank" style="background:#b45309;color:#fff;padding:8px 16px;border-radius:6px;font-size:12px;text-decoration:none;">💰 환불현황</a>
-            <a href="https://www.notion.so/bizmekacom/3388bca2d21981468491f352ddc7bb73?v=3388bca2d2198102af14000c990079b2" target="_blank" style="background:#991b1b;color:#fff;padding:8px 16px;border-radius:6px;font-size:12px;text-decoration:none;">📊 환불이율</a>
-          </div>`;
-        issueWrap.appendChild(errDiv);
-      }
+    function issueLegend(arr, total){
+      return arr.map(d=>{
+        const pct = d.pct || ((d.v/total)*100).toFixed(1);
+        return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+          <span style="width:9px;height:9px;border-radius:50%;background:${d.color};flex-shrink:0;"></span>
+          <span style="font-size:11px;color:#334155;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.l}</span>
+          <span style="font-size:11px;font-weight:600;color:#0f1f3d;flex-shrink:0;white-space:nowrap;">${d.v.toLocaleString()} (${pct}%)</span>
+        </div>`;
+      }).join("");
     }
 
-    buildIssueCharts();
+    // ── 카드 공통 ──
+    function issueCard(innerHTML, gridArea){
+      const d = el("div");
+      d.style.cssText = `background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:16px 18px;grid-area:${gridArea||""};min-width:0;overflow:hidden;box-sizing:border-box;`;
+      d.innerHTML = innerHTML;
+      return d;
+    }
+    function issueCardTitle(t, sub){
+      return `<div style="font-size:12px;font-weight:700;color:#0f1f3d;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #f1f5f9;">${t}${sub?`<span style="font-size:10px;color:#94a3b8;font-weight:400;margin-left:8px;">${sub}</span>`:""}　</div>`;
+    }
+
+    // ── 1행: 2컬럼 그리드 ──
+    const row1 = el("div");
+    row1.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:stretch;";
+
+    // [1] 일자별 회수현황 꺾은선
+    (function(){
+      const vals = 일자별.map(d=>d.v);
+      const maxV = Math.max(...vals, 1);
+      const W=500, H=170, pL=36, pR=12, pT=22, pB=32;
+      const cW=W-pL-pR, cH=H-pT-pB;
+      const n=일자별.length;
+      const px=i=>pL+(n>1?i*(cW/(n-1)):cW/2);
+      const py=v=>pT+cH-Math.round((v/maxV)*cH);
+
+      let yLines="";
+      for(let i=0;i<=4;i++){
+        const v=Math.round(maxV/4*i);
+        yLines+=`<line x1="${pL}" y1="${py(v)}" x2="${W-pR}" y2="${py(v)}" stroke="#f1f5f9" stroke-width="1"/>`;
+        yLines+=`<text x="${pL-4}" y="${py(v)+4}" text-anchor="end" fill="#94a3b8" font-size="9" font-family="Apple SD Gothic Neo,sans-serif">${v}</text>`;
+      }
+      const pts = 일자별.map((d,i)=>`${px(i)},${py(d.v)}`).join(" ");
+      const areaBot = pT+cH;
+      const areaPts = `${px(0)},${areaBot} ${pts} ${px(n-1)},${areaBot}`;
+      const dots = 일자별.map((d,i)=>{
+        const x=px(i), y=py(d.v);
+        // 수치가 낮으면(y가 차트 아래쪽) 라벨을 점 위에 표시, 높으면 점 위에
+        const lblY = y-7 < pT+4 ? y+14 : y-7;
+        return `<circle cx="${x}" cy="${y}" r="3" fill="${C.blue}" stroke="#fff" stroke-width="1.5"/>
+<text x="${x}" y="${lblY}" text-anchor="middle" fill="${C.blue}" font-size="8" font-weight="700" font-family="Apple SD Gothic Neo,sans-serif">${d.v}</text>`;
+      }).join("");
+      const xLbls = 일자별.map((d,i)=>`<text x="${px(i)}" y="${H-4}" text-anchor="middle" fill="#94a3b8" font-size="7.5" font-family="Apple SD Gothic Neo,sans-serif">${d.l}</text>`).join("");
+      const legend = `<div style="font-size:10px;color:#3b82f6;display:flex;align-items:center;justify-content:center;gap:4px;margin-top:6px;">
+        <span style="display:inline-block;width:20px;height:2px;background:#3b82f6;border-radius:1px;"></span>회수접수일</div>`;
+
+      row1.appendChild(issueCard(
+        issueCardTitle("일자별 회수현황","회수접수일 기준 · 건수") +
+        `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;">
+          ${yLines}
+          <polygon points="${areaPts}" fill="${C.blue}18"/>
+          <polyline points="${pts}" fill="none" stroke="${C.blue}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+          ${dots}${xLbls}
+        </svg>` + legend
+      ));
+    })();
+
+    // [2] 네이버폼 접수현황 도넛
+    row1.appendChild(issueCard(
+      issueCardTitle("네이버폼현황","접수 구분별") +
+      `<div style="display:flex;gap:16px;align-items:center;">
+        ${issueDonut(네이버폼, 네이버폼total, 180)}
+        <div style="flex:1;">${issueLegend(네이버폼, 네이버폼total)}</div>
+      </div>`
+    ));
+
+    issueRoot.appendChild(row1);
+
+    // ── 2행: 2컬럼 ──
+    const row2 = el("div");
+    row2.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:stretch;";
+
+    // [3] 환불현황 막대
+    (function(){
+      const maxV = Math.max(...환불현황.map(d=>d.v), 1);
+      const barH = 130;
+      const bars = 환불현황.map(d=>{
+        const h = Math.max(Math.round((d.v/maxV)*barH), 2);
+        const lbl = d.v>=10000 ? Math.round(d.v/10000)+"만" : d.v.toLocaleString();
+        const name = d.l.length>8?d.l.slice(0,8)+"…":d.l;
+        return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:1;min-width:0;">
+          <div style="font-size:9px;font-weight:700;color:#0f1f3d;text-align:center;margin-bottom:3px;">₩${lbl}</div>
+          <div style="width:50%;height:${h}px;background:${d.color};border-radius:3px 3px 0 0;"></div>
+          <div style="font-size:8px;color:#64748b;text-align:center;margin-top:3px;word-break:keep-all;line-height:1.3;">${name}</div>
+        </div>`;
+      }).join("");
+      row2.appendChild(issueCard(
+        issueCardTitle("환불현황","구분별 금액") +
+        `<div style="display:flex;align-items:flex-end;gap:6px;height:${barH+50}px;padding:0 4px;margin-top:auto;">${bars}</div>`
+      ));
+    })();
+
+    // [4] 환불비율 도넛
+    row2.appendChild(issueCard(
+      issueCardTitle("환불비율","환불완료 · 구분별") +
+      `<div style="display:flex;gap:16px;align-items:center;">
+        ${issueDonut(환불비율, 환불비율total, 180)}
+        <div style="flex:1;">${issueLegend(환불비율, 환불비율total)}</div>
+      </div>`
+    ));
+
+    issueRoot.appendChild(row2);
     return;
   }
 

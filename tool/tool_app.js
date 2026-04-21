@@ -460,8 +460,11 @@ function initTool2Module() {
 }
 
 
+
 // =========================
 // 실행
 // =========================
-loadModule("panel-1", "as.html");
-loadModule("panel-2", "as2.html");
+
+// 🔥 무조건 상대경로로 사용 (로컬 + 깃허브 둘 다 대응)
+loadModule("panel-1", "./as.html");
+loadModule("panel-2", "./as2.html");

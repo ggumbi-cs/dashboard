@@ -1381,7 +1381,10 @@ function render(){
       }).join("");
       row2.appendChild(issueCard(
         issueCardTitle("환불현황","구분별 금액") +
-        `<div style="display:flex;align-items:flex-end;gap:6px;height:${barH+50}px;padding:0 4px;margin-top:auto;">${bars}</div>`
+        `<div style="display:flex;align-items:flex-end;gap:6px;height:${barH+50}px;padding:0 4px;margin-top:auto;">${bars}</div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;text-align:center;">
+          <span style="font-size:30px;font-weight:700;color:#0f1f3d;">합계금액 : ${환불현황.reduce((s,d)=>s+d.v,0)>=10000?Math.round(환불현황.reduce((s,d)=>s+d.v,0)/10000).toLocaleString()+"만원":환불현황.reduce((s,d)=>s+d.v,0).toLocaleString()+"원"}</span>
+        </div>`
       ));
     })();
 
@@ -1781,6 +1784,15 @@ function render(){
       typeof d.v==="number"?d.v.toFixed(2):"-",
       ""
     ]);
+    // 합계행
+    const 만족합_상담종료 = 만족추이.reduce((s,d)=>s+safeNum(d.상담종료),0);
+    const 만족합_문자발송 = 만족추이.reduce((s,d)=>s+safeNum(d.문자발송),0);
+    const 만족합_참여건   = 만족추이.reduce((s,d)=>s+safeNum(d.참여건),0);
+    const 만족합_참여율   = 만족합_문자발송>0?(만족합_참여건/만족합_문자발송*100).toFixed(2)+"%":"-";
+    const 만족합_만족도   = 만족추이.filter(d=>typeof d.v==="number").length>0
+      ? (만족추이.filter(d=>typeof d.v==="number").reduce((s,d)=>s+d.v,0)/만족추이.filter(d=>typeof d.v==="number").length).toFixed(2)
+      : "-";
+    if(만족추이.length>0) 만족rows.push(["합계",만족합_상담종료.toLocaleString(),만족합_문자발송.toLocaleString(),만족합_참여건.toLocaleString(),만족합_참여율,만족합_만족도,""]);
 
     // ── 통화성공률 데이터 — period별 올바른 회차 필터 ──────
     // 전체 2026년 데이터에서 period에 맞는 회차만 선택
@@ -1823,6 +1835,13 @@ function render(){
       typeof d.v==="number"?parseFloat(d.v.toFixed(2))+"%":"-",
       d.비고||""
     ]);
+    // 합계행
+    const 통화합_총유입 = 통화arr.reduce((s,d)=>s+safeNum(d.총유입),0);
+    const 통화합_IN     = 통화arr.reduce((s,d)=>s+safeNum(d.IN),0);
+    const 통화합_부재중 = 통화arr.reduce((s,d)=>s+safeNum(d.부재중),0);
+    const 통화합_수신콜 = 통화arr.reduce((s,d)=>s+safeNum(d.수신콜),0);
+    const 통화합_성공률 = 통화합_IN>0?(통화합_수신콜/통화합_IN*100).toFixed(2)+"%":"-";
+    if(통화arr.length>0) 통화rows.push(["합계",통화합_총유입.toLocaleString(),통화합_IN.toLocaleString(),통화합_부재중.toLocaleString(),통화합_수신콜.toLocaleString(),통화합_성공률,""]);
 
     // ── 상단: 도넛 3개 가로 ──────────────────────────────
     const donutRow=el("div");

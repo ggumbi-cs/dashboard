@@ -32,6 +32,7 @@ body {
     background: #abc1d1;
     padding: 10px 14px 8px;
     border-bottom: 1px solid rgba(0,0,0,0.08);
+    position: relative;
 }
 
 .chat-title {
@@ -61,6 +62,20 @@ body {
     border: 1px solid rgba(0,0,0,0.12);
     border-radius: 8px;
     background: #fff;
+}
+
+#alarmToggle {
+    position: absolute;
+    right: 14px;
+    bottom: 8px;
+    height: 28px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.9);
+    color: #222;
+    font-size: 12px;
+    cursor: pointer;
 }
 
 .chat-box {
@@ -110,14 +125,6 @@ body {
     gap: 6px;
 }
 
-.msg-row.me .bubble-line {
-    flex-direction: row;
-}
-
-.msg-row.other .bubble-line {
-    flex-direction: row;
-}
-
 .bubble {
     padding: 10px 12px;
     border-radius: 14px;
@@ -144,7 +151,8 @@ body {
     font-size: 11px;
     color: #55606b;
     white-space: nowrap;
-    margin-bottom: 2px;
+    margin-top: 4px;
+    padding: 0 2px;
 }
 
 .bottom-area {
@@ -183,7 +191,7 @@ body {
     cursor: not-allowed;
 }
 
-button {
+#sendBtn {
     height: 46px;
     min-width: 74px;
     padding: 0 16px;
@@ -196,11 +204,11 @@ button {
     cursor: pointer;
 }
 
-button:hover:not(:disabled) {
+#sendBtn:hover:not(:disabled) {
     filter: brightness(0.98);
 }
 
-button:disabled {
+#sendBtn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
@@ -212,6 +220,43 @@ button:disabled {
     font-size: 11px;
     color: rgba(0,0,0,0.45);
     pointer-events: none;
+}
+
+#toast {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    min-width: 240px;
+    max-width: 340px;
+    background: rgba(30, 30, 30, 0.94);
+    color: #fff;
+    padding: 12px 14px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    font-size: 13px;
+    line-height: 1.45;
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 9999;
+}
+
+#toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#toastTitle {
+    font-weight: bold;
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: #fee500;
+}
+
+#toastBody {
+    word-break: break-word;
+    white-space: pre-wrap;
 }
 
 @media (max-width: 520px) {
@@ -231,6 +276,14 @@ button:disabled {
     .chat-title {
         padding-right: 90px;
     }
+
+    #toast {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        max-width: none;
+        min-width: 0;
+    }
 }
 </style>
 </head>
@@ -245,14 +298,16 @@ button:disabled {
         <div class="user-row">
             <label for="team">소속:</label>
             <select id="team">
-                <option value="꿈비" selected>꿈비</option>
+                <option value="꿈비">꿈비</option>
                 <option value="에르모어">에르모어</option>
                 <option value="가이아">가이아</option>
             </select>
 
             <label for="name">이름:</label>
-            <input id="name" type="text" value="심우승">
+            <input id="name" type="text">
         </div>
+
+        <button type="button" id="alarmToggle">🔔 알림 ON</button>
     </div>
 
     <div id="chat" class="chat-box"></div>
@@ -265,8 +320,17 @@ button:disabled {
     </div>
 </div>
 
+<div id="toast">
+    <div id="toastTitle">새 메시지</div>
+    <div id="toastBody"></div>
+</div>
+
 <script>
 const SERVER = "https://adaptable-expression-production-ba28.up.railway.app";
+
+let alarmEnabled = true;
+let knownLastMessageKey = null;
+let toastTimer = null;
 
 function setVersion() {
     const d = new Date();
@@ -329,14 +393,67 @@ function render(data) {
                     <div class="name">${escapeHtml(d.name || "")}</div>
                     <div class="bubble-line">
                         <div class="bubble">${escapeHtml(d.message || "")}</div>
-                        <div class="time">${escapeHtml(d.created_at || d.time || "")}</div>
                     </div>
+                    <div class="time">${escapeHtml(d.created_at || d.time || "")}</div>
                 </div>
             </div>
         `;
     });
 
     chat.scrollTop = chat.scrollHeight;
+}
+
+function getMessageKey(messageObj) {
+    const name = String(messageObj?.name || "").trim();
+    const message = String(messageObj?.message || "").trim();
+    const time = String(messageObj?.created_at || messageObj?.time || "").trim();
+    return [name, message, time].join("||");
+}
+
+function showToast(sender, message) {
+    const toast = document.getElementById("toast");
+    const toastBody = document.getElementById("toastBody");
+
+    toastBody.innerText = `${sender}\n${message}`;
+
+    if (toastTimer) {
+        clearTimeout(toastTimer);
+        toastTimer = null;
+    }
+
+    toast.classList.add("show");
+
+    toastTimer = setTimeout(() => {
+        toast.classList.remove("show");
+    }, 2500);
+}
+
+function checkNewIncomingMessage(data) {
+    if (!Array.isArray(data) || data.length === 0) return;
+
+    const newest = data[0];
+    const newestKey = getMessageKey(newest);
+
+    if (!knownLastMessageKey) {
+        knownLastMessageKey = newestKey;
+        return;
+    }
+
+    if (newestKey === knownLastMessageKey) {
+        return;
+    }
+
+    knownLastMessageKey = newestKey;
+
+    const myFullName = getFullName();
+    const sender = String(newest.name || "").trim();
+    const message = String(newest.message || "").trim();
+
+    if (!alarmEnabled) return;
+    if (!sender || !message) return;
+    if (sender === myFullName) return;
+
+    showToast(sender, message);
 }
 
 async function load() {
@@ -356,6 +473,7 @@ async function load() {
             return;
         }
 
+        checkNewIncomingMessage(data);
         render(data);
     } catch (e) {
         console.log("불러오기 실패", e);
@@ -418,6 +536,11 @@ document.getElementById("msg").addEventListener("keydown", function (e) {
 
 document.getElementById("team").addEventListener("change", checkLock);
 document.getElementById("name").addEventListener("input", checkLock);
+
+document.getElementById("alarmToggle").addEventListener("click", function () {
+    alarmEnabled = !alarmEnabled;
+    this.innerText = alarmEnabled ? "🔔 알림 ON" : "🔕 알림 OFF";
+});
 
 checkLock();
 load();

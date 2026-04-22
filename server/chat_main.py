@@ -1,28 +1,42 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import os
 
-app = FastAPI()
-
-# 🔥 CORS 허용 (이게 핵심)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # 모든 접속 허용
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app = Flask(__name__)
+CORS(app)
 
 messages = []
 
-@app.get("/")
-def root():
-    return {"message": "chat server alive"}
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({
+        "message": "chat server alive"
+    })
 
-@app.get("/messages")
+@app.route("/messages", methods=["GET"])
 def get_messages():
-    return messages
+    return jsonify(messages)
 
-@app.post("/send")
-def send_message(data: dict):
-    messages.append(data)
-    return {"status": "ok"}
+@app.route("/send", methods=["POST"])
+def send_message():
+    data = request.get_json(silent=True)
+
+    if not data:
+        return jsonify({"status": "error", "reason": "no json body"}), 400
+
+    name = str(data.get("name", "")).strip()
+    message = str(data.get("message", "")).strip()
+
+    if not name or not message:
+        return jsonify({"status": "error", "reason": "name or message empty"}), 400
+
+    messages.append({
+        "name": name,
+        "message": message
+    })
+
+    return jsonify({"status": "ok"})
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)

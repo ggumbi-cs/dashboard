@@ -1891,6 +1891,14 @@ function render(){
       });
       tblInner.appendChild(hdr);
       목록.forEach(function(item,ri){
+        // 사용자 권한: 예방품질 행 블라인드 처리
+        if(currentRole==="user" && (item.구분||"")===  "예방품질"){
+          var blindRow=document.createElement("div");
+          blindRow.style.cssText="display:grid;grid-template-columns:80px 2fr 1.4fr 4.5fr 1.4fr;border-bottom:1px solid #f1f5f9;align-items:center;background:#f8fafc;filter:blur(3px);user-select:none;pointer-events:none;";
+          blindRow.innerHTML='<div style="padding:8px 6px;font-size:9px;font-weight:700;color:#94a3b8;background:#f1f5f9;border-right:1px solid #e2e8f0;text-align:center;">예방품질</div><div style="padding:10px 14px;font-size:12px;color:#cbd5e1;">🔒 비공개</div><div style="padding:10px 14px;"></div><div style="padding:10px 14px;font-size:11px;color:#cbd5e1;">열람 권한 없음</div><div style="padding:10px 14px;"></div>';
+          tblInner.appendChild(blindRow);
+          return;
+        }
         var row=document.createElement("div");
         row.style.cssText="display:grid;grid-template-columns:80px 2fr 1.4fr 4.5fr 1.4fr;border-bottom:1px solid #f1f5f9;align-items:start;";
         var bgRows=[["#eff6ff","#eff6ff"],["#f0fdf4","#f0fdf4"],["#fefce8","#fefce8"],["#faf5ff","#faf5ff"]];

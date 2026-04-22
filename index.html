@@ -1070,22 +1070,17 @@ function render(){
   const IMP_D = 월별D ? (월별D["개선품질"]||{}) : 주간D ? (주간D["개선품질"]||{}) : (DATA["개선품질"]?.[period]||{});
 
   if(tab==="주요KPI"){
-    cnt.appendChild(prepareScreen());
-    return;
-  }
-
-  if(tab==="__주요KPI_DISABLED__"){
     const KPI_ITEMS = DATA["kpi_items"] || [
-      {id:1, label:"Q&A 작성건",        sub:"신제품 출시 2주전 30건 이상", rate:null, note:"출시 2주전 평균 26건 작성중"},
-      {id:2, label:"AI 학습 반영율",    sub:"Q&A 업데이트 24시간 내 100%", rate:null, note:""},
-      {id:3, label:"VOC/A/S 업데이트", sub:"불량 데이터 주 1회 업데이트",  rate:100,  note:"주 1회 이상 업데이트중"},
-      {id:4, label:"위험Top5 선정",     sub:"불량 예측지표 TOP5 선정",      rate:null, note:"매주 Top.5 선정 및 분석 구성"},
-      {id:5, label:"가전 불량율",       sub:"주요 가전 품목 불량율 1% 이하", rate:null, note:""},
-      {id:6, label:"반복 A/S 개선안",   sub:"TOP3 분기별 개선안 제출",      rate:100,  note:""},
-      {id:7, label:"AI 처리율",         sub:"월별 응답율/처리율 70% 이상",   rate:43.71,note:"누적 30.6% / 3월 33.6%"},
-      {id:8, label:"AI 24시간 상담",    sub:"채널톡 AI룸 24시간 구축",      rate:null, note:""},
-      {id:9, label:"품질 특성 시트",    sub:"제품별 품질 특성 시트 100%",   rate:100,  note:"구성, 운영중"},
-      {id:10,label:"신규개발 품질검증", sub:"개발/품질 로드맵 기반 검증",   rate:50,   note:"개발단계 검수 진행중"},
+      {id:1, label:"Q&A 작성율",        sub:"신제품 출시 2주이내 30건 이상등록", rate:null, note:"출시 2주전 평균 26건 작성중"},
+      {id:2, label:"AI 학습 반영율", sub:"Q&A 업데이트 24시간 내 등록", rate:null, note:""},
+      {id:3, label:"VOC, A/S 데이터 업데이트", sub:"불량 데이터 주 1회 업데이트",  rate:100,  note:"주 1회 이상 업데이트중"},
+      {id:4, label:"불량예측지표 선정, 개선", sub:"불량 TOP5 선정 -> 집중관리",      rate:null, note:"매주 Top.5 선정 및 분석 구성"},
+      {id:5, label:"주요 가전 불량율", sub:"주요 가전 불량현황 작성 공유", rate:null, note:""},
+      {id:6, label:"반복 A/S품목 개선",   sub:"TOP3 분기별 개선안 제출",      rate:100,  note:""},
+      {id:7, label:"AI 처리율", sub:"관여 후 해결 완료율 70% 이상",   rate:43.71,note:"누적 30.6% / 3월 33.6%"},
+      {id:8, label:"AI 24시간 상담 구축", sub:"채널톡 AI 응답 시스템 24시간 구축",      rate:null, note:""},
+      {id:9, label:"품질 특성 시트 구축", sub:"품질분석, 대시보드 체계 고도화",   rate:100,  note:"구성, 운영중"},
+      {id:10,label:"개발품 품질검증", sub:"개발/품질 로드맵 기반 검증",   rate:50,   note:"개발단계 검수 진행중"},
     ];
 
     // ── 종합 진행율 계산 ──────────────────────────────────
@@ -1129,7 +1124,7 @@ function render(){
       const title=el("div"); title.style.cssText="font-size:13px;font-weight:700;color:#0f1f3d;margin-bottom:12px;";
       title.textContent="종합 진행현황";
       const sub2=el("div"); sub2.style.cssText="font-size:10px;color:#64748b;margin-bottom:8px;";
-      sub2.textContent="진행율 비율";
+      sub2.textContent="주요 KPI 종합 진행율";
       const size=140,cx=70,cy=70,radius=56,circ=Math.PI*2*radius;
       const filled=circ*(rate/100);
       const color=rate>=100?"#0f766e":rate>=70?"#1e40af":rate>=40?"#f59e0b":"#ef4444";
@@ -1209,15 +1204,61 @@ function render(){
 
   if(tab==="팀Tool"){
     // ── 팀Tool 탭: page_tool.html iframe 로드 ──────────────
+    // ── 팀Tool: 좌측 목차 + iframe ──
     const toolWrap = el("div");
-    toolWrap.style.cssText = "display:flex;flex-direction:column;gap:0;height:calc(100vh - 130px);";
+    toolWrap.style.cssText = "display:flex;gap:0;height:calc(100vh - 130px);";
+
+    // ── 좌측 목차 ──
+    const toolNav = el("div");
+    toolNav.style.cssText = "width:160px;flex-shrink:0;background:#1a2f52;border-radius:8px 0 0 8px;padding:16px 0;display:flex;flex-direction:column;gap:4px;";
+
+    const toolMenus = [
+      { label:"업무Tool 코딩", src:"tool/tool_main.html" },
+      { label:"계열사CS 소통챗", src:"chat/chat_main.html" },
+    ];
 
     const toolFrame = document.createElement("iframe");
-    toolFrame.src = "tool/tool_main.html";
-    toolFrame.style.cssText = "width:100%;flex:1;border:none;border-radius:8px;background:#e9e9e9;";
+    toolFrame.src = toolMenus[0].src;
+    toolFrame.style.cssText = "flex:1;border:none;border-radius:0 8px 8px 0;background:#e9e9e9;";
     toolFrame.setAttribute("frameborder","0");
-    toolWrap.appendChild(toolFrame);
 
+    // 메뉴 헤더
+    const toolNavTitle = el("div");
+    toolNavTitle.style.cssText = "font-size:10px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:0.08em;padding:0 14px 10px;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:6px;";
+    toolNavTitle.textContent = "팀 도구";
+    toolNav.appendChild(toolNavTitle);
+
+    let activeToolIdx = 0;
+    const toolBtns = toolMenus.map((menu, i) => {
+      const btn = el("button");
+      btn.style.cssText = "width:100%;text-align:left;padding:9px 14px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:transparent;color:rgba(255,255,255,0.6);border-left:3px solid transparent;transition:all 0.15s;";
+      btn.textContent = menu.label;
+      if(i === 0){
+        btn.style.background = "rgba(255,255,255,0.1)";
+        btn.style.color = "#fff";
+        btn.style.borderLeftColor = "#60a5fa";
+      }
+      btn.addEventListener("mouseenter", function(){
+        if(activeToolIdx !== i) this.style.background = "rgba(255,255,255,0.06)";
+      });
+      btn.addEventListener("mouseleave", function(){
+        if(activeToolIdx !== i) this.style.background = "transparent";
+      });
+      btn.addEventListener("click", function(){
+        activeToolIdx = i;
+        toolBtns.forEach((b,j) => {
+          b.style.background = j===i ? "rgba(255,255,255,0.1)" : "transparent";
+          b.style.color = j===i ? "#fff" : "rgba(255,255,255,0.6)";
+          b.style.borderLeftColor = j===i ? "#60a5fa" : "transparent";
+        });
+        toolFrame.src = menu.src;
+      });
+      toolNav.appendChild(btn);
+      return btn;
+    });
+
+    toolWrap.appendChild(toolNav);
+    toolWrap.appendChild(toolFrame);
     cnt.appendChild(toolWrap);
     return;
   }

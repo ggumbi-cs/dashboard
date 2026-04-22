@@ -1,1 +1,18 @@
-"준비중 꿈비-에르모어 CS 업무 소통의장"
+<script>
+const ws = new WebSocket("wss://adaptable-expression-production-ba28.up.railway.app/ws");
+
+ws.onmessage = (event) => {
+    const chat = document.getElementById("chat");
+    chat.innerHTML += "<div>" + event.data + "</div>";
+};
+
+function sendMessage() {
+    const input = document.getElementById("msg");
+    ws.send(input.value);
+    input.value = "";
+}
+</script>
+
+<div id="chat"></div>
+<input id="msg" />
+<button onclick="sendMessage()">전송</button>

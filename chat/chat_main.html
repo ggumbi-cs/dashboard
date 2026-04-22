@@ -4,224 +4,57 @@
 <meta charset="UTF-8">
 <title>CS 채팅</title>
 <style>
-body {
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
-    margin: 0;
-}
+body { font-family: Arial; background:#f5f5f5; margin:0; }
+.chat-wrapper { width:60%; margin:30px auto; }
+.chat-title { font-size:24px; font-weight:bold; margin-bottom:20px; }
+.user-row { margin-bottom:10px; display:flex; gap:6px; }
+.chat-box { width:100%; height:400px; background:#fff; border:1px solid #ccc; overflow-y:auto; padding:10px; }
 
-.chat-wrapper {
-    width: 60%;
-    margin: 30px auto;
-}
+.msg { margin:10px 0; padding:10px; border-radius:10px; max-width:70%; }
+.me { background:#cfe5ff; margin-left:auto; }
+.other { background:#eee; margin-right:auto; }
 
-.chat-title {
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 20px;
-}
-
-.user-row {
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-
-.user-row select,
-.user-row input {
-    height: 30px;
-    padding: 4px 8px;
-    font-size: 14px;
-}
-
-.chat-box {
-    width: 100%;
-    height: 400px;
-    background: #fff;
-    border: 1px solid #ccc;
-    overflow-y: auto;
-    padding: 10px;
-}
-
-.msg {
-    margin: 10px 0;
-    padding: 10px;
-    border-radius: 10px;
-    max-width: 70%;
-    word-break: break-all;
-}
-
-.me {
-    background: #cfe5ff;
-    margin-left: auto;
-}
-
-.other {
-    background: #eee;
-    margin-right: auto;
-}
-
-.name {
-    font-size: 12px;
-    color: #555;
-    margin-bottom: 3px;
-}
-
-.time {
-    font-size: 11px;
-    color: #888;
-    text-align: right;
-    margin-top: 3px;
-}
-
-#msg {
-    width: 100%;
-    height: 70px;
-    margin-top: 10px;
-    resize: none;
-    font-size: 14px;
-    padding: 8px;
-}
-
-#msg:disabled {
-    background: #eee;
-    color: #888;
-    cursor: not-allowed;
-}
-
-button {
-    margin-top: 6px;
-    padding: 6px 14px;
-    font-size: 14px;
-    cursor: pointer;
-}
-
-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-#version {
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    font-size: 12px;
-    color: #888;
-}
+#msg { width:100%; height:70px; margin-top:10px; }
+button { margin-top:6px; padding:6px 14px; }
 </style>
 </head>
+
 <body>
 
-<div id="version">수정버전 : 2026/04/22 14:40:00</div>
-
 <div class="chat-wrapper">
-    <div class="chat-title">CS 채팅</div>
+<div class="chat-title">CS 채팅</div>
 
-    <div class="user-row">
-        <label for="team">소속:</label>
-        <select id="team">
-            <option value="">선택</option>
-            <option>꿈비</option>
-            <option>에르모어</option>
-            <option>가이아</option>
-        </select>
+<div class="user-row">
+<select id="team">
+<option value="">선택</option>
+<option>꿈비</option>
+</select>
 
-        <label for="name">이름:</label>
-        <input id="name" type="text">
-    </div>
+<input id="name" placeholder="이름">
+</div>
 
-    <div id="chat" class="chat-box"></div>
+<div id="chat" class="chat-box"></div>
 
-<textarea id="msg" placeholder="소속 및 이름 입력 후 사용 가능"></textarea>
-
+<textarea id="msg"></textarea>
 <button id="sendBtn" onclick="send()">전송</button>
+
 </div>
 
 <script>
 const SERVER = "https://adaptable-expression-production-ba28.up.railway.app";
 
-function setVersion() {
-    const d = new Date();
-    const version =
-        d.getFullYear() + "/" +
-        String(d.getMonth() + 1).padStart(2, "0") + "/" +
-        String(d.getDate()).padStart(2, "0") + " " +
-        String(d.getHours()).padStart(2, "0") + ":" +
-        String(d.getMinutes()).padStart(2, "0") + ":" +
-        String(d.getSeconds()).padStart(2, "0");
+/* 🔥 핵심 수정: 전역 함수 */
+window.send = async function () {
 
-    document.getElementById("version").innerText = "수정버전 : " + version;
-}
-setVersion();
+    console.log("전송 클릭됨");
 
-function getFullName() {
-    const team = document.getElementById("team").value.trim();
-    const name = document.getElementById("name").value.trim();
-    return team + " " + name;
-}
-
-function checkLock() {
-    const team = document.getElementById("team").value.trim();
-    const name = document.getElementById("name").value.trim();
-    const msgBox = document.getElementById("msg");
-    const sendBtn = document.getElementById("sendBtn");
-
-    if (!team || !name) {
-        msgBox.disabled = true;
-        msgBox.placeholder = "소속 및 이름 입력 후 사용 가능";
-        sendBtn.disabled = true;
-    } else {
-        msgBox.disabled = false;
-        msgBox.placeholder = "메시지 입력";
-        sendBtn.disabled = false;
-    }
-}
-
-function render(data) {
-    const chat = document.getElementById("chat");
-    chat.innerHTML = "";
-
-    data.reverse().forEach(d => {
-        const isMe = d.name === getFullName();
-
-        chat.innerHTML += `
-            <div class="msg ${isMe ? 'me' : 'other'}">
-                <div class="name">${d.name}</div>
-                <div>${d.message}</div>
-                <div class="time">${d.created_at || d.time || ""}</div>
-            </div>
-        `;
-    });
-
-    chat.scrollTop = 0;
-}
-
-async function load() {
-    try {
-        const res = await fetch(SERVER + "/messages");
-        if (!res.ok) return;
-
-        const data = await res.json();
-        if (!Array.isArray(data)) return;
-
-        render(data);
-    } catch (e) {
-        console.log("불러오기 실패", e);
-    }
-}
-
-async function send() {
-    console.log("전송 클릭됨");  //  
     const team = document.getElementById("team").value.trim();
     const name = document.getElementById("name").value.trim();
     const msgBox = document.getElementById("msg");
     const msg = msgBox.value.trim();
 
     if (!team || !name) {
-        alert("소속과 이름을 입력하세요.");
-        checkLock();
+        alert("소속/이름 입력");
         return;
     }
 
@@ -229,35 +62,23 @@ async function send() {
 
     const res = await fetch(SERVER + "/send", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
             name: team + " " + name,
             message: msg
         })
     });
 
-    if (!res.ok) {
-        alert("전송 실패");
-        return;
-    }
-
     msgBox.value = "";
-    await load();
-}
+};
 
-document.getElementById("msg").addEventListener("keydown", e => {
-    if (e.key === "Enter" && !e.shiftKey) {
+/* 엔터 전송 */
+document.getElementById("msg").addEventListener("keydown", function(e){
+    if(e.key === "Enter"){
         e.preventDefault();
         send();
     }
 });
-
-document.getElementById("team").addEventListener("change", checkLock);
-document.getElementById("name").addEventListener("input", checkLock);
-
-checkLock();
-load();
-setInterval(load, 2000);
 </script>
 
 </body>

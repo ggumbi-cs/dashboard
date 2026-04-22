@@ -1,43 +1,28 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-app = Flask(__name__)
-CORS(app)  # 🔥 CORS 허용 (이거 없으면 프론트 연결 안됨)
+app = FastAPI()
 
-# 메모리 저장 (임시 DB)
+# 🔥 CORS 허용 (이게 핵심)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 모든 접속 허용
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 messages = []
 
-# 서버 확인용
-@app.route("/")
-def home():
+@app.get("/")
+def root():
     return {"message": "chat server alive"}
 
-# 메시지 전송
-@app.route("/send", methods=["POST"])
-def send():
-    data = request.get_json()
-
-    if not data:
-        return {"error": "no data"}, 400
-
-    name = data.get("name", "익명")
-    message = data.get("message", "")
-
-    messages.append({
-        "name": name,
-        "message": message
-    })
-
-    return {"status": "ok"}
-
-# 메시지 조회
-@app.route("/messages", methods=["GET"])
+@app.get("/messages")
 def get_messages():
-    return jsonify(messages)
+    return messages
 
-
-# 🔥 Railway용 (중요)
-if __name__ == "__main__":
-    import os
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+@app.post("/send")
+def send_message(data: dict):
+    messages.append(data)
+    return {"status": "ok"}

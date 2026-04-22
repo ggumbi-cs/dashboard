@@ -1,81 +1,117 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import os
 import psycopg2
-from datetime import datetime
 
 app = Flask(__name__)
+CORS(app)
 
-# =========================
-# DB 연결 함수 (지연 연결)
-# =========================
+
 def get_conn():
-    return psycopg2.connect(os.environ.get("DATABASE_URL"))
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        raise RuntimeError("DATABASE_URL 환경변수가 없습니다.")
+    return psycopg2.connect(database_url)
 
-# =========================
-# 기본 테스트
-# =========================
-@app.route("/")
-def home():
-    return "OK"
 
-# =========================
-# 메시지 저장
-# =========================
-@app.route("/send", methods=["POST"])
-def send_message():
-    data = request.json
-    name = data.get("name")
-    message = data.get("message")
-
+def ensure_table():
     conn = get_conn()
     cur = conn.cursor()
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS messages (
             id SERIAL PRIMARY KEY,
-            name TEXT,
-            message TEXT,
+            name TEXT NOT NULL,
+            message TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-
-    cur.execute(
-        "INSERT INTO messages (name, message) VALUES (%s, %s)",
-        (name, message)
-    )
 
     conn.commit()
     cur.close()
     conn.close()
 
-    return jsonify({"status": "ok"})
 
-# =========================
-# 메시지 불러오기
-# =========================
-@app.route("/messages")
+@app.route("/")
+def home():
+    return "OK"
+
+
+@app.route("/messages", methods=["GET"])
 def get_messages():
-    conn = get_conn()
-    cur = conn.cursor()
+    try:
+        ensure_table()
 
-    cur.execute("SELECT name, message, created_at FROM messages ORDER BY id DESC")
-    rows = cur.fetchall()
+        conn = get_conn()
+        cur = conn.cursor()
 
-    cur.close()
-    conn.close()
+        cur.execute("""
+            SELECT name, message, created_at
+            FROM messages
+            ORDER BY id DESC
+        """)
 
-    result = []
-    for r in rows:
-        result.append({
-            "name": r[0],
-            "message": r[1],
-            "created_at": str(r[2])
-        })
+        rows = cur.fetchall()
 
-    return jsonify(result)
+        result = []
+        for row in rows:
+            result.append({
+                "name": row[0],
+                "message": row[1],
+                "created_at": row[2].strftime("%Y/%m/%d %H:%M:%S") if row[2] else ""
+            })
 
-# =========================
-# 실행
-# =========================
+        cur.close()
+        conn.close()
+
+        return jsonify(result)
+
+    except Exception as e:
+        print("GET /messages 오류:", str(e))
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+
+@app.route("/send", methods=["POST"])
+def send_message():
+    try:
+        data = request.get_json(silent=True) or {}
+
+        name = str(data.get("name", "")).strip()
+        message = str(data.get("message", "")).strip()
+
+        if not name or not message:
+            return jsonify({
+                "status": "error",
+                "message": "name 또는 message가 비어 있습니다."
+            }), 400
+
+        ensure_table()
+
+        conn = get_conn()
+        cur = conn.cursor()
+
+        cur.execute("""
+            INSERT INTO messages (name, message)
+            VALUES (%s, %s)
+        """, (name, message))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({"status": "ok"})
+
+    except Exception as e:
+        print("POST /send 오류:", str(e))
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)

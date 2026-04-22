@@ -412,6 +412,12 @@ function escapeHtml(text) {
 
 function render(data) {
     const chat = document.getElementById("chat");
+
+    const prevScrollTop = chat.scrollTop;
+    const prevScrollHeight = chat.scrollHeight;
+    const prevClientHeight = chat.clientHeight;
+    const isNearBottom = (prevScrollHeight - (prevScrollTop + prevClientHeight)) <= 40;
+
     chat.innerHTML = "";
 
     const list = [...data].reverse();
@@ -432,7 +438,18 @@ function render(data) {
         `;
     });
 
-    chat.scrollTop = chat.scrollHeight;
+    if (prevScrollHeight === 0) {
+        chat.scrollTop = chat.scrollHeight;
+        return;
+    }
+
+    if (isNearBottom) {
+        chat.scrollTop = chat.scrollHeight;
+    } else {
+        const newScrollHeight = chat.scrollHeight;
+        const heightDiff = newScrollHeight - prevScrollHeight;
+        chat.scrollTop = prevScrollTop + heightDiff;
+    }
 }
 
 function getMessageKey(messageObj) {

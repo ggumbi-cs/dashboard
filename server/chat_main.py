@@ -1,93 +1,138 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import os
 import sqlite3
 from datetime import datetime
-import os
+
+try:
+    import psycopg2
+except ImportError:
+    psycopg2 = None
 
 app = Flask(__name__)
 CORS(app)
 
-# ======================
-# DB 초기화
-# ======================
-def init_db():
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+USE_POSTGRES = bool(DATABASE_URL and psycopg2 is not None)
+
+
+def get_sqlite_conn():
     conn = sqlite3.connect("chat.db")
-    cur = conn.cursor()
+    conn.row_factory = sqlite3.Row
+    return conn
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            message TEXT,
-            time TEXT
+
+def get_postgres_conn():
+    return psycopg2.connect(DATABASE_URL)
+
+
+def init_db():
+    if USE_POSTGRES:
+        conn = get_postgres_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS messages (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                message TEXT NOT NULL,
+                time TEXT NOT NULL
+            )
+        """)
+        conn.commit()
+        cur.close()
+        conn.close()
+    else:
+        conn = get_sqlite_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                message TEXT NOT NULL,
+                time TEXT NOT NULL
+            )
+        """)
+        conn.commit()
+        conn.close()
+
+
+def save_message(name: str, message: str, time_str: str):
+    if USE_POSTGRES:
+        conn = get_postgres_conn()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO messages (name, message, time) VALUES (%s, %s, %s)",
+            (name, message, time_str)
         )
-    """)
+        conn.commit()
+        cur.close()
+        conn.close()
+    else:
+        conn = get_sqlite_conn()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO messages (name, message, time) VALUES (?, ?, ?)",
+            (name, message, time_str)
+        )
+        conn.commit()
+        conn.close()
 
-    conn.commit()
-    conn.close()
+
+def load_messages():
+    if USE_POSTGRES:
+        conn = get_postgres_conn()
+        cur = conn.cursor()
+        cur.execute("SELECT name, message, time FROM messages ORDER BY id ASC")
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return [{"name": r[0], "message": r[1], "time": r[2]} for r in rows]
+    else:
+        conn = get_sqlite_conn()
+        cur = conn.cursor()
+        cur.execute("SELECT name, message, time FROM messages ORDER BY id ASC")
+        rows = cur.fetchall()
+        conn.close()
+        return [{"name": r["name"], "message": r["message"], "time": r["time"]} for r in rows]
+
 
 init_db()
 
-# ======================
-# 서버 상태 확인
-# ======================
-@app.route("/")
+
+@app.route("/", methods=["GET"])
 def home():
-    return {"message": "chat server alive"}
+    return jsonify({
+        "message": "chat server alive",
+        "db": "postgres" if USE_POSTGRES else "sqlite"
+    })
 
-# ======================
-# 메시지 전송
-# ======================
-@app.route("/send", methods=["POST"])
-def send():
-    data = request.get_json()
 
-    if not data:
-        return {"error": "no data"}, 400
-
-    name = data.get("name", "")
-    message = data.get("message", "")
-    time = data.get("time", datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
-
-    conn = sqlite3.connect("chat.db")
-    cur = conn.cursor()
-
-    cur.execute(
-        "INSERT INTO messages (name, message, time) VALUES (?, ?, ?)",
-        (name, message, time)
-    )
-
-    conn.commit()
-    conn.close()
-
-    return {"status": "ok"}
-
-# ======================
-# 메시지 조회
-# ======================
 @app.route("/messages", methods=["GET"])
 def get_messages():
-    conn = sqlite3.connect("chat.db")
-    cur = conn.cursor()
+    return jsonify(load_messages())
 
-    cur.execute("SELECT name, message, time FROM messages ORDER BY id ASC")
-    rows = cur.fetchall()
 
-    conn.close()
+@app.route("/send", methods=["POST"])
+def send():
+    data = request.get_json(silent=True)
 
-    result = []
-    for r in rows:
-        result.append({
-            "name": r[0],
-            "message": r[1],
-            "time": r[2]
-        })
+    if not data:
+        return jsonify({"status": "error", "reason": "no json body"}), 400
 
-    return jsonify(result)
+    name = str(data.get("name", "")).strip()
+    message = str(data.get("message", "")).strip()
+    time_str = str(data.get("time", "")).strip()
 
-# ======================
-# 실행
-# ======================
+    if not name or not message:
+        return jsonify({"status": "error", "reason": "name or message empty"}), 400
+
+    if not time_str:
+        time_str = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+
+    save_message(name, message, time_str)
+    return jsonify({"status": "ok"})
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)

@@ -40,7 +40,6 @@ input, select {
     <option>직접입력</option>
 </select>
 
-<!-- 3종 선택 -->
 <div id="selectWrap">
     <label>3종 선택</label>
     <select id="productSelect">
@@ -50,7 +49,6 @@ input, select {
     </select>
 </div>
 
-<!-- 직접입력 -->
 <div id="inputWrap" style="display:none;">
     <label>모델명 입력</label>
     <input type="text" id="productInput">
@@ -145,7 +143,8 @@ function buildMemo(){
         if(r==="AS"||r==="검수"){
             if(!c) return "고객명을 입력해주세요.";
             if(!s) return "증상을 입력해주세요.";
-            return `★${r} 링크맘 엄감★ ${c}고객님 / ${s}`;
+            // 🔥 여기만 수정됨 (제품명 추가)
+            return `★${r} 링크맘 엄감★ (${p}) ${c}고객님 / ${s}`;
         }
     }
 
@@ -166,7 +165,7 @@ function buildMemo(){
         if(!c) return "고객명을 입력해주세요.";
         if(!p) return "모델명을 입력해주세요.";
         if(!s) return "증상을 입력해주세요.";
-        return `★${r} 링크맘 엄감★${c}고객님 / ${p} / ${s}`;
+        return `★${r} 링크맘 엄감★ (${p}) ${c}고객님 / ${s}`;
     }
 
     return "";

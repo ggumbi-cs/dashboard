@@ -1,42 +1,81 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os
+import sqlite3
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
 
-messages = []
+# DB 초기화
+def init_db():
+    conn = sqlite3.connect("chat.db")
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            message TEXT,
+            time TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
 
-@app.route("/", methods=["GET"])
+init_db()
+
+# 서버 확인용
+@app.route("/")
 def home():
-    return jsonify({
-        "message": "chat server alive"
-    })
+    return {"message": "chat server alive"}
 
-@app.route("/messages", methods=["GET"])
-def get_messages():
-    return jsonify(messages)
-
+# 메시지 전송
 @app.route("/send", methods=["POST"])
-def send_message():
-    data = request.get_json(silent=True)
+def send():
+    data = request.get_json()
 
     if not data:
-        return jsonify({"status": "error", "reason": "no json body"}), 400
+        return {"error": "no data"}, 400
 
-    name = str(data.get("name", "")).strip()
-    message = str(data.get("message", "")).strip()
+    name = data.get("name", "")
+    message = data.get("message", "")
+    time = data.get("time", datetime.now().strftime("%Y/%m/%d %H:%M"))
 
-    if not name or not message:
-        return jsonify({"status": "error", "reason": "name or message empty"}), 400
+    conn = sqlite3.connect("chat.db")
+    cur = conn.cursor()
 
-    messages.append({
-        "name": name,
-        "message": message
-    })
+    cur.execute(
+        "INSERT INTO messages (name, message, time) VALUES (?, ?, ?)",
+        (name, message, time)
+    )
 
-    return jsonify({"status": "ok"})
+    conn.commit()
+    conn.close()
 
+    return {"status": "ok"}
+
+# 메시지 조회
+@app.route("/messages", methods=["GET"])
+def get_messages():
+    conn = sqlite3.connect("chat.db")
+    cur = conn.cursor()
+
+    cur.execute("SELECT name, message, time FROM messages ORDER BY id ASC")
+    rows = cur.fetchall()
+
+    conn.close()
+
+    result = []
+    for r in rows:
+        result.append({
+            "name": r[0],
+            "message": r[1],
+            "time": r[2]
+        })
+
+    return jsonify(result)
+
+# 실행
 if __name__ == "__main__":
+    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)

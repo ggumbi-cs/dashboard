@@ -11,7 +11,7 @@ body {
 }
 
 #chat-container {
-    max-width: 900px;
+    max-width: 1000px;
     margin: 30px auto;
 }
 
@@ -28,13 +28,17 @@ input, textarea {
     margin-top: 10px;
 }
 
+#dept {
+    width: 120px;
+}
+
 #username {
-    width: 200px;
+    width: 150px;
 }
 
 #message {
     width: 100%;
-    height: 60px;
+    height: 70px;
     resize: none;
 }
 
@@ -51,7 +55,9 @@ button {
 
     <h2>CS 채팅</h2>
 
-    <input id="username" placeholder="이름 입력">
+    <!-- 🔥 소속 + 이름 -->
+    <input id="dept" placeholder="소속">
+    <input id="username" placeholder="이름">
 
     <div id="chat-box"></div>
 
@@ -65,12 +71,16 @@ button {
 
 const SERVER_URL = "https://adaptive-expression-production-ba28.up.railway.app";
 
-// ✅ 전송 함수
+// 🔥 전송
 function sendMessage() {
+    const dept = document.getElementById("dept").value;
     const name = document.getElementById("username").value;
     const msg = document.getElementById("message").value;
 
-    if (!name || !msg) return;
+    if (!dept || !name || !msg) {
+        alert("소속/이름/메시지 입력 필요");
+        return;
+    }
 
     fetch(SERVER_URL + "/send", {
         method: "POST",
@@ -78,17 +88,24 @@ function sendMessage() {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
+            dept: dept,
             name: name,
             message: msg
         })
     })
-    .then(() => {
+    .then(res => res.json())
+    .then(data => {
+        console.log("전송 성공:", data);
         document.getElementById("message").value = "";
-        loadMessages(); // 🔥 바로 갱신
+        loadMessages();
+    })
+    .catch(err => {
+        console.error("전송 실패:", err);
+        alert("서버 연결 실패");
     });
 }
 
-// ✅ 메시지 불러오기
+// 🔥 불러오기
 function loadMessages() {
     fetch(SERVER_URL + "/messages")
     .then(res => res.json())
@@ -97,23 +114,28 @@ function loadMessages() {
         chatBox.innerHTML = "";
 
         data.forEach(msg => {
-            chatBox.innerHTML += `<div><b>${msg.name}</b>: ${msg.message}</div>`;
+            chatBox.innerHTML += `
+                <div>
+                    <b>${msg.dept} ${msg.name}</b> : ${msg.message}
+                </div>
+            `;
         });
 
         chatBox.scrollTop = chatBox.scrollHeight;
+    })
+    .catch(err => {
+        console.error("불러오기 실패:", err);
     });
 }
 
-// ✅ 엔터 처리
+// 🔥 엔터 전송 / Shift+Enter 줄바꿈
 document.getElementById("message").addEventListener("keydown", function(e) {
 
-    // Enter만 → 전송
     if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
     }
 
-    // Shift+Enter → 줄바꿈 (기본동작 유지)
 });
 
 // 자동 갱신

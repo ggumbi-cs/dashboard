@@ -5,81 +5,18 @@
 <title>CS 채팅</title>
 
 <style>
-body {
-    font-family: Arial;
-    background: #f5f5f5;
-}
-
-/* 👉 전체 컨테이너 폭 줄임 */
-.chat-wrapper {
-    width: 60%;
-    margin: 30px auto;
-}
-
-/* 입력 영역 */
-.top-area {
-    margin-bottom: 10px;
-}
-
-/* 채팅창 */
+body { font-family: Arial; background:#f5f5f5; }
+.chat-wrapper { width:60%; margin:30px auto; }
 .chat-box {
-    width: 100%;
-    height: 400px;
-    background: #fff;
-    border: 1px solid #ccc;
-    overflow-y: auto;
-    padding: 10px;
+    width:100%; height:400px; background:#fff;
+    border:1px solid #ccc; overflow-y:auto; padding:10px;
 }
-
-/* 말풍선 */
-.msg {
-    margin: 10px 0;
-    padding: 10px;
-    border-radius: 10px;
-    max-width: 70%;
-    word-break: break-all;
-}
-
-/* 내 메시지 */
-.me {
-    background: #cfe5ff;
-    margin-left: auto;
-}
-
-/* 상대 메시지 */
-.other {
-    background: #eee;
-    margin-right: auto;
-}
-
-/* 이름 */
-.name {
-    font-size: 12px;
-    color: #555;
-    margin-bottom: 3px;
-}
-
-/* 시간 */
-.time {
-    font-size: 11px;
-    color: #888;
-    text-align: right;
-    margin-top: 3px;
-}
-
-/* 입력창 */
-.input-area {
-    margin-top: 10px;
-}
-
-textarea {
-    width: 100%;
-    height: 60px;
-}
-
-button {
-    margin-top: 5px;
-}
+.msg { margin:10px 0; padding:10px; border-radius:10px; max-width:70%; word-break:break-all; }
+.me { background:#cfe5ff; margin-left:auto; }
+.other { background:#eee; margin-right:auto; }
+.name { font-size:12px; color:#555; margin-bottom:3px; }
+.time { font-size:11px; color:#888; text-align:right; margin-top:3px; }
+textarea { width:100%; height:60px; }
 </style>
 </head>
 
@@ -87,40 +24,42 @@ button {
 
 <div class="chat-wrapper">
 
-    <h2>CS 채팅</h2>
+<h2>CS 채팅</h2>
 
-    <div class="top-area">
-        소속:
-        <select id="team">
-            <option value="">선택</option>
-            <option>꿈비</option>
-            <option>에르모어</option>
-            <option>가이아</option>
-        </select>
+소속:
+<select id="team">
+<option value="">선택</option>
+<option>꿈비</option>
+<option>에르모어</option>
+<option>가이아</option>
+</select>
 
-        이름:
-        <input type="text" id="name">
-    </div>
+이름:
+<input id="name">
 
-    <div id="chat" class="chat-box"></div>
+<div id="chat" class="chat-box"></div>
 
-    <div class="input-area">
-        <textarea id="msg" placeholder="소속 및 이름 입력 후 사용 가능"></textarea>
-        <button onclick="send()">전송</button>
-    </div>
+<textarea id="msg" placeholder="소속 및 이름 입력 후 사용 가능"></textarea>
+<button onclick="send()">전송</button>
 
 </div>
 
 <script>
 const SERVER = "https://adaptable-expression-production-ba28.up.railway.app";
 
-function getNow() {
+let lastData = [];   // 👉 기존 데이터 보존
+
+function getNow(){
     const d = new Date();
-    return d.getFullYear() + "/" +
-        String(d.getMonth()+1).padStart(2,'0') + "/" +
-        String(d.getDate()).padStart(2,'0') + " " +
-        String(d.getHours()).padStart(2,'0') + ":" +
-        String(d.getMinutes()).padStart(2,'0');
+    return d.getFullYear()+"/"+
+    (d.getMonth()+1).toString().padStart(2,'0')+"/"+
+    d.getDate().toString().padStart(2,'0')+" "+
+    d.getHours().toString().padStart(2,'0')+":"+
+    d.getMinutes().toString().padStart(2,'0');
+}
+
+function getFullName(){
+    return document.getElementById("team").value + " " + document.getElementById("name").value;
 }
 
 function render(data){
@@ -129,40 +68,39 @@ function render(data){
 
     data.forEach(d=>{
         const isMe = d.name === getFullName();
-
         chat.innerHTML += `
         <div class="msg ${isMe ? 'me':'other'}">
             <div class="name">${d.name}</div>
             <div>${d.message}</div>
-            <div class="time">${d.time || ''}</div>
+            <div class="time">${d.time || ""}</div>
         </div>`;
     });
 
     chat.scrollTop = chat.scrollHeight;
 }
 
-function getFullName(){
-    const team = document.getElementById("team").value;
-    const name = document.getElementById("name").value;
-    return team + " " + name;
-}
+async function load(){
+    try{
+        const res = await fetch(SERVER + "/messages");
 
-function checkLock(){
-    const team = document.getElementById("team").value;
-    const name = document.getElementById("name").value;
-    const msgBox = document.getElementById("msg");
+        // 👉 서버 응답 이상 시 무시
+        if(!res.ok) return;
 
-    if(!team || !name){
-        msgBox.disabled = true;
-        msgBox.placeholder = "소속 및 이름 입력 후 사용 가능";
-    }else{
-        msgBox.disabled = false;
-        msgBox.placeholder = "메시지 입력";
+        const data = await res.json();
+
+        // 👉 데이터 비어있으면 기존 유지 (핵심)
+        if(!data || data.length === 0) return;
+
+        // 👉 기존보다 적으면 무시 (롤백 방지)
+        if(data.length < lastData.length) return;
+
+        lastData = data;
+        render(data);
+
+    }catch(e){
+        console.log("서버 끊김 - 기존 유지");
     }
 }
-
-document.getElementById("team").onchange = checkLock;
-document.getElementById("name").oninput = checkLock;
 
 async function send(){
     const team = document.getElementById("team").value;
@@ -170,19 +108,17 @@ async function send(){
     const msg = document.getElementById("msg").value;
 
     if(!team || !name){
-        alert("소속과 이름 입력");
+        alert("소속/이름 입력");
         return;
     }
 
     if(!msg.trim()) return;
 
-    const fullName = team + " " + name;
-
-    await fetch(SERVER + "/send", {
+    await fetch(SERVER + "/send",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body: JSON.stringify({
-            name: fullName,
+            name: team+" "+name,
             message: msg,
             time: getNow()
         })
@@ -192,26 +128,15 @@ async function send(){
     load();
 }
 
-/* 엔터 전송 / 쉬프트 줄바꿈 */
-document.getElementById("msg").addEventListener("keydown", function(e){
-    if(e.key === "Enter" && !e.shiftKey){
+// 👉 엔터 전송
+document.getElementById("msg").addEventListener("keydown", e=>{
+    if(e.key==="Enter" && !e.shiftKey){
         e.preventDefault();
         send();
     }
 });
 
-async function load(){
-    try{
-        const res = await fetch(SERVER + "/messages");
-        const data = await res.json();
-        render(data);
-    }catch(e){
-        console.log("서버 오류");
-    }
-}
-
 setInterval(load, 2000);
-checkLock();
 load();
 </script>
 

@@ -1446,7 +1446,7 @@ function render(){
     // ── Issue 탭: 26년 3월 낮잠이불 리콜 현황 (정적 데이터) ──
 
     const issueRoot = el("div");
-    issueRoot.style.cssText = "display:grid;grid-template-rows:auto 1fr 1fr;gap:12px;";
+    issueRoot.style.cssText = "display:grid;grid-template-rows:auto 1fr 1fr auto;gap:12px;";
     cnt.appendChild(issueRoot);
 
     // ── 섹션 타이틀 ──
@@ -1621,6 +1621,79 @@ function render(){
     ));
 
     issueRoot.appendChild(row2);
+
+    // ── 3행: 직접 입력 가능한 비고 테이블 ──
+    const memoWrap = el("div");
+    memoWrap.style.cssText = "background:#fff;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;";
+
+    // 테이블 헤더
+    const memoHead = el("div");
+    memoHead.style.cssText = "display:grid;grid-template-columns:180px 1fr;background:#0f1f3d;";
+    memoHead.innerHTML = `
+      <div style="padding:9px 16px;font-size:12px;font-weight:700;color:#fff;border-right:1px solid rgba(255,255,255,0.1);">구분</div>
+      <div style="padding:9px 16px;font-size:12px;font-weight:700;color:#fff;">진행내용</div>`;
+    memoWrap.appendChild(memoHead);
+
+    // 초기 행 데이터 (직접 입력 가능)
+    const memoRows = [
+      { label:"낮잠이불 리콜", content:"주 2~4건 접수로 마무리 단계로 예상" },
+      { label:"낮잠이불 리콜", content:"주 2~4건 접수로 마무리 단계로 예상" },
+      { label:"낮잠이불 리콜", content:"주 2~4건 접수로 마무리 단계로 예상" },
+    ];
+
+    const memoBody = el("div");
+    memoRows.forEach((row, i) => {
+      const tr = el("div");
+      tr.style.cssText = `display:grid;grid-template-columns:180px 1fr;border-top:1px solid #e2e8f0;background:${i%2===0?"#fff":"#f8fafc"};`;
+
+      const tdLabel = el("div");
+      tdLabel.style.cssText = "border-right:1px solid #e2e8f0;";
+      const inLabel = document.createElement("input");
+      inLabel.type = "text";
+      inLabel.value = row.label;
+      inLabel.style.cssText = "width:100%;padding:12px 16px;border:none;outline:none;font-size:12px;font-weight:600;color:#0f1f3d;background:transparent;font-family:inherit;text-align:center;";
+      inLabel.placeholder = "구분 입력";
+      tdLabel.appendChild(inLabel);
+
+      const tdContent = el("div");
+      const inContent = document.createElement("input");
+      inContent.type = "text";
+      inContent.value = row.content;
+      inContent.style.cssText = "width:100%;padding:12px 16px;border:none;outline:none;font-size:12px;color:#334155;background:transparent;font-family:inherit;";
+      inContent.placeholder = "진행내용 입력";
+      tdContent.appendChild(inContent);
+
+      tr.appendChild(tdLabel);
+      tr.appendChild(tdContent);
+      memoBody.appendChild(tr);
+    });
+    memoWrap.appendChild(memoBody);
+
+    // 행 추가 버튼
+    const addRowBtn = el("button");
+    addRowBtn.style.cssText = "width:100%;padding:8px;background:#f8fafc;border:none;border-top:1px solid #e2e8f0;color:#64748b;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;";
+    addRowBtn.textContent = "+ 행 추가";
+    addRowBtn.onmouseenter = function(){ this.style.background="#f1f5f9"; this.style.color="#0f1f3d"; };
+    addRowBtn.onmouseleave = function(){ this.style.background="#f8fafc"; this.style.color="#64748b"; };
+    addRowBtn.onclick = function(){
+      const idx = memoBody.children.length;
+      const tr2 = el("div");
+      tr2.style.cssText = `display:grid;grid-template-columns:180px 1fr;border-top:1px solid #e2e8f0;background:${idx%2===0?"#fff":"#f8fafc"};`;
+      const td1 = el("div"); td1.style.cssText = "border-right:1px solid #e2e8f0;";
+      const i1 = document.createElement("input"); i1.type="text"; i1.placeholder="구분 입력";
+      i1.style.cssText = "width:100%;padding:12px 16px;border:none;outline:none;font-size:12px;font-weight:600;color:#0f1f3d;background:transparent;font-family:inherit;text-align:center;";
+      td1.appendChild(i1);
+      const td2 = el("div");
+      const i2 = document.createElement("input"); i2.type="text"; i2.placeholder="진행내용 입력";
+      i2.style.cssText = "width:100%;padding:12px 16px;border:none;outline:none;font-size:12px;color:#334155;background:transparent;font-family:inherit;";
+      td2.appendChild(i2);
+      tr2.appendChild(td1); tr2.appendChild(td2);
+      memoBody.appendChild(tr2);
+      i1.focus();
+    };
+    memoWrap.appendChild(addRowBtn);
+
+    issueRoot.appendChild(memoWrap);
     return;
   }
 

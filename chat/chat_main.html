@@ -6,21 +6,50 @@
 
 <style>
 body { font-family: Arial; background:#f5f5f5; }
-.chat-wrapper { width:60%; margin:30px auto; }
-.chat-box {
-    width:100%; height:400px; background:#fff;
-    border:1px solid #ccc; overflow-y:auto; padding:10px;
+
+.chat-wrapper {
+    width: 60%;
+    margin: 30px auto;
 }
-.msg { margin:10px 0; padding:10px; border-radius:10px; max-width:70%; word-break:break-all; }
+
+.chat-box {
+    width:100%;
+    height:400px;
+    background:#fff;
+    border:1px solid #ccc;
+    overflow-y:auto;
+    padding:10px;
+}
+
+.msg {
+    margin:10px 0;
+    padding:10px;
+    border-radius:10px;
+    max-width:70%;
+    word-break:break-all;
+}
+
 .me { background:#cfe5ff; margin-left:auto; }
 .other { background:#eee; margin-right:auto; }
-.name { font-size:12px; color:#555; margin-bottom:3px; }
-.time { font-size:11px; color:#888; text-align:right; margin-top:3px; }
+
+.name { font-size:12px; color:#555; }
+.time { font-size:11px; color:#888; text-align:right; }
+
 textarea { width:100%; height:60px; }
+
+#version {
+    position:absolute;
+    top:10px;
+    right:20px;
+    font-size:12px;
+    color:#888;
+}
 </style>
 </head>
 
 <body>
+
+<div id="version">수정버전 : 로딩중...</div>
 
 <div class="chat-wrapper">
 
@@ -47,27 +76,38 @@ textarea { width:100%; height:60px; }
 <script>
 const SERVER = "https://adaptable-expression-production-ba28.up.railway.app";
 
-let lastData = [];   // 👉 기존 데이터 보존
+let lastData = [];
 
-function getNow(){
+// ======================
+// 버전 표시
+// ======================
+function setVersion(){
     const d = new Date();
-    return d.getFullYear()+"/"+
-    (d.getMonth()+1).toString().padStart(2,'0')+"/"+
-    d.getDate().toString().padStart(2,'0')+" "+
-    d.getHours().toString().padStart(2,'0')+":"+
-    d.getMinutes().toString().padStart(2,'0');
-}
+    const t =
+        d.getFullYear()+"/"+
+        (d.getMonth()+1).toString().padStart(2,'0')+"/"+
+        d.getDate().toString().padStart(2,'0')+" "+
+        d.getHours().toString().padStart(2,'0')+":"+
+        d.getMinutes().toString().padStart(2,'0')+":"+
+        d.getSeconds().toString().padStart(2,'0');
 
+    document.getElementById("version").innerText = "수정버전 : " + t;
+}
+setVersion();
+
+// ======================
 function getFullName(){
     return document.getElementById("team").value + " " + document.getElementById("name").value;
 }
 
+// ======================
 function render(data){
     const chat = document.getElementById("chat");
     chat.innerHTML = "";
 
     data.forEach(d=>{
         const isMe = d.name === getFullName();
+
         chat.innerHTML += `
         <div class="msg ${isMe ? 'me':'other'}">
             <div class="name">${d.name}</div>
@@ -79,29 +119,27 @@ function render(data){
     chat.scrollTop = chat.scrollHeight;
 }
 
+// ======================
 async function load(){
     try{
         const res = await fetch(SERVER + "/messages");
 
-        // 👉 서버 응답 이상 시 무시
         if(!res.ok) return;
 
         const data = await res.json();
 
-        // 👉 데이터 비어있으면 기존 유지 (핵심)
         if(!data || data.length === 0) return;
-
-        // 👉 기존보다 적으면 무시 (롤백 방지)
         if(data.length < lastData.length) return;
 
         lastData = data;
         render(data);
 
     }catch(e){
-        console.log("서버 끊김 - 기존 유지");
+        console.log("서버 끊김 - 유지");
     }
 }
 
+// ======================
 async function send(){
     const team = document.getElementById("team").value;
     const name = document.getElementById("name").value;
@@ -119,8 +157,7 @@ async function send(){
         headers:{"Content-Type":"application/json"},
         body: JSON.stringify({
             name: team+" "+name,
-            message: msg,
-            time: getNow()
+            message: msg
         })
     });
 
@@ -128,7 +165,9 @@ async function send(){
     load();
 }
 
-// 👉 엔터 전송
+// ======================
+// 엔터 전송
+// ======================
 document.getElementById("msg").addEventListener("keydown", e=>{
     if(e.key==="Enter" && !e.shiftKey){
         e.preventDefault();

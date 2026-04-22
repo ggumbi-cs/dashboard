@@ -4,100 +4,200 @@
 <meta charset="UTF-8">
 <title>CS 채팅</title>
 <style>
+* {
+    box-sizing: border-box;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
     margin: 0;
+    font-family: Arial, sans-serif;
+    background: #abc1d1;
 }
 
 .chat-wrapper {
-    width: 60%;
-    margin: 30px auto;
+    width: 420px;
+    max-width: calc(100vw - 20px);
+    height: calc(100vh - 20px);
+    margin: 10px auto;
+    background: #b2c7da;
+    display: flex;
+    flex-direction: column;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    position: relative;
+}
+
+.top-bar {
+    background: #abc1d1;
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
 }
 
 .chat-title {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: bold;
-    margin-bottom: 20px;
+    margin-bottom: 8px;
+    color: #1f1f1f;
 }
 
 .user-row {
-    margin-bottom: 10px;
     display: flex;
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
 }
 
+.user-row label {
+    font-size: 12px;
+    color: #2b2b2b;
+}
+
 .user-row select,
 .user-row input {
     height: 30px;
     padding: 4px 8px;
-    font-size: 14px;
+    font-size: 13px;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 8px;
+    background: #fff;
 }
 
 .chat-box {
-    width: 100%;
-    height: 400px;
-    background: #fff;
-    border: 1px solid #ccc;
+    flex: 1;
     overflow-y: auto;
-    padding: 10px;
-    box-sizing: border-box;
+    padding: 14px 12px 18px;
+    background: #b2c7da;
 }
 
-.msg {
+.msg-row {
+    display: flex;
     margin: 10px 0;
-    padding: 10px;
-    border-radius: 10px;
-    max-width: 70%;
-    word-break: break-all;
 }
 
-.me {
-    background: #cfe5ff;
-    margin-left: auto;
+.msg-row.me {
+    justify-content: flex-end;
 }
 
-.other {
-    background: #eee;
-    margin-right: auto;
+.msg-row.other {
+    justify-content: flex-start;
+}
+
+.msg-wrap {
+    max-width: 78%;
+    display: flex;
+    flex-direction: column;
+}
+
+.msg-row.me .msg-wrap {
+    align-items: flex-end;
+}
+
+.msg-row.other .msg-wrap {
+    align-items: flex-start;
 }
 
 .name {
     font-size: 12px;
-    color: #555;
-    margin-bottom: 3px;
+    color: #3e3e3e;
+    margin-bottom: 4px;
+    padding: 0 2px;
+}
+
+.bubble-line {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.msg-row.me .bubble-line {
+    flex-direction: row;
+}
+
+.msg-row.other .bubble-line {
+    flex-direction: row;
+}
+
+.bubble {
+    padding: 10px 12px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.45;
+    word-break: break-word;
+    white-space: pre-wrap;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+}
+
+.msg-row.me .bubble {
+    background: #fee500;
+    color: #111;
+    border-top-right-radius: 4px;
+}
+
+.msg-row.other .bubble {
+    background: #ffffff;
+    color: #111;
+    border-top-left-radius: 4px;
 }
 
 .time {
     font-size: 11px;
-    color: #888;
-    text-align: right;
-    margin-top: 3px;
+    color: #55606b;
+    white-space: nowrap;
+    margin-bottom: 2px;
+}
+
+.bottom-area {
+    background: #f7f7f7;
+    border-top: 1px solid rgba(0,0,0,0.08);
+    padding: 10px;
+}
+
+.input-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
 }
 
 #msg {
-    width: 100%;
-    height: 70px;
-    margin-top: 10px;
+    flex: 1;
+    min-height: 46px;
+    max-height: 120px;
     resize: none;
     font-size: 14px;
-    padding: 8px;
-    box-sizing: border-box;
+    padding: 11px 12px;
+    border: 1px solid #d6d6d6;
+    border-radius: 12px;
+    background: #fff;
+    line-height: 1.4;
+}
+
+#msg:focus {
+    outline: none;
+    border-color: #c8b400;
 }
 
 #msg:disabled {
-    background: #eee;
+    background: #ececec;
     color: #888;
     cursor: not-allowed;
 }
 
 button {
-    margin-top: 6px;
-    padding: 6px 14px;
+    height: 46px;
+    min-width: 74px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 12px;
+    background: #fee500;
+    color: #111;
     font-size: 14px;
+    font-weight: bold;
     cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+    filter: brightness(0.98);
 }
 
 button:disabled {
@@ -107,10 +207,30 @@ button:disabled {
 
 #version {
     position: absolute;
-    top: 10px;
-    right: 20px;
-    font-size: 12px;
-    color: #888;
+    top: 12px;
+    right: 14px;
+    font-size: 11px;
+    color: rgba(0,0,0,0.45);
+    pointer-events: none;
+}
+
+@media (max-width: 520px) {
+    .chat-wrapper {
+        width: 100vw;
+        max-width: 100vw;
+        height: 100vh;
+        margin: 0;
+        border-radius: 0;
+    }
+
+    #version {
+        top: 10px;
+        right: 10px;
+    }
+
+    .chat-title {
+        padding-right: 90px;
+    }
 }
 </style>
 </head>
@@ -119,26 +239,30 @@ button:disabled {
 <div id="version">수정버전 : 2026/04/22 15:30:00</div>
 
 <div class="chat-wrapper">
-    <div class="chat-title">CS 채팅</div>
+    <div class="top-bar">
+        <div class="chat-title">CS 채팅</div>
 
-    <div class="user-row">
-        <label for="team">소속:</label>
-        <select id="team">
-            <option value="꿈비" selected>꿈비</option>
-            <option value="에르모어">에르모어</option>
-            <option value="가이아">가이아</option>
-        </select>
+        <div class="user-row">
+            <label for="team">소속:</label>
+            <select id="team">
+                <option value="꿈비" selected>꿈비</option>
+                <option value="에르모어">에르모어</option>
+                <option value="가이아">가이아</option>
+            </select>
 
-        <label for="name">이름:</label>
-        <input id="name" type="text" value="심우승">
+            <label for="name">이름:</label>
+            <input id="name" type="text" value="심우승">
+        </div>
     </div>
 
     <div id="chat" class="chat-box"></div>
 
-    <textarea id="msg" placeholder="메시지 입력"></textarea>
-
-    <br>
-    <button type="button" id="sendBtn" onclick="send()">전송</button>
+    <div class="bottom-area">
+        <div class="input-row">
+            <textarea id="msg" placeholder="메시지 입력"></textarea>
+            <button type="button" id="sendBtn" onclick="send()">전송</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -200,10 +324,14 @@ function render(data) {
         const isMe = (d.name || "").trim() === getFullName();
 
         chat.innerHTML += `
-            <div class="msg ${isMe ? 'me' : 'other'}">
-                <div class="name">${escapeHtml(d.name || "")}</div>
-                <div>${escapeHtml(d.message || "")}</div>
-                <div class="time">${escapeHtml(d.created_at || d.time || "")}</div>
+            <div class="msg-row ${isMe ? 'me' : 'other'}">
+                <div class="msg-wrap">
+                    <div class="name">${escapeHtml(d.name || "")}</div>
+                    <div class="bubble-line">
+                        <div class="bubble">${escapeHtml(d.message || "")}</div>
+                        <div class="time">${escapeHtml(d.created_at || d.time || "")}</div>
+                    </div>
+                </div>
             </div>
         `;
     });

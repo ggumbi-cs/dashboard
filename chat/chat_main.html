@@ -1,18 +1,103 @@
-<script>
-const ws = new WebSocket("wss://adaptable-expression-production-ba28.up.railway.app/ws");
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>CS 채팅</title>
 
-ws.onmessage = (event) => {
-    const chat = document.getElementById("chat");
-    chat.innerHTML += "<div>" + event.data + "</div>";
-};
+<style>
+body {
+    font-family: Arial;
+    margin: 0;
+}
+
+#chat-container {
+    max-width: 800px;
+    margin: 30px auto;
+}
+
+#chat-box {
+    border: 1px solid #ccc;
+    height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+input {
+    padding: 10px;
+    margin-top: 10px;
+}
+
+#username {
+    width: 150px;
+}
+
+#message {
+    width: 500px;
+}
+
+button {
+    padding: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="chat-container">
+
+    <h2>CS 채팅</h2>
+
+    <input id="username" placeholder="이름">
+    <br>
+
+    <div id="chat-box"></div>
+
+    <input id="message" placeholder="메시지 입력">
+    <button onclick="sendMessage()">전송</button>
+
+</div>
+
+<script>
+
+const SERVER_URL = "https://adaptive-expression-production-ba28.up.railway.app";
 
 function sendMessage() {
-    const input = document.getElementById("msg");
-    ws.send(input.value);
-    input.value = "";
+    const name = document.getElementById("username").value;
+    const msg = document.getElementById("message").value;
+
+    fetch(SERVER_URL + "/send", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            name: name,
+            message: msg
+        })
+    });
+
+    document.getElementById("message").value = "";
 }
+
+function loadMessages() {
+    fetch(SERVER_URL + "/messages")
+    .then(res => res.json())
+    .then(data => {
+        const chatBox = document.getElementById("chat-box");
+        chatBox.innerHTML = "";
+
+        data.forEach(msg => {
+            chatBox.innerHTML += `<div><b>${msg.name}</b>: ${msg.message}</div>`;
+        });
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+    });
+}
+
+// 1초마다 갱신
+setInterval(loadMessages, 1000);
+
 </script>
 
-<div id="chat"></div>
-<input id="msg" />
-<button onclick="sendMessage()">전송</button>
+</body>
+</html>

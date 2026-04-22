@@ -1,276 +1,194 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>계열사CS 소통챗</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8">
+<title>CS 채팅</title>
 
-    body {
-      margin: 0;
-      font-family: Arial, "Malgun Gothic", sans-serif;
-      background: transparent;
-    }
+<style>
+body {
+    font-family: Arial, sans-serif;
+}
 
-    .chat-wrap {
-      width: 100%;
-      max-width: 1600px;
-      margin: 0 auto;
-      padding: 18px 24px 24px;
-      position: relative;
-    }
+.chat-wrap {
+    width: 90%;
+    margin: auto;
+}
 
-    .version {
-      position: absolute;
-      top: 18px;
-      right: 24px;
-      font-size: 12px;
-      color: #666;
-    }
+.title {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 20px 0;
+}
 
-    .title {
-      font-size: 24px;
-      font-weight: 700;
-      margin: 8px 0 14px;
-    }
+.user-row {
+    margin-bottom: 10px;
+}
 
-    .user-row {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
+#chat-box {
+    width: 100%;
+    height: 420px;
+    border: 1px solid #ccc;
+    overflow-y: auto;
+    padding: 10px;
+    background: #f9f9f9;
+}
 
-    .user-row label {
-      font-weight: 700;
-    }
+.msg {
+    margin: 6px 0;
+    display: flex;
+}
 
-    .user-row input {
-      height: 36px;
-      padding: 6px 10px;
-      border: 1px solid #999;
-      background: #fff;
-      font-size: 16px;
-    }
+.msg.me {
+    justify-content: flex-end;
+}
 
-    #dept {
-      width: 180px;
-    }
+.bubble {
+    max-width: 60%;
+    padding: 8px 12px;
+    border-radius: 12px;
+}
 
-    #username {
-      width: 180px;
-    }
+.me .bubble {
+    background: #d0ebff;
+}
 
-    #chat-box {
-      width: 100%;
-      min-height: 420px;
-      height: 420px;
-      border: 1px solid #bbb;
-      background: #fff;
-      overflow-y: auto;
-      padding: 14px;
-      line-height: 1.5;
-      white-space: pre-wrap;
-    }
+.other .bubble {
+    background: #eee;
+}
 
-    .msg-item {
-      margin-bottom: 10px;
-      word-break: break-word;
-    }
+.name {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 2px;
+}
 
-    .msg-name {
-      font-weight: 700;
-      margin-right: 6px;
-    }
+#msg {
+    width: 100%;
+    height: 80px;
+    margin-top: 10px;
+}
 
-    .input-row {
-      margin-top: 12px;
-    }
+.locked {
+    background: #eee;
+    color: #888;
+}
+</style>
 
-    #msg {
-      width: 100%;
-      height: 92px;
-      resize: none;
-      border: 1px solid #999;
-      padding: 10px;
-      font-size: 16px;
-      background: #fff;
-    }
-
-    .btn-row {
-      margin-top: 8px;
-    }
-
-    #send-btn {
-      min-width: 72px;
-      height: 42px;
-      border: 1px solid #888;
-      background: #fff;
-      cursor: pointer;
-      font-size: 15px;
-    }
-
-    #send-btn:hover {
-      background: #f3f3f3;
-    }
-  </style>
 </head>
+
 <body>
-  <div class="chat-wrap">
-    <div class="version" id="version"></div>
+<div class="chat-wrap">
 
-    <div class="title">CS 채팅</div>
+<div class="title">CS 채팅</div>
 
-    <div class="user-row">
-      <label for="dept">소속:</label>
-      <input id="dept" type="text" placeholder="소속" />
+<div class="user-row">
+    소속:
+    <select id="dept">
+        <option value="">선택</option>
+        <option>꿈비</option>
+        <option>에르모어</option>
+        <option>가이아</option>
+    </select>
 
-      <label for="username">이름:</label>
-      <input id="username" type="text" placeholder="이름" />
-    </div>
+    이름:
+    <input id="username" placeholder="이름 입력">
+</div>
 
-    <div id="chat-box"></div>
+<div id="chat-box"></div>
 
-    <div class="input-row">
-      <textarea id="msg" placeholder="메시지 입력"></textarea>
-    </div>
+<textarea id="msg" class="locked" disabled placeholder="소속 및 이름 입력 후 사용 가능"></textarea>
+<button onclick="sendMessage()">전송</button>
 
-    <div class="btn-row">
-      <button id="send-btn" type="button">전송</button>
-    </div>
-  </div>
+</div>
 
-  <script>
-    const API_URL = "https://adaptable-expression-production-ba28.up.railway.app";
-    const FIXED_VERSION = "수정버전 : 2026/04/22 13:00:00";
+<script>
+const API = "https://adaptable-expression-production-ba28.up.railway.app";
 
-    const deptEl = document.getElementById("dept");
-    const usernameEl = document.getElementById("username");
-    const msgEl = document.getElementById("msg");
-    const chatBoxEl = document.getElementById("chat-box");
-    const sendBtnEl = document.getElementById("send-btn");
-    const versionEl = document.getElementById("version");
+const deptEl = document.getElementById("dept");
+const nameEl = document.getElementById("username");
+const msgEl = document.getElementById("msg");
+const chatBox = document.getElementById("chat-box");
 
-    versionEl.textContent = FIXED_VERSION;
+function getMyName() {
+    return deptEl.value + " " + nameEl.value;
+}
 
-    const LS_DEPT_KEY = "cs_chat_dept";
-    const LS_NAME_KEY = "cs_chat_name";
+function checkLock() {
+    if (!deptEl.value || !nameEl.value) {
+        msgEl.disabled = true;
+        msgEl.classList.add("locked");
+        msgEl.placeholder = "소속 및 이름 입력 후 사용 가능";
+    } else {
+        msgEl.disabled = false;
+        msgEl.classList.remove("locked");
+        msgEl.placeholder = "메시지 입력";
+    }
+}
 
-    deptEl.value = localStorage.getItem(LS_DEPT_KEY) || "꿈비";
-    usernameEl.value = localStorage.getItem(LS_NAME_KEY) || "";
+deptEl.addEventListener("change", checkLock);
+nameEl.addEventListener("input", checkLock);
 
-    deptEl.addEventListener("input", () => {
-      localStorage.setItem(LS_DEPT_KEY, deptEl.value);
+async function loadMessages() {
+    const res = await fetch(API + "/messages");
+    const data = await res.json();
+
+    chatBox.innerHTML = "";
+
+    data.forEach(m => {
+        const isMe = m.name === getMyName();
+
+        const msgDiv = document.createElement("div");
+        msgDiv.className = "msg " + (isMe ? "me" : "other");
+
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+
+        const name = document.createElement("div");
+        name.className = "name";
+        name.innerText = m.name;
+
+        const text = document.createElement("div");
+        text.innerText = m.message;
+
+        bubble.appendChild(name);
+        bubble.appendChild(text);
+        msgDiv.appendChild(bubble);
+        chatBox.appendChild(msgDiv);
     });
 
-    usernameEl.addEventListener("input", () => {
-      localStorage.setItem(LS_NAME_KEY, usernameEl.value);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+async function sendMessage() {
+    if (msgEl.disabled) return;
+
+    const text = msgEl.value.trim();
+    if (!text) return;
+
+    await fetch(API + "/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            name: getMyName(),
+            message: text
+        })
     });
 
-    async function loadMessages() {
-      try {
-        const res = await fetch(`${API_URL}/messages`, {
-          method: "GET",
-          cache: "no-store"
-        });
+    msgEl.value = "";
+    loadMessages();
+}
 
-        if (!res.ok) {
-          console.error("messages load failed:", res.status);
-          return;
-        }
-
-        const data = await res.json();
-        chatBoxEl.innerHTML = "";
-
-        data.forEach((item) => {
-          const row = document.createElement("div");
-          row.className = "msg-item";
-
-          const name = document.createElement("span");
-          name.className = "msg-name";
-          name.textContent = `${item.name} :`;
-
-          const msg = document.createElement("span");
-          msg.textContent = item.message;
-
-          row.appendChild(name);
-          row.appendChild(msg);
-          chatBoxEl.appendChild(row);
-        });
-
-        chatBoxEl.scrollTop = chatBoxEl.scrollHeight;
-      } catch (err) {
-        console.error("messages fetch error:", err);
-      }
-    }
-
-    async function sendMessage() {
-      const dept = deptEl.value.trim();
-      const username = usernameEl.value.trim();
-      const message = msgEl.value.trim();
-
-      if (!dept) {
-        alert("소속을 입력해 주세요.");
-        deptEl.focus();
-        return;
-      }
-
-      if (!username) {
-        alert("이름을 입력해 주세요.");
-        usernameEl.focus();
-        return;
-      }
-
-      if (!message) {
-        msgEl.focus();
-        return;
-      }
-
-      const fullName = `${dept} ${username}`;
-
-      try {
-        const res = await fetch(`${API_URL}/send`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            name: fullName,
-            message: message
-          })
-        });
-
-        if (!res.ok) {
-          const text = await res.text();
-          console.error("send failed:", res.status, text);
-          alert("서버 연결 실패");
-          return;
-        }
-
-        msgEl.value = "";
-        await loadMessages();
-        msgEl.focus();
-      } catch (err) {
-        console.error("send fetch error:", err);
-        alert("서버 연결 실패");
-      }
-    }
-
-    msgEl.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
+msgEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
-      }
-    });
+    }
+});
 
-    sendBtnEl.addEventListener("click", sendMessage);
+setInterval(loadMessages, 2000);
+loadMessages();
+checkLock();
+</script>
 
-    loadMessages();
-    setInterval(loadMessages, 2000);
-  </script>
 </body>
 </html>

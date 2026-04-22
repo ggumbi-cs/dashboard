@@ -33,6 +33,7 @@ body {
     padding: 10px 14px 8px;
     border-bottom: 1px solid rgba(0,0,0,0.08);
     position: relative;
+    min-height: 96px;
 }
 
 .chat-title {
@@ -47,6 +48,7 @@ body {
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
+    padding-right: 108px;
 }
 
 .user-row label {
@@ -64,18 +66,32 @@ body {
     background: #fff;
 }
 
+.user-row select {
+    min-width: 70px;
+}
+
+.user-row input {
+    min-width: 120px;
+    flex: 1;
+}
+
 #alarmToggle {
     position: absolute;
     right: 14px;
-    bottom: 8px;
-    height: 28px;
-    padding: 0 10px;
+    top: 44px;
+    height: 30px;
+    padding: 0 12px;
     border: none;
     border-radius: 999px;
-    background: rgba(255,255,255,0.9);
+    background: rgba(255,255,255,0.95);
     color: #222;
     font-size: 12px;
     cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+#alarmToggle:hover {
+    filter: brightness(0.98);
 }
 
 .chat-box {
@@ -268,6 +284,10 @@ body {
         border-radius: 0;
     }
 
+    .top-bar {
+        min-height: 102px;
+    }
+
     #version {
         top: 10px;
         right: 10px;
@@ -275,6 +295,16 @@ body {
 
     .chat-title {
         padding-right: 90px;
+    }
+
+    .user-row {
+        padding-right: 0;
+        padding-top: 2px;
+    }
+
+    #alarmToggle {
+        top: 44px;
+        right: 10px;
     }
 
     #toast {
@@ -298,6 +328,7 @@ body {
         <div class="user-row">
             <label for="team">소속:</label>
             <select id="team">
+                <option value=""></option>
                 <option value="꿈비">꿈비</option>
                 <option value="에르모어">에르모어</option>
                 <option value="가이아">가이아</option>
@@ -331,6 +362,7 @@ const SERVER = "https://adaptable-expression-production-ba28.up.railway.app";
 let alarmEnabled = true;
 let knownLastMessageKey = null;
 let toastTimer = null;
+let notificationPermissionRequested = false;
 
 function setVersion() {
     const d = new Date();
@@ -428,6 +460,53 @@ function showToast(sender, message) {
     }, 2500);
 }
 
+async function ensureNotificationPermission() {
+    if (!("Notification" in window)) {
+        return "unsupported";
+    }
+
+    if (Notification.permission === "granted") {
+        return "granted";
+    }
+
+    if (Notification.permission === "denied") {
+        return "denied";
+    }
+
+    if (notificationPermissionRequested) {
+        return Notification.permission;
+    }
+
+    notificationPermissionRequested = true;
+
+    try {
+        const result = await Notification.requestPermission();
+        return result;
+    } catch (e) {
+        console.log("브라우저 알림 권한 요청 실패", e);
+        return "error";
+    }
+}
+
+function showBrowserNotification(sender, message) {
+    if (!("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
+
+    try {
+        const n = new Notification("CS 채팅", {
+            body: `${sender}: ${message}`,
+            tag: "cs-chat-message",
+            renotify: false
+        });
+
+        setTimeout(() => {
+            n.close();
+        }, 4000);
+    } catch (e) {
+        console.log("브라우저 알림 표시 실패", e);
+    }
+}
+
 function checkNewIncomingMessage(data) {
     if (!Array.isArray(data) || data.length === 0) return;
 
@@ -451,9 +530,11 @@ function checkNewIncomingMessage(data) {
 
     if (!alarmEnabled) return;
     if (!sender || !message) return;
+    if (!myFullName) return;
     if (sender === myFullName) return;
 
     showToast(sender, message);
+    showBrowserNotification(sender, message);
 }
 
 async function load() {
@@ -537,12 +618,22 @@ document.getElementById("msg").addEventListener("keydown", function (e) {
 document.getElementById("team").addEventListener("change", checkLock);
 document.getElementById("name").addEventListener("input", checkLock);
 
-document.getElementById("alarmToggle").addEventListener("click", function () {
+document.getElementById("alarmToggle").addEventListener("click", async function () {
     alarmEnabled = !alarmEnabled;
+
+    if (alarmEnabled) {
+        const permission = await ensureNotificationPermission();
+
+        if (permission === "denied") {
+            alert("브라우저 알림이 차단되어 있습니다. 브라우저 설정에서 알림 허용이 필요합니다.");
+        }
+    }
+
     this.innerText = alarmEnabled ? "🔔 알림 ON" : "🔕 알림 OFF";
 });
 
 checkLock();
+ensureNotificationPermission();
 load();
 setInterval(load, 2000);
 </script>

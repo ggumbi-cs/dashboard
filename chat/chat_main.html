@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>CS 채팅</title>
-
 <style>
 body {
     font-family: Arial, sans-serif;
@@ -14,14 +13,6 @@ body {
 .chat-wrapper {
     width: 60%;
     margin: 30px auto;
-}
-
-#version {
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    font-size: 12px;
-    color: #888;
 }
 
 .chat-title {
@@ -111,12 +102,19 @@ button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+#version {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 12px;
+    color: #888;
+}
 </style>
 </head>
-
 <body>
 
-<div id="version">수정버전 : 2026/04/22 14:20:00</div>
+<div id="version">수정버전 : 2026/04/22 14:40:00</div>
 
 <div class="chat-wrapper">
     <div class="chat-title">CS 채팅</div>
@@ -131,7 +129,7 @@ button:disabled {
         </select>
 
         <label for="name">이름:</label>
-        <input id="name" type="text" />
+        <input id="name" type="text">
     </div>
 
     <div id="chat" class="chat-box"></div>
@@ -143,9 +141,7 @@ button:disabled {
 
 <script>
 const SERVER = "https://adaptable-expression-production-ba28.up.railway.app";
-let lastRenderedLength = 0;
 
-// 버전 표시
 function setVersion() {
     const d = new Date();
     const version =
@@ -160,14 +156,12 @@ function setVersion() {
 }
 setVersion();
 
-// 내 표시명
 function getFullName() {
     const team = document.getElementById("team").value.trim();
     const name = document.getElementById("name").value.trim();
     return team + " " + name;
 }
 
-// 입력 잠금
 function checkLock() {
     const team = document.getElementById("team").value.trim();
     const name = document.getElementById("name").value.trim();
@@ -185,46 +179,39 @@ function checkLock() {
     }
 }
 
-// 렌더
 function render(data) {
     const chat = document.getElementById("chat");
     chat.innerHTML = "";
 
-    data.forEach(d => {
+    data.reverse().forEach(d => {
         const isMe = d.name === getFullName();
 
         chat.innerHTML += `
             <div class="msg ${isMe ? 'me' : 'other'}">
                 <div class="name">${d.name}</div>
                 <div>${d.message}</div>
-                <div class="time">${d.time || ""}</div>
+                <div class="time">${d.created_at || d.time || ""}</div>
             </div>
         `;
     });
 
-    chat.scrollTop = chat.scrollHeight;
+    chat.scrollTop = 0;
 }
 
-// 불러오기
 async function load() {
     try {
-        const res = await fetch(SERVER + "/messages", { cache: "no-store" });
+        const res = await fetch(SERVER + "/messages");
         if (!res.ok) return;
 
         const data = await res.json();
         if (!Array.isArray(data)) return;
 
-        // 길이가 같아도 최신 전체를 다시 그려서 새로고침/재접속 시 유지 확인
-        if (data.length === 0 && lastRenderedLength > 0) return;
-
-        lastRenderedLength = data.length;
         render(data);
     } catch (e) {
-        console.log("서버 끊김 - 기존 화면 유지");
+        console.log("불러오기 실패", e);
     }
 }
 
-// 전송
 async function send() {
     const team = document.getElementById("team").value.trim();
     const name = document.getElementById("name").value.trim();
@@ -232,34 +219,24 @@ async function send() {
     const msg = msgBox.value.trim();
 
     if (!team || !name) {
-        alert("소속/이름 입력");
+        alert("소속과 이름을 입력하세요.");
         checkLock();
         return;
     }
 
     if (!msg) return;
 
-    const now = new Date();
-    const timeStr =
-        now.getFullYear() + "/" +
-        String(now.getMonth() + 1).padStart(2, "0") + "/" +
-        String(now.getDate()).padStart(2, "0") + " " +
-        String(now.getHours()).padStart(2, "0") + ":" +
-        String(now.getMinutes()).padStart(2, "0") + ":" +
-        String(now.getSeconds()).padStart(2, "0");
-
     const res = await fetch(SERVER + "/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             name: team + " " + name,
-            message: msg,
-            time: timeStr
+            message: msg
         })
     });
 
     if (!res.ok) {
-        alert("서버 연결 실패");
+        alert("전송 실패");
         return;
     }
 
@@ -267,7 +244,6 @@ async function send() {
     await load();
 }
 
-// 엔터 전송 / 쉬프트 엔터 줄바꿈
 document.getElementById("msg").addEventListener("keydown", e => {
     if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
@@ -275,11 +251,9 @@ document.getElementById("msg").addEventListener("keydown", e => {
     }
 });
 
-// 이벤트 연결
 document.getElementById("team").addEventListener("change", checkLock);
 document.getElementById("name").addEventListener("input", checkLock);
 
-// 초기 실행
 checkLock();
 load();
 setInterval(load, 2000);

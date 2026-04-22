@@ -6,188 +6,213 @@
 
 <style>
 body {
-    font-family: Arial, sans-serif;
+    font-family: Arial;
+    background: #f5f5f5;
 }
 
-.chat-wrap {
-    width: 90%;
-    margin: auto;
+/* 👉 전체 컨테이너 폭 줄임 */
+.chat-wrapper {
+    width: 60%;
+    margin: 30px auto;
 }
 
-.title {
-    font-size: 24px;
-    font-weight: bold;
-    margin: 20px 0;
-}
-
-.user-row {
+/* 입력 영역 */
+.top-area {
     margin-bottom: 10px;
 }
 
-#chat-box {
+/* 채팅창 */
+.chat-box {
     width: 100%;
-    height: 420px;
+    height: 400px;
+    background: #fff;
     border: 1px solid #ccc;
     overflow-y: auto;
     padding: 10px;
-    background: #f9f9f9;
 }
 
+/* 말풍선 */
 .msg {
-    margin: 6px 0;
-    display: flex;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 10px;
+    max-width: 70%;
+    word-break: break-all;
 }
 
-.msg.me {
-    justify-content: flex-end;
+/* 내 메시지 */
+.me {
+    background: #cfe5ff;
+    margin-left: auto;
 }
 
-.bubble {
-    max-width: 60%;
-    padding: 8px 12px;
-    border-radius: 12px;
-}
-
-.me .bubble {
-    background: #d0ebff;
-}
-
-.other .bubble {
+/* 상대 메시지 */
+.other {
     background: #eee;
+    margin-right: auto;
 }
 
+/* 이름 */
 .name {
     font-size: 12px;
-    color: #666;
-    margin-bottom: 2px;
+    color: #555;
+    margin-bottom: 3px;
 }
 
-#msg {
-    width: 100%;
-    height: 80px;
+/* 시간 */
+.time {
+    font-size: 11px;
+    color: #888;
+    text-align: right;
+    margin-top: 3px;
+}
+
+/* 입력창 */
+.input-area {
     margin-top: 10px;
 }
 
-.locked {
-    background: #eee;
-    color: #888;
+textarea {
+    width: 100%;
+    height: 60px;
+}
+
+button {
+    margin-top: 5px;
 }
 </style>
-
 </head>
 
 <body>
-<div class="chat-wrap">
 
-<div class="title">CS 채팅</div>
+<div class="chat-wrapper">
 
-<div class="user-row">
-    소속:
-    <select id="dept">
-        <option value="">선택</option>
-        <option>꿈비</option>
-        <option>에르모어</option>
-        <option>가이아</option>
-    </select>
+    <h2>CS 채팅</h2>
 
-    이름:
-    <input id="username" placeholder="이름 입력">
-</div>
+    <div class="top-area">
+        소속:
+        <select id="team">
+            <option value="">선택</option>
+            <option>꿈비</option>
+            <option>에르모어</option>
+            <option>가이아</option>
+        </select>
 
-<div id="chat-box"></div>
+        이름:
+        <input type="text" id="name">
+    </div>
 
-<textarea id="msg" class="locked" disabled placeholder="소속 및 이름 입력 후 사용 가능"></textarea>
-<button onclick="sendMessage()">전송</button>
+    <div id="chat" class="chat-box"></div>
+
+    <div class="input-area">
+        <textarea id="msg" placeholder="소속 및 이름 입력 후 사용 가능"></textarea>
+        <button onclick="send()">전송</button>
+    </div>
 
 </div>
 
 <script>
-const API = "https://adaptable-expression-production-ba28.up.railway.app";
+const SERVER = "https://adaptable-expression-production-ba28.up.railway.app";
 
-const deptEl = document.getElementById("dept");
-const nameEl = document.getElementById("username");
-const msgEl = document.getElementById("msg");
-const chatBox = document.getElementById("chat-box");
-
-function getMyName() {
-    return deptEl.value + " " + nameEl.value;
+function getNow() {
+    const d = new Date();
+    return d.getFullYear() + "/" +
+        String(d.getMonth()+1).padStart(2,'0') + "/" +
+        String(d.getDate()).padStart(2,'0') + " " +
+        String(d.getHours()).padStart(2,'0') + ":" +
+        String(d.getMinutes()).padStart(2,'0');
 }
 
-function checkLock() {
-    if (!deptEl.value || !nameEl.value) {
-        msgEl.disabled = true;
-        msgEl.classList.add("locked");
-        msgEl.placeholder = "소속 및 이름 입력 후 사용 가능";
-    } else {
-        msgEl.disabled = false;
-        msgEl.classList.remove("locked");
-        msgEl.placeholder = "메시지 입력";
+function render(data){
+    const chat = document.getElementById("chat");
+    chat.innerHTML = "";
+
+    data.forEach(d=>{
+        const isMe = d.name === getFullName();
+
+        chat.innerHTML += `
+        <div class="msg ${isMe ? 'me':'other'}">
+            <div class="name">${d.name}</div>
+            <div>${d.message}</div>
+            <div class="time">${d.time || ''}</div>
+        </div>`;
+    });
+
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function getFullName(){
+    const team = document.getElementById("team").value;
+    const name = document.getElementById("name").value;
+    return team + " " + name;
+}
+
+function checkLock(){
+    const team = document.getElementById("team").value;
+    const name = document.getElementById("name").value;
+    const msgBox = document.getElementById("msg");
+
+    if(!team || !name){
+        msgBox.disabled = true;
+        msgBox.placeholder = "소속 및 이름 입력 후 사용 가능";
+    }else{
+        msgBox.disabled = false;
+        msgBox.placeholder = "메시지 입력";
     }
 }
 
-deptEl.addEventListener("change", checkLock);
-nameEl.addEventListener("input", checkLock);
+document.getElementById("team").onchange = checkLock;
+document.getElementById("name").oninput = checkLock;
 
-async function loadMessages() {
-    const res = await fetch(API + "/messages");
-    const data = await res.json();
+async function send(){
+    const team = document.getElementById("team").value;
+    const name = document.getElementById("name").value;
+    const msg = document.getElementById("msg").value;
 
-    chatBox.innerHTML = "";
+    if(!team || !name){
+        alert("소속과 이름 입력");
+        return;
+    }
 
-    data.forEach(m => {
-        const isMe = m.name === getMyName();
+    if(!msg.trim()) return;
 
-        const msgDiv = document.createElement("div");
-        msgDiv.className = "msg " + (isMe ? "me" : "other");
+    const fullName = team + " " + name;
 
-        const bubble = document.createElement("div");
-        bubble.className = "bubble";
-
-        const name = document.createElement("div");
-        name.className = "name";
-        name.innerText = m.name;
-
-        const text = document.createElement("div");
-        text.innerText = m.message;
-
-        bubble.appendChild(name);
-        bubble.appendChild(text);
-        msgDiv.appendChild(bubble);
-        chatBox.appendChild(msgDiv);
-    });
-
-    chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-async function sendMessage() {
-    if (msgEl.disabled) return;
-
-    const text = msgEl.value.trim();
-    if (!text) return;
-
-    await fetch(API + "/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+    await fetch(SERVER + "/send", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
         body: JSON.stringify({
-            name: getMyName(),
-            message: text
+            name: fullName,
+            message: msg,
+            time: getNow()
         })
     });
 
-    msgEl.value = "";
-    loadMessages();
+    document.getElementById("msg").value="";
+    load();
 }
 
-msgEl.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+/* 엔터 전송 / 쉬프트 줄바꿈 */
+document.getElementById("msg").addEventListener("keydown", function(e){
+    if(e.key === "Enter" && !e.shiftKey){
         e.preventDefault();
-        sendMessage();
+        send();
     }
 });
 
-setInterval(loadMessages, 2000);
-loadMessages();
+async function load(){
+    try{
+        const res = await fetch(SERVER + "/messages");
+        const data = await res.json();
+        render(data);
+    }catch(e){
+        console.log("서버 오류");
+    }
+}
+
+setInterval(load, 2000);
 checkLock();
+load();
 </script>
 
 </body>

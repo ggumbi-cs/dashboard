@@ -9,8 +9,14 @@ CORS(app)
 
 def get_conn():
     database_url = os.environ.get("DATABASE_URL")
+
     if not database_url:
-        raise RuntimeError("DATABASE_URL 환경변수가 없습니다.")
+        raise RuntimeError("DATABASE_URL 없음")
+
+    # 🔥 핵심 수정 (Railway 호환)
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+
     return psycopg2.connect(database_url)
 
 
@@ -68,10 +74,7 @@ def get_messages():
 
     except Exception as e:
         print("GET /messages 오류:", str(e))
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/send", methods=["POST"])
@@ -83,10 +86,7 @@ def send_message():
         message = str(data.get("message", "")).strip()
 
         if not name or not message:
-            return jsonify({
-                "status": "error",
-                "message": "name 또는 message가 비어 있습니다."
-            }), 400
+            return jsonify({"error": "값 없음"}), 400
 
         ensure_table()
 
@@ -106,10 +106,7 @@ def send_message():
 
     except Exception as e:
         print("POST /send 오류:", str(e))
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":

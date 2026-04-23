@@ -4,6 +4,34 @@
 let globalCSVData = [];
 
 // =========================
+// CSV 파싱 (🔥 핵심 추가)
+// =========================
+function parseCSV(text) {
+    const lines = text.split("\n").map(l => l.replace(/\r/g, ""));
+    return lines.map(line => {
+        const result = [];
+        let current = "";
+        let inQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                result.push(current.trim());
+                current = "";
+            } else {
+                current += char;
+            }
+        }
+
+        result.push(current.trim());
+        return result;
+    });
+}
+
+// =========================
 // 모듈 로드 함수
 // =========================
 async function loadModule(targetId, file) {
@@ -42,10 +70,8 @@ async function initASModule() {
 
         const text = await res.text();
 
-        // 🔥 핵심 수정 (CR 제거 + trim)
-        const rows = text
-            .split("\n")
-            .map(r => r.replace(/\r/g, "").split(",").map(v => v.trim()));
+        // 🔥 핵심 수정 (parseCSV 사용)
+        const rows = parseCSV(text);
 
         globalCSVData = rows;
 
@@ -61,7 +87,7 @@ async function initASModule() {
         const resultIndex = 7;
         const symptomIndex = 9;
 
-        // 🔥 2026년 이후 필터 (안정화)
+        // 🔥 2026년 이후 필터
         const filteredRows = rows.slice(1).filter(r => {
             if (!r[dateIndex]) return false;
             return r[dateIndex].includes("2026");
@@ -129,7 +155,7 @@ async function initASModule() {
         // 상태 표시
         const updateBox = document.getElementById("updateTime");
         if (updateBox) {
-            updateBox.innerText = `CSV 로드 완료 (총 ${filteredRows.length}건 / 2026 필터 적용)`;
+            updateBox.innerText = `CSV 로드 완료 (${filteredRows.length}건)`;
         }
 
     } catch (err) {

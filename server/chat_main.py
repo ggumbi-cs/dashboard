@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import psycopg2
+from datetime import timedelta
 
 app = Flask(__name__)
 CORS(app)
@@ -13,7 +14,7 @@ def get_conn():
     if not database_url:
         raise RuntimeError("DATABASE_URL 없음")
 
-    # 🔥 핵심 수정 (Railway 호환)
+    # Railway 호환
     if database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
 
@@ -33,7 +34,7 @@ def ensure_table():
         )
     """)
 
-    # checked_by 컬럼이 없을 수 있으므로 안전하게 추가
+    # 기존 DB 호환용
     cur.execute("""
         ALTER TABLE messages
         ADD COLUMN IF NOT EXISTS checked_by TEXT
@@ -42,6 +43,25 @@ def ensure_table():
     conn.commit()
     cur.close()
     conn.close()
+
+
+def normalize_checked_list(raw_text):
+    if not raw_text:
+        return []
+
+    result = []
+    seen = set()
+
+    for item in str(raw_text).split(","):
+        name = item.strip()
+        if not name:
+            continue
+        if name in seen:
+            continue
+        seen.add(name)
+        result.append(name)
+
+    return result
 
 
 @app.route("/")
@@ -67,12 +87,21 @@ def get_messages():
 
         result = []
         for row in rows:
+            created_at = row[3]
+            created_at_kst = ""
+
+            if created_at:
+                # Railway/DB UTC 저장 기준 보정
+                created_at_kst = (created_at + timedelta(hours=9)).strftime("%Y/%m/%d %H:%M:%S")
+
+            checked_list = normalize_checked_list(row[4])
+
             result.append({
                 "id": row[0],
                 "name": row[1],
                 "message": row[2],
-                "created_at": row[3].strftime("%Y/%m/%d %H:%M:%S") if row[3] else "",
-                "checked_by": row[4] if row[4] else ""
+                "created_at": created_at_kst,
+                "checked_by": ", ".join(checked_list)
             })
 
         cur.close()
@@ -128,12 +157,14 @@ def check_message():
         if not message_id:
             return jsonify({"error": "id 없음"}), 400
 
+        if not checker:
+            return jsonify({"error": "checker 없음"}), 400
+
         ensure_table()
 
         conn = get_conn()
         cur = conn.cursor()
 
-        # 이미 체크한 사람이 있으면 해제, 없으면 등록
         cur.execute("""
             SELECT checked_by
             FROM messages
@@ -147,22 +178,19 @@ def check_message():
             conn.close()
             return jsonify({"error": "메시지 없음"}), 404
 
-        current_checked_by = row[0] if row[0] else ""
+        checked_list = normalize_checked_list(row[0])
 
-        if current_checked_by:
-            cur.execute("""
-                UPDATE messages
-                SET checked_by = NULL
-                WHERE id = %s
-            """, (message_id,))
-            checked_by = ""
-        else:
-            cur.execute("""
-                UPDATE messages
-                SET checked_by = %s
-                WHERE id = %s
-            """, (checker, message_id))
-            checked_by = checker
+        # 토글 제거 / 사람별 누적만
+        if checker not in checked_list:
+            checked_list.append(checker)
+
+        checked_by = ", ".join(checked_list)
+
+        cur.execute("""
+            UPDATE messages
+            SET checked_by = %s
+            WHERE id = %s
+        """, (checked_by, message_id))
 
         conn.commit()
         cur.close()

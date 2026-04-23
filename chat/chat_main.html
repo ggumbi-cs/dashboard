@@ -731,8 +731,34 @@ document.getElementById("msg").addEventListener("keydown", function (e) {
     }
 });
 
-document.getElementById("team").addEventListener("change", checkLock);
-document.getElementById("name").addEventListener("input", checkLock);
+/* ===== 추가 시작: localStorage 저장/복원 ===== */
+function saveUserInfo() {
+    localStorage.setItem("cs_team", document.getElementById("team").value);
+    localStorage.setItem("cs_name", document.getElementById("name").value);
+}
+
+function loadUserInfo() {
+    const savedTeam = localStorage.getItem("cs_team");
+    const savedName = localStorage.getItem("cs_name");
+
+    if (savedTeam !== null) {
+        document.getElementById("team").value = savedTeam;
+    }
+    if (savedName !== null) {
+        document.getElementById("name").value = savedName;
+    }
+}
+/* ===== 추가 끝 ===== */
+
+document.getElementById("team").addEventListener("change", function () {
+    checkLock();
+    saveUserInfo();
+});
+
+document.getElementById("name").addEventListener("input", function () {
+    checkLock();
+    saveUserInfo();
+});
 
 document.getElementById("alarmToggle").addEventListener("click", async function () {
     alarmEnabled = !alarmEnabled;
@@ -748,6 +774,7 @@ document.getElementById("alarmToggle").addEventListener("click", async function 
     this.innerText = alarmEnabled ? "🔔 알림 ON" : "🔕 알림 OFF";
 });
 
+loadUserInfo();
 checkLock();
 ensureNotificationPermission();
 load();

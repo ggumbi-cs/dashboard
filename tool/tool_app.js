@@ -16,12 +16,10 @@ async function loadModule(targetId, file) {
         const html = await res.text();
         target.innerHTML = html;
 
-        // 🔥 AS 모듈 초기화
         if (file.includes("as.html")) {
             initASModule();
         }
 
-        // 🔥 Tool2는 그대로 유지
         if (file.includes("as2.html")) {
             initTool2Module();
         }
@@ -33,14 +31,14 @@ async function loadModule(targetId, file) {
 }
 
 // =========================
-// AS 모듈 초기화 (자동 CSV 로드)
+// AS 모듈
 // =========================
 async function initASModule() {
     try {
-        const csvUrl = "./../data/가전마감.csv"; // 🔥 GitHub 경로
+        const csvUrl = "./../data/가전마감.csv";
         const res = await fetch(csvUrl);
 
-        if (!res.ok) throw new Error("CSV fetch 실패");
+        if (!res.ok) throw new Error("CSV 로드 실패");
 
         const text = await res.text();
 
@@ -48,14 +46,27 @@ async function initASModule() {
         globalCSVData = rows;
 
         const modelSelect = document.getElementById("modelSelect");
+        const symptomSelect = document.getElementById("symptomSelect");
+        const resultBox = document.getElementById("resultBox");
 
-        if (!modelSelect) return;
+        // 컬럼 인덱스
+        const dateIndex = 0;
+        const modelIndex = 2;
+        const resultIndex = 7;
+        const symptomIndex = 9;
+
+        // 🔥 2026년 이후 필터
+        const filteredRows = rows.slice(1).filter(r => {
+            if (!r[dateIndex]) return false;
+            return r[dateIndex].startsWith("2026");
+        });
+
+        // =========================
+        // 모델 채우기
+        // =========================
+        const models = [...new Set(filteredRows.map(r => r[modelIndex]))];
 
         modelSelect.innerHTML = `<option value="">선택</option>`;
-
-        const modelIndex = 2; // 제품명
-
-        const models = [...new Set(rows.slice(1).map(r => r[modelIndex]))];
 
         models.forEach(m => {
             if (!m) return;
@@ -65,14 +76,56 @@ async function initASModule() {
             modelSelect.appendChild(opt);
         });
 
+        // =========================
+        // 모델 선택 → 증상
+        // =========================
+        modelSelect.addEventListener("change", () => {
+            const selectedModel = modelSelect.value;
+
+            const modelFiltered = filteredRows.filter(r => r[modelIndex] === selectedModel);
+
+            const symptoms = [...new Set(modelFiltered.map(r => r[symptomIndex]))];
+
+            symptomSelect.innerHTML = `<option value="">선택</option>`;
+
+            symptoms.forEach(s => {
+                if (!s) return;
+                const opt = document.createElement("option");
+                opt.value = s;
+                opt.textContent = s;
+                symptomSelect.appendChild(opt);
+            });
+
+            resultBox.innerHTML = "";
+        });
+
+        // =========================
+        // 증상 선택 → 결과 출력
+        // =========================
+        symptomSelect.addEventListener("change", () => {
+            const selectedModel = modelSelect.value;
+            const selectedSymptom = symptomSelect.value;
+
+            const final = filteredRows.filter(r =>
+                r[modelIndex] === selectedModel &&
+                r[symptomIndex] === selectedSymptom
+            );
+
+            const results = [...new Set(final.map(r => r[resultIndex]))];
+
+            resultBox.innerHTML = results
+                .map(r => `• ${r}`)
+                .join("<br>");
+        });
+
         // 상태 표시
         const updateBox = document.getElementById("updateTime");
         if (updateBox) {
-            updateBox.innerText = "GitHub CSV 자동 로드 완료";
+            updateBox.innerText = "GitHub CSV 자동 로드 완료 (2026 필터 적용)";
         }
 
     } catch (err) {
-        console.error("CSV 로딩 실패:", err);
+        console.error(err);
 
         const updateBox = document.getElementById("updateTime");
         if (updateBox) {
@@ -82,7 +135,7 @@ async function initASModule() {
 }
 
 // =========================
-// Tool2 초기화 (절대 수정 없음)
+// Tool2 (절대 유지)
 // =========================
 function initTool2Module() {
     const typeSelect = document.getElementById("typeSelect");

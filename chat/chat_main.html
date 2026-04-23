@@ -163,6 +163,30 @@ body {
     border-top-left-radius: 4px;
 }
 
+.check-btn {
+    min-width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    line-height: 1;
+    color: #8a8f96;
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.75;
+}
+
+.check-btn:hover {
+    opacity: 1;
+}
+
+.check-btn.checked {
+    color: #2b7cff;
+    opacity: 1;
+    font-weight: bold;
+}
+
 .time {
     font-size: 11px;
     color: #55606b;
@@ -424,6 +448,9 @@ function render(data) {
 
     list.forEach(d => {
         const isMe = (d.name || "").trim() === getFullName();
+        const checkedBy = (d.checked_by || "").trim();
+        const checkedClass = checkedBy ? "checked" : "";
+        const checkedTitle = checkedBy ? escapeHtml(checkedBy) : "";
 
         chat.innerHTML += `
             <div class="msg-row ${isMe ? 'me' : 'other'}">
@@ -431,6 +458,11 @@ function render(data) {
                     <div class="name">${escapeHtml(d.name || "")}</div>
                     <div class="bubble-line">
                         <div class="bubble">${escapeHtml(d.message || "")}</div>
+                        <div
+                            class="check-btn ${checkedClass}"
+                            title="${checkedTitle}"
+                            onclick="toggleCheck(${d.id})"
+                        >✔</div>
                     </div>
                     <div class="time">${escapeHtml(d.created_at || d.time || "")}</div>
                 </div>
@@ -622,6 +654,40 @@ window.send = async function () {
         sendBtn.disabled = false;
         checkLock();
         msgBox.focus();
+    }
+};
+
+window.toggleCheck = async function (id) {
+    const fullName = getFullName();
+
+    if (!fullName) {
+        alert("소속/이름 입력");
+        checkLock();
+        return;
+    }
+
+    try {
+        const res = await fetch(SERVER + "/check", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                id: id,
+                checker: fullName
+            })
+        });
+
+        if (!res.ok) {
+            alert("체크 저장 실패");
+            console.log("체크 저장 실패 상태코드:", res.status);
+            return;
+        }
+
+        await load();
+    } catch (e) {
+        alert("체크 저장 실패");
+        console.log("체크 저장 오류:", e);
     }
 };
 

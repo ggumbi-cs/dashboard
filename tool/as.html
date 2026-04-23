@@ -1,29 +1,55 @@
-<div style="padding:3px 10px 10px 10px; font-family:Arial; height:100%; box-sizing:border-box;">
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>AS Tool</title>
 
-<h2 style="margin-top:0;">AS 기술 진단 어시스턴트</h2>
+<style>
+html, body {
+    margin: 0;
+    padding: 3px 10px 10px 10px;
+    font-family: Arial;
+    box-sizing: border-box;
+}
 
-    <div>
-        ① 제품 모델 선택
-        <select id="modelSelect">
-            <option value="">선택</option>
-        </select>
+h2 {
+    margin: 0 0 5px 0;
+}
 
-        ② 불량 증상 선택
-        <select id="symptomSelect">
-            <option value="">선택</option>
-        </select>
-    </div>
+#resultBox {
+    margin-top:10px;
+    padding:10px;
+    border:1px solid #ccc;
+    height:200px;
+    overflow:auto;
+}
+</style>
+</head>
 
-    <div id="resultBox" style="
-        margin-top:10px;
-        padding:10px;
-        border:1px solid #ccc;
-        height:200px;
-        overflow:auto;
-    "></div>
+<body>
 
-    <div style="margin-top:10px;">
-        <span id="updateTime">데이터 로딩중...</span>
-    </div>
+<h2>AS 기술 진단 어시스턴트</h2>
 
+<div>
+    ① 제품 모델 선택
+    <select id="modelSelect">
+        <option value="">선택</option>
+    </select>
+
+    ② 불량 증상 선택
+    <select id="symptomSelect">
+        <option value="">선택</option>
+    </select>
 </div>
+
+<div id="resultBox"></div>
+
+<div style="margin-top:10px;">
+    <span id="updateTime">데이터 로딩중...</span>
+</div>
+
+<!-- 🔥 여기 핵심 -->
+<script src="/dashboard/tool/tool_app.js"></script>
+
+</body>
+</html>

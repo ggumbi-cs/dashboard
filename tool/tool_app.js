@@ -42,12 +42,18 @@ async function initASModule() {
 
         const text = await res.text();
 
-        const rows = text.split("\n").map(r => r.split(","));
+        // 🔥 핵심 수정 (CR 제거 + trim)
+        const rows = text
+            .split("\n")
+            .map(r => r.replace(/\r/g, "").split(",").map(v => v.trim()));
+
         globalCSVData = rows;
 
         const modelSelect = document.getElementById("modelSelect");
         const symptomSelect = document.getElementById("symptomSelect");
         const resultBox = document.getElementById("resultBox");
+
+        if (!modelSelect || !symptomSelect || !resultBox) return;
 
         // 컬럼 인덱스
         const dateIndex = 0;
@@ -55,21 +61,20 @@ async function initASModule() {
         const resultIndex = 7;
         const symptomIndex = 9;
 
-        // 🔥 2026년 이후 필터
+        // 🔥 2026년 이후 필터 (안정화)
         const filteredRows = rows.slice(1).filter(r => {
             if (!r[dateIndex]) return false;
-            return r[dateIndex].startsWith("2026");
+            return r[dateIndex].includes("2026");
         });
 
         // =========================
         // 모델 채우기
         // =========================
-        const models = [...new Set(filteredRows.map(r => r[modelIndex]))];
+        const models = [...new Set(filteredRows.map(r => r[modelIndex]).filter(Boolean))];
 
         modelSelect.innerHTML = `<option value="">선택</option>`;
 
         models.forEach(m => {
-            if (!m) return;
             const opt = document.createElement("option");
             opt.value = m;
             opt.textContent = m;
@@ -84,12 +89,13 @@ async function initASModule() {
 
             const modelFiltered = filteredRows.filter(r => r[modelIndex] === selectedModel);
 
-            const symptoms = [...new Set(modelFiltered.map(r => r[symptomIndex]))];
+            const symptoms = [...new Set(
+                modelFiltered.map(r => r[symptomIndex]).filter(Boolean)
+            )];
 
             symptomSelect.innerHTML = `<option value="">선택</option>`;
 
             symptoms.forEach(s => {
-                if (!s) return;
                 const opt = document.createElement("option");
                 opt.value = s;
                 opt.textContent = s;
@@ -111,17 +117,19 @@ async function initASModule() {
                 r[symptomIndex] === selectedSymptom
             );
 
-            const results = [...new Set(final.map(r => r[resultIndex]))];
+            const results = [...new Set(
+                final.map(r => r[resultIndex]).filter(Boolean)
+            )];
 
-            resultBox.innerHTML = results
-                .map(r => `• ${r}`)
-                .join("<br>");
+            resultBox.innerHTML = results.length
+                ? results.map(r => `• ${r}`).join("<br>")
+                : "결과 없음";
         });
 
         // 상태 표시
         const updateBox = document.getElementById("updateTime");
         if (updateBox) {
-            updateBox.innerText = "GitHub CSV 자동 로드 완료 (2026 필터 적용)";
+            updateBox.innerText = `CSV 로드 완료 (총 ${filteredRows.length}건 / 2026 필터 적용)`;
         }
 
     } catch (err) {

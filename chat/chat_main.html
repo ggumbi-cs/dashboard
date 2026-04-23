@@ -483,9 +483,7 @@ function render(data) {
         const checkedBy = normalizeCheckedByText(d.checked_by || "");
         const checkedClass = checkedBy ? "checked" : "";
         const checkedTitle = checkedBy ? escapeHtml(checkedBy) : "";
-        const checkedUsersHtml = checkedBy
-            ? `<div class="check-users">${escapeHtml(checkedBy)}</div>`
-            : "";
+       
 
         chat.innerHTML += `
             <div class="msg-row ${isMe ? 'me' : 'other'}">
@@ -497,8 +495,7 @@ function render(data) {
                             class="check-btn ${checkedClass}"
                             title="${checkedTitle}"
                             onclick="toggleCheck(${d.id})"
-                        >✔</div>
-                        ${checkedUsersHtml}
+                        >✔</div>                       
                     </div>
                     <div class="time">${escapeHtml(d.created_at || d.time || "")}</div>
                 </div>

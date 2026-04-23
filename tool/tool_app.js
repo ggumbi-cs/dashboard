@@ -16,11 +16,12 @@ async function loadModule(targetId, file) {
         const html = await res.text();
         target.innerHTML = html;
 
-        // 🔥 핵심 수정 (경로 대응)
+        // 🔥 AS 모듈 초기화
         if (file.includes("as.html")) {
             initASModule();
         }
 
+        // 🔥 Tool2는 그대로 유지
         if (file.includes("as2.html")) {
             initTool2Module();
         }
@@ -32,12 +33,15 @@ async function loadModule(targetId, file) {
 }
 
 // =========================
-// AS 모듈 초기화
+// AS 모듈 초기화 (자동 CSV 로드)
 // =========================
 async function initASModule() {
     try {
-        const csvUrl = "./../data/가전마감.csv";
+        const csvUrl = "./../data/가전마감.csv"; // 🔥 GitHub 경로
         const res = await fetch(csvUrl);
+
+        if (!res.ok) throw new Error("CSV fetch 실패");
+
         const text = await res.text();
 
         const rows = text.split("\n").map(r => r.split(","));
@@ -49,7 +53,7 @@ async function initASModule() {
 
         modelSelect.innerHTML = `<option value="">선택</option>`;
 
-        const modelIndex = 2; // 제품명 기준
+        const modelIndex = 2; // 제품명
 
         const models = [...new Set(rows.slice(1).map(r => r[modelIndex]))];
 
@@ -61,19 +65,24 @@ async function initASModule() {
             modelSelect.appendChild(opt);
         });
 
-        // 업데이트 표시
+        // 상태 표시
         const updateBox = document.getElementById("updateTime");
         if (updateBox) {
-            updateBox.innerText = "GitHub 자동 로드 완료";
+            updateBox.innerText = "GitHub CSV 자동 로드 완료";
         }
 
     } catch (err) {
         console.error("CSV 로딩 실패:", err);
+
+        const updateBox = document.getElementById("updateTime");
+        if (updateBox) {
+            updateBox.innerText = "CSV 로드 실패";
+        }
     }
 }
 
 // =========================
-// Tool2 초기화 (우측)
+// Tool2 초기화 (절대 수정 없음)
 // =========================
 function initTool2Module() {
     const typeSelect = document.getElementById("typeSelect");

@@ -187,6 +187,20 @@ body {
     font-weight: bold;
 }
 
+.check-users {
+    display: inline-block;
+    max-width: 180px;
+    padding: 4px 6px;
+    border: 1px solid #8f8f8f;
+    background: #ffffff;
+    color: #111;
+    font-size: 12px;
+    line-height: 1.35;
+    word-break: break-word;
+    white-space: pre-wrap;
+    border-radius: 0;
+}
+
 .time {
     font-size: 11px;
     color: #55606b;
@@ -434,6 +448,24 @@ function escapeHtml(text) {
         .replaceAll("'", "&#039;");
 }
 
+function normalizeCheckedByText(value) {
+    const items = String(value || "")
+        .split(",")
+        .map(v => v.trim())
+        .filter(Boolean);
+
+    const seen = new Set();
+    const result = [];
+
+    items.forEach(name => {
+        if (seen.has(name)) return;
+        seen.add(name);
+        result.push(name);
+    });
+
+    return result.join(", ");
+}
+
 function render(data) {
     const chat = document.getElementById("chat");
 
@@ -448,9 +480,12 @@ function render(data) {
 
     list.forEach(d => {
         const isMe = (d.name || "").trim() === getFullName();
-        const checkedBy = (d.checked_by || "").trim();
+        const checkedBy = normalizeCheckedByText(d.checked_by || "");
         const checkedClass = checkedBy ? "checked" : "";
         const checkedTitle = checkedBy ? escapeHtml(checkedBy) : "";
+        const checkedUsersHtml = checkedBy
+            ? `<div class="check-users">${escapeHtml(checkedBy)}</div>`
+            : "";
 
         chat.innerHTML += `
             <div class="msg-row ${isMe ? 'me' : 'other'}">
@@ -463,6 +498,7 @@ function render(data) {
                             title="${checkedTitle}"
                             onclick="toggleCheck(${d.id})"
                         >✔</div>
+                        ${checkedUsersHtml}
                     </div>
                     <div class="time">${escapeHtml(d.created_at || d.time || "")}</div>
                 </div>

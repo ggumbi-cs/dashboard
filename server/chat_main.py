@@ -33,6 +33,12 @@ def ensure_table():
         )
     """)
 
+    # checked_by 컬럼이 없을 수 있으므로 안전하게 추가
+    cur.execute("""
+        ALTER TABLE messages
+        ADD COLUMN IF NOT EXISTS checked_by TEXT
+    """)
+
     conn.commit()
     cur.close()
     conn.close()
@@ -52,7 +58,7 @@ def get_messages():
         cur = conn.cursor()
 
         cur.execute("""
-            SELECT name, message, created_at
+            SELECT id, name, message, created_at, checked_by
             FROM messages
             ORDER BY id DESC
         """)
@@ -62,9 +68,11 @@ def get_messages():
         result = []
         for row in rows:
             result.append({
-                "name": row[0],
-                "message": row[1],
-                "created_at": row[2].strftime("%Y/%m/%d %H:%M:%S") if row[2] else ""
+                "id": row[0],
+                "name": row[1],
+                "message": row[2],
+                "created_at": row[3].strftime("%Y/%m/%d %H:%M:%S") if row[3] else "",
+                "checked_by": row[4] if row[4] else ""
             })
 
         cur.close()
@@ -106,6 +114,67 @@ def send_message():
 
     except Exception as e:
         print("POST /send 오류:", str(e))
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/check", methods=["POST"])
+def check_message():
+    try:
+        data = request.get_json(silent=True) or {}
+
+        message_id = data.get("id")
+        checker = str(data.get("checker", "")).strip()
+
+        if not message_id:
+            return jsonify({"error": "id 없음"}), 400
+
+        ensure_table()
+
+        conn = get_conn()
+        cur = conn.cursor()
+
+        # 이미 체크한 사람이 있으면 해제, 없으면 등록
+        cur.execute("""
+            SELECT checked_by
+            FROM messages
+            WHERE id = %s
+        """, (message_id,))
+
+        row = cur.fetchone()
+
+        if row is None:
+            cur.close()
+            conn.close()
+            return jsonify({"error": "메시지 없음"}), 404
+
+        current_checked_by = row[0] if row[0] else ""
+
+        if current_checked_by:
+            cur.execute("""
+                UPDATE messages
+                SET checked_by = NULL
+                WHERE id = %s
+            """, (message_id,))
+            checked_by = ""
+        else:
+            cur.execute("""
+                UPDATE messages
+                SET checked_by = %s
+                WHERE id = %s
+            """, (checker, message_id))
+            checked_by = checker
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({
+            "status": "ok",
+            "checked_by": checked_by
+        })
+
+    except Exception as e:
+        print("POST /check 오류:", str(e))
         return jsonify({"error": str(e)}), 500
 
 

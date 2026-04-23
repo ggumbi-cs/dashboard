@@ -51,7 +51,7 @@ html, body {
     border: 1px solid #ccc;
     padding: 15px;
     background: white;
-    height: 200px;
+    height: 100px; /* 🔥 여기만 수정 (200 → 100) */
     white-space: pre-line;
 }
 
@@ -103,15 +103,12 @@ html, body {
 </div>
 
 <script>
-/* 🔥 환경 자동 감지 */
 const isLocal = location.hostname === "localhost" || location.hostname === "127.0.0.1";
-
 const base = isLocal ? "./" : "/dashboard/tool/";
 
 document.getElementById("asFrame").src = base + "as.html";
 document.getElementById("as2Frame").src = base + "as2.html";
 
-/* 결과 */
 let currentText = "";
 
 window.addEventListener("message", (e)=>{

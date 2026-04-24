@@ -290,3 +290,40 @@ if (document.getElementById("modelSelect")) {
 if (document.getElementById("typeSelect")) {
     initTool2Module();
 }
+// =========================
+// Tool3 (부품 설명)
+// =========================
+let partGuideData = [];
+
+async function loadPartGuideCSV() {
+    try {
+        const res = await fetch("/dashboard/data/불량부품원인.csv");
+        const text = await res.text();
+        const rows = parseCSV(text);
+
+        const headers = rows[0];
+
+        const modelIndex = getColumnIndex(headers, "제품명");
+        const partIndex = getColumnIndex(headers, "부품명");
+        const guideIndex = getColumnIndex(headers, "AI 멘트수정");
+
+        partGuideData = rows.slice(1).map(r => ({
+            model: r[modelIndex],
+            part: r[partIndex],
+            guide: r[guideIndex]
+        }));
+
+        console.log("툴3 CSV 로드 완료", partGuideData.length);
+
+    } catch (e) {
+        console.error("툴3 CSV 로드 실패", e);
+    }
+}
+
+// 👉 외부에서 호출할 함수
+function getPartGuide(model, part) {
+    const match = partGuideData.find(d =>
+        d.model === model && d.part === part
+    );
+    return match ? match.guide : "데이터 없음";
+}

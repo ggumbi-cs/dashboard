@@ -211,5 +211,10 @@ function initTool2Module() {
 // =========================
 // 실행
 // =========================
-loadModule("panel-1", "./as.html");
-loadModule("panel-2", "./as2.html");
+if (document.getElementById("modelSelect")) {
+    initASModule();
+}
+
+if (document.getElementById("typeSelect")) {
+    initTool2Module();
+}

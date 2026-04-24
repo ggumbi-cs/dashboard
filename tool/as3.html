@@ -7,30 +7,37 @@
 <script src="tool_app.js"></script>
 
 <style>
-body {
-    font-family: Arial;
-    padding: 10px;
+html, body {
+    height: 100%;
+    margin: 0;
 }
 
-/* 좌우 분할 */
+body {
+    font-family: Arial;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 전체 영역 */
 .container {
     display: flex;
+    flex: 1;
     gap: 10px;
 }
 
-/* 박스 공통 */
+/* 박스 */
 .box {
     flex: 1;
     border: 1px solid #ccc;
     padding: 10px;
-    height: 100%;
+    overflow-y: auto;
 }
 
-/* 항목 줄 */
+/* 항목 */
 .row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
 }
 
 /* 버튼 */
@@ -44,6 +51,11 @@ button {
 <body>
 
 <h3>AS 기술 진단 어시스턴트 (툴3)</h3>
+
+<!-- CSV 상태 -->
+<div id="updateBox" style="font-size:12px; color:#666; margin-bottom:5px;">
+CSV 로드 중...
+</div>
 
 <div class="container">
 
@@ -70,37 +82,52 @@ button {
 
 let csvData = [];
 
+// =========================
 // CSV 로드
+// =========================
 async function loadCSV(){
-    const res = await fetch("/dashboard/data/불량부품원인.csv");
-    const text = await res.text();
-    const rows = parseCSV(text);
+    try{
+        const res = await fetch("/dashboard/data/불량부품원인.csv");
+        const text = await res.text();
+        const rows = parseCSV(text);
 
-    const headers = rows[0];
+        const headers = rows[0];
 
-    const partIndex = headers.indexOf("부품명");
-    const guideIndex = headers.indexOf("AI 멘트수정");
+        const partIndex = headers.indexOf("부품명");
+        const guideIndex = headers.indexOf("AI 멘트수정");
 
-    csvData = rows.slice(1).map(r => ({
-        part: r[partIndex],
-        guide: r[guideIndex]
-    }));
+        const dataRows = rows.slice(1);
 
-    // 드롭다운 채우기
-    const parts = [...new Set(csvData.map(d=>d.part))];
-    const select = document.getElementById("manualPart");
+        csvData = dataRows.map(r => ({
+            part: r[partIndex],
+            guide: r[guideIndex]
+        }));
 
-    parts.forEach(p=>{
-        const opt = document.createElement("option");
-        opt.value = p;
-        opt.textContent = p;
-        select.appendChild(opt);
-    });
+        // 드롭다운 채우기
+        const parts = [...new Set(csvData.map(d=>d.part))];
+        const select = document.getElementById("manualPart");
+
+        parts.forEach(p=>{
+            const opt = document.createElement("option");
+            opt.value = p;
+            opt.textContent = p;
+            select.appendChild(opt);
+        });
+
+        // ✅ 로드 완료 표시
+        document.getElementById("updateBox").innerText =
+            `CSV 로드 완료 (${dataRows.length}건)`;
+
+    } catch(e){
+        document.getElementById("updateBox").innerText = "CSV 로드 실패";
+    }
 }
 
 loadCSV();
 
-// 🔥 툴1 결과 받기
+// =========================
+// 툴1 결과 받기
+// =========================
 window.addEventListener("message",(e)=>{
     const text = e.data.memo || "";
 
@@ -109,7 +136,9 @@ window.addEventListener("message",(e)=>{
     renderAuto(parts);
 });
 
+// =========================
 // 자동 영역
+// =========================
 function renderAuto(parts){
     const box = document.getElementById("autoParts");
     box.innerHTML = "";
@@ -127,13 +156,17 @@ function renderAuto(parts){
     });
 }
 
-// 팝업 (부품 기준만)
+// =========================
+// 팝업
+// =========================
 function show(part){
     const match = csvData.find(d=>d.part === part);
     alert(match ? match.guide : "데이터 없음");
 }
 
-// 수동
+// =========================
+// 수동 선택
+// =========================
 function manualShow(){
     const part = document.getElementById("manualPart").value;
     show(part);

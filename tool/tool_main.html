@@ -110,6 +110,17 @@ const base = isLocal ? "./" : "/dashboard/tool/";
 
 document.getElementById("asFrame").src = base + "as.html";
 document.getElementById("as2Frame").src = base + "as2.html";
+    <script>
+const isLocal = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+const base = isLocal ? "./" : "/dashboard/tool/";
+
+document.getElementById("asFrame").src = base + "as.html";
+document.getElementById("as2Frame").src = base + "as2.html";
+
+// ✅ 👇 이거 추가 (툴3)
+document.getElementById("as3Frame").src = base + "as3.html";
+
+let currentText = "";
 
 let currentText = "";
 

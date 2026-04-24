@@ -3,56 +3,103 @@
 <head>
 <meta charset="UTF-8">
 <title>툴3</title>
-<link rel="stylesheet" href="tool_style.css">
+
 <script src="tool_app.js"></script>
+
+<style>
+body {
+    font-family: Arial;
+    padding: 10px;
+}
+
+.box {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+</style>
+
 </head>
 
 <body>
 
-<h3>AS 기술 진단 어시스턴트 (툴3)</h3>
+<h3>툴3 - 부품 상세</h3>
 
-<div style="display:flex; gap:20px;">
-
-<!-- 자동 -->
-<div style="flex:1; border:1px solid #ccc; padding:10px;">
+<div class="box">
 <h4>자동 추천</h4>
-<div id="autoParts"></div>
+<div id="auto"></div>
 </div>
 
-<!-- 수동 -->
-<div style="flex:1; border:1px solid #ccc; padding:10px;">
+<div class="box">
 <h4>직접 선택</h4>
 
-<select id="manualModel"></select>
-<select id="manualPart"></select>
-<button onclick="manualShow()">내용보기</button>
+<select id="manualPart">
+<option value="">선택</option>
+</select>
 
-</div>
+<button onclick="manualShow()">내용보기</button>
 
 </div>
 
 <script>
 
-// 시작
-loadPartGuideCSV();
+let csvData = [];
 
-// 자동 (툴1 결과 받기)
-window.addEventListener("message", (e)=>{
+// CSV 로드
+async function loadCSV(){
+    const res = await fetch("/dashboard/data/불량부품원인.csv");
+    const text = await res.text();
+    const rows = parseCSV(text);
+
+    const headers = rows[0];
+
+    const partIndex = headers.indexOf("부품명");
+    const guideIndex = headers.indexOf("AI 멘트수정");
+
+    csvData = rows.slice(1).map(r => ({
+        part: r[partIndex],
+        guide: r[guideIndex]
+    }));
+
+    const parts = [...new Set(csvData.map(d=>d.part))];
+
+    const select = document.getElementById("manualPart");
+    parts.forEach(p=>{
+        const opt = document.createElement("option");
+        opt.value = p;
+        opt.textContent = p;
+        select.appendChild(opt);
+    });
+}
+
+loadCSV();
+
+// 툴1 결과 받기
+window.addEventListener("message",(e)=>{
     const text = e.data.memo || "";
 
-    const parts = text.split("|").map(t => t.trim().split(" ")[0]);
+    const parts = text.split("|").map(t=>t.trim().split(" ")[0]);
+
     renderAuto(parts);
 });
 
+// 자동 영역
 function renderAuto(parts){
-    const box = document.getElementById("autoParts");
+    const box = document.getElementById("auto");
     box.innerHTML = "";
 
     parts.slice(0,3).forEach(part=>{
         const div = document.createElement("div");
+        div.className = "row";
 
         div.innerHTML = `
-            ${part}
+            <span>${part}</span>
             <button onclick="show('${part}')">보기</button>
         `;
 
@@ -62,8 +109,8 @@ function renderAuto(parts){
 
 // 팝업
 function show(part){
-    const guide = getPartGuide("", part);
-    alert(guide);
+    const match = csvData.find(d=>d.part === part);
+    alert(match ? match.guide : "데이터 없음");
 }
 
 // 수동

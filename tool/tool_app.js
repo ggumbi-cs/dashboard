@@ -189,9 +189,18 @@ async function initASModule() {
             const counts = {};
 
             finalRows.forEach(r => {
-                const part = r[resultIndex];
-                if (!part) return;
-                counts[part] = (counts[part] || 0) + 1;
+const raw = r[resultIndex];
+if (!raw) return;
+
+// 🔥 모든 구분자 대응 (쉼표, 슬래시, +, |)
+const parts = raw.split(/[,/+\|]/);
+
+parts.forEach(p => {
+    const part = p.trim();
+    if (!part) return;
+
+    counts[part] = (counts[part] || 0) + 1;
+});
             });
 
             const results = Object.entries(counts)

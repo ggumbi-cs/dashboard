@@ -12,16 +12,30 @@ body {
     padding: 10px;
 }
 
-.box {
-    border: 1px solid #ccc;
-    padding: 10px;
-    margin-bottom: 10px;
+/* 좌우 분할 */
+.container {
+    display: flex;
+    gap: 10px;
 }
 
+/* 박스 공통 */
+.box {
+    flex: 1;
+    border: 1px solid #ccc;
+    padding: 10px;
+    height: 100%;
+}
+
+/* 항목 줄 */
 .row {
     display: flex;
     justify-content: space-between;
     margin-bottom: 5px;
+}
+
+/* 버튼 */
+button {
+    cursor: pointer;
 }
 </style>
 
@@ -29,21 +43,26 @@ body {
 
 <body>
 
-<h3>툴3 - 부품 상세</h3>
+<h3>AS 기술 진단 어시스턴트 (툴3)</h3>
 
-<div class="box">
-<h4>자동 추천</h4>
-<div id="auto"></div>
-</div>
+<div class="container">
 
-<div class="box">
-<h4>직접 선택</h4>
+    <!-- 자동 추천 -->
+    <div class="box">
+        <h4>자동 추천 (툴1 연동)</h4>
+        <div id="autoParts"></div>
+    </div>
 
-<select id="manualPart">
-<option value="">선택</option>
-</select>
+    <!-- 직접 선택 -->
+    <div class="box">
+        <h4>직접 선택</h4>
 
-<button onclick="manualShow()">내용보기</button>
+        <select id="manualPart">
+            <option value="">선택</option>
+        </select>
+
+        <button onclick="manualShow()">내용보기</button>
+    </div>
 
 </div>
 
@@ -67,9 +86,10 @@ async function loadCSV(){
         guide: r[guideIndex]
     }));
 
+    // 드롭다운 채우기
     const parts = [...new Set(csvData.map(d=>d.part))];
-
     const select = document.getElementById("manualPart");
+
     parts.forEach(p=>{
         const opt = document.createElement("option");
         opt.value = p;
@@ -80,7 +100,7 @@ async function loadCSV(){
 
 loadCSV();
 
-// 툴1 결과 받기
+// 🔥 툴1 결과 받기
 window.addEventListener("message",(e)=>{
     const text = e.data.memo || "";
 
@@ -91,7 +111,7 @@ window.addEventListener("message",(e)=>{
 
 // 자동 영역
 function renderAuto(parts){
-    const box = document.getElementById("auto");
+    const box = document.getElementById("autoParts");
     box.innerHTML = "";
 
     parts.slice(0,3).forEach(part=>{
@@ -107,7 +127,7 @@ function renderAuto(parts){
     });
 }
 
-// 팝업
+// 팝업 (부품 기준만)
 function show(part){
     const match = csvData.find(d=>d.part === part);
     alert(match ? match.guide : "데이터 없음");

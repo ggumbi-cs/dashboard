@@ -89,11 +89,18 @@ html, body {
                 <button onclick="resetAll()">초기화</button>
             </div>
 
+            <!-- 🔥 복구된 빨간문장 -->
+            <ul>
+            <li><strong style="color:red;">특별 본사회수(분석)대상 : 분유쉐이커 2종</strong></li>
+            <li><strong style="color:red;">증상 : 소음, 충전불량, 전원불량</strong></li>
+            <li><strong style="color:red;">회수사유 : 검수</strong></li>
+            </ul>
+
         </div>
 
     </div>
 
-    <!-- ✅ 툴3 -->
+    <!-- 툴3 -->
     <div class="panel">
         <iframe id="as3Frame"></iframe>
     </div>
@@ -108,13 +115,10 @@ const base = isLocal ? "./" : "/dashboard/tool/";
 
 document.getElementById("asFrame").src = base + "as.html";
 document.getElementById("as2Frame").src = base + "as2.html";
-
-// ✅ 추가된 툴3
 document.getElementById("as3Frame").src = base + "as3.html";
 
 let currentText = "";
 
-// 👉 툴1 결과 받아서 툴3로도 전달
 window.addEventListener("message", (e)=>{
     currentText = e.data.memo || "";
     document.getElementById("result").innerText = currentText;

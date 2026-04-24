@@ -73,7 +73,7 @@ function getColumnIndex(headers, name) {
 }
 
 // =========================
-// AS 모듈
+// AS 모듈 (툴1)
 // =========================
 async function initASModule() {
     console.log("AS 모듈 시작");
@@ -103,14 +103,8 @@ async function initASModule() {
         const symptomIndex = getColumnIndex(headers, "접수불량");
         const resultIndex = getColumnIndex(headers, "사용부품");
 
-        console.log("헤더:", headers);
-        console.log("인덱스:", { dateIndex, typeIndex, modelIndex, symptomIndex, resultIndex });
-
         if ([dateIndex, typeIndex, modelIndex, symptomIndex, resultIndex].some(i => i === -1)) {
-            if (updateBox) {
-                updateBox.innerText = "CSV 필수 컬럼 없음";
-            }
-            console.error("필수 컬럼 누락");
+            if (updateBox) updateBox.innerText = "CSV 필수 컬럼 없음";
             return;
         }
 
@@ -128,9 +122,6 @@ async function initASModule() {
 
             return true;
         });
-
-        console.log("전체 데이터:", rows.length - 1);
-        console.log("필터 후 데이터:", filteredRows.length);
 
         const models = [...new Set(
             filteredRows.map(r => r[modelIndex]).filter(Boolean)
@@ -197,7 +188,6 @@ async function initASModule() {
                 parts.forEach(p => {
                     const part = p.trim();
                     if (!part) return;
-
                     counts[part] = (counts[part] || 0) + 1;
                 });
             });
@@ -215,15 +205,18 @@ async function initASModule() {
                 .join("  |  ");
 
             resultBox.innerHTML = `
-                <div style="font-weight:bold; margin-bottom:4px;">모델: ${selectedModel}</div>
-                <div style="font-size:12px; color:#666; margin-bottom:10px;">
+                <div style="font-weight:bold;">모델: ${selectedModel}</div>
+                <div style="font-size:12px; color:#666;">
                     증상: ${selectedSymptom} (데이터 ${total}건 분석)
                 </div>
-                <div style="font-weight:bold; color:#0078d4; margin-bottom:8px;">[예상 원인]</div>
+                <div style="font-weight:bold; color:#0078d4;">[예상 원인]</div>
                 <div style="font-size:15px; font-weight:bold; color:#d13438;">
                     ${compactResult}
                 </div>
             `;
+
+            // 👉 툴3으로 전달
+            window.parent.postMessage({ memo: compactResult }, "*");
         });
 
         if (updateBox) {
@@ -231,17 +224,13 @@ async function initASModule() {
         }
 
     } catch (err) {
-        console.error(err);
-
         const updateBox = document.getElementById("updateTime");
-        if (updateBox) {
-            updateBox.innerText = "CSV 로드 실패";
-        }
+        if (updateBox) updateBox.innerText = "CSV 로드 실패";
     }
 }
 
 // =========================
-// Tool2 기존 유지
+// Tool2 (그대로)
 // =========================
 function initTool2Module() {
     const typeSelect = document.getElementById("typeSelect");

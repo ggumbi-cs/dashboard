@@ -1,1 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>툴3</title>
+<link rel="stylesheet" href="tool_style.css">
+<script src="tool_app.js"></script>
+</head>
 
+<body>
+
+<h3>AS 기술 진단 어시스턴트 (툴3)</h3>
+
+<div style="display:flex; gap:20px;">
+
+<!-- 자동 -->
+<div style="flex:1; border:1px solid #ccc; padding:10px;">
+<h4>자동 추천</h4>
+<div id="autoParts"></div>
+</div>
+
+<!-- 수동 -->
+<div style="flex:1; border:1px solid #ccc; padding:10px;">
+<h4>직접 선택</h4>
+
+<select id="manualModel"></select>
+<select id="manualPart"></select>
+<button onclick="manualShow()">내용보기</button>
+
+</div>
+
+</div>
+
+<script>
+
+// 시작
+loadPartGuideCSV();
+
+// 자동 (툴1 결과 받기)
+window.addEventListener("message", (e)=>{
+    const text = e.data.memo || "";
+
+    const parts = text.split("|").map(t => t.trim().split(" ")[0]);
+    renderAuto(parts);
+});
+
+function renderAuto(parts){
+    const box = document.getElementById("autoParts");
+    box.innerHTML = "";
+
+    parts.slice(0,3).forEach(part=>{
+        const div = document.createElement("div");
+
+        div.innerHTML = `
+            ${part}
+            <button onclick="show('${part}')">보기</button>
+        `;
+
+        box.appendChild(div);
+    });
+}
+
+// 팝업
+function show(part){
+    const guide = getPartGuide("", part);
+    alert(guide);
+}
+
+// 수동
+function manualShow(){
+    const part = document.getElementById("manualPart").value;
+    show(part);
+}
+
+</script>
+
+</body>
+</html>

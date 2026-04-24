@@ -51,7 +51,7 @@ html, body {
     border: 1px solid #ccc;
     padding: 15px;
     background: white;
-    height: 100px; /* 🔥 여기만 수정 (200 → 100) */
+    height: 100px;
     white-space: pre-line;
 }
 
@@ -87,19 +87,18 @@ html, body {
                 <button onclick="resetAll()">초기화</button>
             </div>
 
+            <!-- 🔥 여기 수정 완료 -->
             <ul>
-<li><strong style="color:red;">특별 본사회수(분석)대상 : 분유쉐이커 2종</strong></li>
-<li><strong style="color:red;">증상 : 소음, 충전불량, 전원불량</strong></li>
-<li><strong style="color:red;">회수사유 : 검수</strong></li>
+                <li><strong style="color:red;">특별 본사회수(분석)대상 : 분유쉐이커 2종</strong></li>
+                <li><strong style="color:red;">증상 : 소음, 충전불량, 전원불량</strong></li>
+                <li><strong style="color:red;">회수사유 : 검수</strong></li>
             </ul>
 
         </div>
 
     </div>
 
-<div class="panel">
-    <iframe id="as3Frame"></iframe>
-</div>
+    <div class="panel">영역 3</div>
     <div class="panel">영역 4</div>
 
 </div>
@@ -110,17 +109,6 @@ const base = isLocal ? "./" : "/dashboard/tool/";
 
 document.getElementById("asFrame").src = base + "as.html";
 document.getElementById("as2Frame").src = base + "as2.html";
-    <script>
-const isLocal = location.hostname === "localhost" || location.hostname === "127.0.0.1";
-const base = isLocal ? "./" : "/dashboard/tool/";
-
-document.getElementById("asFrame").src = base + "as.html";
-document.getElementById("as2Frame").src = base + "as2.html";
-
-// ✅ 👇 이거 추가 (툴3)
-document.getElementById("as3Frame").src = base + "as3.html";
-
-let currentText = "";
 
 let currentText = "";
 

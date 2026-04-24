@@ -6,41 +6,47 @@ console.log("JS 로드됨");
 let globalCSVData = [];
 
 // =========================
-// CSV 파싱 (쉼표/따옴표 대응)
+// CSV 파싱
 // =========================
 function parseCSV(text) {
-    const lines = text.split("\n").map(l => l.replace(/\r/g, ""));
+    const rows = [];
+    let row = [];
+    let current = "";
+    let inQuotes = false;
 
-    return lines.map(line => {
-        const result = [];
-        let current = "";
-        let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const nextChar = text[i + 1];
 
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            const nextChar = line[i + 1];
-
-            if (char === '"' && nextChar === '"') {
-                current += '"';
-                i++;
-            } else if (char === '"') {
-                inQuotes = !inQuotes;
-            } else if (char === "," && !inQuotes) {
-                result.push(current.trim());
-                current = "";
-            } else {
-                current += char;
-            }
+        if (char === '"' && nextChar === '"') {
+            current += '"';
+            i++;
+        } else if (char === '"') {
+            inQuotes = !inQuotes;
+        } else if (char === "," && !inQuotes) {
+            row.push(current.trim());
+            current = "";
+        } else if ((char === "\n" || char === "\r") && !inQuotes) {
+            if (char === "\r" && nextChar === "\n") i++;
+            row.push(current.trim());
+            rows.push(row);
+            row = [];
+            current = "";
+        } else {
+            current += char;
         }
+    }
 
-        result.push(current.trim());
-        return result;
-    });
+    if (current || row.length) {
+        row.push(current.trim());
+        rows.push(row);
+    }
+
+    return rows;
 }
 
 // =========================
 // 날짜 파싱
-// 파이썬 원본 parse_date 로직 대응
 // =========================
 function parseDateValue(value) {
     if (!value) return null;
@@ -58,33 +64,12 @@ function parseDateValue(value) {
 }
 
 // =========================
-// 모듈 로드 함수
-// 기존 구조 보존
+// 헤더명으로 컬럼 찾기
 // =========================
-async function loadModule(targetId, file) {
-    const target = document.getElementById(targetId);
-
-    if (!target) return;
-
-    try {
-        const res = await fetch(file);
-        if (!res.ok) throw new Error(`${file} 로드 실패`);
-
-        const html = await res.text();
-        target.innerHTML = html;
-
-        if (file.includes("as.html")) {
-            initASModule();
-        }
-
-        if (file.includes("as2.html")) {
-            initTool2Module();
-        }
-
-    } catch (err) {
-        console.error(err);
-        target.innerHTML = "화면 로드 실패";
-    }
+function getColumnIndex(headers, name) {
+    return headers.findIndex(h =>
+        String(h).replace(/^\uFEFF/, "").trim() === name
+    );
 }
 
 // =========================
@@ -101,7 +86,6 @@ async function initASModule() {
 
         const text = await res.text();
         const rows = parseCSV(text);
-
         globalCSVData = rows;
 
         const modelSelect = document.getElementById("modelSelect");
@@ -111,25 +95,27 @@ async function initASModule() {
 
         if (!modelSelect || !symptomSelect || !resultBox) return;
 
-        // =========================
-        // 컬럼 인덱스
-        // Python 원본 기준:
-        // 접수일 / 구분 / 제품명 / 접수불량 / 사용부품
-        // =========================
-        const dateIndex = 0;      // 접수일
-        const typeIndex = 1;      // 구분
-        const modelIndex = 2;     // 제품명
-        const resultIndex = 7;    // 사용부품
-        const symptomIndex = 9;   // 접수불량
+        const headers = rows[0].map(h => String(h).replace(/^\uFEFF/, "").trim());
+
+        const dateIndex = getColumnIndex(headers, "접수일");
+        const typeIndex = getColumnIndex(headers, "구분");
+        const modelIndex = getColumnIndex(headers, "제품명");
+        const symptomIndex = getColumnIndex(headers, "접수불량");
+        const resultIndex = getColumnIndex(headers, "사용부품");
+
+        console.log("헤더:", headers);
+        console.log("인덱스:", { dateIndex, typeIndex, modelIndex, symptomIndex, resultIndex });
+
+        if ([dateIndex, typeIndex, modelIndex, symptomIndex, resultIndex].some(i => i === -1)) {
+            if (updateBox) {
+                updateBox.innerText = "CSV 필수 컬럼 없음";
+            }
+            console.error("필수 컬럼 누락");
+            return;
+        }
 
         const startDate = new Date(2026, 0, 1);
 
-        // =========================
-        // 필터 기준
-        // 1) 접수일 >= 2026-01-01
-        // 2) 구분 == 수리출고
-        // 3) 제품명 / 접수불량 / 사용부품 공란 제외
-        // =========================
         const filteredRows = rows.slice(1).filter(r => {
             const dateValue = parseDateValue(r[dateIndex]);
 
@@ -146,13 +132,8 @@ async function initASModule() {
         console.log("전체 데이터:", rows.length - 1);
         console.log("필터 후 데이터:", filteredRows.length);
 
-        // =========================
-        // 모델 채우기
-        // =========================
         const models = [...new Set(
-            filteredRows
-                .map(r => r[modelIndex])
-                .filter(Boolean)
+            filteredRows.map(r => r[modelIndex]).filter(Boolean)
         )].sort();
 
         modelSelect.innerHTML = `<option value="">선택</option>`;
@@ -166,9 +147,6 @@ async function initASModule() {
             modelSelect.appendChild(opt);
         });
 
-        // =========================
-        // 모델 선택 → 접수불량 채우기
-        // =========================
         modelSelect.addEventListener("change", () => {
             const selectedModel = modelSelect.value;
 
@@ -177,9 +155,7 @@ async function initASModule() {
             );
 
             const symptoms = [...new Set(
-                modelFiltered
-                    .map(r => r[symptomIndex])
-                    .filter(Boolean)
+                modelFiltered.map(r => r[symptomIndex]).filter(Boolean)
             )].sort();
 
             symptomSelect.innerHTML = `<option value="">선택</option>`;
@@ -194,18 +170,9 @@ async function initASModule() {
             resultBox.innerHTML = "";
         });
 
-        // =========================
-        // 접수불량 선택 → 사용부품 확률 계산
-        // Python calculate_probability 로직 대응
-        // =========================
         symptomSelect.addEventListener("change", () => {
             const selectedModel = modelSelect.value;
             const selectedSymptom = symptomSelect.value;
-
-            if (!selectedModel || !selectedSymptom) {
-                resultBox.innerHTML = "";
-                return;
-            }
 
             const finalRows = filteredRows.filter(r =>
                 r[modelIndex] === selectedModel &&
@@ -228,14 +195,11 @@ async function initASModule() {
             });
 
             const results = Object.entries(counts)
-                .map(([part, count]) => {
-                    const percent = Math.round((count / total) * 100);
-                    return {
-                        part,
-                        count,
-                        percent
-                    };
-                })
+                .map(([part, count]) => ({
+                    part,
+                    count,
+                    percent: Math.round((count / total) * 100)
+                }))
                 .sort((a, b) => b.count - a.count);
 
             const compactResult = results
@@ -254,9 +218,6 @@ async function initASModule() {
             `;
         });
 
-        // =========================
-        // 상태 표시
-        // =========================
         if (updateBox) {
             updateBox.innerText = `CSV 로드 완료 (${filteredRows.length}건)`;
         }
@@ -272,7 +233,7 @@ async function initASModule() {
 }
 
 // =========================
-// Tool2 (기존 유지)
+// Tool2 기존 유지
 // =========================
 function initTool2Module() {
     const typeSelect = document.getElementById("typeSelect");
@@ -312,7 +273,6 @@ function initTool2Module() {
 
 // =========================
 // 실행
-// iframe 내부 직접 실행 구조 대응
 // =========================
 if (document.getElementById("modelSelect")) {
     initASModule();

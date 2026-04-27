@@ -13,7 +13,29 @@ body {
     font-family: Arial, sans-serif;
     background: #abc1d1;
 }
+.chat-layout {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 12px;
+    width: 100%;
+}
 
+.chat-layout .chat-wrapper {
+    margin: 10px 0;
+}
+
+.unchecked-wrapper {
+    border: 2px solid rgba(254, 229, 0, 0.9);
+}
+
+.unchecked-wrapper .top-bar {
+    min-height: 96px;
+}
+
+.unchecked-wrapper .chat-title {
+    margin-bottom: 8px;
+}
 .chat-wrapper {
     width: 420px;
     max-width: calc(100vw - 20px);

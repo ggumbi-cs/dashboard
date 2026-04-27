@@ -669,7 +669,8 @@ async function load() {
         }
 
         checkNewIncomingMessage(data);
-        render(data);
+render(data);
+renderUnchecked(data);
     } catch (e) {
         console.log("불러오기 실패", e);
     }

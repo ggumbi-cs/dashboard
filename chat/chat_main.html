@@ -13,34 +13,56 @@ body {
     font-family: Arial, sans-serif;
     background: #abc1d1;
 }
-.chat-layout {
+
+/* ===== 좌우 배치 전용: 기존 CS 채팅 기능/구조 유지 ===== */
+.chat-page-layout {
     display: flex;
     justify-content: center;
     align-items: stretch;
     gap: 12px;
     width: 100%;
+    height: 100vh;
 }
 
-.chat-layout .chat-wrapper {
+.chat-page-layout > .chat-wrapper {
+    flex: 0 0 420px;
     margin: 10px 0;
 }
 
-.unchecked-wrapper {
-    border: 2px solid rgba(254, 229, 0, 0.9);
+.unchecked-frame {
+    flex: 0 0 420px;
+    width: 420px;
+    height: calc(100vh - 20px);
+    margin: 10px 0;
+    border: none;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    background: #b2c7da;
 }
 
-.unchecked-wrapper .top-bar {
-    min-height: 96px;
+@media (max-width: 900px) {
+    .chat-page-layout {
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .chat-page-layout > .chat-wrapper,
+    .unchecked-frame {
+        width: 420px;
+        max-width: calc(100vw - 20px);
+        flex: 0 0 auto;
+    }
 }
 
-.unchecked-wrapper .chat-title {
-    margin-bottom: 8px;
-}
 .chat-wrapper {
     width: 420px;
     max-width: calc(100vw - 20px);
     height: calc(100vh - 20px);
-    margin: 10px 0;
+    margin: 10px auto;
     background: #b2c7da;
     display: flex;
     flex-direction: column;
@@ -336,38 +358,6 @@ body {
 }
 
 @media (max-width: 520px) {
-    /* ===== 추가 시작: 좌우 2창 레이아웃 + V 미체크 모아보기 ===== */
-.chat-layout {
-    display: flex;
-    justify-content: center;
-    align-items: stretch;
-    gap: 12px;
-    width: 100%;
-}
-
-.chat-layout .chat-wrapper {
-    margin: 10px 0;
-}
-
-.unchecked-wrapper {
-    border: 2px solid rgba(254, 229, 0, 0.9);
-}
-
-.unchecked-wrapper .top-bar {
-    min-height: 56px;
-}
-
-.unchecked-wrapper .chat-title {
-    margin-bottom: 0;
-}
-
-@media (max-width: 900px) {
-    .chat-layout {
-        flex-direction: column;
-        align-items: center;
-    }
-}
-/* ===== 추가 끝 ===== */
     .chat-wrapper {
         width: 100vw;
         max-width: 100vw;
@@ -413,7 +403,7 @@ body {
 
 <div id="version">수정버전 : 2026/04/22 15:30:00</div>
 
-<div class="chat-layout">
+<div class="chat-page-layout">
 
 <div class="chat-wrapper">
     <div class="top-bar">
@@ -445,29 +435,11 @@ body {
     </div>
 </div>
 
-<div class="chat-layout">
-
-    <div class="chat-wrapper">
-       
-    </div>
-
-    <div class="chat-wrapper unchecked-wrapper">
-        <div class="top-bar">
-            <div class="chat-title">V 미체크 모아보기</div>
-        </div>
-
-        <div id="chat_unchecked" class="chat-box"></div>
-    </div>
-
-</div>
-
-<div class="chat-wrapper unchecked-wrapper">
-    <div class="top-bar">
-        <div class="chat-title">V 미체크 모아보기</div>
-    </div>
-
-    <div id="chat_unchecked" class="chat-box"></div>
-</div>
+<iframe
+    class="unchecked-frame"
+    src="chatchat_unchecked.html"
+    title="V 미체크 모아보기">
+</iframe>
 
 </div>
 
@@ -589,34 +561,7 @@ function render(data) {
         chat.scrollTop = chat.scrollHeight;
         return;
     }
-function renderUnchecked(data) {
-    const chat = document.getElementById("chat_unchecked");
-    if (!chat) return;
 
-    chat.innerHTML = "";
-
-    const list = [...data].reverse();
-
-    list.forEach(d => {
-        const checkedBy = (d.checked_by || "").trim();
-
-        if (checkedBy) return;
-
-        chat.innerHTML += `
-            <div class="msg-row other">
-                <div class="msg-wrap">
-                    <div class="name">${d.name}</div>
-                    <div class="bubble-line">
-                        <div class="bubble">${d.message}</div>
-                        <div class="check-btn"
-                             onclick="toggleCheck(${d.id})">✔</div>
-                    </div>
-                    <div class="time">${d.created_at || ""}</div>
-                </div>
-            </div>
-        `;
-    });
-}
     if (isNearBottom) {
         chat.scrollTop = chat.scrollHeight;
     } else {
@@ -746,8 +691,7 @@ async function load() {
         }
 
         checkNewIncomingMessage(data);
-render(data);
-renderUnchecked(data);
+        render(data);
     } catch (e) {
         console.log("불러오기 실패", e);
     }

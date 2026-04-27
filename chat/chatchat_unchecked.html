@@ -3,122 +3,333 @@
 <head>
 <meta charset="UTF-8">
 <title>V 미체크 모아보기</title>
-
 <style>
+* {
+    box-sizing: border-box;
+}
+
 body {
     margin: 0;
-    font-family: Arial;
+    font-family: Arial, sans-serif;
     background: #abc1d1;
 }
 
 .chat-wrapper {
     width: 420px;
-    height: 100vh;
-    margin: auto;
+    max-width: calc(100vw - 20px);
+    height: calc(100vh - 20px);
+    margin: 10px auto;
     background: #b2c7da;
     display: flex;
     flex-direction: column;
     border-radius: 14px;
     overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    position: relative;
+    border: 2px solid rgba(254, 229, 0, 0.95);
 }
 
 .top-bar {
-    padding: 10px;
+    background: #abc1d1;
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    position: relative;
+    min-height: 96px;
+}
+
+.chat-title {
+    font-size: 20px;
     font-weight: bold;
+    margin-bottom: 8px;
+    color: #1f1f1f;
+}
+
+.sub-title {
+    font-size: 12px;
+    color: #3e3e3e;
+    line-height: 1.45;
 }
 
 .chat-box {
     flex: 1;
     overflow-y: auto;
-    padding: 10px;
+    padding: 14px 12px 18px;
+    background: #b2c7da;
 }
 
-.msg {
-    background: #fff;
-    margin: 8px 0;
-    padding: 10px;
-    border-radius: 10px;
-    position: relative;
+.msg-row {
+    display: flex;
+    margin: 10px 0;
+    justify-content: flex-start;
+}
+
+.msg-wrap {
+    max-width: 78%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.name {
+    font-size: 12px;
+    color: #3e3e3e;
+    margin-bottom: 4px;
+    padding: 0 2px;
+}
+
+.bubble-line {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.bubble {
+    padding: 10px 12px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.45;
+    word-break: break-word;
+    white-space: pre-wrap;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+    background: #ffffff;
+    color: #111;
+    border-top-left-radius: 4px;
 }
 
 .check-btn {
-    position: absolute;
-    right: 10px;
-    bottom: 10px;
+    min-width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    line-height: 1;
+    color: #8a8f96;
     cursor: pointer;
-    color: #999;
+    user-select: none;
+    opacity: 0.75;
 }
 
-.check-btn.checked {
+.check-btn:hover {
+    opacity: 1;
     color: #2b7cff;
     font-weight: bold;
 }
-</style>
 
+.time {
+    font-size: 11px;
+    color: #55606b;
+    white-space: nowrap;
+    margin-top: 4px;
+    padding: 0 2px;
+}
+
+.empty-state {
+    padding: 14px 12px;
+    color: #4a5661;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+#version {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    font-size: 11px;
+    color: rgba(0,0,0,0.45);
+    pointer-events: none;
+}
+
+@media (max-width: 520px) {
+    .chat-wrapper {
+        width: 100vw;
+        max-width: 100vw;
+        height: 100vh;
+        margin: 0;
+        border-radius: 0;
+    }
+
+    .top-bar {
+        min-height: 96px;
+    }
+
+    #version {
+        top: 10px;
+        right: 10px;
+    }
+}
+</style>
 </head>
 <body>
 
+<div id="version">수정버전 : 2026/04/22 15:30:00</div>
+
 <div class="chat-wrapper">
-    <div class="top-bar">V 미체크 모아보기</div>
+    <div class="top-bar">
+        <div class="chat-title">V 미체크 모아보기</div>
+        <div class="sub-title">체크되지 않은 대화만 표시됩니다.</div>
+    </div>
+
     <div id="chat" class="chat-box"></div>
 </div>
 
 <script>
 const SERVER = "https://adaptable-expression-production-ba28.up.railway.app";
 
-// 👉 이름 가져오기 (chat_main과 동일 방식)
+function setVersion() {
+    const d = new Date();
+    const version =
+        d.getFullYear() + "/" +
+        String(d.getMonth() + 1).padStart(2, "0") + "/" +
+        String(d.getDate()).padStart(2, "0") + " " +
+        String(d.getHours()).padStart(2, "0") + ":" +
+        String(d.getMinutes()).padStart(2, "0") + ":" +
+        String(d.getSeconds()).padStart(2, "0");
+
+    document.getElementById("version").innerText = "수정버전 : " + version;
+}
+setVersion();
+
 function getFullName() {
-    return localStorage.getItem("cs_team") + " " + localStorage.getItem("cs_name");
+    const team = localStorage.getItem("cs_team") || "";
+    const name = localStorage.getItem("cs_name") || "";
+    return (team + " " + name).trim();
 }
 
-// 👉 체크 버튼
-async function toggleCheck(id) {
-    const fullName = getFullName();
+function escapeHtml(text) {
+    return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
 
-    await fetch(SERVER + "/check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            id: id,
-            checker: fullName
-        })
+function normalizeCheckedByText(value) {
+    const items = String(value || "")
+        .split(",")
+        .map(v => v.trim())
+        .filter(Boolean);
+
+    const seen = new Set();
+    const result = [];
+
+    items.forEach(name => {
+        if (seen.has(name)) return;
+        seen.add(name);
+        result.push(name);
     });
 
-    load();
+    return result.join(", ");
 }
 
-// 👉 렌더
 function render(data) {
     const chat = document.getElementById("chat");
+
+    const prevScrollTop = chat.scrollTop;
+    const prevScrollHeight = chat.scrollHeight;
+    const prevClientHeight = chat.clientHeight;
+    const isNearBottom = (prevScrollHeight - (prevScrollTop + prevClientHeight)) <= 40;
+
     chat.innerHTML = "";
 
-    data.reverse().forEach(d => {
-        const checked = d.checked_by ? "checked" : "";
+    const list = [...data]
+        .filter(d => !normalizeCheckedByText(d.checked_by || ""))
+        .reverse();
 
+    if (list.length === 0) {
+        chat.innerHTML = `<div class="empty-state">현재 V 미체크 대화가 없습니다.</div>`;
+        return;
+    }
+
+    list.forEach(d => {
         chat.innerHTML += `
-            <div class="msg">
-                <b>${d.name}</b><br>
-                ${d.message}<br>
-                <small>${d.created_at}</small>
-
-                <div class="check-btn ${checked}" onclick="toggleCheck(${d.id})">
-                    ✔
+            <div class="msg-row other">
+                <div class="msg-wrap">
+                    <div class="name">${escapeHtml(d.name || "")}</div>
+                    <div class="bubble-line">
+                        <div class="bubble">${escapeHtml(d.message || "")}</div>
+                        <div
+                            class="check-btn"
+                            title="V 체크하기"
+                            onclick="toggleCheck(${d.id})"
+                        >✔</div>
+                    </div>
+                    <div class="time">${escapeHtml(d.created_at || d.time || "")}</div>
                 </div>
             </div>
         `;
     });
+
+    if (prevScrollHeight === 0) {
+        chat.scrollTop = chat.scrollHeight;
+        return;
+    }
+
+    if (isNearBottom) {
+        chat.scrollTop = chat.scrollHeight;
+    } else {
+        const newScrollHeight = chat.scrollHeight;
+        const heightDiff = newScrollHeight - prevScrollHeight;
+        chat.scrollTop = prevScrollTop + heightDiff;
+    }
 }
 
-// 👉 데이터 로드
 async function load() {
-    const res = await fetch(SERVER + "/messages");
-    const data = await res.json();
+    try {
+        const res = await fetch(SERVER + "/messages", {
+            method: "GET"
+        });
 
-    // 🔥 핵심 필터 (미체크만)
-    const filtered = data.filter(d => !d.checked_by);
+        if (!res.ok) {
+            console.log("미체크 메시지 불러오기 실패:", res.status);
+            return;
+        }
 
-    render(filtered);
+        const data = await res.json();
+        if (!Array.isArray(data)) {
+            console.log("미체크 메시지 형식 이상");
+            return;
+        }
+
+        render(data);
+    } catch (e) {
+        console.log("미체크 불러오기 실패", e);
+    }
 }
+
+window.toggleCheck = async function (id) {
+    const fullName = getFullName();
+
+    if (!fullName) {
+        alert("왼쪽 CS 채팅에서 소속/이름을 먼저 입력해 주세요.");
+        return;
+    }
+
+    try {
+        const res = await fetch(SERVER + "/check", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                id: id,
+                checker: fullName
+            })
+        });
+
+        if (!res.ok) {
+            alert("체크 저장 실패");
+            console.log("미체크 체크 저장 실패 상태코드:", res.status);
+            return;
+        }
+
+        await load();
+    } catch (e) {
+        alert("체크 저장 실패");
+        console.log("미체크 체크 저장 오류:", e);
+    }
+};
 
 load();
 setInterval(load, 2000);

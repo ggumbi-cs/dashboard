@@ -1393,7 +1393,7 @@ function render(){
 
     // 개인설정 패널 (4등분 드롭다운 레이아웃)
     const toolPanel = el("div");
-    toolPanel.style.cssText = "flex:1;border-radius:0 8px 8px 0;background:#f1f5f9;display:none;overflow:auto;padding:16px;box-sizing:border-box;";
+    toolPanel.style.cssText = "flex:1;border-radius:0 8px 8px 0;background:#f1f5f9;overflow:hidden;padding:12px;box-sizing:border-box;display:none;flex-direction:column;";
 
     // ── localStorage 저장 키 ──
     function slotKey(name, s){ return "ggumbi_slot_" + name + "_" + s; }
@@ -1402,13 +1402,13 @@ function render(){
       toolPanel.innerHTML = "";
 
       const title = el("div");
-      title.style.cssText = "font-size:14px;font-weight:700;color:#0f1f3d;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:10px;";
+      title.style.cssText = "font-size:13px;font-weight:700;color:#0f1f3d;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:10px;flex-shrink:0;";
       title.innerHTML = "👤 " + name + " · 개인 Tool 설정" +
         "<span style='font-size:10px;color:#94a3b8;font-weight:400;margin-left:4px;'>선택 설정이 자동 저장됩니다</span>";
       toolPanel.appendChild(title);
 
       const grid = el("div");
-      grid.style.cssText = "display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:12px;height:calc(100% - 54px);";
+      grid.style.cssText = "display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:10px;flex:1;min-height:0;";
 
       const toolOptions = [
         { label:"-- Tool 선택 --",      value:"" },
@@ -1421,7 +1421,7 @@ function render(){
 
       for(let s=0; s<4; s++){
         const slot = el("div");
-        slot.style.cssText = "background:#fff;border:1px solid #e2e8f0;border-radius:8px;display:flex;flex-direction:column;overflow:hidden;";
+        slot.style.cssText = "background:#fff;border:1px solid #e2e8f0;border-radius:8px;display:flex;flex-direction:column;overflow:hidden;min-height:0;";
 
         const slotHdr = el("div");
         slotHdr.style.cssText = "display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f8fafc;border-bottom:1px solid #e2e8f0;flex-shrink:0;";
@@ -1447,7 +1447,7 @@ function render(){
         slot.appendChild(slotHdr);
 
         const slotFrame = document.createElement("iframe");
-        slotFrame.style.cssText = "flex:1;width:100%;border:none;background:#f8fafc;display:none;";
+        slotFrame.style.cssText = "flex:1;width:100%;border:none;background:#f8fafc;display:none;min-height:0;";
         slotFrame.setAttribute("frameborder","0");
 
         const slotEmpty = el("div");
@@ -1558,7 +1558,7 @@ function render(){
         btn.dataset.active = "1";
         // 패널 전환
         toolFrame.style.display = "none";
-        toolPanel.style.display = "block";
+        toolPanel.style.display = "flex";
         renderPersonPanel(name);
       });
       toolNav.appendChild(btn);

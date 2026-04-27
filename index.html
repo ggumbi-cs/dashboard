@@ -1378,23 +1378,129 @@ function render(){
     const toolNav = el("div");
     toolNav.style.cssText = "width:160px;flex-shrink:0;background:#1a2f52;border-radius:8px 0 0 8px;padding:16px 0;display:flex;flex-direction:column;gap:4px;";
 
+    // ── 메뉴 구조 정의 ──
     const toolMenus = [
-      { label:"업무Tool 코딩", src:"tool/tool_main.html" },
-      { label:"계열사CS 소통챗", src:"chat/chat_main.html" },
+      { type:"link", label:"업무Tool 코딩",   src:"tool/tool_main.html" },
+      { type:"link", label:"계열사CS 소통챗", src:"chat/chat_main.html" },
     ];
+    const 개인설정멤버 = ["권미숙","심우승","이대훈","강민성","박수진","장진영","정지현","조승연"];
 
+    // ── 콘텐츠 영역 (iframe or 개인설정 패널) ──
     const toolFrame = document.createElement("iframe");
     toolFrame.src = toolMenus[0].src;
-    toolFrame.style.cssText = "flex:1;border:none;border-radius:0 8px 8px 0;background:#e9e9e9;";
+    toolFrame.style.cssText = "flex:1;border:none;border-radius:0 8px 8px 0;background:#e9e9e9;display:block;";
     toolFrame.setAttribute("frameborder","0");
 
-    // 메뉴 헤더
+    // 개인설정 패널 (4등분 드롭다운 레이아웃)
+    const toolPanel = el("div");
+    toolPanel.style.cssText = "flex:1;border-radius:0 8px 8px 0;background:#f1f5f9;display:none;overflow:auto;padding:16px;box-sizing:border-box;";
+
+    // ── localStorage 저장 키 ──
+    function slotKey(name, s){ return "ggumbi_slot_" + name + "_" + s; }
+
+    function renderPersonPanel(name){
+      toolPanel.innerHTML = "";
+
+      const title = el("div");
+      title.style.cssText = "font-size:14px;font-weight:700;color:#0f1f3d;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:10px;";
+      title.innerHTML = "👤 " + name + " · 개인 Tool 설정" +
+        "<span style='font-size:10px;color:#94a3b8;font-weight:400;margin-left:4px;'>선택 설정이 자동 저장됩니다</span>";
+      toolPanel.appendChild(title);
+
+      const grid = el("div");
+      grid.style.cssText = "display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:12px;height:calc(100% - 54px);";
+
+      const toolOptions = [
+        { label:"-- Tool 선택 --",      value:"" },
+        { label:"업무Tool 코딩",         value:"tool/tool_main.html" },
+        { label:"계열사CS 소통챗",       value:"chat/chat_main.html" },
+        { label:"예상교체작업",           value:"tool/as.html" },
+        { label:"회수접수도우미",         value:"tool/as2.html" },
+        { label:"원인 및 관리안내",       value:"tool/as3.html" },
+      ];
+
+      for(let s=0; s<4; s++){
+        const slot = el("div");
+        slot.style.cssText = "background:#fff;border:1px solid #e2e8f0;border-radius:8px;display:flex;flex-direction:column;overflow:hidden;";
+
+        const slotHdr = el("div");
+        slotHdr.style.cssText = "display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f8fafc;border-bottom:1px solid #e2e8f0;flex-shrink:0;";
+
+        const slotLabel = el("div");
+        slotLabel.style.cssText = "font-size:10px;font-weight:700;color:#64748b;flex-shrink:0;";
+        slotLabel.textContent = "슬롯 " + (s+1);
+
+        const slotSel = document.createElement("select");
+        slotSel.style.cssText = "flex:1;font-size:11px;padding:3px 6px;border:1px solid #e2e8f0;border-radius:4px;background:#fff;font-family:inherit;cursor:pointer;outline:none;";
+        toolOptions.forEach(opt => {
+          const o = document.createElement("option");
+          o.value = opt.value; o.textContent = opt.label;
+          slotSel.appendChild(o);
+        });
+
+        // ── 저장된 값 복원 ──
+        const saved = localStorage.getItem(slotKey(name, s));
+        if(saved) slotSel.value = saved;
+
+        slotHdr.appendChild(slotLabel);
+        slotHdr.appendChild(slotSel);
+        slot.appendChild(slotHdr);
+
+        const slotFrame = document.createElement("iframe");
+        slotFrame.style.cssText = "flex:1;width:100%;border:none;background:#f8fafc;display:none;";
+        slotFrame.setAttribute("frameborder","0");
+
+        const slotEmpty = el("div");
+        slotEmpty.style.cssText = "flex:1;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:12px;";
+        slotEmpty.textContent = "Tool을 선택하세요";
+
+        slot.appendChild(slotEmpty);
+        slot.appendChild(slotFrame);
+
+        // ── 저장된 값 있으면 자동 로드 ──
+        if(saved){
+          slotFrame.src = saved;
+          slotFrame.style.display = "block";
+          slotEmpty.style.display = "none";
+        }
+
+        slotSel.addEventListener("change", function(){
+          if(this.value){
+            slotFrame.src = this.value;
+            slotFrame.style.display = "block";
+            slotEmpty.style.display = "none";
+            localStorage.setItem(slotKey(name, s), this.value); // 저장
+          } else {
+            slotFrame.style.display = "none";
+            slotEmpty.style.display = "flex";
+            localStorage.removeItem(slotKey(name, s)); // 삭제
+          }
+        });
+
+        grid.appendChild(slot);
+      }
+      toolPanel.appendChild(grid);
+    }
+
+    // ── 메뉴 헤더 ──
     const toolNavTitle = el("div");
     toolNavTitle.style.cssText = "font-size:10px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:0.08em;padding:0 14px 10px;border-bottom:1px solid rgba(255,255,255,0.1);margin-bottom:6px;";
     toolNavTitle.textContent = "팀 도구";
     toolNav.appendChild(toolNavTitle);
 
     let activeToolIdx = 0;
+    let activeType = "link"; // "link" or "personal"
+
+    function setActiveBtn(allBtns, idx){
+      allBtns.forEach((b,j) => {
+        b.style.background = j===idx ? "rgba(255,255,255,0.1)" : "transparent";
+        b.style.color = j===idx ? "#fff" : "rgba(255,255,255,0.6)";
+        b.style.borderLeftColor = j===idx ? "#60a5fa" : "transparent";
+      });
+    }
+
+    // ── 링크 메뉴 버튼 ──
+    const allNavBtns = [];
     const toolBtns = toolMenus.map((menu, i) => {
       const btn = el("button");
       btn.style.cssText = "width:100%;text-align:left;padding:9px 14px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:transparent;color:rgba(255,255,255,0.6);border-left:3px solid transparent;transition:all 0.15s;";
@@ -1404,23 +1510,59 @@ function render(){
         btn.style.color = "#fff";
         btn.style.borderLeftColor = "#60a5fa";
       }
-      btn.addEventListener("mouseenter", function(){
-        if(activeToolIdx !== i) this.style.background = "rgba(255,255,255,0.06)";
-      });
-      btn.addEventListener("mouseleave", function(){
-        if(activeToolIdx !== i) this.style.background = "transparent";
-      });
+      btn.addEventListener("mouseenter", function(){ if(activeToolIdx !== i || activeType!=="link") this.style.background="rgba(255,255,255,0.06)"; });
+      btn.addEventListener("mouseleave", function(){ if(activeToolIdx !== i || activeType!=="link") this.style.background="transparent"; });
       btn.addEventListener("click", function(){
-        activeToolIdx = i;
-        toolBtns.forEach((b,j) => {
-          b.style.background = j===i ? "rgba(255,255,255,0.1)" : "transparent";
-          b.style.color = j===i ? "#fff" : "rgba(255,255,255,0.6)";
-          b.style.borderLeftColor = j===i ? "#60a5fa" : "transparent";
-        });
+        activeToolIdx = i; activeType = "link";
+        setActiveBtn(allNavBtns, allNavBtns.indexOf(btn));
         toolFrame.src = menu.src;
+        toolFrame.style.display = "block";
+        toolPanel.style.display = "none";
       });
       toolNav.appendChild(btn);
+      allNavBtns.push(btn);
       return btn;
+    });
+
+    // ── 개인설정 섹션 위 spacer ──
+    const personalSpacer = el("div");
+    personalSpacer.style.cssText = "flex:1;min-height:40px;";
+    toolNav.appendChild(personalSpacer);
+
+    // ── 구분선 ──
+    const personalDivider = el("div");
+    personalDivider.style.cssText = "height:1px;background:rgba(255,255,255,0.1);margin:0 10px 6px;";
+    toolNav.appendChild(personalDivider);
+
+    // ── 중분류 헤더: 개인설정 ──
+    const personalHeader = el("div");
+    personalHeader.style.cssText = "font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:0.06em;padding:10px 14px 6px;margin-top:4px;";
+    personalHeader.textContent = "개인설정";
+    toolNav.appendChild(personalHeader);
+
+    // ── 소분류: 멤버 버튼 ──
+    개인설정멤버.forEach((name) => {
+      const btn = el("button");
+      btn.style.cssText = "width:100%;text-align:left;padding:7px 14px 7px 22px;font-size:11px;font-weight:500;border:none;cursor:pointer;background:transparent;color:rgba(255,255,255,0.55);border-left:3px solid transparent;transition:all 0.15s;";
+      btn.textContent = name;
+      btn.addEventListener("mouseenter", function(){ if(activeType!=="personal"||btn.dataset.active!=="1") this.style.background="rgba(255,255,255,0.06)"; });
+      btn.addEventListener("mouseleave", function(){ if(btn.dataset.active!=="1") this.style.background="transparent"; });
+      btn.addEventListener("click", function(){
+        activeType = "personal";
+        // 모든 버튼 초기화
+        allNavBtns.forEach(b => { b.style.background="transparent"; b.style.color="rgba(255,255,255,0.6)"; b.style.borderLeftColor="transparent"; b.dataset.active="0"; });
+        // 현재 버튼 활성
+        btn.style.background = "rgba(255,255,255,0.1)";
+        btn.style.color = "#fff";
+        btn.style.borderLeftColor = "#60a5fa";
+        btn.dataset.active = "1";
+        // 패널 전환
+        toolFrame.style.display = "none";
+        toolPanel.style.display = "block";
+        renderPersonPanel(name);
+      });
+      toolNav.appendChild(btn);
+      allNavBtns.push(btn);
     });
 
     // 로그아웃 버튼 (사이드바와 동일)
@@ -1442,6 +1584,7 @@ function render(){
 
     toolWrap.appendChild(toolNav);
     toolWrap.appendChild(toolFrame);
+    toolWrap.appendChild(toolPanel);
     cnt.appendChild(toolWrap);
     return;
   }

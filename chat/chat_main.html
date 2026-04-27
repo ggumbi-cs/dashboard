@@ -589,7 +589,34 @@ function render(data) {
         chat.scrollTop = chat.scrollHeight;
         return;
     }
+function renderUnchecked(data) {
+    const chat = document.getElementById("chat_unchecked");
+    if (!chat) return;
 
+    chat.innerHTML = "";
+
+    const list = [...data].reverse();
+
+    list.forEach(d => {
+        const checkedBy = (d.checked_by || "").trim();
+
+        if (checkedBy) return;
+
+        chat.innerHTML += `
+            <div class="msg-row other">
+                <div class="msg-wrap">
+                    <div class="name">${d.name}</div>
+                    <div class="bubble-line">
+                        <div class="bubble">${d.message}</div>
+                        <div class="check-btn"
+                             onclick="toggleCheck(${d.id})">✔</div>
+                    </div>
+                    <div class="time">${d.created_at || ""}</div>
+                </div>
+            </div>
+        `;
+    });
+}
     if (isNearBottom) {
         chat.scrollTop = chat.scrollHeight;
     } else {

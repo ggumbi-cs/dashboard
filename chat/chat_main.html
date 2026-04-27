@@ -314,6 +314,38 @@ body {
 }
 
 @media (max-width: 520px) {
+    /* ===== 추가 시작: 좌우 2창 레이아웃 + V 미체크 모아보기 ===== */
+.chat-layout {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 12px;
+    width: 100%;
+}
+
+.chat-layout .chat-wrapper {
+    margin: 10px 0;
+}
+
+.unchecked-wrapper {
+    border: 2px solid rgba(254, 229, 0, 0.9);
+}
+
+.unchecked-wrapper .top-bar {
+    min-height: 56px;
+}
+
+.unchecked-wrapper .chat-title {
+    margin-bottom: 0;
+}
+
+@media (max-width: 900px) {
+    .chat-layout {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+/* ===== 추가 끝 ===== */
     .chat-wrapper {
         width: 100vw;
         max-width: 100vw;

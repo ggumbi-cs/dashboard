@@ -1,6 +1,22 @@
 console.log("JS 로드됨");
 
 // =========================
+// 프레임 간 공유 채널
+// =========================
+const asToolChannel = new BroadcastChannel("as-tool-channel-v1");
+
+function publishSharedMemo(memo) {
+    asToolChannel.postMessage({ memo: memo || "" });
+}
+
+function subscribeSharedMemo(handler) {
+    asToolChannel.addEventListener("message", (event) => {
+        const payload = event.data || {};
+        handler(payload.memo || "");
+    });
+}
+
+// =========================
 // 공통 데이터
 // =========================
 let globalCSVData = [];
@@ -215,8 +231,9 @@ async function initASModule() {
                 </div>
             `;
 
-            // 👉 툴3으로 전달
+            // 👉 툴3으로 전달 (기존 postMessage + 공용 채널)
             window.parent.postMessage({ memo: compactResult }, "*");
+            publishSharedMemo(compactResult);
         });
 
         if (updateBox) {

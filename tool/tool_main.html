@@ -8,6 +8,8 @@
 html, body {
     margin: 0;
     height: 100%;
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
 }
 
 .grid {
@@ -21,42 +23,15 @@ html, body {
 }
 
 .panel {
+    background: #fff;
     border: 1px solid #ccc;
-}
-
-.panel-left {
-    overflow: auto;
-}
-
-.panel-right {
-    display: grid;
-    grid-template-columns: 55% 45%;
     overflow: hidden;
 }
 
-.panel-left iframe,
-.panel-right iframe {
+.panel iframe {
     width: 100%;
     height: 100%;
     border: none;
-}
-
-.result-side {
-    padding: 20px;
-    background: #f9f9f9;
-    border-left: 1px solid #ddd;
-}
-
-.result-box {
-    border: 1px solid #ccc;
-    padding: 15px;
-    background: white;
-    height: 100px;
-    white-space: pre-line;
-}
-
-.button-area {
-    margin-top: 10px;
 }
 </style>
 
@@ -65,42 +40,14 @@ html, body {
 <body>
 
 <div class="grid">
-    
-    <!-- 툴1 -->
-    <div class="panel panel-left">
+    <div class="panel">
         <iframe id="asFrame"></iframe>
     </div>
 
-    <!-- 툴2 -->
-    <div class="panel panel-right">
-
+    <div class="panel">
         <iframe id="as2Frame"></iframe>
-
-        <div class="result-side">
-
-            <h3>자동 생성 결과</h3>
-
-            <div class="result-box" id="result">
-                여기에 결과 출력
-            </div>
-
-            <div class="button-area">
-                <button onclick="copyText()">복사</button>
-                <button onclick="resetAll()">초기화</button>
-            </div>
-
-            <!-- 🔥 복구된 빨간문장 -->
-            <ul>
-            <li><strong style="color:red;">특별 본사회수(분석)대상 : 분유쉐이커 2종</strong></li>
-            <li><strong style="color:red;">증상 : 소음, 충전불량, 전원불량</strong></li>
-            <li><strong style="color:red;">회수사유 : 검수</strong></li>
-            </ul>
-
-        </div>
-
     </div>
 
-    <!-- 툴3 -->
     <div class="panel">
         <iframe id="as3Frame"></iframe>
     </div>
@@ -116,29 +63,6 @@ const base = isLocal ? "./" : "/dashboard/tool/";
 document.getElementById("asFrame").src = base + "as.html";
 document.getElementById("as2Frame").src = base + "as2.html";
 document.getElementById("as3Frame").src = base + "as3.html";
-
-let currentText = "";
-
-window.addEventListener("message", (e)=>{
-    currentText = e.data.memo || "";
-    document.getElementById("result").innerText = currentText;
-
-    const tool3 = document.getElementById("as3Frame").contentWindow;
-    tool3.postMessage({ memo: currentText }, "*");
-});
-
-function copyText(){
-    if(!currentText){
-        alert("내용 없음");
-        return;
-    }
-    navigator.clipboard.writeText(currentText);
-    alert("복사 완료");
-}
-
-function resetAll(){
-    location.reload();
-}
 </script>
 
 </body>

@@ -5,14 +5,34 @@
 <title>회수접수도우미</title>
 
 <style>
-body {
-    font-family: Arial, sans-serif;
-    margin: 10px;
+html, body {
+    height: 100%;
+    margin: 0;
 }
 
-h2 {
-    margin: 5px 0 8px 0;
-    font-size: 19px;
+body {
+    font-family: Arial, sans-serif;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 55% 45%;
+    gap: 12px;
+    height: 100%;
+}
+
+.left, .right {
+    border: 1px solid #ddd;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow: auto;
+    background: #fff;
+}
+
+h2, h3 {
+    margin: 5px 0 10px 0;
 }
 
 label {
@@ -27,10 +47,24 @@ input, select {
     margin-bottom: 10px;
     box-sizing: border-box;
 }
+
+.result-box {
+    border: 1px solid #ccc;
+    padding: 12px;
+    background: #fff;
+    min-height: 84px;
+    white-space: pre-line;
+}
+
+.button-area {
+    margin-top: 10px;
+}
 </style>
 </head>
 
 <body>
+<div class="layout">
+<div class="left">
 
 <h2>회수접수도우미</h2>
 
@@ -79,6 +113,23 @@ input, select {
     <input type="text" id="customer">
 </div>
 
+</div>
+
+<div class="right">
+<h3>자동 생성 결과</h3>
+<div class="result-box" id="result">여기에 결과 출력</div>
+<div class="button-area">
+    <button type="button" id="copyBtn">복사</button>
+    <button type="button" id="resetBtn">초기화</button>
+</div>
+<ul>
+    <li><strong style="color:red;">특별 본사회수(분석)대상 : 분유쉐이커 2종</strong></li>
+    <li><strong style="color:red;">증상 : 소음, 충전불량, 전원불량</strong></li>
+    <li><strong style="color:red;">회수사유 : 검수</strong></li>
+</ul>
+</div>
+</div>
+
 <script>
 const LINKMOM = ["분유쉐이커","LED분유쉐이커","휴대용분유포트"];
 
@@ -98,6 +149,9 @@ const productInput = document.getElementById("productInput");
 const symptom = document.getElementById("symptom");
 const order = document.getElementById("order");
 const customer = document.getElementById("customer");
+const result = document.getElementById("result");
+const copyBtn = document.getElementById("copyBtn");
+const resetBtn = document.getElementById("resetBtn");
 
 function getProduct(){
     return modelType.value === "3종 선택"
@@ -176,7 +230,7 @@ function buildMemo(){
 
 function sendToParent(){
     const memo = buildMemo();
-    window.parent.postMessage({memo}, "*");
+    result.innerText = memo || "여기에 결과 출력";
 }
 
 document.querySelectorAll("input, select").forEach(el=>{
@@ -200,7 +254,26 @@ modelType.addEventListener("change", ()=>{
     }
 });
 
+copyBtn.addEventListener("click", async ()=>{
+    const text = result.innerText.trim();
+    if(!text || text === "여기에 결과 출력"){
+        alert("내용 없음");
+        return;
+    }
+    try{
+        await navigator.clipboard.writeText(text);
+        alert("복사 완료");
+    }catch(e){
+        alert("복사 실패");
+    }
+});
+
+resetBtn.addEventListener("click", ()=>{
+    location.reload();
+});
+
 updateFields();
+sendToParent();
 </script>
 
 </body>

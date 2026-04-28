@@ -130,11 +130,16 @@ loadCSV();
 // =========================
 window.addEventListener("message",(e)=>{
     const text = e.data.memo || "";
-
     const parts = text.split("|").map(t=>t.trim().split(" ")[0]);
-
     renderAuto(parts);
 });
+
+if (typeof subscribeSharedMemo === "function") {
+    subscribeSharedMemo((text) => {
+        const parts = text.split("|").map(t=>t.trim().split(" ")[0]);
+        renderAuto(parts);
+    });
+}
 
 // =========================
 // 자동 영역

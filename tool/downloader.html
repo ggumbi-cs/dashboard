@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notion CSV 통합 다운로더</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --border: #e2e4e9;
+    --border-focus: #4a6cf7;
+    --text: #1a1d2e;
+    --text-sub: #6b7280;
+    --text-muted: #9ca3af;
+    --accent: #4a6cf7;
+    --accent-hover: #3b5ce4;
+    --accent-light: #eef1fe;
+    --success: #10b981;
+    --success-light: #d1fae5;
+    --warning: #f59e0b;
+    --warning-light: #fef3c7;
+    --danger: #ef4444;
+    --danger-light: #fee2e2;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 13px;
+    min-height: 100vh;
+  }
+
+  /* ── 타이틀바 ── */
+  .titlebar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow);
+  }
+  .titlebar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .titlebar-icon {
+    width: 28px;
+    height: 28px;
+    background: var(--accent);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  .titlebar h1 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  .titlebar-user {
+    font-size: 11px;
+    color: var(--text-sub);
+    background: var(--bg);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  /* ── 메인 레이아웃 ── */
+  .main {
+    height: calc(100vh - 52px);
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+    gap: 0;
+    overflow: hidden;
+  }
+  .main-left {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 14px 16px 16px;
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .main-right {
+    display: flex;
+    flex-direction: column;
+    padding: 16px 16px 16px 14px;
+    overflow-y: auto;
+    background: var(--surface);
+  }
+
+  /* ── 카드 ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-sub);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ── API 토큰 ── */
+  .token-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .token-input {
+    flex: 1;
+    height: 36px;
+    padding: 0 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border 0.15s;
+  }
+  .token-input:focus { border-color: var(--accent); background: #fff; }
+  .token-toggle {
+    height: 36px;
+    padding: 0 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    background: var(--bg);
+    color: var(--text-sub);
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .token-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── 설정 행 ── */
+  .settings-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .setting-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 140px;
+  }
+  .setting-group.toggle-group {
+    min-width: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+  }
+  .setting-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-sub);
+  }
+  .setting-select {
+    height: 34px;
+    padding: 0 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    background: var(--bg);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px;
+    color: var(--text);
+    cursor: pointer;
+    outline: none;
+    min-width: 160px;
+  }
+  .setting-select:focus { border-color: var(--accent); background: #fff; }
+
+  .toggle-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+  .toggle-label-text {
+    font-size: 11px;
+    color: var(--text-sub);
+    font-weight: 600;
+  }
+  .toggle-btn {
+    height: 30px;
+    padding: 0 14px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .toggle-btn.off {
+    background: var(--bg);
+    color: var(--text-sub);
+    border-color: var(--border);
+  }
+  .toggle-btn.on {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .toggle-btn:hover { border-color: var(--accent); }
+
+  /* ── URL 입력 테이블 ── */
+  .url-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .url-table thead th {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-sub);
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 2px solid var(--border);
+    background: var(--bg);
+  }
+  .url-table thead th:first-child {
+    width: 36px;
+    text-align: center;
+    border-radius: 6px 0 0 0;
+  }
+  .url-table thead th:last-child {
+    width: 110px;
+    border-radius: 0 6px 0 0;
+  }
+  .url-row td {
+    padding: 3px 4px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .url-row:last-child td { border-bottom: none; }
+  .url-row:hover td { background: #fafbff; }
+
+  .row-num {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    text-align: center;
+    width: 36px;
+  }
+  .url-input {
+    width: 100%;
+    height: 30px;
+    padding: 0 8px;
+    border: 1.5px solid transparent;
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+    background: transparent;
+    outline: none;
+    transition: all 0.12s;
+  }
+  .url-input:focus {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+  .url-input.has-value { color: var(--accent); }
+  .url-input::placeholder { color: var(--text-muted); }
+
+  .name-input {
+    width: 100%;
+    height: 30px;
+    padding: 0 8px;
+    border: 1.5px solid transparent;
+    border-radius: 5px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px;
+    color: var(--text);
+    background: transparent;
+    outline: none;
+    transition: all 0.12s;
+  }
+  .name-input:focus {
+    border-color: var(--accent);
+    background: #f0f9f4;
+  }
+  .name-input.has-value { font-weight: 600; }
+  .name-input::placeholder { color: var(--text-muted); }
+
+  /* ── 상태 배지 ── */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .status-badge.idle { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+  .status-badge.pending { background: var(--warning-light); color: var(--warning); border: 1px solid #fcd34d; }
+  .status-badge.running {
+    background: var(--accent-light);
+    color: var(--accent);
+    border: 1px solid #a5b4fc;
+    animation: pulse 1.2s infinite;
+  }
+  .status-badge.done { background: var(--success-light); color: var(--success); border: 1px solid #6ee7b7; }
+  .status-badge.fail { background: var(--danger-light); color: var(--danger); border: 1px solid #fca5a5; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* ── 하단 버튼 영역 ── */
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    align-items: center;
+  }
+  .btn {
+    height: 38px;
+    padding: 0 20px;
+    border-radius: 8px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-secondary {
+    background: var(--bg);
+    color: var(--text-sub);
+    border: 1.5px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(74,108,247,0.3);
+  }
+  .btn-primary:hover { background: var(--accent-hover); box-shadow: 0 4px 12px rgba(74,108,247,0.4); }
+  .btn-primary:disabled { background: #a5b4fc; cursor: not-allowed; box-shadow: none; }
+  .btn-danger {
+    background: var(--danger);
+    color: #fff;
+  }
+  .btn-danger:hover { background: #dc2626; }
+
+  /* ── 진행 로그 ── */
+  .log-wrap {
+    background: #1a1d2e;
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #a5b4fc;
+    min-height: 80px;
+    max-height: 160px;
+    overflow-y: auto;
+    line-height: 1.8;
+  }
+  .log-line { display: flex; gap: 10px; }
+  .log-time { color: #4b5563; flex-shrink: 0; }
+  .log-text.info { color: #a5b4fc; }
+  .log-text.success { color: #34d399; }
+  .log-text.warn { color: #fbbf24; }
+  .log-text.error { color: #f87171; }
+  .log-empty { color: #374151; font-style: italic; }
+
+  /* ── 진행바 ── */
+  .progress-wrap {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #818cf8);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-sub);
+    margin-bottom: 4px;
+  }
+
+  /* ── 스크롤바 ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+
+<!-- 타이틀바 -->
+<div class="titlebar">
+  <div class="titlebar-left">
+    <div class="titlebar-icon">📥</div>
+    <h1>Notion CSV 통합 다운로더</h1>
+  </div>
+  <div class="titlebar-user">사용문의 : 우승SQ</div>
+</div>
+
+<div class="main">
+
+<div class="main-left">
+
+  <!-- 저장 경로 -->
+  <div class="card">
+    <div class="card-title">📁 다운로드 저장 경로</div>
+    <div class="token-wrap">
+      <div id="pathDisplay" style="flex:1;height:36px;padding:0 12px;border:1.5px solid var(--border);border-radius:7px;background:var(--bg);display:flex;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);gap:8px;">
+        <span>📂</span><span id="pathText">바탕화면에 새 폴더 생성 후 선택해주세요</span>
+      </div>
+      <button class="token-toggle" onclick="selectFolder()" style="background:var(--accent-light);color:var(--accent);border-color:var(--accent);white-space:nowrap;">폴더 선택</button>
+      <button class="token-toggle" id="pathClearBtn" onclick="clearFolder()" style="display:none;">초기화</button>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--text-muted);line-height:1.7;">
+      ⚠️ 브라우저 보안 정책상 <b style="color:var(--danger);">다운로드·문서 등 시스템 폴더는 선택 불가</b>합니다.<br>
+      &nbsp;&nbsp;&nbsp;💡 <b style="color:var(--text);">바탕화면에 새 폴더를 생성</b>한 후 해당 폴더를 선택해주세요.<br>
+      &nbsp;&nbsp;&nbsp;선택한 폴더에 ZIP 압축을 자동으로 풀고 가장 큰 CSV를 저장합니다.
+    </div>
+  </div>
+
+  <!-- 다운로드 설정 -->
+  <div class="card">
+    <div class="card-title">⚙️ 다운로드 설정</div>
+    <div class="settings-row">
+      <div class="setting-group">
+        <div class="setting-label">형식</div>
+        <select class="setting-select" id="formatSel">
+          <option value="csv">CSV</option>
+          <option value="html">HTML</option>
+          <option value="pdf">PDF</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <div class="setting-label">보기방식</div>
+        <select class="setting-select" id="viewSel">
+          <option value="current" selected>기본 보기</option>
+          <option value="all">모든 보기</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <div class="setting-label">콘텐츠</div>
+        <select class="setting-select" id="contentSel">
+          <option value="no_files" selected>파일 및 이미지 제외</option>
+          <option value="include_files">파일 및 이미지 포함</option>
+        </select>
+      </div>
+      <div class="setting-group toggle-group">
+        <div class="toggle-item">
+          <div class="toggle-label-text">하위페이지</div>
+          <button class="toggle-btn off" id="subpageBtn" onclick="toggleSetting('subpageBtn')">미포함</button>
+        </div>
+        <div class="toggle-item">
+          <div class="toggle-label-text">하위폴더</div>
+          <button class="toggle-btn off" id="subfolderBtn" onclick="toggleSetting('subfolderBtn')">미생성</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 봇 상태 -->
+  <div class="card" style="padding:12px 16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
+        <div id="botDot" style="width:8px;height:8px;border-radius:50%;background:#d1d5db;flex-shrink:0;transition:background 0.3s;"></div>
+        <span id="botStatus" style="font-size:11px;color:var(--text-muted);">봇 미연결 — 아래에서 봇을 다운로드하고 실행해주세요</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <a href="https://github.com/ggumbi-cs/downloads/releases/download/v1.0/ggumbi_csv_bot.exe"
+          download="ggumbi_csv_bot.exe"
+          class="btn btn-secondary"
+          style="height:28px;font-size:11px;padding:0 12px;text-decoration:none;display:flex;align-items:center;gap:4px;">
+          ⬇ 봇 다운로드
+        </a>
+        <button class="btn btn-secondary" style="height:28px;font-size:11px;padding:0 12px;" onclick="checkBotServer()">🔌 연결 확인</button>
+      </div>
+    </div>
+
+    <!-- 봇 안내 (항상 표시) -->
+    <div id="botGuide" style="margin-top:12px;padding:10px 14px;background:#fffbeb;border:1px solid #fcd34d;border-radius:7px;font-size:11px;line-height:1.9;color:#78350f;">
+      <b style="font-size:12px;">📋 봇 사용 준비 안내</b><br>
+      이 기능은 <b>PC에서 직접 실행되는 봇 프로그램</b>과 연동하여 동작합니다.<br>
+      아래 순서대로 준비해주세요:<br>
+      <span style="display:flex;flex-direction:column;gap:3px;margin-top:4px;">
+        <span>① <b>⬇ 봇 다운로드</b> 클릭 → <code style="background:#fef3c7;padding:1px 5px;border-radius:3px;">ggumbi_csv_bot.exe</code> 파일 저장</span>
+        <span>② 다운로드된 <code style="background:#fef3c7;padding:1px 5px;border-radius:3px;">ggumbi_csv_bot.exe</code> <b>더블클릭하여 실행</b></span>
+        <span>③ 검은 창이 뜨면 <b>🔌 연결 확인</b> 버튼 클릭</span>
+        <span>④ <span style="color:var(--success);font-weight:700;">● 봇 연결됨</span> 으로 바뀌면 준비 완료!</span>
+      </span>
+      <div style="margin-top:6px;color:#92400e;">⚠️ 봇 창(검은 창)을 닫으면 연결이 끊깁니다. 작업 중에는 열어두세요.</div>
+    </div>
+
+    <!-- 봇 실행 로그 (연결 후) -->
+    <div id="botLogWrap" style="display:none;margin-top:10px;">
+      <div class="log-wrap" id="botLog" style="min-height:60px;max-height:120px;"></div>
+    </div>
+  </div>
+
+  <!-- 하단 여백 채우기 -->
+  <div style="flex:1;"></div>
+
+  <!-- 긴급중단 안내 -->
+  <div style="display:flex;align-items:center;justify-content:center;padding:6px 0 4px;gap:8px;">
+    <div style="flex:1;height:1px;background:var(--border);"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--danger);background:var(--danger-light);border:1.5px solid var(--danger);border-radius:5px;padding:4px 12px;letter-spacing:0.04em;white-space:nowrap;">
+      🛑 긴급중단 : F9
+    </div>
+    <div style="flex:1;height:1px;background:var(--border);"></div>
+  </div>
+
+  <!-- 액션바 -->
+  <div style="display:flex;gap:8px;justify-content:flex-end;padding:4px 0 0;flex-shrink:0;">
+    <button class="btn btn-secondary" onclick="saveSettings()">💾 설정 저장</button>
+    <button class="btn btn-secondary" id="stopBtn" style="display:none;" onclick="stopBot()">⛔ 중지</button>
+    <button class="btn btn-primary" id="runBtn" onclick="startBot()">🤖 봇 실행</button>
+  </div>
+
+</div><!-- /main-left -->
+
+<div class="main-right">
+
+  <!-- URL 입력 -->
+  <div class="card" style="padding:0;overflow:hidden;flex:1;display:flex;flex-direction:column;">
+    <div style="padding:14px 20px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div class="card-title" style="margin:0;">🔗 NOTION 페이지 링크</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-secondary" style="height:28px;font-size:11px;padding:0 12px;" onclick="clearAll()">전체 초기화</button>
+        <button class="btn btn-secondary" style="height:28px;font-size:11px;padding:0 12px;" onclick="pasteFromClipboard()">📋 붙여넣기</button>
+      </div>
+    </div>
+    <div style="padding:10px 16px 14px;flex:1;overflow-y:auto;">
+      <table class="url-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Notion 페이지 URL</th>
+            <th>이름 (선택)</th>
+          </tr>
+        </thead>
+        <tbody id="urlTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 진행 현황 -->
+  <div class="card" id="progressCard" style="display:none;flex-shrink:0;">
+    <div class="card-title">📊 진행 현황</div>
+    <div class="progress-info">
+      <span id="progressText">준비중...</span>
+      <span id="progressPct">0%</span>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+  </div>
+
+  <!-- 실행 로그 -->
+  <div class="card" id="logCard" style="display:none;flex-shrink:0;">
+    <div class="card-title" style="justify-content:space-between;">
+      <span>📋 실행 로그</span>
+      <button class="btn btn-secondary" style="height:24px;font-size:10px;padding:0 10px;" onclick="clearLog()">지우기</button>
+    </div>
+    <div class="log-wrap" id="logWrap">
+      <div class="log-empty">실행 로그가 여기에 표시됩니다.</div>
+    </div>
+  </div>
+
+</div><!-- /main-right -->
+</div><!-- /main -->
+
+<script>
+// ── 상수 ──
+const ROW_COUNT = 20;
+const STORAGE_KEY = 'notion_dl_settings';
+
+// ── 초기화 ──
+// ── F9 긴급중단 ──
+document.addEventListener("keydown", function(e){
+  if(e.key === "F9"){
+    e.preventDefault();
+    stopBot();
+    addLog("🛑 F9 긴급중단 실행", "warn");
+  }
+});
+
+function init(){
+  buildTable();
+  loadSettings();
+}
+
+// ── 테이블 생성 ──
+function buildTable(){
+  const tbody = document.getElementById('urlTableBody');
+  tbody.innerHTML = '';
+  for(let i=0; i<ROW_COUNT; i++){
+    const tr = document.createElement('tr');
+    tr.className = 'url-row';
+    tr.id = 'row_' + i;
+    tr.innerHTML = `
+      <td class="row-num">${i+1}</td>
+      <td>
+        <input type="text" class="url-input" id="url_${i}"
+          placeholder="https://www.notion.so/..."
+          oninput="onUrlInput(${i}, this)">
+      </td>
+      <td>
+        <input type="text" class="name-input" id="name_${i}"
+          placeholder="이름"
+          oninput="onNameInput(${i}, this)">
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+function onUrlInput(i, el){
+  el.classList.toggle('has-value', el.value.trim().length > 0);
+  updateRowStatus(i, el.value.trim() ? 'idle' : null);
+}
+
+function onNameInput(i, el){
+  el.classList.toggle('has-value', el.value.trim().length > 0);
+}
+
+// ── 상태 배지 업데이트 ──
+const STATUS_MAP = {
+  null: '',
+  idle: '<span class="status-badge idle"><span class="status-dot"></span>대기</span>',
+  pending: '<span class="status-badge pending"><span class="status-dot"></span>대기중</span>',
+  running: '<span class="status-badge running"><span class="status-dot"></span>진행중</span>',
+  done: '<span class="status-badge done"><span class="status-dot"></span>완료</span>',
+  fail: '<span class="status-badge fail"><span class="status-dot"></span>실패</span>',
+};
+function updateRowStatus(i, status){
+  // 상태 컬럼이 없으면 추가
+  const row = document.getElementById('row_' + i);
+  if(!row) return;
+  let statusCell = row.querySelector('.status-cell');
+  if(status === null){ if(statusCell) statusCell.innerHTML = ''; return; }
+  if(!statusCell){
+    const td = document.createElement('td');
+    td.className = 'status-cell';
+    td.style.width = '80px';
+    row.appendChild(td);
+    statusCell = td;
+  }
+  statusCell.innerHTML = STATUS_MAP[status] || '';
+}
+
+// ── 토큰 토글 ──
+function toggleToken(){
+  const inp = document.getElementById('apiToken');
+  const btn = event.target;
+  if(inp.type === 'password'){ inp.type = 'text'; btn.textContent = '숨김'; }
+  else { inp.type = 'password'; btn.textContent = '표시'; }
+}
+
+// ── 설정 토글 ──
+function toggleSetting(btnId){
+  const btn = document.getElementById(btnId);
+  const isOn = btn.classList.contains('on');
+  btn.classList.toggle('on', !isOn);
+  btn.classList.toggle('off', isOn);
+  if(btnId === 'subpageBtn') btn.textContent = isOn ? '미포함' : '포함';
+  if(btnId === 'subfolderBtn') btn.textContent = isOn ? '미생성' : '생성';
+}
+
+// ── 설정 저장/불러오기 ──
+// ── 폴더 선택 (File System Access API) ──
+let dirHandle = null;
+
+async function selectFolder(){
+  try {
+    dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    const pathText = document.getElementById('pathText');
+    pathText.textContent = '\u{1F4C2} ' + dirHandle.name + '  ✔ 선택완료';
+    pathText.style.color = 'var(--success)'; pathText.style.fontWeight='600';
+    document.getElementById('pathDisplay').style.borderColor = 'var(--success)';
+    document.getElementById('pathDisplay').style.background = 'var(--success-light)';
+    document.getElementById('pathClearBtn').style.display = '';
+    addLog('저장 폴더 선택완료 → ' + dirHandle.name, 'success');
+  } catch(e){
+    if(e.name !== 'AbortError') addLog('폴더 선택 실패: ' + e.message, 'error');
+  }
+}
+
+function clearFolder(){
+  dirHandle = null;
+  const pt=document.getElementById('pathText'); pt.textContent='바탕화면에 새 폴더 생성 후 선택해주세요'; pt.style.fontWeight='400';
+  pt.style.color='var(--text-muted)';
+  document.getElementById('pathDisplay').style.borderColor = 'var(--border)';
+  document.getElementById('pathDisplay').style.background = 'var(--bg)';
+  document.getElementById('pathClearBtn').style.display = 'none';
+}
+
+// ── 이중 ZIP 처리: zip → zip → csv (가장 큰 CSV 추출) ──
+async function extractBiggestCsv(zipFileOrBlob){
+  const outerZip = await JSZip.loadAsync(zipFileOrBlob);
+
+  // 외부 ZIP 안에서 ZIP 파일 찾기
+  let innerZipFile = null;
+  outerZip.forEach((path, file) => {
+    if(path.toLowerCase().endsWith('.zip') && !file.dir) innerZipFile = file;
+  });
+
+  let targetZip = outerZip;
+  if(innerZipFile){
+    // 이중 ZIP이면 내부 ZIP 열기
+    const innerBlob = await innerZipFile.async('blob');
+    targetZip = await JSZip.loadAsync(innerBlob);
+  }
+
+  // CSV 파일 목록 수집
+  const csvFiles = [];
+  targetZip.forEach((path, file) => {
+    if(path.toLowerCase().endsWith('.csv') && !file.dir){
+      csvFiles.push({ path, file });
+    }
+  });
+
+  if(csvFiles.length === 0) return null;
+
+  // 가장 큰 CSV 찾기 (압축 해제 후 크기 비교)
+  const csvBlobs = await Promise.all(csvFiles.map(async ({path, file}) => {
+    const blob = await file.async('blob');
+    return { path, blob, size: blob.size };
+  }));
+
+  csvBlobs.sort((a,b) => b.size - a.size);
+  return csvBlobs[0]; // 가장 큰 CSV
+}
+
+// ── ZIP 파일을 폴더에 처리하여 저장 ──
+async function processZipAndSave(zipBlob, saveName){
+  if(!dirHandle) throw new Error('저장 폴더가 선택되지 않았습니다.');
+
+  const result = await extractBiggestCsv(zipBlob);
+  if(!result) throw new Error('ZIP 내에서 CSV 파일을 찾을 수 없습니다.');
+
+  const fileName = saveName.endsWith('.csv') ? saveName : saveName + '.csv';
+
+  // 폴더에 파일 쓰기
+  const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
+  const writable = await fileHandle.createWritable();
+  await writable.write(result.blob);
+  await writable.close();
+
+  return { fileName, size: result.size };
+}
+
+function saveSettings(){
+  const urls = [], names = [];
+  for(let i=0; i<ROW_COUNT; i++){
+    urls.push(document.getElementById('url_'+i)?.value || '');
+    names.push(document.getElementById('name_'+i)?.value || '');
+  }
+  const s = {
+    format: document.getElementById('formatSel').value,
+    view: document.getElementById('viewSel').value,
+    content: document.getElementById('contentSel').value,
+    subpage: document.getElementById('subpageBtn').classList.contains('on'),
+    subfolder: document.getElementById('subfolderBtn').classList.contains('on'),
+    urls, names,
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  addLog('설정이 저장되었습니다.', 'success');
+}
+
+function loadSettings(){
+  const token = localStorage.getItem('notion_dl_token');
+  if(token) document.getElementById('apiToken').value = token;
+
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(!raw) return;
+  try{
+    const s = JSON.parse(raw);
+    if(s.format) document.getElementById('formatSel').value = s.format;
+    if(s.view) document.getElementById('viewSel').value = s.view;
+    if(s.content) document.getElementById('contentSel').value = s.content;
+    setToggle('subpageBtn', s.subpage, '포함', '미포함');
+    setToggle('subfolderBtn', s.subfolder, '생성', '미생성');
+    if(s.urls) s.urls.forEach((v,i)=>{
+      const el = document.getElementById('url_'+i);
+      if(el && v){ el.value = v; el.classList.add('has-value'); updateRowStatus(i,'idle'); }
+    });
+    if(s.names) s.names.forEach((v,i)=>{
+      const el = document.getElementById('name_'+i);
+      if(el && v){ el.value = v; el.classList.add('has-value'); }
+    });
+  } catch(e){}
+}
+
+function setToggle(btnId, isOn, onText, offText){
+  const btn = document.getElementById(btnId);
+  if(!btn) return;
+  btn.classList.toggle('on', !!isOn);
+  btn.classList.toggle('off', !isOn);
+  btn.textContent = isOn ? onText : offText;
+}
+
+// ── 전체 초기화 ──
+function clearAll(){
+  if(!confirm('입력된 모든 URL과 이름을 초기화할까요?')) return;
+  for(let i=0; i<ROW_COUNT; i++){
+    const u = document.getElementById('url_'+i);
+    const n = document.getElementById('name_'+i);
+    if(u){ u.value=''; u.classList.remove('has-value'); }
+    if(n){ n.value=''; n.classList.remove('has-value'); }
+    updateRowStatus(i, null);
+  }
+}
+
+// ── 붙여넣기 ──
+async function pasteFromClipboard(){
+  try {
+    const text = await navigator.clipboard.readText();
+    const lines = text.split('\n').map(l=>l.trim()).filter(l=>l.startsWith('http'));
+    lines.forEach((url, i)=>{
+      if(i >= ROW_COUNT) return;
+      const el = document.getElementById('url_'+i);
+      if(el){ el.value = url; el.classList.add('has-value'); updateRowStatus(i,'idle'); }
+    });
+    addLog(`클립보드에서 ${lines.length}개 URL을 붙여넣었습니다.`, 'info');
+  } catch(e){
+    addLog('클립보드 접근 실패. 직접 붙여넣기 해주세요.', 'warn');
+  }
+}
+
+// ── 로그 ──
+function addLog(text, type='info'){
+  document.getElementById('logCard').style.display = '';
+  const wrap = document.getElementById('logWrap');
+  const empty = wrap.querySelector('.log-empty');
+  if(empty) empty.remove();
+  const now = new Date();
+  const t = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+  const div = document.createElement('div');
+  div.className = 'log-line';
+  div.innerHTML = `<span class="log-time">[${t}]</span><span class="log-text ${type}">${text}</span>`;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function clearLog(){
+  const wrap = document.getElementById('logWrap');
+  wrap.innerHTML = '<div class="log-empty">실행 로그가 여기에 표시됩니다.</div>';
+}
+
+// ── 진행바 업데이트 ──
+function updateProgress(done, total){
+  document.getElementById('progressCard').style.display = '';
+  const pct = total > 0 ? Math.round(done/total*100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressText').textContent = `${done} / ${total} 처리중`;
+}
+
+// ── 봇 서버 연동 ─────────────────────────────────────────
+const BOT_URL = "http://localhost:5000";
+let botPollTimer = null;
+
+async function checkBotServer(){
+  try {
+    const res = await fetch(BOT_URL + "/ping", {signal: AbortSignal.timeout(2000)});
+    const data = await res.json();
+    if(data.ok){
+      setBotStatus("connected", "봇 연결됨 ✓  (v" + (data.version||"?") + ")");
+      document.getElementById('botGuide').style.display = 'none';
+      addLog("봇 연결 확인됨 ✓", "success");
+    }
+  } catch(e){
+    setBotStatus("disconnected", "봇 미연결 — ggumbi_csv_bot.exe 를 먼저 실행해주세요");
+    document.getElementById('botGuide').style.display = '';
+    addLog("봇 연결 실패. ggumbi_csv_bot.exe 파일을 실행해주세요.", "error");
+  }
+}
+
+function setBotStatus(state, msg){
+  const dot = document.getElementById('botDot');
+  const txt = document.getElementById('botStatus');
+  txt.textContent = msg;
+  const colors = { connected:"#10b981", running:"#4a6cf7", disconnected:"#d1d5db", error:"#ef4444" };
+  dot.style.background = colors[state] || "#d1d5db";
+  if(state === "running") dot.style.animation = "pulse 1s infinite";
+  else dot.style.animation = "";
+}
+
+async function startBot(){
+  const urls = [];
+  const names = [];
+  for(let i=0; i<ROW_COUNT; i++){
+    const url = document.getElementById('url_'+i)?.value.trim();
+    const name = document.getElementById('name_'+i)?.value.trim() || ("항목_"+(i+1));
+    if(url){ urls.push(url); names.push(name); }
+  }
+  if(urls.length === 0){ alert("처리할 Notion URL을 입력해주세요."); return; }
+
+  try {
+    const fmt     = document.getElementById("formatSel").value;
+    const view    = document.getElementById("viewSel").value;
+    const content = document.getElementById("contentSel").value;
+
+    const res = await fetch(BOT_URL + "/run", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({urls, names, fmt, view, content}),
+      signal: AbortSignal.timeout(3000)
+    });
+    const data = await res.json();
+    if(data.ok){
+      setBotStatus("running", `봇 실행중 — ${urls.length}개 URL 처리`);
+      document.getElementById('runBtn').disabled = true;
+      document.getElementById('stopBtn').style.display = '';
+      document.getElementById('botLogWrap').style.display = '';
+      document.getElementById('logCard').style.display = '';
+      startBotPolling();
+    } else {
+      addLog("봇 실행 실패: " + data.msg, "error");
+    }
+  } catch(e){
+    addLog("봇 연결 실패 — ggumbi_csv_bot.exe 파일을 실행한 뒤 다시 시도해주세요.", "error");
+    setBotStatus("disconnected", "봇 미연결 — ggumbi_csv_bot.exe 를 먼저 실행해주세요");
+    document.getElementById('botGuide').style.display = '';
+  }
+}
+
+async function stopBot(){
+  await fetch(BOT_URL + "/stop", {method:"POST"}).catch(()=>{});
+  clearInterval(botPollTimer);
+  setBotStatus("connected", "봇 중지됨");
+  document.getElementById('runBtn').disabled = false;
+  document.getElementById('stopBtn').style.display = 'none';
+  addLog("⛔ 봇 중지 요청", "warn");
+}
+
+function startBotPolling(){
+  botPollTimer = setInterval(async ()=>{
+    try {
+      const res = await fetch(BOT_URL + "/status", {signal: AbortSignal.timeout(2000)});
+      const s = await res.json();
+
+      // 새 로그 출력
+      const botLog = document.getElementById('botLog');
+      botLog.innerHTML = s.log.map(l =>
+        `<div class="log-line"><span class="log-time">•</span><span class="log-text ${l.level}">${l.msg}</span></div>`
+      ).join('');
+      botLog.scrollTop = botLog.scrollHeight;
+
+      // 진행 상태 반영
+      if(s.step) setBotStatus("running", s.step);
+
+      // 수동 좌표 지정 대기 안내
+      if(s.waiting_manual){
+        setBotStatus("running", `⚠️ 수동 클릭 필요: ${s.waiting_manual} — 5초 안에 해당 위치 클릭!`);
+      }
+
+      if(s.done || !s.running){
+        clearInterval(botPollTimer);
+        document.getElementById('runBtn').disabled = false;
+        document.getElementById('stopBtn').style.display = 'none';
+        setBotStatus("connected", s.error ? "오류 발생 — 로그 확인" : "완료 ✓");
+        if(s.error) addLog("오류: " + s.error, "error");
+      }
+    } catch(e){ /* 일시적 연결 오류 무시 */ }
+  }, 800);
+}
+
+// ── 다운로드 실행 (반자동: 안내 + 상태 표시) ──
+async function startDownload(){
+  if(!dirHandle){
+    alert('저장 폴더를 먼저 선택해주세요.\n[폴더 선택] 버튼을 클릭하세요.');
+    return;
+  }
+
+  const entries = [];
+  for(let i=0; i<ROW_COUNT; i++){
+    const url = document.getElementById('url_'+i)?.value.trim();
+    const name = document.getElementById('name_'+i)?.value.trim() || `항목_${i+1}`;
+    if(url) entries.push({i, url, name});
+  }
+  if(entries.length === 0){ alert('처리할 Notion URL을 입력해주세요.'); return; }
+
+  document.getElementById('runBtn').disabled = true;
+  addLog(`총 ${entries.length}개 항목 처리 시작`, 'info');
+
+  // 전체 대기 상태로
+  entries.forEach(e => updateRowStatus(e.i, 'pending'));
+  updateProgress(0, entries.length);
+
+  let done = 0;
+  for(const e of entries){
+    updateRowStatus(e.i, 'running');
+    addLog(`[${e.i+1}] "${e.name}" 처리중...`, 'info');
+
+    try {
+      const result = await processEntry(e.url, e.name);
+      if(result.ok){
+        updateRowStatus(e.i, 'done');
+        addLog(`[${e.i+1}] "${e.name}" 완료 ✓`, 'success');
+      } else {
+        updateRowStatus(e.i, 'fail');
+        addLog(`[${e.i+1}] "${e.name}" 실패 - ${result.msg}`, 'error');
+      }
+    } catch(err){
+      updateRowStatus(e.i, 'fail');
+      addLog(`[${e.i+1}] "${e.name}" 오류 - ${err.message}`, 'error');
+    }
+    done++;
+    updateProgress(done, entries.length);
+  }
+
+  document.getElementById('progressText').textContent = `완료 (${done}/${entries.length})`;
+  addLog(`전체 처리 완료`, 'success');
+  document.getElementById('runBtn').disabled = false;
+}
+
+// ── 단일 항목 처리 ──
+// 현재: 수동 모드 (ZIP 파일 드롭/선택으로 처리)
+// 추후: API 토큰 입력 시 자동 다운로드 모드 전환
+async function processEntry(pageUrl, name){
+  // 수동 모드: 각 항목별로 ZIP 파일 선택 요청
+  addLog(`"${name}" - ZIP 파일을 선택해주세요...`, 'warn');
+
+  try {
+    const [fileHandle] = await window.showOpenFilePicker({
+      types: [{ description: 'ZIP 파일', accept: { 'application/zip': ['.zip'] } }],
+      multiple: false,
+    });
+    const file = await fileHandle.getFile();
+    addLog(`"${name}" - ${file.name} (${(file.size/1024).toFixed(1)}KB) 처리중...`, 'info');
+
+    const result = await processZipAndSave(file, name);
+    addLog(`"${name}" - ${result.fileName} 저장 완료 (${(result.size/1024).toFixed(1)}KB)`, 'success');
+    return { ok: true };
+  } catch(e) {
+    if(e.name === 'AbortError') return { ok:false, msg:'파일 선택 취소됨' };
+    return { ok:false, msg: e.message };
+  }
+}
+</script>
+
+<script>init();</script>
+</body>
+</html>

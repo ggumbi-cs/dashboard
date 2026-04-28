@@ -84,6 +84,10 @@ let csvData = [];
 let lastMemoText = "";
 let lastRankedParts = [];
 
+function normalizePartName(value){
+    return String(value || "").replace(/\s+/g, " ").trim();
+}
+
 // =========================
 // CSV 로드
 // =========================
@@ -92,22 +96,33 @@ async function loadCSV(){
         const res = await fetch("/dashboard/data/불량부품원인.csv");
         const text = await res.text();
         const rows = parseCSV(text);
+        const headers = rows[0].map(h => String(h).replace(/^\uFEFF/, "").trim());
 
-        const headers = rows[0];
+        const partIndex = typeof getColumnIndex === "function"
+            ? getColumnIndex(headers, "부품명")
+            : headers.indexOf("부품명");
+        const guideIndex = typeof getColumnIndex === "function"
+            ? getColumnIndex(headers, "AI 멘트수정")
+            : headers.indexOf("AI 멘트수정");
 
-        const partIndex = headers.indexOf("부품명");
-        const guideIndex = headers.indexOf("AI 멘트수정");
+        if (partIndex === -1 || guideIndex === -1) {
+            document.getElementById("updateBox").innerText = "CSV 필수 컬럼 없음";
+            return;
+        }
 
         const dataRows = rows.slice(1);
 
-        csvData = dataRows.map(r => ({
-            part: r[partIndex],
-            guide: r[guideIndex]
-        }));
+        csvData = dataRows
+            .map(r => ({
+                part: normalizePartName(r[partIndex]),
+                guide: String(r[guideIndex] || "").trim()
+            }))
+            .filter(item => item.part);
 
         // 드롭다운 채우기
-        const parts = [...new Set(csvData.map(d=>d.part))];
+        const parts = [...new Set(csvData.map(d => d.part).filter(Boolean))];
         const select = document.getElementById("manualPart");
+        select.innerHTML = `<option value="">선택</option>`;
 
         parts.forEach(p=>{
             const opt = document.createElement("option");
@@ -168,12 +183,13 @@ function renderAuto(parts){
 function parsePartsFromMemo(text){
     return String(text || "")
         .split("|")
-        .map(t => t.trim().split(" ")[0].trim())
+        .map(t => normalizePartName(t.trim().split(" ")[0]))
         .filter(Boolean);
 }
 
 function hasGuide(part){
-    return csvData.some(d => d.part === part && d.guide && d.guide.trim());
+    const normalized = normalizePartName(part);
+    return csvData.some(d => d.part === normalized && d.guide);
 }
 
 function pickTop3Available(rankedParts){
@@ -181,7 +197,7 @@ function pickTop3Available(rankedParts){
     const seen = new Set();
 
     rankedParts.forEach(part => {
-        const p = String(part || "").trim();
+        const p = normalizePartName(part);
         if (!p || seen.has(p)) return;
         if (!hasGuide(p)) return;
         seen.add(p);
@@ -204,7 +220,8 @@ function updateAutoRecommendation(text, rankedParts){
 // 팝업
 // =========================
 function show(part){
-    const match = csvData.find(d=>d.part === part);
+    const normalized = normalizePartName(part);
+    const match = csvData.find(d => d.part === normalized);
     alert(match && match.guide ? match.guide : "데이터 없음");
 }
 

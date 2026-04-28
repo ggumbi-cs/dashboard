@@ -63,6 +63,16 @@ const base = isLocal ? "./" : "/dashboard/tool/";
 document.getElementById("asFrame").src = base + "as.html";
 document.getElementById("as2Frame").src = base + "as2.html";
 document.getElementById("as3Frame").src = base + "as3.html";
+
+window.addEventListener("message", (e) => {
+    const as3Frame = document.getElementById("as3Frame");
+    if (!as3Frame || !as3Frame.contentWindow) return;
+
+    as3Frame.contentWindow.postMessage({
+        memo: e.data && e.data.memo ? e.data.memo : "",
+        rankedParts: Array.isArray(e.data && e.data.rankedParts) ? e.data.rankedParts : []
+    }, "*");
+});
 </script>
 
 </body>

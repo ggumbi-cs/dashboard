@@ -45,6 +45,12 @@ body {
     color: #fff;
 }
 
+.toolbar-spacer {
+    margin-left: auto;
+    font-size: 12px;
+    color: #666;
+}
+
 .grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -112,6 +118,7 @@ body {
 <script>
 const isLocal = location.hostname === "localhost" || location.hostname === "127.0.0.1";
 const base = isLocal ? "./" : "/dashboard/tool/";
+const scaleStorageKey = "tool-scale-tool-main";
 
 document.getElementById("asFrame").src = base + "as.html";
 document.getElementById("as2Frame").src = base + "as2.html";
@@ -127,6 +134,8 @@ function applyScale(scale) {
     document.querySelectorAll(".scale-btn").forEach((btn) => {
         btn.classList.toggle("active", Number(btn.dataset.scale) === scale);
     });
+
+    localStorage.setItem(scaleStorageKey, String(scale));
 }
 
 document.querySelectorAll(".scale-btn").forEach((btn) => {
@@ -135,7 +144,8 @@ document.querySelectorAll(".scale-btn").forEach((btn) => {
     });
 });
 
-applyScale(1);
+const savedScale = Number(localStorage.getItem(scaleStorageKey));
+applyScale([1, 0.9, 0.8, 0.7].includes(savedScale) ? savedScale : 1);
 
 window.addEventListener("message", (e) => {
     const as3Frame = document.getElementById("as3Frame");

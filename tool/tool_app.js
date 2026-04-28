@@ -5,14 +5,20 @@ console.log("JS 로드됨");
 // =========================
 const asToolChannel = new BroadcastChannel("as-tool-channel-v1");
 
-function publishSharedMemo(memo) {
-    asToolChannel.postMessage({ memo: memo || "" });
+function publishSharedMemo(memo, rankedParts) {
+    asToolChannel.postMessage({
+        memo: memo || "",
+        rankedParts: Array.isArray(rankedParts) ? rankedParts : []
+    });
 }
 
 function subscribeSharedMemo(handler) {
     asToolChannel.addEventListener("message", (event) => {
         const payload = event.data || {};
-        handler(payload.memo || "");
+        handler(
+            payload.memo || "",
+            Array.isArray(payload.rankedParts) ? payload.rankedParts : []
+        );
     });
 }
 
@@ -219,6 +225,7 @@ async function initASModule() {
             const compactResult = results
                 .map(item => `${item.part} ${item.percent}%`)
                 .join("  |  ");
+            const rankedParts = results.map(item => item.part);
 
             resultBox.innerHTML = `
                 <div style="font-weight:bold;">모델: ${selectedModel}</div>
@@ -232,8 +239,8 @@ async function initASModule() {
             `;
 
             // 👉 툴3으로 전달 (기존 postMessage + 공용 채널)
-            window.parent.postMessage({ memo: compactResult }, "*");
-            publishSharedMemo(compactResult);
+            window.parent.postMessage({ memo: compactResult, rankedParts }, "*");
+            publishSharedMemo(compactResult, rankedParts);
         });
 
         if (updateBox) {

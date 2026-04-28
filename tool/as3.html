@@ -81,6 +81,8 @@ CSV 로드 중...
 <script>
 
 let csvData = [];
+let lastMemoText = "";
+let lastRankedParts = [];
 
 // =========================
 // CSV 로드
@@ -118,6 +120,9 @@ async function loadCSV(){
         document.getElementById("updateBox").innerText =
             `CSV 로드 완료 (${dataRows.length}건)`;
 
+        // 메모 수신이 CSV 로드보다 먼저였던 경우를 대비
+        updateAutoRecommendation(lastMemoText, lastRankedParts);
+
     } catch(e){
         document.getElementById("updateBox").innerText = "CSV 로드 실패";
     }
@@ -130,14 +135,13 @@ loadCSV();
 // =========================
 window.addEventListener("message",(e)=>{
     const text = e.data.memo || "";
-    const parts = text.split("|").map(t=>t.trim().split(" ")[0]);
-    renderAuto(parts);
+    const rankedParts = Array.isArray(e.data.rankedParts) ? e.data.rankedParts : [];
+    updateAutoRecommendation(text, rankedParts);
 });
 
 if (typeof subscribeSharedMemo === "function") {
-    subscribeSharedMemo((text) => {
-        const parts = text.split("|").map(t=>t.trim().split(" ")[0]);
-        renderAuto(parts);
+    subscribeSharedMemo((text, rankedParts) => {
+        updateAutoRecommendation(text, rankedParts);
     });
 }
 
@@ -148,7 +152,7 @@ function renderAuto(parts){
     const box = document.getElementById("autoParts");
     box.innerHTML = "";
 
-    parts.slice(0,3).forEach(part=>{
+    parts.forEach(part=>{
         const div = document.createElement("div");
         div.className = "row";
 
@@ -161,12 +165,47 @@ function renderAuto(parts){
     });
 }
 
+function parsePartsFromMemo(text){
+    return String(text || "")
+        .split("|")
+        .map(t => t.trim().split(" ")[0].trim())
+        .filter(Boolean);
+}
+
+function hasGuide(part){
+    return csvData.some(d => d.part === part && d.guide && d.guide.trim());
+}
+
+function pickTop3Available(rankedParts){
+    const picked = [];
+    const seen = new Set();
+
+    rankedParts.forEach(part => {
+        const p = String(part || "").trim();
+        if (!p || seen.has(p)) return;
+        if (!hasGuide(p)) return;
+        seen.add(p);
+        picked.push(p);
+    });
+
+    return picked.slice(0, 3);
+}
+
+function updateAutoRecommendation(text, rankedParts){
+    lastMemoText = text || "";
+    lastRankedParts = Array.isArray(rankedParts) ? rankedParts : [];
+
+    const sourceRanks = lastRankedParts.length ? lastRankedParts : parsePartsFromMemo(lastMemoText);
+    const top3 = pickTop3Available(sourceRanks);
+    renderAuto(top3);
+}
+
 // =========================
 // 팝업
 // =========================
 function show(part){
     const match = csvData.find(d=>d.part === part);
-    alert(match ? match.guide : "데이터 없음");
+    alert(match && match.guide ? match.guide : "데이터 없음");
 }
 
 // =========================

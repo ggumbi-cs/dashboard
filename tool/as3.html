@@ -99,8 +99,8 @@ async function loadCSV(){
         const headers = rows[0].map(h => String(h).replace(/^\uFEFF/, "").trim());
 
         const partIndex = typeof getColumnIndex === "function"
-            ? getColumnIndex(headers, "부품명")
-            : headers.indexOf("부품명");
+            ? getColumnIndex(headers, "사용부품")
+            : headers.indexOf("사용부품");
         const guideIndex = typeof getColumnIndex === "function"
             ? getColumnIndex(headers, "AI 멘트수정")
             : headers.indexOf("AI 멘트수정");

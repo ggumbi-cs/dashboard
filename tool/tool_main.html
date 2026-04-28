@@ -12,26 +12,69 @@ html, body {
     background: #f5f5f5;
 }
 
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: #fff;
+    border-bottom: 1px solid #d9d9d9;
+    box-sizing: border-box;
+}
+
+.toolbar-title {
+    font-weight: bold;
+    margin-right: 4px;
+}
+
+.scale-btn {
+    padding: 6px 10px;
+    border: 1px solid #bbb;
+    background: #f7f7f7;
+    cursor: pointer;
+}
+
+.scale-btn.active {
+    background: #1f4e79;
+    border-color: #1f4e79;
+    color: #fff;
+}
+
 .grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
-    height: 100vh;
+    flex: 1;
     gap: 10px;
     padding: 10px;
     box-sizing: border-box;
+    min-height: 0;
 }
 
 .panel {
     background: #fff;
     border: 1px solid #ccc;
     overflow: hidden;
+    position: relative;
 }
 
-.panel iframe {
+.scalable-target {
     width: 100%;
     height: 100%;
     border: none;
+    transform-origin: top left;
+}
+
+.panel-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
 }
 </style>
 
@@ -39,20 +82,30 @@ html, body {
 
 <body>
 
+<div class="toolbar">
+    <span class="toolbar-title">창크기조정</span>
+    <button type="button" class="scale-btn active" data-scale="1">100%</button>
+    <button type="button" class="scale-btn" data-scale="0.9">90%</button>
+    <button type="button" class="scale-btn" data-scale="0.8">80%</button>
+    <button type="button" class="scale-btn" data-scale="0.7">70%</button>
+</div>
+
 <div class="grid">
     <div class="panel">
-        <iframe id="asFrame"></iframe>
+        <iframe id="asFrame" class="scalable-target"></iframe>
     </div>
 
     <div class="panel">
-        <iframe id="as2Frame"></iframe>
+        <iframe id="as2Frame" class="scalable-target"></iframe>
     </div>
 
     <div class="panel">
-        <iframe id="as3Frame"></iframe>
+        <iframe id="as3Frame" class="scalable-target"></iframe>
     </div>
 
-    <div class="panel">영역 4</div>
+    <div class="panel">
+        <div id="panel4Content" class="scalable-target panel-placeholder">영역 4</div>
+    </div>
 
 </div>
 
@@ -63,6 +116,26 @@ const base = isLocal ? "./" : "/dashboard/tool/";
 document.getElementById("asFrame").src = base + "as.html";
 document.getElementById("as2Frame").src = base + "as2.html";
 document.getElementById("as3Frame").src = base + "as3.html";
+
+function applyScale(scale) {
+    document.querySelectorAll(".scalable-target").forEach((el) => {
+        el.style.transform = `scale(${scale})`;
+        el.style.width = `${100 / scale}%`;
+        el.style.height = `${100 / scale}%`;
+    });
+
+    document.querySelectorAll(".scale-btn").forEach((btn) => {
+        btn.classList.toggle("active", Number(btn.dataset.scale) === scale);
+    });
+}
+
+document.querySelectorAll(".scale-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+        applyScale(Number(btn.dataset.scale));
+    });
+});
+
+applyScale(1);
 
 window.addEventListener("message", (e) => {
     const as3Frame = document.getElementById("as3Frame");

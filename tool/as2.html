@@ -12,44 +12,8 @@ html, body {
 
 body {
     font-family: Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-}
-
-.toolbar {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    border-bottom: 1px solid #ddd;
-    background: #fff;
-    box-sizing: border-box;
-}
-
-.toolbar-title {
-    font-size: 12px;
-    font-weight: bold;
-}
-
-.scale-btn {
-    padding: 4px 8px;
-    border: 1px solid #bbb;
-    background: #f7f7f7;
-    cursor: pointer;
-    font-size: 12px;
-}
-
-.scale-btn.active {
-    background: #1f4e79;
-    border-color: #1f4e79;
-    color: #fff;
-}
-
-#pageContent {
-    flex: 1;
     padding: 10px;
     box-sizing: border-box;
-    transform-origin: top left;
 }
 
 .layout {
@@ -99,14 +63,6 @@ input, select {
 </head>
 
 <body>
-<div class="toolbar">
-    <span class="toolbar-title">창크기조정</span>
-    <button type="button" class="scale-btn active" data-scale="1">100%</button>
-    <button type="button" class="scale-btn" data-scale="0.9">90%</button>
-    <button type="button" class="scale-btn" data-scale="0.8">80%</button>
-    <button type="button" class="scale-btn" data-scale="0.7">70%</button>
-</div>
-<div id="pageContent">
 <div class="layout">
 <div class="left">
 
@@ -173,31 +129,8 @@ input, select {
 </ul>
 </div>
 </div>
-</div>
 
 <script>
-const scaleStorageKey = "tool-scale-as2";
-const pageContent = document.getElementById("pageContent");
-
-function applyPageScale(scale) {
-    pageContent.style.transform = `scale(${scale})`;
-    pageContent.style.width = `${100 / scale}%`;
-    pageContent.style.height = `${100 / scale}%`;
-
-    document.querySelectorAll(".scale-btn").forEach((btn) => {
-        btn.classList.toggle("active", Number(btn.dataset.scale) === scale);
-    });
-
-    localStorage.setItem(scaleStorageKey, String(scale));
-}
-
-document.querySelectorAll(".scale-btn").forEach((btn) => {
-    btn.addEventListener("click", () => applyPageScale(Number(btn.dataset.scale)));
-});
-
-const savedScale = Number(localStorage.getItem(scaleStorageKey));
-applyPageScale([1, 0.9, 0.8, 0.7].includes(savedScale) ? savedScale : 1);
-
 const LINKMOM = ["분유쉐이커","LED분유쉐이커","휴대용분유포트"];
 
 const modelType = document.getElementById("modelType");

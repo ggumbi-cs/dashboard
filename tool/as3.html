@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>툴3</title>
+<title>부품별 원인 및 관리방법</title>
 
 <script src="tool_app.js"></script>
 
@@ -33,6 +33,56 @@ body {
     overflow-y: auto;
 }
 
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+    z-index: 9999;
+}
+
+.modal-overlay.open {
+    display: flex;
+}
+
+.modal {
+    width: min(760px, 96vw);
+    max-height: 78vh;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.modal-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid #e5e5e5;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.modal-body {
+    padding: 18px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 18px 16px;
+    border-top: 1px solid #e5e5e5;
+}
+
 /* 항목 */
 .row {
     display: flex;
@@ -50,7 +100,7 @@ button {
 
 <body>
 
-<h3>AS 기술 진단 어시스턴트 (툴3)</h3>
+<h3>부품별 원인 및 관리방법</h3>
 
 <!-- CSV 상태 -->
 <div id="updateBox" style="font-size:12px; color:#666; margin-bottom:5px;">
@@ -78,11 +128,23 @@ CSV 로드 중...
 
 </div>
 
+<div class="modal-overlay" id="guideModal">
+    <div class="modal">
+        <div class="modal-header">엔지니어 의견</div>
+        <div class="modal-body" id="modalContent">데이터 없음</div>
+        <div class="modal-footer">
+            <button type="button" id="copyGuideBtn">내용 복사하기</button>
+            <button type="button" id="closeGuideBtn">확인</button>
+        </div>
+    </div>
+</div>
+
 <script>
 
 let csvData = [];
 let lastMemoText = "";
 let lastRankedParts = [];
+let currentGuideText = "";
 
 function normalizePartName(value){
     return String(value || "").replace(/\s+/g, " ").trim();
@@ -222,7 +284,7 @@ function updateAutoRecommendation(text, rankedParts){
 function show(part){
     const normalized = normalizePartName(part);
     const match = csvData.find(d => d.part === normalized);
-    alert(match && match.guide ? match.guide : "데이터 없음");
+    openGuideModal(match && match.guide ? match.guide : "데이터 없음");
 }
 
 // =========================
@@ -232,6 +294,35 @@ function manualShow(){
     const part = document.getElementById("manualPart").value;
     show(part);
 }
+
+function openGuideModal(text){
+    currentGuideText = text || "데이터 없음";
+    document.getElementById("modalContent").innerText = currentGuideText;
+    document.getElementById("guideModal").classList.add("open");
+}
+
+function closeGuideModal(){
+    document.getElementById("guideModal").classList.remove("open");
+}
+
+document.getElementById("copyGuideBtn").addEventListener("click", async () => {
+    if (!currentGuideText) return;
+
+    try {
+        await navigator.clipboard.writeText(currentGuideText);
+        alert("복사 완료");
+    } catch (e) {
+        alert("복사 실패");
+    }
+});
+
+document.getElementById("closeGuideBtn").addEventListener("click", closeGuideModal);
+
+document.getElementById("guideModal").addEventListener("click", (e) => {
+    if (e.target.id === "guideModal") {
+        closeGuideModal();
+    }
+});
 
 </script>
 

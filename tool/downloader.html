@@ -710,12 +710,18 @@ function toggleSetting(btnId){
 // ── 설정 저장/불러오기 ──
 // ── 폴더 선택 (File System Access API) ──
 let dirHandle = null;
+let saveFolderPath = "";  // 봇에 전달할 경로 문자열
 
 async function selectFolder(){
   try {
     dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    // 봇에 전달할 경로: 사용자에게 입력받기 (File System Access API는 실제 경로 미제공)
+    saveFolderPath = prompt(
+      "저장 폴더의 전체 경로를 입력해주세요.\n예) C:\\Users\\홍길동\\Desktop\\csv다운로드",
+      "C:\\Users\\" + (dirHandle.name || "사용자") + "\\Desktop\\csv다운로드"
+    ) || "";
     const pathText = document.getElementById('pathText');
-    pathText.textContent = '\u{1F4C2} ' + dirHandle.name + '  ✔ 선택완료';
+    pathText.textContent = '\u{1F4C2} ' + (saveFolderPath || dirHandle.name) + '  ✔ 선택완료';
     pathText.style.color = 'var(--success)'; pathText.style.fontWeight='600';
     document.getElementById('pathDisplay').style.borderColor = 'var(--success)';
     document.getElementById('pathDisplay').style.background = 'var(--success-light)';
@@ -728,6 +734,7 @@ async function selectFolder(){
 
 function clearFolder(){
   dirHandle = null;
+  saveFolderPath = "";
   const pt=document.getElementById('pathText'); pt.textContent='바탕화면에 새 폴더 생성 후 선택해주세요'; pt.style.fontWeight='400';
   pt.style.color='var(--text-muted)';
   document.getElementById('pathDisplay').style.borderColor = 'var(--border)';
@@ -950,7 +957,7 @@ async function startBot(){
     const res = await fetch(BOT_URL + "/run", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({urls, names, fmt, view, content, subpage_include, subpage_folder}),
+      body: JSON.stringify({urls, names, fmt, view, content, subpage_include, subpage_folder, save_folder: saveFolderPath}),
       signal: AbortSignal.timeout(3000)
     });
     const data = await res.json();

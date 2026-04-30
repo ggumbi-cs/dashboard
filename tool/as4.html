@@ -22,7 +22,6 @@
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .as4-title { font-size: 1.1rem; font-weight: 800; color: #1f2328; }
         
-        /* [수정] 로컬 확인 영역을 데이터 로딩 상태 표시창으로 변경 */
         .data-loader-status { 
             font-size: 0.75rem; 
             color: #666; 
@@ -65,7 +64,6 @@
 <div class="as4-container">
     <div class="header-row">
         <div class="as4-title"><span id="status-dot" class="status-dot"></span>유상견적 산출기</div>
-        <!-- [수정] 표시된 영역: 데이터 로딩 상태창 -->
         <div id="data-load-info" class="data-loader-status">
             데이터 로딩 대기 중...
         </div>
@@ -116,7 +114,6 @@
         return parseInt(val.toString().replace(/[^0-9]/g, '')) || 0;
     }
 
-    // 깃허브 데이터 로드
     window.onload = function() {
         const githubUrl = '../data/유상처리단가.csv';
         Papa.parse(githubUrl, {
@@ -125,13 +122,10 @@
             skipEmptyLines: true,
             complete: function(results) {
                 csvData = results.data;
-                const rowCount = csvData.length; // 데이터 건수 확인
-                
-                // 상태창 업데이트
+                const rowCount = csvData.length;
                 const statusInfo = document.getElementById('data-load-info');
                 statusInfo.innerText = `데이터 ${rowCount}건 로딩 완료`;
                 statusInfo.style.color = "#1a7f37";
-                
                 document.getElementById('status-dot').classList.add('status-ok');
                 initProductSelect();
             },
@@ -227,7 +221,18 @@
             item[COL.PART] && item[COL.PART].toLowerCase().includes(keyword)
         );
 
-        resultsDiv.innerHTML = matches.map(m => `
+        // 중복 제거 로직 추가
+        const uniqueMatches = [];
+        const seenParts = new Set();
+
+        matches.forEach(m => {
+            if (!seenParts.has(m[COL.PART])) {
+                seenParts.add(m[COL.PART]);
+                uniqueMatches.push(m);
+            }
+        });
+
+        resultsDiv.innerHTML = uniqueMatches.map(m => `
             <div class="search-item" onclick="autoFillPart('${m[COL.PART]}')">
                 <span>${m[COL.PART]}</span>
                 <span>${parsePrice(m[COL.PRICE]).toLocaleString()}원</span>

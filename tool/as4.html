@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>유상견적 산출기</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        .as4-container { font-family: 'Pretendard', sans-serif; padding: 20px; border: 1px solid #e1e4e8; border-radius: 12px; background: #fff; max-width: 900px; color: #24292e; }
+        .as4-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #f6f8fa; }
+        .as4-title { font-size: 1.4rem; font-weight: 800; color: #1f2328; }
+        .local-loader { font-size: 0.85rem; background: #f6f8fa; padding: 10px; border-radius: 8px; border: 1px solid #d0d7de; }
+        .row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+        .input-group { display: flex; flex-direction: column; flex: 1; min-width: 180px; }
+        .input-group label { font-size: 0.85rem; font-weight: 600; color: #57606a; margin-bottom: 6px; }
+        select, input { padding: 10px; border: 1px solid #d0d7de; border-radius: 6px; font-size: 0.95rem; background-color: #fff; }
+        
+        /* 검색창 강조 */
+        .search-box { margin-top: 15px; background: #fff9db; padding: 15px; border-radius: 8px; border: 1px solid #fab005; }
+        .search-results { margin-top: 8px; font-size: 0.9rem; max-height: 200px; overflow-y: auto; background: white; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .search-item { padding: 8px 12px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; }
+        .search-item:hover { background: #fff4ce; color: #0969da; }
+        .search-price { color: #888; font-size: 0.8rem; }
+
+        #as4-result { margin-top: 25px; padding: 20px; background: #f0f7ff; border-radius: 10px; border-left: 5px solid #0969da; min-height: 80px; }
+        .status-badge { font-size: 0.75rem; padding: 3px 8px; border-radius: 20px; margin-left: 10px; }
+        .status-ok { background: #dafbe1; color: #1a7f37; border: 1px solid #bc8; }
+    </style>
+</head>
+<body>
+
+<div class="as4-container">
+    <div class="as4-header">
+        <div class="as4-title">유상견적 산출기 <span id="data-status" class="status-badge">데이터 대기중</span></div>
+        <div class="local-loader">
+            <strong>PC 로컬 확인:</strong> 
+            <input type="file" id="csv-file" accept=".csv">
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="input-group" style="flex: 2;">
+            <label>1. 제품명 선택 (필수)</label>
+            <select id="product-select"><option value="">파일을 먼저 선택하세요</option></select>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="input-group"><label>교체부품 1</label><select class="part-select" id="part1"><option value="">선택</option></select></div>
+        <div class="input-group"><label>교체부품 2</label><select class="part-select" id="part2"><option value="">선택</option></select></div>
+    </div>
+    <div class="row">
+        <div class="input-group"><label>교체부품 3</label><select class="part-select" id="part3"><option value="">선택</option></select></div>
+        <div class="input-group"><label>교체부품 4</label><select class="part-select" id="part4"><option value="">선택</option></select></div>
+        <div class="input-group"><label>교체부품 5</label><select class="part-select" id="part5"><option value="">선택</option></select></div>
+    </div>
+
+    <div class="search-box">
+        <label style="font-size:0.85rem; font-weight:600;">🔍 부품 빠른 검색 (선택한 제품 내에서 찾기)</label>
+        <input type="text" id="quick-search" placeholder="제품을 먼저 선택한 후 부품명을 입력하세요." style="width:100%; box-sizing:border-box; margin-top:5px;">
+        <div id="search-results" class="search-results"></div>
+    </div>
+
+    <div id="as4-result">제품명과 부품을 선택하면 견적이 자동으로 계산됩니다.</div>
+</div>
+
+<script>
+    let csvData = [];
+    const COL = {
+        PROD: '제품명(엄마감동)',
+        PART: '예상부품(심SQ)',
+        PRICE: '소비자단가(심SQ)',
+        LABOR: '공임(심SQ)'
+    };
+
+    function parsePrice(val) {
+        if (!val) return 0;
+        return parseInt(val.toString().replace(/[^0-9]/g, '')) || 0;
+    }
+
+    document.getElementById('csv-file').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    csvData = results.data;
+                    document.getElementById('data-status').innerText = "로컬 로드 완료";
+                    document.getElementById('data-status').className = "status-badge status-ok";
+                    initProductSelect();
+                }
+            });
+        }
+    });
+
+    function initProductSelect() {
+        const productSelect = document.getElementById('product-select');
+        const products = [...new Set(csvData.map(item => item[COL.PROD]))].filter(Boolean).sort();
+        productSelect.innerHTML = '<option value="">제품 선택</option>';
+        products.forEach(prod => {
+            const opt = document.createElement('option');
+            opt.value = prod;
+            opt.textContent = prod;
+            productSelect.appendChild(opt);
+        });
+    }
+
+    document.getElementById('product-select').addEventListener('change', function() {
+        updatePartOptions(this.value);
+        calculateTotal();
+    });
+
+    function updatePartOptions(selectedProduct) {
+        const partSelects = document.querySelectorAll('.part-select');
+        const filteredParts = csvData.filter(item => item[COL.PROD] === selectedProduct);
+        partSelects.forEach(select => {
+            select.innerHTML = '<option value="">선택</option>';
+            filteredParts.forEach(part => {
+                const opt = document.createElement('option');
+                opt.value = part[COL.PART];
+                const price = parsePrice(part[COL.PRICE]);
+                opt.textContent = `${part[COL.PART]} (${price.toLocaleString()}원)`;
+                select.appendChild(opt);
+            });
+        });
+    }
+
+    document.querySelectorAll('.part-select').forEach(select => {
+        select.addEventListener('change', calculateTotal);
+    });
+
+    function calculateTotal() {
+        const selectedProduct = document.getElementById('product-select').value;
+        const partSelects = document.querySelectorAll('.part-select');
+        const resultDiv = document.getElementById('as4-result');
+
+        if (!selectedProduct) return;
+
+        let totalPartPrice = 0;
+        let laborCosts = [0];
+        let selectedPartNames = [];
+
+        partSelects.forEach(select => {
+            if (select.value) {
+                const partInfo = csvData.find(item => item[COL.PROD] === selectedProduct && item[COL.PART] === select.value);
+                if (partInfo) {
+                    totalPartPrice += parsePrice(partInfo[COL.PRICE]);
+                    laborCosts.push(parsePrice(partInfo[COL.LABOR]));
+                    selectedPartNames.push(partInfo[COL.PART]);
+                }
+            }
+        });
+
+        if (selectedPartNames.length === 0) {
+            resultDiv.innerHTML = "부품을 선택해 주세요.";
+            return;
+        }
+
+        const maxLaborCost = Math.max(...laborCosts);
+        const totalPrice = totalPartPrice + maxLaborCost;
+
+        resultDiv.innerHTML = `
+            <strong>📋 견적 결과: ${selectedProduct}</strong><br>
+            • 선택된 부품: ${selectedPartNames.join(', ')}<br>
+            • 부품비 합계: ${totalPartPrice.toLocaleString()}원 / 공임비(최대값): ${maxLaborCost.toLocaleString()}원<br>
+            <div style="font-size:1.3rem; color:#d9534f; font-weight:bold; margin-top:10px;">총 결제 금액: ${totalPrice.toLocaleString()}원</div>
+        `;
+    }
+
+    // [수정] 검색 기능: 선택된 제품과 일치하는 부품만 검색
+    document.getElementById('quick-search').addEventListener('input', function(e) {
+        const selectedProduct = document.getElementById('product-select').value;
+        const keyword = e.target.value.toLowerCase();
+        const resultsDiv = document.getElementById('search-results');
+
+        if (!selectedProduct) {
+            resultsDiv.innerHTML = '<div style="padding:10px; color:red;">먼저 제품명을 선택해야 검색이 가능합니다.</div>';
+            return;
+        }
+
+        if (keyword.length < 1) { resultsDiv.innerHTML = ''; return; }
+
+        // 현재 선택된 제품명과 일치하는 데이터 중 부품명 검색
+        const matches = csvData.filter(item => 
+            item[COL.PROD] === selectedProduct && 
+            item[COL.PART] && item[COL.PART].toLowerCase().includes(keyword)
+        );
+
+        resultsDiv.innerHTML = matches.map(m => `
+            <div class="search-item" onclick="autoFillPart('${m[COL.PART]}')">
+                <span>${m[COL.PART]}</span>
+                <span class="search-price">${parsePrice(m[COL.PRICE]).toLocaleString()}원</span>
+            </div>
+        `).join('');
+    });
+
+    // [수정] 검색 결과 클릭 시 빈 칸에 자동 입력
+    window.autoFillPart = function(partName) {
+        const partSelects = document.querySelectorAll('.part-select');
+        let filled = false;
+
+        // 1번부터 5번 드롭다운을 돌면서 비어있는(value가 없는) 첫 번째 칸을 찾음
+        for (let select of partSelects) {
+            if (select.value === "") {
+                select.value = partName;
+                filled = true;
+                break;
+            }
+        }
+
+        if (!filled) {
+            alert("이미 5개의 부품이 모두 선택되어 있습니다.");
+        }
+
+        // 검색창 초기화 및 합계 갱신
+        document.getElementById('search-results').innerHTML = '';
+        document.getElementById('quick-search').value = '';
+        calculateTotal();
+    };
+</script>
+</body>
+</html>

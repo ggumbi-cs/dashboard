@@ -809,9 +809,6 @@ function saveSettings(){
 }
 
 function loadSettings(){
-  const token = localStorage.getItem('notion_dl_token');
-  if(token) document.getElementById('apiToken').value = token;
-
   const raw = localStorage.getItem(STORAGE_KEY);
   if(!raw) return;
   try{
@@ -928,6 +925,11 @@ function setBotStatus(state, msg){
 }
 
 async function startBot(){
+  // 폴더 미선택 시 차단
+  if(!dirHandle){
+    alert("저장 폴더를 먼저 선택해주세요.\n[폴더 선택] 버튼을 클릭하세요.");
+    return;
+  }
   const urls = [];
   const names = [];
   for(let i=0; i<ROW_COUNT; i++){
@@ -942,10 +944,13 @@ async function startBot(){
     const view    = document.getElementById("viewSel").value;
     const content = document.getElementById("contentSel").value;
 
+    const subpage_include = document.getElementById("subpageBtn").classList.contains("on");
+    const subpage_folder  = document.getElementById("subfolderBtn").classList.contains("on");
+
     const res = await fetch(BOT_URL + "/run", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({urls, names, fmt, view, content}),
+      body: JSON.stringify({urls, names, fmt, view, content, subpage_include, subpage_folder}),
       signal: AbortSignal.timeout(3000)
     });
     const data = await res.json();
@@ -993,7 +998,7 @@ function startBotPolling(){
 
       // 수동 좌표 지정 대기 안내
       if(s.waiting_manual){
-        setBotStatus("running", `⚠️ 수동 클릭 필요: ${s.waiting_manual} — 5초 안에 해당 위치 클릭!`);
+        setBotStatus("running", `⚠️ [${s.waiting_manual}] 이미지 미발견 — 직접 클릭해주세요. 다음 화면이 뜨면 자동으로 이어집니다.`);
       }
 
       if(s.done || !s.running){

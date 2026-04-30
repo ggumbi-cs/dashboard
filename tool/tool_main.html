@@ -110,7 +110,7 @@ body {
     </div>
 
     <div class="panel">
-        <div id="panel4Content" class="scalable-target panel-placeholder">영역 4</div>
+        <iframe id="as4Frame" class="scalable-target"></iframe>
     </div>
 
 </div>
@@ -123,6 +123,7 @@ const scaleStorageKey = "tool-scale-tool-main";
 document.getElementById("asFrame").src = base + "as.html";
 document.getElementById("as2Frame").src = base + "as2.html";
 document.getElementById("as3Frame").src = base + "as3.html";
+document.getElementById("as4Frame").src = base + "as4.html";
 
 function applyScale(scale) {
     document.querySelectorAll(".scalable-target").forEach((el) => {

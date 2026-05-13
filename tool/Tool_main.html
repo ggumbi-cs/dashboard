@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>업무Tool 코딩</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f0f2f5; font-family: 'Malgun Gothic', sans-serif; font-size: 13px; }
+
+.size-bar {
+  background: #1a2e50; padding: 5px 14px;
+  display: flex; align-items: center; gap: 6px;
+  position: sticky; top: 0; z-index: 100;
+}
+.size-bar span { color: #8aaccc; font-size: 11px; margin-right: 2px; }
+.size-btn {
+  background: #243d6a; border: none; color: #a8c4df;
+  padding: 3px 10px; border-radius: 3px; font-size: 11px;
+  cursor: pointer; transition: background 0.1s;
+}
+.size-btn:hover { background: #2e5080; color: #e0eefc; }
+.size-btn.active { background: #4a9fd4; color: #fff; font-weight: 700; }
+
+/* 데이터 갱신 상태 표시 */
+.data-status {
+  margin-left: auto;
+  font-size: 10.5px; color: #6a9ec0;
+  display: flex; align-items: center; gap: 6px;
+}
+.data-status .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #4a9fd4; flex-shrink: 0;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; } 50% { opacity: 0.3; }
+}
+
+.tool-wrap { padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+
+.tool-slot { background: #fff; border-radius: 5px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; }
+
+.slot-header {
+  background: #1a2e50; height: 36px;
+  padding: 0 8px 0 12px;
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer; user-select: none;
+}
+.slot-header:hover { background: #1e3560; }
+.slot-num { color: #5bb8f5; font-size: 12px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+.slot-sel-name {
+  color: #8aaccc; font-size: 11px; flex: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* 연동 표시 배지 */
+.link-badge {
+  font-size: 9.5px; padding: 1px 6px; border-radius: 8px;
+  background: #1e4a2a; color: #5be87a;
+  flex-shrink: 0; display: none;
+}
+.link-badge.visible { display: inline; }
+
+.slot-select {
+  background: #243d6a; border: 1px solid #2e5080; color: #a8c4df;
+  padding: 3px 6px; font-size: 11.5px; border-radius: 3px;
+  cursor: pointer; outline: none; font-family: inherit;
+  flex-shrink: 0; min-width: 84px;
+}
+.slot-select:focus { border-color: #5bb8f5; }
+
+.slot-body { display: none; }
+.slot-body.open { display: block; }
+.slot-empty { padding: 16px; text-align: center; color: #bbb; font-size: 12px; }
+
+.slot-body iframe {
+  width: 100%; border: none; display: block;
+  height: calc(100vh - 92px);
+  min-height: 500px;
+}
+</style>
+</head>
+<body>
+
+<div class="size-bar">
+  <span>창기크기조정</span>
+  <button class="size-btn" onclick="setZoom(1,this)">100%</button>
+  <button class="size-btn active" onclick="setZoom(0.9,this)">90%</button>
+  <button class="size-btn" onclick="setZoom(0.8,this)">80%</button>
+  <button class="size-btn" onclick="setZoom(0.7,this)">70%</button>
+  <div class="data-status">
+    <span class="dot" id="dataDot"></span>
+    <span id="dataStatusText">데이터 대기중</span>
+  </div>
+</div>
+
+<div class="tool-wrap" id="toolWrap"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  경로 분기: 로컬 vs 깃허브
+// ═══════════════════════════════════════════════════
+const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+const BASE    = isLocal ? './' : '/dashboard/tool/';
+
+const TOOL_FILES = {
+  'AS1':'as.html',  'AS2':'as2.html', 'AS3':'as3.html', 'AS4':'as4.html',
+  'AS5':'as5.html', 'AS6':'as6.html', 'AS7':'as7.html', 'AS8':'as8.html',
+  'AS9':'as9.html', 'AS10':'as10.html'
+};
+
+// 슬롯별 로드된 Tool 키 추적
+const slotKeyMap = {};  // { 1: 'AS1', 3: 'AS3', ... }
+
+// ═══════════════════════════════════════════════════
+//  툴간 연동: BroadcastChannel (같은 origin 탭/iframe 간)
+//  + postMessage fallback (iframe 직접 전달)
+// ═══════════════════════════════════════════════════
+const toolChannel = new BroadcastChannel('as-tool-channel-v1');
+
+// postMessage 수신 (index → Tool_main 중계, 또는 자식iframe → 부모)
+window.addEventListener('message', (e) => {
+  const d = e.data;
+  if (!d) return;
+
+  // index에서 내려오는 CSV 데이터 → 슬롯 iframe들에 중계
+  if (d.type === 'CSV_DATA' && d.rows) {
+    relayToFrames(d);
+    return;
+  }
+
+  // 툴간 연동 신호 (AS1→AS3 등)
+  if (!d.memo && !d.rankedParts) return;
+  toolChannel.postMessage(d);
+  relayToFrames(d);
+  updateLinkBadge(d);
+});
+
+// BroadcastChannel 수신 → 모든 슬롯 iframe에 중계
+toolChannel.addEventListener('message', (e) => {
+  const d = e.data;
+  if (!d) return;
+  relayToFrames(d);
+});
+
+// 열려있는 슬롯의 iframe들에 메시지 릴레이
+function relayToFrames(data) {
+  for (let i = 1; i <= 10; i++) {
+    const frame = document.getElementById(`frame${i}`);
+    if (frame && frame.contentWindow) {
+      try { frame.contentWindow.postMessage(data, '*'); } catch(e) {}
+    }
+  }
+}
+
+// AS1→AS3 연동 시 배지 표시
+function updateLinkBadge(data) {
+  if (!data.memo && !data.rankedParts) return;
+  for (let i = 1; i <= 10; i++) {
+    const key = slotKeyMap[i];
+    if (key === 'AS3') {
+      const badge = document.getElementById(`badge${i}`);
+      if (badge) {
+        badge.textContent = '연동됨';
+        badge.classList.add('visible');
+        setTimeout(() => badge.classList.remove('visible'), 3000);
+      }
+    }
+  }
+  // 상태바 업데이트
+  document.getElementById('dataStatusText').textContent =
+    `툴 연동 신호 수신 · ${new Date().toLocaleTimeString()}`;
+}
+
+// ═══════════════════════════════════════════════════
+//  데이터 자동 갱신
+//  - report.xlsx 또는 CSV가 변경되면 iframe reload
+//  - 5분마다 폴링 (ETag 변경 감지)
+// ═══════════════════════════════════════════════════
+const DATA_URL  = isLocal ? '/dashboard/data/가전마감.csv' : '/dashboard/data/가전마감.csv';
+const POLL_INTERVAL = 5 * 60 * 1000; // 5분
+let lastETag = null;
+
+async function checkDataUpdate() {
+  try {
+    const res = await fetch(DATA_URL, { method: 'HEAD', cache: 'no-cache' });
+    if (!res.ok) return;
+    const etag = res.headers.get('ETag') || res.headers.get('Last-Modified') || '';
+    if (lastETag !== null && etag !== lastETag) {
+      // 데이터 변경 감지 → 열려있는 AS1 슬롯 iframe 새로고침
+      setDataStatus('🔄 데이터 변경 감지 — 갱신 중...', true);
+      reloadDataFrames();
+      setTimeout(() => setDataStatus(`최종 갱신 · ${new Date().toLocaleTimeString()}`, false), 2000);
+    }
+    lastETag = etag;
+  } catch(e) { /* 네트워크 오류 무시 */ }
+}
+
+function reloadDataFrames() {
+  // AS1(as.html)이 데이터를 직접 로드하므로 해당 슬롯만 새로고침
+  for (let i = 1; i <= 10; i++) {
+    if (slotKeyMap[i] === 'AS1') {
+      const frame = document.getElementById(`frame${i}`);
+      if (frame) frame.src = frame.src; // 재로드
+    }
+  }
+}
+
+function setDataStatus(msg, loading) {
+  document.getElementById('dataStatusText').textContent = msg;
+  const dot = document.getElementById('dataDot');
+  dot.style.background = loading ? '#f5a623' : '#4a9fd4';
+}
+
+// 초기 ETag 캐시 후 폴링 시작
+checkDataUpdate();
+setInterval(checkDataUpdate, POLL_INTERVAL);
+
+// ═══════════════════════════════════════════════════
+//  슬롯 UI
+// ═══════════════════════════════════════════════════
+const SCALE_KEY = 'tool-scale-tool-main';
+
+function buildSlots() {
+  const wrap = document.getElementById('toolWrap');
+  const opts = '<option value="">-- 선택 --</option>' +
+    Object.keys(TOOL_FILES).map(k => `<option value="${k}">${k}</option>`).join('');
+
+  let html = '';
+  for (let i = 1; i <= 10; i++) {
+    const def    = i <= 4 ? `AS${i}` : '';
+    const isOpen = i <= 4;
+    if (def) slotKeyMap[i] = def;
+
+    html += `
+    <div class="tool-slot" id="slot${i}">
+      <div class="slot-header" onclick="toggleSlot(${i})">
+        <span class="slot-num">슬롯 ${i}</span>
+        <span class="slot-sel-name" id="sname${i}">${def || '선택 안됨'}</span>
+        <span class="link-badge" id="badge${i}"></span>
+        <select class="slot-select" id="sel${i}"
+                onclick="event.stopPropagation()" onchange="changeTool(${i})">
+          ${opts}
+        </select>
+      </div>
+      <div class="slot-body${isOpen ? ' open' : ''}" id="body${i}">
+        ${def
+          ? `<iframe src="${BASE}${TOOL_FILES[def]}" id="frame${i}"></iframe>`
+          : `<div class="slot-empty">Tool을 선택하면 여기에 표시됩니다</div>`}
+      </div>
+    </div>`;
+  }
+  wrap.innerHTML = html;
+
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById(`sel${i}`).value = `AS${i}`;
+  }
+
+  // 저장된 줌 복원
+  const saved = Number(localStorage.getItem(SCALE_KEY));
+  if ([1, 0.9, 0.8, 0.7].includes(saved)) {
+    document.body.style.zoom = saved;
+    document.querySelectorAll('.size-btn').forEach(b => {
+      b.classList.toggle('active', Number(b.textContent) / 100 === saved ||
+        b.textContent.replace('%','') == String(saved * 100));
+    });
+  }
+
+  // AS1 로드 완료 후 데이터 상태 갱신
+  const f1 = document.getElementById('frame1');
+  if (f1) f1.addEventListener('load', () => {
+    setDataStatus(`CSV 로드 완료 · ${new Date().toLocaleTimeString()}`, false);
+  });
+}
+
+function toggleSlot(i) {
+  document.getElementById(`body${i}`).classList.toggle('open');
+}
+
+function changeTool(i) {
+  const key  = document.getElementById(`sel${i}`).value;
+  document.getElementById(`sname${i}`).textContent = key || '선택 안됨';
+  const body = document.getElementById(`body${i}`);
+  slotKeyMap[i] = key || null;
+
+  if (!key) {
+    body.innerHTML = `<div class="slot-empty">Tool을 선택하면 여기에 표시됩니다</div>`;
+    return;
+  }
+  body.classList.add('open');
+  body.innerHTML = `<iframe src="${BASE}${TOOL_FILES[key]}" id="frame${i}"></iframe>`;
+
+  // 새로 로드된 AS3이면 연동 배지 준비
+  if (key === 'AS3') {
+    const badge = document.getElementById(`badge${i}`);
+    if (badge) badge.textContent = '연동 대기';
+  }
+}
+
+function setZoom(s, btn) {
+  document.body.style.zoom = s;
+  document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  localStorage.setItem(SCALE_KEY, String(s));
+}
+
+buildSlots();
+</script>
+</body>
+</html>

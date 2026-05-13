@@ -95,20 +95,81 @@ function getColumnIndex(headers, name) {
 }
 
 // =========================
+// index.html → postMessage / BroadcastChannel 수신
+// =========================
+let _csvFromIndex = null;
+let _asModuleReady = false;
+
+window.addEventListener("message", (e) => {
+    if (e.data && e.data.type === "CSV_DATA" && e.data.rows) {
+        _csvFromIndex = e.data.rows;
+        if (document.getElementById("modelSelect") && !_asModuleReady) {
+            initASModuleWithRows(_csvFromIndex);
+        }
+    }
+});
+
+const _indexChannel = new BroadcastChannel("as-tool-channel-v1");
+_indexChannel.addEventListener("message", (e) => {
+    if (e.data && e.data.type === "CSV_DATA" && e.data.rows) {
+        _csvFromIndex = e.data.rows;
+        if (document.getElementById("modelSelect") && !_asModuleReady) {
+            initASModuleWithRows(_csvFromIndex);
+        }
+    }
+});
+
+// =========================
 // AS 모듈 (툴1)
 // =========================
 async function initASModule() {
     console.log("AS 모듈 시작");
 
+    // index에서 이미 받은 데이터 있으면 바로 사용
+    if (_csvFromIndex) {
+        initASModuleWithRows(_csvFromIndex);
+        return;
+    }
+
+    // fallback: 직접 fetch 시도
     try {
-        const csvUrl = "/dashboard/data/가전마감.csv";
+        // 로컬(localhost)이면 /data/, 깃허브면 /dashboard/data/
+        const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+        const csvUrl = isLocal ? '/data/가전마감.csv' : '/dashboard/data/가전마감.csv';
         const res = await fetch(csvUrl);
 
         if (!res.ok) throw new Error("CSV 로드 실패");
 
         const text = await res.text();
         const rows = parseCSV(text);
-        globalCSVData = rows;
+        initASModuleWithRows(rows);
+
+    } catch (err) {
+        const updateBox = document.getElementById("updateTime");
+        if (updateBox) updateBox.innerText = "CSV 로드 실패 (index 수신 대기중...)";
+
+        // index에서 데이터 올 때까지 대기 (최대 10초)
+        let waited = 0;
+        const waitTimer = setInterval(() => {
+            waited += 500;
+            if (_csvFromIndex) {
+                clearInterval(waitTimer);
+                initASModuleWithRows(_csvFromIndex);
+            } else if (waited >= 10000) {
+                clearInterval(waitTimer);
+                const box = document.getElementById("updateTime");
+                if (box) box.innerText = "CSV 로드 실패";
+            }
+        }, 500);
+    }
+}
+
+function initASModuleWithRows(rows) {
+    if (_asModuleReady) return; // 중복 실행 방지
+    _asModuleReady = true;
+    globalCSVData = rows;
+
+    try {
 
         const modelSelect = document.getElementById("modelSelect");
         const symptomSelect = document.getElementById("symptomSelect");
@@ -248,8 +309,10 @@ async function initASModule() {
         }
 
     } catch (err) {
+        console.error("initASModuleWithRows 오류:", err);
         const updateBox = document.getElementById("updateTime");
-        if (updateBox) updateBox.innerText = "CSV 로드 실패";
+        if (updateBox) updateBox.innerText = "데이터 처리 오류";
+        _asModuleReady = false; // 오류 시 재시도 허용
     }
 }
 

@@ -235,6 +235,7 @@ function render(data) {
 
     const list = [...data]
         .filter(d => !normalizeCheckedByText(d.checked_by || ""))
+        .slice(0, 30)
         .reverse();
 
     if (list.length === 0) {

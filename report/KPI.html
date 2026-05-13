@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주요 KPI</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --red-dark: #b03030;
+    --red-mid: #c94040;
+    --green-dark: #2a7a6f;
+    --green-mid: #3a9a8f;
+    --blue-dark: #1a3a6e;
+    --blue-mid: #2356a8;
+    --blue-light: #4a80d0;
+    --text-main: #1a1a2e;
+    --text-sub: #555577;
+    --text-muted: #8888aa;
+    --border: #dde0ea;
+    --shadow: 0 2px 12px rgba(30,40,80,0.08);
+    --font: 'Malgun Gothic', '맑은 고딕', sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text-main);
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--blue-dark);
+    letter-spacing: -0.5px;
+  }
+  .page-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .load-status {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 20px;
+  }
+  .load-status.ok { color: var(--green-dark); border-color: var(--green-mid); }
+  .load-status.err { color: var(--red-dark); border-color: var(--red-mid); }
+
+  /* ── 전체 진행율 대형 카드 ── */
+  .hero-card {
+    background: linear-gradient(135deg, var(--blue-dark) 0%, var(--blue-mid) 100%);
+    border-radius: 14px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    box-shadow: 0 4px 20px rgba(35,86,168,0.25);
+  }
+  .hero-left { flex: 1; }
+  .hero-label { font-size: 12px; opacity: 0.7; letter-spacing: 1px; text-transform: uppercase; }
+  .hero-title { font-size: 22px; font-weight: 700; margin: 4px 0 8px; }
+  .hero-desc { font-size: 12px; opacity: 0.75; }
+  .hero-right { text-align: right; min-width: 140px; }
+  .hero-pct { font-size: 52px; font-weight: 800; line-height: 1; }
+  .hero-pct-label { font-size: 12px; opacity: 0.7; margin-top: 4px; }
+  .hero-bar-wrap { margin-top: 16px; background: rgba(255,255,255,0.18); border-radius: 4px; height: 8px; }
+  .hero-bar { height: 8px; border-radius: 4px; background: #fff; transition: width 1s ease; }
+
+  /* ── 섹션 그룹 ── */
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-sub);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin: 20px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px; height: 14px;
+    border-radius: 2px;
+    background: var(--blue-mid);
+  }
+  .section-title.red::before { background: var(--red-mid); }
+  .section-title.green::before { background: var(--green-mid); }
+
+  /* ── KPI 카드 그리드 ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+  }
+
+  .kpi-card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 18px 20px 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.15s;
+    min-height: 169px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(30,40,80,0.12);
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 12px 12px 0 0;
+    background: #f0b030; /* 진행중 - 주황노랑 */
+  }
+  .kpi-card.done::before { background: #2a9a6f; } /* 완료 - 초록 */
+  .kpi-card.none::before { background: #e03030; } /* 시작전 - 빨강 */
+
+  .kpi-name { font-size: 14px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
+  .kpi-desc { font-size: 11px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5; }
+
+  .kpi-bottom { display: flex; align-items: center; justify-content: space-between; }
+  .kpi-bar-wrap { flex: 1; background: #eef0f6; border-radius: 4px; height: 6px; margin-right: 12px; }
+  .kpi-bar { height: 6px; border-radius: 4px; background: var(--blue-mid); transition: width 0.8s ease; }
+  .kpi-card.done .kpi-bar { background: var(--green-mid); }
+  .kpi-card.none .kpi-bar { background: #ccc; }
+
+  .kpi-pct-badge {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: #e8eef8;
+    color: var(--blue-mid);
+    white-space: nowrap;
+  }
+  .kpi-card.done .kpi-pct-badge { background: #e3f5f2; color: var(--green-dark); }
+  .kpi-card.none .kpi-pct-badge { background: #f0f0f0; color: #999; }
+
+  /* ── 체크박스 아이콘 ── */
+  .status-icon {
+    position: absolute;
+    top: 14px; right: 14px;
+    width: 22px; height: 22px;
+    border-radius: 5px;
+    border: 2px solid #ccc;
+    background: #f5f5f5;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 900; color: transparent;
+    line-height: 1;
+  }
+  .kpi-card.none .status-icon {
+    background: #e03030;
+    border-color: #c02020;
+    color: #fff;
+  }
+  .status-icon.progress {
+    background: #f0b030;
+    border-color: #d09010;
+    color: #fff;
+  }
+  .kpi-card.done .status-icon {
+    background: #2a9a6f;
+    border-color: #1a7a4f;
+    color: #fff;
+  }
+
+  /* ── 바로가기 버튼 ── */
+  .kpi-link-btn {
+    position: absolute;
+    bottom: 12px; right: 14px;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--blue-mid);
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, transform 0.15s;
+    text-decoration: none;
+  }
+  .kpi-link-btn:hover { background: var(--blue-dark); transform: scale(1.1); }
+  .kpi-link-btn svg { width: 12px; height: 12px; fill: #fff; margin-left: 2px; }
+  .kpi-card.done .kpi-link-btn { background: #2a9a6f; }
+  .kpi-card.done .kpi-link-btn:hover { background: #1a7a4f; }
+  .kpi-card.none .kpi-link-btn { background: #e03030; }
+  .kpi-card.none .kpi-link-btn:hover { background: #c02020; }
+  .kpi-card.ing .kpi-link-btn { background: #f0b030; }
+  .kpi-card.ing .kpi-link-btn:hover { background: #d09010; }
+  .kpi-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    line-height: 1.5;
+    min-height: 14px;
+  }
+
+  /* ── 미완료 vs 완료 분리 탭 ── */
+  .tab-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .tab-btn {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    font-family: var(--font);
+  }
+  .tab-btn.active-all { background: var(--blue-mid); color: #fff; }
+  .tab-btn.active-todo { background: var(--red-mid); color: #fff; }
+  .tab-btn.active-done { background: var(--green-mid); color: #fff; }
+  .tab-btn:not([class*="active"]) { background: var(--card); color: var(--text-sub); border: 1px solid var(--border); }
+
+  .loading {
+    text-align: center;
+    padding: 60px 0;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .err-msg {
+    background: #fff0f0;
+    border: 1px solid var(--red-mid);
+    color: var(--red-dark);
+    padding: 16px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div>
+    <div class="page-title">📊 주요 KPI</div>
+    <div class="page-sub" id="subTitle">연간 목표 달성 현황</div>
+  </div>
+  <div class="load-status" id="loadStatus">데이터 로딩중…</div>
+</div>
+
+<div id="root"><div class="loading">⏳ report.xlsx 로딩 중...</div></div>
+
+<script>
+// ── URL 파라미터 파싱 ──
+const params = new URLSearchParams(location.search);
+const periodParam = params.get('period') || '';
+const typeParam   = params.get('type')   || '';
+
+// ── 엑셀 파일 경로 (깃허브 기준 상대경로) ──
+const EXCEL_PATH = 'report.xlsx';
+
+async function loadExcel() {
+  try {
+    const res = await fetch(EXCEL_PATH + '?t=' + Date.now());
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const buf = await res.arrayBuffer();
+    const wb  = XLSX.read(buf, { type: 'array' });
+    return wb;
+  } catch(e) {
+    throw e;
+  }
+}
+
+function parseKpiSheet(wb) {
+  const ws = wb.Sheets['주요kpi'];
+  if (!ws) throw new Error("'주요kpi' 시트를 찾을 수 없습니다.");
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+  const data = [];
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r || !r[2]) continue;
+    if (r[1] === '종합현황') continue;
+    data.push({
+      주기:     r[0],
+      대분류:   r[1],
+      명칭:     r[2],
+      설명:     r[3],
+      달성율:   r[4],
+      특이사항: r[5] || '',
+      링크:     r[6] || '',
+    });
+  }
+  return data;
+}
+
+function pctText(v) {
+  if (v === null || v === undefined || v === '' || isNaN(v)) return '미집계';
+  const n = Number(v);
+  return Math.round(n * 100) + '%';
+}
+function pctNum(v) {
+  if (v === null || v === undefined || v === '' || isNaN(v)) return null;
+  return Math.min(Number(v), 1);
+}
+
+function cardClass(v) {
+  const n = pctNum(v);
+  if (n === null || n === 0) return 'none';
+  if (n >= 1) return 'done';
+  return 'ing';
+}
+function statusIcon(v) {
+  const n = pctNum(v);
+  if (n === null || n === 0) return { cls: '', check: '✓' }; // none class (빨강)
+  if (n >= 1)               return { cls: 'done', check: '✓' }; // 초록
+  return { cls: 'progress', check: '✓' }; // 주황
+}
+
+let currentFilter = 'all';
+let kpiData = [];
+let overallRate = 0;
+
+function renderAll() {
+  const heroDiv = document.getElementById('hero');
+  if (heroDiv) {
+    const pctStr = Math.round(overallRate * 100) + '%';
+    const barW   = Math.round(overallRate * 100);
+    heroDiv.querySelector('.hero-pct').textContent = pctStr;
+    heroDiv.querySelector('.hero-bar').style.width = barW + '%';
+  }
+
+  // 그룹화
+  const groups = {};
+  kpiData.forEach(item => {
+    if (!groups[item.대분류]) groups[item.대분류] = [];
+    groups[item.대분류].push(item);
+  });
+
+  const container = document.getElementById('kpiSections');
+  if (!container) return;
+  container.innerHTML = '';
+
+  Object.keys(groups).forEach(cat => {
+    const items = groups[cat].filter(item => {
+      if (currentFilter === 'done') return pctNum(item.달성율) >= 1;
+      if (currentFilter === 'todo') return pctNum(item.달성율) === null || pctNum(item.달성율) < 1;
+      return true;
+    });
+    if (items.length === 0) return;
+
+    const secEl = document.createElement('div');
+    const colorCls = cat === '고객응대' ? 'red' : cat === '품질관리' ? 'green' : '';
+    secEl.innerHTML = `<div class="section-title ${colorCls}">${cat}</div>`;
+
+    const grid = document.createElement('div');
+    grid.className = 'kpi-grid';
+
+    items.forEach(item => {
+      const cls   = cardClass(item.달성율);
+      const pct   = pctText(item.달성율);
+      const n     = pctNum(item.달성율);
+      const barW  = n !== null ? Math.round(n * 100) : 0;
+      const icon  = statusIcon(item.달성율);
+      const desc  = item.설명 || '-';
+      const note  = item.특이사항 || '';
+      const link  = item.링크 || '';
+      const linkBtn = link
+        ? `<a class="kpi-link-btn" href="${link}" target="_blank" title="바로가기">
+            <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+              <polygon points="3,2 13,8 3,14"/>
+            </svg>
+           </a>`
+        : '';
+
+      const card = document.createElement('div');
+      card.className = `kpi-card ${cls}`;
+      card.innerHTML = `
+        <div class="status-icon ${icon.cls}">${icon.check}</div>
+        <div class="kpi-name">${item.명칭}</div>
+        <div class="kpi-desc">${desc}</div>
+        <div class="kpi-bottom">
+          <div class="kpi-bar-wrap"><div class="kpi-bar" style="width:${barW}%"></div></div>
+          <div class="kpi-pct-badge">${pct}</div>
+        </div>
+        <div class="kpi-note">${note}</div>
+        ${linkBtn}
+      `;
+      grid.appendChild(card);
+    });
+
+    secEl.appendChild(grid);
+    container.appendChild(secEl);
+  });
+}
+
+async function init() {
+  const root = document.getElementById('root');
+  try {
+    const wb = await loadExcel();
+    kpiData = parseKpiSheet(wb);
+
+    // 전체 진행율 = 전체 건의 달성율 합산 / 전체 건수 (미집계는 0으로 포함)
+    const allItems = kpiData;
+    if (allItems.length > 0) {
+      const sum = allItems.reduce((s, d) => s + (pctNum(d.달성율) || 0), 0);
+      overallRate = sum / allItems.length;
+    } else {
+      overallRate = 0;
+    }
+
+    const barW = Math.round(overallRate * 100);
+    const pctStr = barW + '%';
+
+    document.getElementById('loadStatus').textContent = '✅ 데이터 로드 완료';
+    document.getElementById('loadStatus').className = 'load-status ok';
+    if (periodParam) document.getElementById('subTitle').textContent = `${periodParam} · 연간 목표 달성 현황`;
+
+    root.innerHTML = `
+      <div id="hero" class="hero-card">
+        <div class="hero-left">
+          <div class="hero-label">종합현황</div>
+          <div class="hero-title">전체 진행율</div>
+          <div class="hero-desc">연간 KPI 전체 목표 대비 현재 달성 수준</div>
+          <div class="hero-bar-wrap"><div class="hero-bar" style="width:${barW}%"></div></div>
+        </div>
+        <div class="hero-right">
+          <div class="hero-pct">${pctStr}</div>
+          <div class="hero-pct-label">목표 달성율</div>
+        </div>
+      </div>
+
+      <div class="tab-row">
+        <button class="tab-btn active-all" onclick="setFilter('all',this)">전체</button>
+        <button class="tab-btn" onclick="setFilter('todo',this)">진행중</button>
+        <button class="tab-btn" onclick="setFilter('done',this)">완료</button>
+      </div>
+
+      <div id="kpiSections"></div>
+    `;
+
+    renderAll();
+
+  } catch(e) {
+    document.getElementById('loadStatus').textContent = '❌ 로드 실패';
+    document.getElementById('loadStatus').className = 'load-status err';
+    root.innerHTML = `
+      <div class="err-msg">
+        <strong>데이터 로드 오류</strong><br>
+        ${e.message}<br><br>
+        <small>• <code>report.xlsx</code> 파일이 같은 폴더(report/)에 있는지 확인하세요.<br>
+        • 로컬 파일 시스템에서 직접 열면 CORS 오류가 납니다. 로컬 서버(<code>python -m http.server 8000</code>) 또는 깃허브 페이지를 통해 접근하세요.</small>
+      </div>
+    `;
+  }
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.className = 'tab-btn';
+  });
+  if (f === 'all')  btn.className = 'tab-btn active-all';
+  if (f === 'todo') btn.className = 'tab-btn active-todo';
+  if (f === 'done') btn.className = 'tab-btn active-done';
+  renderAll();
+}
+
+init();
+</script>
+</body>
+</html>

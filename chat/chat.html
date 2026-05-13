@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>CS 채팅</title>
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #abc1d1;
+}
+
+/* ===== 좌우 배치 전용: 기존 CS 채팅 기능/구조 유지 ===== */
+.chat-page-layout {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 60px;
+    width: 100%;
+    height: 100vh;
+}
+
+.chat-page-layout > .chat-wrapper {
+    flex: 0 0 420px;
+    margin: 10px 0;
+}
+
+.unchecked-frame {
+    flex: 0 0 420px;
+    width: 420px;
+    height: calc(100vh - 20px);
+    margin: 10px 0;
+    border: none;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    background: #b2c7da;
+}
+
+@media (max-width: 900px) {
+    .chat-page-layout {
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .chat-page-layout > .chat-wrapper,
+    .unchecked-frame {
+        width: 420px;
+        max-width: calc(100vw - 20px);
+        flex: 0 0 auto;
+    }
+}
+
+.chat-wrapper {
+    width: 420px;
+    max-width: calc(100vw - 20px);
+    height: calc(100vh - 20px);
+    margin: 10px auto;
+    background: #b2c7da;
+    display: flex;
+    flex-direction: column;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    position: relative;
+}
+
+.top-bar {
+    background: #abc1d1;
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    position: relative;
+    min-height: 96px;
+}
+
+.chat-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #1f1f1f;
+}
+
+.user-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding-right: 108px;
+}
+
+.user-row label {
+    font-size: 12px;
+    color: #2b2b2b;
+}
+
+.user-row select,
+.user-row input {
+    height: 30px;
+    padding: 4px 8px;
+    font-size: 13px;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.user-row select {
+    min-width: 70px;
+}
+
+.user-row input {
+    min-width: 120px;
+    flex: 1;
+}
+
+#alarmToggle {
+    position: absolute;
+    right: 14px;
+    top: 44px;
+    height: 30px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.95);
+    color: #222;
+    font-size: 12px;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+#alarmToggle:hover {
+    filter: brightness(0.98);
+}
+
+.chat-box {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 12px 18px;
+    background: #b2c7da;
+}
+
+.msg-row {
+    display: flex;
+    margin: 10px 0;
+}
+
+.msg-row.me {
+    justify-content: flex-end;
+}
+
+.msg-row.other {
+    justify-content: flex-start;
+}
+
+.msg-wrap {
+    max-width: 78%;
+    display: flex;
+    flex-direction: column;
+}
+
+.msg-row.me .msg-wrap {
+    align-items: flex-end;
+}
+
+.msg-row.other .msg-wrap {
+    align-items: flex-start;
+}
+
+.name {
+    font-size: 12px;
+    color: #3e3e3e;
+    margin-bottom: 4px;
+    padding: 0 2px;
+}
+
+.bubble-line {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.bubble {
+    padding: 10px 12px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.45;
+    word-break: break-word;
+    white-space: pre-wrap;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+}
+
+.msg-row.me .bubble {
+    background: #fee500;
+    color: #111;
+    border-top-right-radius: 4px;
+}
+
+.msg-row.other .bubble {
+    background: #ffffff;
+    color: #111;
+    border-top-left-radius: 4px;
+}
+
+.check-btn {
+    min-width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    line-height: 1;
+    color: #8a8f96;
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.75;
+}
+
+.check-btn:hover {
+    opacity: 1;
+}
+
+.check-btn.checked {
+    color: #2b7cff;
+    opacity: 1;
+    font-weight: bold;
+}
+
+.check-users {
+    display: inline-block;
+    max-width: 180px;
+    padding: 4px 6px;
+    border: 1px solid #8f8f8f;
+    background: #ffffff;
+    color: #111;
+    font-size: 12px;
+    line-height: 1.35;
+    word-break: break-word;
+    white-space: pre-wrap;
+    border-radius: 0;
+}
+
+.time {
+    font-size: 11px;
+    color: #55606b;
+    white-space: nowrap;
+    margin-top: 4px;
+    padding: 0 2px;
+}
+
+.bottom-area {
+    background: #f7f7f7;
+    border-top: 1px solid rgba(0,0,0,0.08);
+    padding: 10px;
+}
+
+.input-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+#msg {
+    flex: 1;
+    min-height: 46px;
+    max-height: 120px;
+    resize: none;
+    font-size: 14px;
+    padding: 11px 12px;
+    border: 1px solid #d6d6d6;
+    border-radius: 12px;
+    background: #fff;
+    line-height: 1.4;
+}
+
+#msg:focus {
+    outline: none;
+    border-color: #c8b400;
+}
+
+#msg:disabled {
+    background: #ececec;
+    color: #888;
+    cursor: not-allowed;
+}
+
+#sendBtn {
+    height: 46px;
+    min-width: 74px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 12px;
+    background: #fee500;
+    color: #111;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#sendBtn:hover:not(:disabled) {
+    filter: brightness(0.98);
+}
+
+#sendBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#version {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    font-size: 11px;
+    color: rgba(0,0,0,0.45);
+    pointer-events: none;
+}
+
+#toast {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    min-width: 240px;
+    max-width: 340px;
+    background: rgba(30, 30, 30, 0.94);
+    color: #fff;
+    padding: 12px 14px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    font-size: 13px;
+    line-height: 1.45;
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 9999;
+}
+
+#toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#toastTitle {
+    font-weight: bold;
+    margin-bottom: 4px;
+    font-size: 12px;
+    color: #fee500;
+}
+
+#toastBody {
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+@media (max-width: 520px) {
+    .chat-wrapper {
+        width: 100vw;
+        max-width: 100vw;
+        height: 100vh;
+        margin: 0;
+        border-radius: 0;
+    }
+
+    .top-bar {
+        min-height: 102px;
+    }
+
+    #version {
+        top: 10px;
+        right: 10px;
+    }
+
+    .chat-title {
+        padding-right: 90px;
+    }
+
+    .user-row {
+        padding-right: 0;
+        padding-top: 2px;
+    }
+
+    #alarmToggle {
+        top: 44px;
+        right: 10px;
+    }
+
+    #toast {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        max-width: none;
+        min-width: 0;
+    }
+}
+</style>
+</head>
+<body>
+
+<div id="version">수정버전 : 2026/04/22 15:30:00</div>
+
+<div class="chat-page-layout">
+
+<div class="chat-wrapper">
+    <div class="top-bar">
+        <div class="chat-title">CS 채팅</div>
+
+        <div class="user-row">
+            <label for="team">소속:</label>
+            <select id="team">
+                <option value=""></option>
+                <option value="꿈비">꿈비</option>
+                <option value="에르모어">에르모어</option>
+                <option value="가이아">가이아</option>
+            </select>
+
+            <label for="name">이름:</label>
+            <input id="name" type="text">
+        </div>
+
+        <button type="button" id="alarmToggle">🔔 알림 ON</button>
+    </div>
+
+    <div id="chat" class="chat-box"></div>
+
+    <div class="bottom-area">
+        <div class="input-row">
+            <textarea id="msg" placeholder="메시지 입력"></textarea>
+            <button type="button" id="sendBtn" onclick="send()">전송</button>
+        </div>
+    </div>
+</div>
+
+<iframe
+    class="unchecked-frame"
+    src="chatchat_unchecked.html"
+    title="V 미체크 모아보기">
+</iframe>
+
+</div>
+
+<div id="toast">
+    <div id="toastTitle">새 메시지</div>
+    <div id="toastBody"></div>
+</div>
+
+<script>
+const SERVER = "https://adaptable-expression-production-ba28.up.railway.app";
+
+let alarmEnabled = true;
+let knownLastMessageKey = null;
+let toastTimer = null;
+let notificationPermissionRequested = false;
+
+function setVersion() {
+    const d = new Date();
+    const version =
+        d.getFullYear() + "/" +
+        String(d.getMonth() + 1).padStart(2, "0") + "/" +
+        String(d.getDate()).padStart(2, "0") + " " +
+        String(d.getHours()).padStart(2, "0") + ":" +
+        String(d.getMinutes()).padStart(2, "0") + ":" +
+        String(d.getSeconds()).padStart(2, "0");
+
+    document.getElementById("version").innerText = "수정버전 : " + version;
+}
+setVersion();
+
+function getFullName() {
+    const team = document.getElementById("team").value.trim();
+    const name = document.getElementById("name").value.trim();
+    return (team + " " + name).trim();
+}
+
+function checkLock() {
+    const team = document.getElementById("team").value.trim();
+    const name = document.getElementById("name").value.trim();
+    const msgBox = document.getElementById("msg");
+    const sendBtn = document.getElementById("sendBtn");
+
+    if (!team || !name) {
+        msgBox.disabled = true;
+        msgBox.placeholder = "소속 및 이름 입력 후 사용 가능";
+        sendBtn.disabled = true;
+    } else {
+        msgBox.disabled = false;
+        msgBox.placeholder = "메시지 입력";
+        sendBtn.disabled = false;
+    }
+}
+
+function escapeHtml(text) {
+    return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function normalizeCheckedByText(value) {
+    const items = String(value || "")
+        .split(",")
+        .map(v => v.trim())
+        .filter(Boolean);
+
+    const seen = new Set();
+    const result = [];
+
+    items.forEach(name => {
+        if (seen.has(name)) return;
+        seen.add(name);
+        result.push(name);
+    });
+
+    return result.join(", ");
+}
+
+function render(data) {
+    const chat = document.getElementById("chat");
+
+    const prevScrollTop = chat.scrollTop;
+    const prevScrollHeight = chat.scrollHeight;
+    const prevClientHeight = chat.clientHeight;
+    const isNearBottom = (prevScrollHeight - (prevScrollTop + prevClientHeight)) <= 40;
+
+    chat.innerHTML = "";
+
+    const list = [...data].reverse();
+
+    list.forEach(d => {
+        const isMe = (d.name || "").trim() === getFullName();
+        const checkedBy = normalizeCheckedByText(d.checked_by || "");
+        const checkedClass = checkedBy ? "checked" : "";
+        const checkedTitle = checkedBy ? escapeHtml(checkedBy) : "";
+       
+
+        chat.innerHTML += `
+            <div class="msg-row ${isMe ? 'me' : 'other'}">
+                <div class="msg-wrap">
+                    <div class="name">${escapeHtml(d.name || "")}</div>
+                    <div class="bubble-line">
+                        <div class="bubble">${escapeHtml(d.message || "")}</div>
+                        <div
+                            class="check-btn ${checkedClass}"
+                            title="${checkedTitle}"
+                            onclick="toggleCheck(${d.id})"
+                        >✔</div>                       
+                    </div>
+                    <div class="time">${escapeHtml(d.created_at || d.time || "")}</div>
+                </div>
+            </div>
+        `;
+    });
+
+    if (prevScrollHeight === 0) {
+        chat.scrollTop = chat.scrollHeight;
+        return;
+    }
+
+    if (isNearBottom) {
+        chat.scrollTop = chat.scrollHeight;
+    } else {
+        const newScrollHeight = chat.scrollHeight;
+        const heightDiff = newScrollHeight - prevScrollHeight;
+        chat.scrollTop = prevScrollTop + heightDiff;
+    }
+}
+
+function getMessageKey(messageObj) {
+    const name = String(messageObj?.name || "").trim();
+    const message = String(messageObj?.message || "").trim();
+    const time = String(messageObj?.created_at || messageObj?.time || "").trim();
+    return [name, message, time].join("||");
+}
+
+function showToast(sender, message) {
+    const toast = document.getElementById("toast");
+    const toastBody = document.getElementById("toastBody");
+
+    toastBody.innerText = `${sender}\n${message}`;
+
+    if (toastTimer) {
+        clearTimeout(toastTimer);
+        toastTimer = null;
+    }
+
+    toast.classList.add("show");
+
+    toastTimer = setTimeout(() => {
+        toast.classList.remove("show");
+    }, 2500);
+}
+
+async function ensureNotificationPermission() {
+    if (!("Notification" in window)) {
+        return "unsupported";
+    }
+
+    if (Notification.permission === "granted") {
+        return "granted";
+    }
+
+    if (Notification.permission === "denied") {
+        return "denied";
+    }
+
+    if (notificationPermissionRequested) {
+        return Notification.permission;
+    }
+
+    notificationPermissionRequested = true;
+
+    try {
+        const result = await Notification.requestPermission();
+        return result;
+    } catch (e) {
+        console.log("브라우저 알림 권한 요청 실패", e);
+        return "error";
+    }
+}
+
+function showBrowserNotification(sender, message) {
+    if (!("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
+
+    try {
+        const n = new Notification("CS 채팅", {
+            body: `${sender}: ${message}`,
+            tag: "cs-chat-message",
+            renotify: false
+        });
+
+        setTimeout(() => {
+            n.close();
+        }, 4000);
+    } catch (e) {
+        console.log("브라우저 알림 표시 실패", e);
+    }
+}
+
+function checkNewIncomingMessage(data) {
+    if (!Array.isArray(data) || data.length === 0) return;
+
+    const newest = data[0];
+    const newestKey = getMessageKey(newest);
+
+    if (!knownLastMessageKey) {
+        knownLastMessageKey = newestKey;
+        return;
+    }
+
+    if (newestKey === knownLastMessageKey) {
+        return;
+    }
+
+    knownLastMessageKey = newestKey;
+
+    const myFullName = getFullName();
+    const sender = String(newest.name || "").trim();
+    const message = String(newest.message || "").trim();
+
+    if (!alarmEnabled) return;
+    if (!sender || !message) return;
+    if (!myFullName) return;
+    if (sender === myFullName) return;
+
+    showToast(sender, message);
+    showBrowserNotification(sender, message);
+}
+
+async function load() {
+    try {
+        const res = await fetch(SERVER + "/messages", {
+            method: "GET"
+        });
+
+        if (!res.ok) {
+            console.log("메시지 불러오기 실패:", res.status);
+            return;
+        }
+
+        const data = await res.json();
+        if (!Array.isArray(data)) {
+            console.log("메시지 형식 이상");
+            return;
+        }
+
+        checkNewIncomingMessage(data);
+        render(data);
+    } catch (e) {
+        console.log("불러오기 실패", e);
+    }
+}
+
+window.send = async function () {
+    const team = document.getElementById("team").value.trim();
+    const name = document.getElementById("name").value.trim();
+    const msgBox = document.getElementById("msg");
+    const sendBtn = document.getElementById("sendBtn");
+    const msg = msgBox.value.trim();
+
+    if (!team || !name) {
+        alert("소속/이름 입력");
+        checkLock();
+        return;
+    }
+
+    if (!msg) return;
+
+    sendBtn.disabled = true;
+
+    try {
+        const res = await fetch(SERVER + "/send", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                name: team + " " + name,
+                message: msg
+            })
+        });
+
+        if (!res.ok) {
+            alert("전송 실패");
+            console.log("전송 실패 상태코드:", res.status);
+            return;
+        }
+
+        msgBox.value = "";
+        await load();
+    } catch (e) {
+        alert("서버 연결 실패");
+        console.log("전송 오류:", e);
+    } finally {
+        sendBtn.disabled = false;
+        checkLock();
+        msgBox.focus();
+    }
+};
+
+window.toggleCheck = async function (id) {
+    const fullName = getFullName();
+
+    if (!fullName) {
+        alert("소속/이름 입력");
+        checkLock();
+        return;
+    }
+
+    try {
+        const res = await fetch(SERVER + "/check", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                id: id,
+                checker: fullName
+            })
+        });
+
+        if (!res.ok) {
+            alert("체크 저장 실패");
+            console.log("체크 저장 실패 상태코드:", res.status);
+            return;
+        }
+
+        await load();
+    } catch (e) {
+        alert("체크 저장 실패");
+        console.log("체크 저장 오류:", e);
+    }
+};
+
+document.getElementById("msg").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        send();
+    }
+});
+
+/* ===== 추가 시작: localStorage 저장/복원 ===== */
+function saveUserInfo() {
+    localStorage.setItem("cs_team", document.getElementById("team").value);
+    localStorage.setItem("cs_name", document.getElementById("name").value);
+}
+
+function loadUserInfo() {
+    const savedTeam = localStorage.getItem("cs_team");
+    const savedName = localStorage.getItem("cs_name");
+
+    if (savedTeam !== null) {
+        document.getElementById("team").value = savedTeam;
+    }
+    if (savedName !== null) {
+        document.getElementById("name").value = savedName;
+    }
+}
+/* ===== 추가 끝 ===== */
+
+document.getElementById("team").addEventListener("change", function () {
+    checkLock();
+    saveUserInfo();
+});
+
+document.getElementById("name").addEventListener("input", function () {
+    checkLock();
+    saveUserInfo();
+});
+
+document.getElementById("alarmToggle").addEventListener("click", async function () {
+    alarmEnabled = !alarmEnabled;
+
+    if (alarmEnabled) {
+        const permission = await ensureNotificationPermission();
+
+        if (permission === "denied") {
+            alert("브라우저 알림이 차단되어 있습니다. 브라우저 설정에서 알림 허용이 필요합니다.");
+        }
+    }
+
+    this.innerText = alarmEnabled ? "🔔 알림 ON" : "🔕 알림 OFF";
+});
+
+loadUserInfo();
+checkLock();
+ensureNotificationPermission();
+load();
+setInterval(load, 2000);
+</script>
+
+</body>
+</html>

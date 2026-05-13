@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>처리현황</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+:root {
+  --navy:#0f1f3d; --blue:#1e40af; --teal:#0f766e;
+  --amber:#b45309; --purple:#6d28d9;
+  --slate:#334155; --slateL:#64748b;
+  --border:#e2e8f0; --bg:#f0f2f5;
+}
+body { background:var(--bg); font-family:'Malgun Gothic',sans-serif; font-size:12px; color:var(--slate); margin:0; padding:12px; overflow-x:hidden; }
+
+#root { width:1200px; padding:0; transform-origin:top left; }
+
+/* 공통 카드 */
+.card { background:#fff; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.08); padding:10px 12px; }
+.card-header { padding-bottom:6px; border-bottom:1px solid var(--border); margin-bottom:8px; }
+.card-title { font-size:10px; font-weight:600; color:#888; }
+.card-sub   { font-size:9px; color:#aaa; margin-top:1px; }
+
+/* 섹션 제목바 */
+.sec { font-size:10px; font-weight:700; color:#fff; padding:5px 10px; border-radius:4px; margin-bottom:8px; letter-spacing:.03em; }
+.sec-blue { background:var(--blue); }
+.sec-teal { background:var(--teal); }
+
+/* 서브바 */
+.subbar { font-size:10px; font-weight:700; color:#fff; padding:4px 10px; border-radius:4px; }
+.subbar-repair { background:var(--navy); }
+.subbar-stock  { background:var(--teal); }
+
+/* 그리드 */
+.subbar-row  { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:8px; }
+.elec-row1   { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:8px; }
+.elec-row2   { display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:8px; margin-bottom:8px; }
+.ge-row      { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; }
+.ge-row > .card { }
+.ge-row .card-header { margin-bottom:40px; }
+.ge-row .chart-area { }
+
+/* 막대차트 */
+.chart-area { display:flex; justify-content:space-evenly; align-items:flex-end; height:83px; border-bottom:1px solid var(--border); padding-bottom:4px; padding-top:0; overflow:visible; }
+.col-group  { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:0; flex:1; max-width:38px; }
+.col-val    { font-size:9px; font-weight:700; color:var(--navy); white-space:nowrap; margin-bottom:2px; line-height:1; }
+.col-bars   { display:flex; align-items:flex-end; gap:2px; }
+.col-bar    { width:20px; border-radius:3px 3px 0 0; transition:height .3s; }
+.col-lbl    { font-size:9px; color:#888; margin-top:2px; }
+.bar-legend { display:flex; gap:8px; flex-wrap:wrap; font-size:9px; color:#888; margin-top:6px; }
+.leg-dot    { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:3px; vertical-align:middle; }
+
+/* 도넛차트 */
+.donut-wrap { display:flex; flex-direction:column; align-items:flex-start; gap:6px; }
+.donut-rel  { position:relative; flex-shrink:0; }
+.dcenter    { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:11px; font-weight:700; color:var(--navy); text-align:center; line-height:1.2; white-space:nowrap; }
+.dcenter small { font-size:9px; font-weight:400; color:#888; display:block; }
+.dlegend    { font-size:9px; color:var(--slate); line-height:1.9; }
+.ldot       { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:3px; vertical-align:middle; }
+
+/* 라인차트 */
+.line-svg   { width:100%; height:100px; display:block; }
+.x-labels   { display:flex; justify-content:space-around; font-size:9px; color:#888; margin-top:2px; }
+
+/* 로딩/에러 */
+.no-data { color:#aaa; font-size:10px; padding:16px 0; text-align:center; }
+</style>
+</head>
+<body>
+<div id="root">
+
+<!-- ════ 전자제품 ════ -->
+<div class="sec sec-blue">전자제품</div>
+<div class="subbar-row">
+  <div class="subbar subbar-repair" style="grid-column:span 2;">수리출고</div>
+  <div class="subbar subbar-stock">자재출고</div>
+</div>
+<div class="elec-row1">
+  <!-- 수리현황 -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">수리현황</div><div class="card-sub" id="sub-repair">처리일 기준 · 월별</div></div>
+    <div class="chart-area" id="chart-repair"></div>
+    <div class="bar-legend">
+      <span><span class="leg-dot" style="background:var(--blue);"></span>무상수리</span>
+      <span><span class="leg-dot" style="background:#93c5fd;"></span>유상수리</span>
+    </div>
+  </div>
+  <!-- 유상처리금액 -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">유상처리금액</div><div class="card-sub">월별 유상 처리금액</div></div>
+    <div class="chart-area" id="chart-fee"></div>
+  </div>
+  <!-- 자재출고현황 -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">자재출고현황</div><div class="card-sub">월별 자재출고 추이</div></div>
+    <div class="chart-area" id="chart-stock"></div>
+  </div>
+</div>
+
+<div class="elec-row2">
+  <!-- 수리모델비율 -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">수리모델 비율</div><div class="card-sub">수리출고 모델 비율</div></div>
+    <div id="chart-model-repair"></div>
+  </div>
+  <!-- 수리 부품교체비율 -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">수리 부품교체 비율</div><div class="card-sub">수리 시 부품 교체 비율</div></div>
+    <div id="chart-part-repair"></div>
+  </div>
+  <!-- 수리 처리소요일 -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">수리 처리소요일</div><div class="card-sub">월별 평균 처리소요일</div></div>
+    <svg class="line-svg" id="chart-day-repair" viewBox="0 0 260 120"></svg>
+    <div class="x-labels" id="xlbl-day-repair"></div>
+  </div>
+  <!-- 자재출고 모델비율 -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">자재출고 모델비율</div><div class="card-sub">자재출고 모델</div></div>
+    <div id="chart-model-stock"></div>
+  </div>
+  <!-- 자재출고 부품비율 -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">자재출고 부품비율</div><div class="card-sub">자재출고 부품</div></div>
+    <div id="chart-part-stock"></div>
+  </div>
+</div>
+
+<!-- ════ 전자제품 外 ════ -->
+<div class="sec sec-teal">전자제품 外</div>
+<div class="ge-row">
+  <!-- 접수현황 -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">접수현황</div><div class="card-sub">완료일자 기준 · 월별</div></div>
+    <div class="chart-area" id="chart-ge-receive"></div>
+    <div class="bar-legend">
+      <span><span class="leg-dot" style="background:var(--teal);"></span>무상수리</span>
+      <span><span class="leg-dot" style="background:#2dd4bf;"></span>유상수리</span>
+    </div>
+  </div>
+  <!-- 유상처리금액 -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">유상처리금액</div><div class="card-sub">월별 유상 처리금액</div></div>
+    <div class="chart-area" id="chart-ge-fee"></div>
+  </div>
+  <!-- 모델비율 -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">모델비율</div><div class="card-sub">처리 모델별</div></div>
+    <div id="chart-ge-model"></div>
+  </div>
+  <!-- 처리소요일 -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">처리소요일</div><div class="card-sub" id="sub-ge-day">평균 -일</div></div>
+    <svg class="line-svg" id="chart-ge-day" viewBox="0 0 260 120"></svg>
+    <div class="x-labels" id="xlbl-ge-day"></div>
+  </div>
+</div>
+
+</div><!-- /root -->
+
+<script>
+// ══════════════════════════════════════
+// 색상 팔레트
+// ══════════════════════════════════════
+const COLORS = [
+  '#1e40af','#0f766e','#f97316','#8b5cf6','#ef4444',
+  '#22c55e','#eab308','#06b6d4','#ec4899','#64748b',
+  '#3b82f6','#10b981','#f59e0b','#a855f7','#6366f1'
+];
+
+// ══════════════════════════════════════
+// 전역 상태
+// ══════════════════════════════════════
+// RAW_GM: data_가전마감 원본 레코드 (전자제품·자재출고 직접 집계)
+// RAW_GE: data_가전외마감 원본 레코드 (전자제품外 직접 집계)
+let RAW_GM = [];
+let RAW_GE = [];
+let CUR_PERIOD = '월간';
+let CUR_ROUND  = null; // null = 전체, 또는 특정 회차
+
+// ══════════════════════════════════════
+// 엑셀 날짜 시리얼 → JS Date (UTC)
+// ══════════════════════════════════════
+function serialToDate(v) {
+  if (v instanceof Date) return v;
+  const n = Number(v);
+  if (!isNaN(n) && n > 30000 && n < 80000)
+    return new Date(Date.UTC(1899, 11, 30) + n * 86400000);
+  return null;
+}
+
+// ══════════════════════════════════════
+// 날짜 → 주간 회차 키 (해당 주 금요일 YYYY-MM-DD)
+// ══════════════════════════════════════
+function toWeekRound(d) {
+  if (!d) return null;
+  const day  = d.getUTCDay(); // 0=Sun ... 5=Fri 6=Sat
+  const diff = day === 5 ? 0 : day === 6 ? 6 : 5 - day;
+  const fd   = new Date(d.getTime() + diff * 86400000);
+  const y = fd.getUTCFullYear();
+  const m = String(fd.getUTCMonth()+1).padStart(2,'0');
+  const da= String(fd.getUTCDate()).padStart(2,'0');
+  return `${y}-${m}-${da}`;
+}
+
+// ══════════════════════════════════════
+// 날짜 → 월간 회차 키 (YYYY년M월)
+// ══════════════════════════════════════
+function toMonthRound(d) {
+  if (!d) return null;
+  return `${d.getUTCFullYear()}년${d.getUTCMonth()+1}월`;
+}
+
+// ══════════════════════════════════════
+// RAW_GE 레코드의 완료일 기준 회차 키
+// ══════════════════════════════════════
+function geRoundKey(rec) {
+  return CUR_PERIOD === '월간' ? toMonthRound(rec.완료일) : toWeekRound(rec.완료일);
+}
+
+// ══════════════════════════════════════
+// xlsx 로드 (report.xlsx 실시간 읽기)
+// ══════════════════════════════════════
+async function loadXlsx() {
+  const path = './report.xlsx';
+  try {
+    const res = await fetch(path + '?t=' + Date.now());
+    if (!res.ok) throw new Error('파일 없음');
+    const buf = await res.arrayBuffer();
+    const wb  = XLSX.read(buf, { type:'array', cellDates:true });
+
+    // ── A. data_가전마감 시트 파싱 (전자제품·자재출고 직접 집계) ──
+    // 컬럼(0-based): A=0 접수일, C=2 제품명, E=4 제품증상, F=5 처리일,
+    //                G=6 유상AS비용, H=7 유/무상, I=8 구분, J=9 사용부품, N=13 소요일
+    const ws = wb.Sheets['data_가전마감'];
+    if (!ws) throw new Error('data_가전마감 시트 없음');
+    const rawGm = XLSX.utils.sheet_to_json(ws, { header:1, defval:null });
+    RAW_GM = [];
+    for (let i = 1; i < rawGm.length; i++) {
+      const r = rawGm[i];
+      const 처리일 = serialToDate(r[5]);
+      if (!처리일) continue; // 처리일 없으면 미완료 → 제외
+      RAW_GM.push({
+        접수일: serialToDate(r[0]),
+        처리일,
+        제품명: r[2]  ? String(r[2]).trim()  : '',
+        유무상: r[7]  ? String(r[7]).trim()  : '',
+        구분:   r[8]  ? String(r[8]).trim()  : '',
+        비용:   parseFloat(r[6]) || 0,
+        소요일: parseFloat(r[13]) || 0,
+        // 사용부품: 쉼표 구분 분리
+        부품목록: r[9] ? String(r[9]).split(',').map(p=>p.trim()).filter(Boolean) : []
+      });
+    }
+
+    // ── B. data_가전외마감 시트 파싱 (전자제품外 원본 직접 집계) ──
+    // 컬럼(0-based): B=1 접수일, C=2 완료일, D=3 소요기간, F=5 상품명, J=9 유/무상, K=10 비용
+    const wsGe = wb.Sheets['data_가전외마감'];
+    if (wsGe) {
+      const rawGe = XLSX.utils.sheet_to_json(wsGe, { header:1, defval:null });
+      RAW_GE = [];
+      for (let i = 1; i < rawGe.length; i++) {
+        const r = rawGe[i];
+        const 완료일 = serialToDate(r[2]);
+        if (!완료일) continue; // 완료일 없으면 미처리 → 제외
+        RAW_GE.push({
+          접수일: serialToDate(r[1]),
+          완료일,
+          소요일: parseFloat(r[3]) || 0,
+          상품명: r[5] ? String(r[5]).trim() : '',
+          유무상: r[9] ? String(r[9]).trim() : '',
+          비용:   parseFloat(r[10]) || 0
+        });
+      }
+    }
+
+    render();
+  } catch(e) {
+    document.getElementById('root').innerHTML +=
+      `<div class="no-data" style="color:red;">⚠ report.xlsx 로드 실패: ${e.message}<br>이 파일과 같은 폴더에 report.xlsx를 두세요.</div>`;
+  }
+}
+
+function fmtRound(v) {
+  if (v == null) return null;
+  if (v instanceof Date) {
+    const adjusted = new Date(v.getTime());
+    if (adjusted.getHours() >= 23 && adjusted.getMinutes() >= 50)
+      adjusted.setDate(adjusted.getDate() + 1);
+    const y = adjusted.getFullYear();
+    const m = String(adjusted.getMonth()+1).padStart(2,'0');
+    const d = String(adjusted.getDate()).padStart(2,'0');
+    return `${y}-${m}-${d}`;
+  }
+  const s = String(v).trim();
+  if (s.match(/^\d{4}-\d{2}-\d{2}/)) return s.slice(0,10);
+  if (s.match(/^\d{4}년\d+월$/)) return s;
+  const n = Number(v);
+  if (!isNaN(n) && n > 40000 && n < 60000) {
+    const date = new Date(Date.UTC(1899, 11, 30) + n * 86400000);
+    const y = date.getUTCFullYear();
+    const m = String(date.getUTCMonth()+1).padStart(2,'0');
+    const d = String(date.getUTCDate()).padStart(2,'0');
+    return `${y}-${m}-${d}`;
+  }
+  if (s.match(/^\d{6}$/)) return `20${s.slice(0,2)}-${s.slice(2,4)}-${s.slice(4,6)}`;
+  return s;
+}
+
+// ══════════════════════════════════════
+// index.html 에서 받는 필터 신호
+// ══════════════════════════════════════
+window.addEventListener('message', function(e) {
+  if (!e.data || e.data.type !== 'FILTER') return;
+  const type   = e.data.filterType;
+  const period = e.data.period;
+  if (type === 'monthly' && period) {
+    const m = period.match(/^(\d{2})\.(\d{2})월$/);
+    if (m) { CUR_PERIOD = '월간'; CUR_ROUND = `20${m[1]}년${parseInt(m[2])}월`; }
+  } else if (type === 'weekly' && period) {
+    const m = period.match(/^(\d{2})(\d{2})(\d{2})$/);
+    if (m) { CUR_PERIOD = '주간'; CUR_ROUND = `20${m[1]}-${m[2]}-${m[3]}`; }
+  } else {
+    CUR_ROUND = null;
+  }
+  render();
+});
+
+// URL 파라미터로도 수신 가능
+function readUrlParams() {
+  const p = new URLSearchParams(window.location.search);
+  const type   = p.get('type');
+  const period = p.get('period');
+  if (type === 'monthly' && period) {
+    const m = period.match(/^(\d{2})\.(\d{2})월$/);
+    if (m) { CUR_PERIOD = '월간'; CUR_ROUND = `20${m[1]}년${parseInt(m[2])}월`; }
+  } else if (type === 'weekly' && period) {
+    const m = period.match(/^(\d{2})(\d{2})(\d{2})$/);
+    if (m) { CUR_PERIOD = '주간'; CUR_ROUND = `20${m[1]}-${m[2]}-${m[3]}`; }
+  }
+}
+
+// ══════════════════════════════════════
+// 필터 헬퍼 (RAW_GE 전용 — geRoundKey 사용)
+// ══════════════════════════════════════
+
+// ══════════════════════════════════════
+// 표시할 회차 목록 반환
+// ══════════════════════════════════════
+function getRounds() {
+  // RAW_GM(가전마감 처리일) + RAW_GE(가전외마감 완료일) 기준으로 회차 목록 생성
+  const gmKey = r => CUR_PERIOD === '월간' ? toMonthRound(r.처리일) : toWeekRound(r.처리일);
+  const geKey = r => CUR_PERIOD === '월간' ? toMonthRound(r.완료일) : toWeekRound(r.완료일);
+  const allRounds = [...new Set([
+    ...RAW_GM.map(gmKey).filter(Boolean),
+    ...RAW_GE.map(geKey).filter(Boolean)
+  ])].sort();
+
+  if (CUR_ROUND) {
+    if (CUR_PERIOD === '월간') {
+      const yearMatch = CUR_ROUND.match(/^(\d{4})년/);
+      const year = yearMatch ? yearMatch[1] : '2026';
+      return allRounds.filter(r => {
+        const ym = r.match(/^(\d{4})년/);
+        if (!ym) return false;
+        return ym[1] === year && r <= CUR_ROUND;
+      });
+    } else {
+      const idx = allRounds.indexOf(CUR_ROUND);
+      if (idx === -1) return allRounds.slice(-6);
+      return allRounds.slice(Math.max(0, idx-5), idx+1);
+    }
+  } else {
+    if (CUR_PERIOD === '주간') return allRounds.slice(-6);
+    return allRounds;
+  }
+}
+
+// ══════════════════════════════════════
+// 스택 막대차트 (무상 하단 + 유상 상단, 총합 1개)
+// ══════════════════════════════════════
+function renderStackBar(containerId, rounds, series, colorMu, colorYu, maxH=55) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+
+  const totals = series.map(s => (s.mu||0) + (s.yu||0));
+  const maxVal = Math.max(...totals, 1);
+
+  let html = '';
+  rounds.forEach((round, i) => {
+    const mu  = series[i] ? (series[i].mu||0) : 0;
+    const yu  = series[i] ? (series[i].yu||0) : 0;
+    const tot = mu + yu;
+    const hMu = Math.max(tot>0 ? Math.round((mu/maxVal)*maxH) : 0, mu>0?2:0);
+    const hYu = Math.max(tot>0 ? Math.round((yu/maxVal)*maxH) : 0, yu>0?2:0);
+    const label = fmtLabel(round);
+    html += `<div class="col-group">
+      <div class="col-bars" style="flex-direction:column;align-items:center;position:relative;">
+        <div class="col-val" style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);">${tot > 0 ? tot : ''}</div>
+        <div style="width:20px;height:${hYu}px;background:${colorYu};border-radius:3px 3px 0 0;"></div>
+        <div style="width:20px;height:${hMu}px;background:${colorMu};"></div>
+      </div>
+      <div class="col-lbl">${label}</div>
+    </div>`;
+  });
+  el.innerHTML = html || `<div class="no-data">데이터 없음</div>`;
+}
+
+
+function renderBarChart(containerId, rounds, series, maxH=55) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+
+  // series: [{label, color, values:[{round, val}]}]
+  const allVals = series.flatMap(s => s.values.map(v => v.val || 0));
+  const maxVal  = Math.max(...allVals, 1);
+
+  let html = '';
+  rounds.forEach(round => {
+    const label = fmtLabel(round);
+    const bars  = series.map(s => {
+      const found = s.values.find(v => v.round === round);
+      const val   = found ? (found.val || 0) : 0;
+      const h     = Math.max(2, Math.round((val / maxVal) * maxH));
+      return `<div class="col-bar" style="height:${h}px;background:${s.color};"></div>`;
+    }).join('');
+    const topVal = series.reduce((sum, s) => {
+      const f = s.values.find(v => v.round === round);
+      return sum + (f ? (f.val || 0) : 0);
+    }, 0);
+    const dispVal = fmtVal(topVal);
+    html += `<div class="col-group">
+      <div class="col-bars" style="position:relative;">
+        <div class="col-val" style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);">${dispVal !== '-' ? dispVal : ''}</div>
+        ${bars}
+      </div>
+      <div class="col-lbl">${label}</div>
+    </div>`;
+  });
+  el.innerHTML = html || `<div class="no-data">데이터 없음</div>`;
+}
+
+// ══════════════════════════════════════
+// 도넛차트 렌더러
+// ══════════════════════════════════════
+function renderDonut(containerId, items, totalLabel) {
+  // items: [{label, val}]
+  const el = document.getElementById(containerId);
+  if (!el) return;
+
+  const total = items.reduce((s, i) => s + (i.val||0), 0);
+  if (total === 0) { el.innerHTML = `<div class="no-data">데이터 없음</div>`; return; }
+
+  // 상위 5개 + 기타
+  let sorted = [...items].sort((a,b) => b.val - a.val);
+  let top = sorted.slice(0, 5);
+  let etcVal = sorted.slice(5).reduce((s,i) => s + i.val, 0);
+  if (etcVal > 0) top.push({ label:'기타', val: etcVal });
+
+  // SVG 도넛 (r=30, sw=13, viewBox 80x80, 세그먼트 GAP 1.5px)
+  const R = 30, CX = 40, CY = 40, SW = 13;
+  const GAP = 1.5; // 세그먼트 간 흰 틈(px)
+  const circ = 2 * Math.PI * R;
+  let offset = 0;
+  let circles = '';
+  top.forEach((item, idx) => {
+    const pct   = item.val / total;
+    const dash  = Math.max(0, pct * circ - GAP);
+    const gap   = circ - dash;
+    const color = COLORS[idx % COLORS.length];
+    item.color  = color;
+    circles += `<circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${color}"
+      stroke-width="${SW}" stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}"
+      stroke-dashoffset="${(-offset).toFixed(2)}" transform="rotate(-90 ${CX} ${CY})"/>`;
+    offset += pct * circ;
+  });
+  circles += `<circle cx="${CX}" cy="${CY}" r="${R-SW/2-1}" fill="#fff"/>`;
+
+  // 범례
+  const legend = top.map(item => {
+    const pct = ((item.val/total)*100).toFixed(1);
+    // 긴 이름 줄이기
+    const lbl = item.label.length > 12 ? item.label.slice(0,12)+'…' : item.label;
+    return `<div><span class="ldot" style="background:${item.color};"></span>${lbl} ${pct}%</div>`;
+  }).join('');
+
+  el.innerHTML = `<div class="donut-wrap">
+    <div class="donut-rel" style="width:80px;height:80px;">
+      <svg viewBox="0 0 80 80" style="width:80px;height:80px;">${circles}</svg>
+      <div class="dcenter">${total}<small>${totalLabel||'건'}</small></div>
+    </div>
+    <div class="dlegend">${legend}</div>
+  </div>`;
+}
+
+// ══════════════════════════════════════
+// 라인차트 렌더러
+// ══════════════════════════════════════
+function renderLine(svgId, xlblId, rounds, values, color) {
+  const svg = document.getElementById(svgId);
+  const xlbl = document.getElementById(xlblId);
+  if (!svg) return;
+
+  const W=260, H=120, PAD_L=32, PAD_R=10, PAD_T=15, PAD_B=20;
+  const chartW = W - PAD_L - PAD_R;
+  const chartH = H - PAD_T - PAD_B;
+
+  const vals = rounds.map(r => {
+    const f = values.find(v => v.round === r);
+    return f ? (f.val || 0) : null;
+  });
+  const nonNull = vals.filter(v => v != null);
+  if (nonNull.length === 0) { svg.innerHTML = ''; xlbl.innerHTML=''; return; }
+
+  const minV = Math.min(...nonNull);
+  const maxV = Math.max(...nonNull, minV + 0.1);
+
+  // 그리드
+  let inner = `<line x1="${PAD_L}" y1="${PAD_T}" x2="${W-PAD_R}" y2="${PAD_T}" stroke="#f1f5f9" stroke-width="1"/>
+    <line x1="${PAD_L}" y1="${PAD_T+chartH/2}" x2="${W-PAD_R}" y2="${PAD_T+chartH/2}" stroke="#f1f5f9" stroke-width="1"/>
+    <line x1="${PAD_L}" y1="${PAD_T+chartH}" x2="${W-PAD_R}" y2="${PAD_T+chartH}" stroke="#e2e8f0" stroke-width="1"/>`;
+
+  // Y축 레이블
+  inner += `<text x="${PAD_L-4}" y="${PAD_T+4}" text-anchor="end" font-size="9" fill="#94a3b8">${maxV.toFixed(1)}</text>`;
+  inner += `<text x="${PAD_L-4}" y="${PAD_T+chartH/2+4}" text-anchor="end" font-size="9" fill="#94a3b8">${((maxV+minV)/2).toFixed(1)}</text>`;
+  inner += `<text x="${PAD_L-4}" y="${PAD_T+chartH+4}" text-anchor="end" font-size="9" fill="#94a3b8">${minV.toFixed(1)}</text>`;
+
+  // 점 좌표
+  const pts = rounds.map((r, i) => {
+    if (vals[i] == null) return null;
+    const x = PAD_L + (rounds.length === 1 ? chartW/2 : (i / (rounds.length-1)) * chartW);
+    const y = PAD_T + chartH - ((vals[i] - minV) / (maxV - minV)) * chartH;
+    return { x, y, val: vals[i] };
+  });
+
+  // 라인
+  const linePts = pts.filter(Boolean);
+  if (linePts.length > 1) {
+    inner += `<polyline points="${linePts.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')}"
+      fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>`;
+  }
+
+  // 점 + 값
+  linePts.forEach(p => {
+    inner += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="#fff" stroke="${color}" stroke-width="2"/>`;
+    inner += `<text x="${p.x.toFixed(1)}" y="${(p.y-8).toFixed(1)}" text-anchor="middle" font-size="9" fill="${color}" font-weight="600">${p.val.toFixed(2)}</text>`;
+  });
+
+  svg.innerHTML = inner;
+
+  // X축 레이블
+  xlbl.innerHTML = rounds.map(r => `<span>${fmtLabel(r)}</span>`).join('');
+}
+
+// ══════════════════════════════════════
+// 포맷 헬퍼
+// ══════════════════════════════════════
+function fmtLabel(round) {
+  if (!round) return '';
+  // 월간: 2026년1월 → 01월
+  const mMatch = round.match(/(\d{4})년(\d+)월/);
+  if (mMatch) return `${mMatch[2].padStart(2,'0')}월`;
+  // 주간: 2026-01-09 → 01/09
+  const wMatch = round.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (wMatch) return `${wMatch[2]}/${wMatch[3]}`;
+  return round;
+}
+
+function fmtVal(v) {
+  if (v == null || v === 0) return '-';
+  if (v >= 1000000) return (v/10000).toFixed(0) + '만';
+  if (v >= 10000)   return (v/10000).toFixed(1) + '만';
+  return Math.round(v).toString();
+}
+
+// ══════════════════════════════════════
+// 메인 렌더
+// ══════════════════════════════════════
+function render() {
+  if (RAW_GM.length === 0 && RAW_GE.length === 0) return;
+
+  const rounds = getRounds(); // 막대/라인용 회차 목록
+
+  // ── 1~8. 전자제품·자재출고 — RAW_GM(data_가전마감) 원본에서 직접 집계 ──
+  // 처리일(F열) 기준으로 회차 키 계산
+  const gmKey = r => CUR_PERIOD === '월간' ? toMonthRound(r.처리일) : toWeekRound(r.처리일);
+  const gmDonutRounds = new Set(CUR_ROUND ? [CUR_ROUND] : rounds);
+
+  // 수리출고 행만 (구분='수리출고')
+  const repairRecs = r => RAW_GM.filter(d => gmKey(d) === r && d.구분 === '수리출고');
+  // 자재출고 행만 (구분='자재출고')
+  const stockRecs  = r => RAW_GM.filter(d => gmKey(d) === r && d.구분 === '자재출고');
+
+  // 1. 수리현황 (스택 막대)
+  const repairSeries = rounds.map(r => {
+    const recs = repairRecs(r);
+    return {
+      round: r,
+      mu: recs.filter(d => d.유무상.includes('무상')).length,
+      yu: recs.filter(d => d.유무상.includes('유상')).length
+    };
+  });
+  renderStackBar('chart-repair', rounds, repairSeries, '#1e40af', '#93c5fd', 55);
+
+  // 2. 유상처리금액 (막대)
+  const feeVals = rounds.map(r => ({
+    round: r,
+    val: repairRecs(r).filter(d => d.유무상.includes('유상')).reduce((s,d)=>s+(d.비용||0),0)
+  }));
+  renderBarChart('chart-fee', rounds,
+    [{ label:'유상처리금액', color:'#b45309', values: feeVals }]);
+
+  // 3. 자재출고현황 (막대)
+  const stockVals = rounds.map(r => ({
+    round: r,
+    val: stockRecs(r).length
+  }));
+  renderBarChart('chart-stock', rounds,
+    [{ label:'자재출고', color:'#0f1f3d', values: stockVals }]);
+
+  // 4. 수리모델비율 (도넛) — 도넛 범위 회차
+  const repModelMap = {};
+  RAW_GM.filter(d => gmDonutRounds.has(gmKey(d)) && d.구분 === '수리출고').forEach(d => {
+    if (!d.제품명) return;
+    repModelMap[d.제품명] = (repModelMap[d.제품명]||0) + 1;
+  });
+  renderDonut('chart-model-repair', Object.entries(repModelMap).map(([label,val])=>({label,val})));
+
+  // 5. 수리 부품교체비율 (도넛) — 사용부품 쉼표 분리
+  const repPartMap = {};
+  RAW_GM.filter(d => gmDonutRounds.has(gmKey(d)) && d.구분 === '수리출고').forEach(d => {
+    d.부품목록.forEach(p => {
+      if (!p || p === '점검' || p === '대체품') return;
+      repPartMap[p] = (repPartMap[p]||0) + 1;
+    });
+  });
+  renderDonut('chart-part-repair', Object.entries(repPartMap).map(([label,val])=>({label,val})));
+
+  // 6. 수리 처리소요일 (라인)
+  const repDayVals = rounds.map(r => {
+    const recs = repairRecs(r).filter(d => d.소요일 != null);
+    return { round: r, val: recs.length ? recs.reduce((s,d)=>s+(d.소요일||0),0)/recs.length : null };
+  });
+  renderLine('chart-day-repair','xlbl-day-repair', rounds, repDayVals, '#6d28d9');
+
+  // 7. 자재출고 모델비율 (도넛)
+  const stModelMap = {};
+  RAW_GM.filter(d => gmDonutRounds.has(gmKey(d)) && d.구분 === '자재출고').forEach(d => {
+    if (!d.제품명) return;
+    stModelMap[d.제품명] = (stModelMap[d.제품명]||0) + 1;
+  });
+  renderDonut('chart-model-stock', Object.entries(stModelMap).map(([label,val])=>({label,val})));
+
+  // 8. 자재출고 부품비율 (도넛)
+  const stPartMap = {};
+  RAW_GM.filter(d => gmDonutRounds.has(gmKey(d)) && d.구분 === '자재출고').forEach(d => {
+    d.부품목록.forEach(p => {
+      if (!p) return;
+      stPartMap[p] = (stPartMap[p]||0) + 1;
+    });
+  });
+  renderDonut('chart-part-stock', Object.entries(stPartMap).map(([label,val])=>({label,val})));
+
+  // ── 9~12. 전자제품外 — RAW_GE(data_가전외마감) 원본에서 직접 집계 ──
+  // 완료일 기준으로 회차 키를 계산해 집계 (U~AC 열 불필요)
+
+  // 도넛 범위: 선택 회차 단일 or 현재 표시 rounds 전체
+  const geDonutRounds = new Set(CUR_ROUND ? [CUR_ROUND] : rounds);
+
+  // 9. 접수현황 (스택 막대)
+  const geReceiveSeries = rounds.map(r => {
+    const recs = RAW_GE.filter(d => geRoundKey(d) === r);
+    const mu = recs.filter(d => d.유무상.includes('무상')).length;
+    const yu = recs.filter(d => d.유무상.includes('유상')).length;
+    return { round:r, mu, yu };
+  });
+  renderStackBar('chart-ge-receive', rounds, geReceiveSeries, '#0f766e', '#2dd4bf', 55);
+
+  // 10. 유상처리금액 (막대)
+  const geFeeVals = rounds.map(r => ({
+    round: r,
+    val: RAW_GE
+      .filter(d => geRoundKey(d) === r && d.유무상.includes('유상'))
+      .reduce((s,d) => s + (d.비용||0), 0)
+  }));
+  renderBarChart('chart-ge-fee', rounds,
+    [{ label:'유상처리금액', color:'#b45309', values: geFeeVals }]);
+
+  // 11. 모델비율 (도넛)
+  const geModelMap = {};
+  RAW_GE.filter(d => geDonutRounds.has(geRoundKey(d))).forEach(d => {
+    if (!d.상품명) return;
+    geModelMap[d.상품명] = (geModelMap[d.상품명]||0) + 1;
+  });
+  renderDonut('chart-ge-model', Object.entries(geModelMap).map(([label,val])=>({label,val})), '건');
+
+  // 12. 처리소요일 (라인)
+  const geDayVals = rounds.map(r => {
+    const recs = RAW_GE.filter(d => geRoundKey(d) === r && d.소요일 != null);
+    return {
+      round: r,
+      val: recs.length ? recs.reduce((s,d)=>s+(d.소요일||0),0) / recs.length : null
+    };
+  });
+  const geDayAvg = geDayVals.filter(v=>v.val!=null);
+  const avgVal = geDayAvg.length ? (geDayAvg.reduce((s,v)=>s+v.val,0)/geDayAvg.length).toFixed(1) : '-';
+  document.getElementById('sub-ge-day').textContent = `평균 ${avgVal}일`;
+  renderLine('chart-ge-day','xlbl-ge-day', rounds, geDayVals, '#6d28d9');
+
+  // ge-row 카드 높이 통일
+  equalizeGeCards();
+}
+
+function equalizeGeCards() {
+  const cards = document.querySelectorAll('.ge-row > .card');
+  cards.forEach(c => c.style.height = '');
+  let maxH = 0;
+  cards.forEach(c => maxH = Math.max(maxH, c.offsetHeight));
+  cards.forEach(c => c.style.height = maxH + 'px');
+}
+
+// ══════════════════════════════════════
+// 스케일
+// ══════════════════════════════════════
+function scaleRoot() {
+  const root = document.getElementById('root');
+  const scale = window.innerWidth / 1200;
+  root.style.transform = `scale(${scale})`;
+  document.body.style.height = (root.offsetHeight * scale) + 'px';
+}
+
+// ══════════════════════════════════════
+// 초기화
+// ══════════════════════════════════════
+readUrlParams();
+scaleRoot();
+window.addEventListener('resize', () => { scaleRoot(); equalizeGeCards(); });
+loadXlsx();
+
+// 30초마다 자동 갱신 (xlsx 파일 변경 반영)
+setInterval(loadXlsx, 30000);
+</script>
+</body>
+</html>

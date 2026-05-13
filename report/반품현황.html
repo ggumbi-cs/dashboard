@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>반품현황</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+  font-size: 13px; color: #334155;
+  background: #f1f5f9; padding: 14px;
+}
+#loading {
+  display: flex; align-items: center; justify-content: center;
+  height: 200px; color: #64748b; font-size: 14px; gap: 8px;
+}
+.spinner {
+  width: 18px; height: 18px; border: 2px solid #e2e8f0;
+  border-top-color: #1e40af; border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#error-msg {
+  display: none; padding: 14px 18px; background: #fef2f2;
+  border: 1px solid #fca5a5; border-radius: 8px;
+  color: #991b1b; font-size: 13px;
+}
+.period-badge {
+  display: inline-block; font-size: 11px; font-weight: 600;
+  color: #64748b; background: #fff; border: 1px solid #e2e8f0;
+  border-radius: 4px; padding: 3px 10px; margin-bottom: 10px;
+}
+.brands-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.brand-box { display: flex; flex-direction: column; }
+.section-title {
+  font-size: 12px; font-weight: 700; color: #fff;
+  padding: 7px 14px; border-radius: 6px;
+  margin-bottom: 10px; letter-spacing: .03em;
+}
+.inner { display: flex; gap: 10px; align-items: stretch; flex: 1; }
+.leftCol  { display: flex; flex-direction: column; gap: 8px; flex: 4; }
+.rightCol { display: flex; flex-direction: column; gap: 10px; flex: 6; }
+.kpi-card {
+  background: #fff; border: 1px solid #e2e8f0;
+  border-radius: 8px; padding: 12px 14px;
+}
+.kpi-label {
+  font-size: 11px; font-weight: 600; color: #64748b;
+  letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px;
+}
+.kpi-value { font-size: 22px; font-weight: 700; color: #0f1f3d; line-height: 1; }
+.kpi-sub   { font-size: 12px; color: #64748b; margin-top: 4px; }
+.gaug-card {
+  background: #fff; border: 1px solid #e2e8f0;
+  border-radius: 6px; padding: 14px 16px; border-top: 3px solid #e2e8f0;
+}
+.gaug-label { font-size: 12px; font-weight: 600; color: #0f1f3d; }
+.gaug-num { font-size: 17px; font-weight: 700; color: #0f1f3d; margin: 5px 0 2px; }
+.bar-track {
+  height: 7px; background: #e2e8f0; border-radius: 4px;
+  overflow: hidden; display: flex; margin: 4px 0 3px;
+}
+.bar-pct { display: flex; justify-content: space-between; font-size: 10px; }
+.trendCard, .pieCard {
+  background: #fff; border: 1px solid #e2e8f0;
+  border-radius: 8px; padding: 14px 16px; flex: 1;
+}
+.card-header { padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; margin-bottom: 12px; }
+.card-title { font-size: 13px; font-weight: 600; color: #0f1f3d; }
+.card-sub   { font-size: 11px; color: #64748b; margin-top: 2px; }
+.x-labels {
+  display: flex; justify-content: space-around;
+  font-size: 10px; color: #64748b; margin-top: 3px;
+}
+.donut-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.donut-wrap { position: relative; width: 82px; height: 82px; flex-shrink: 0; }
+.donut-wrap svg { width: 82px; height: 82px; }
+.donut-center {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  font-size: 13px; font-weight: 700; text-align: center;
+  color: #0f1f3d; line-height: 1.15;
+}
+.legend-list { font-size: 11px; color: #64748b; line-height: 1.9; }
+.ldot {
+  display: inline-block; width: 7px; height: 7px;
+  border-radius: 50%; margin-right: 3px; vertical-align: middle;
+}
+.reason-row { display: flex; align-items: flex-start; gap: 10px; }
+.reason-donut { position: relative; width: 88px; height: 88px; flex-shrink: 0; }
+.reason-donut svg { width: 88px; height: 88px; }
+.reason-center {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  font-size: 14px; font-weight: 700; text-align: center;
+  color: #0f1f3d; line-height: 1.15;
+}
+.reason-legend { font-size: 10px; color: #64748b; line-height: 1.85; }
+.no-data { color: #94a3b8; font-size: 12px; padding: 12px 0; }
+</style>
+</head>
+<body>
+
+<div id="error-msg"></div>
+<div id="loading"><div class="spinner"></div> 데이터 불러오는 중...</div>
+<div id="app" style="display:none;"></div>
+
+<script>
+const REASON_COLORS = [
+  '#1e40af','#3b82f6','#0f766e','#10b981',
+  '#f59e0b','#fd8d3c','#e74c3c','#9b59b6',
+  '#3498db','#2ecc71','#e8834a','#64748b'
+];
+
+// ── URL 파라미터 ──────────────────────────────────────────
+const params = new URLSearchParams(window.location.search);
+const TYPE   = params.get('type')   || 'monthly';
+const PERIOD = params.get('period') || '';
+
+function parsePeriod() {
+  if (TYPE === 'monthly') {
+    return { label: PERIOD || '기간 미선택', key: PERIOD, mode: 'monthly' };
+  }
+  const yy = PERIOD.slice(0,2), mm = PERIOD.slice(2,4), dd = PERIOD.slice(4,6);
+  const friday   = new Date(`20${yy}-${mm}-${dd}`);
+  const saturday = new Date(friday);
+  saturday.setDate(friday.getDate() - 6);
+  const fmt = d => `${d.getMonth()+1}/${d.getDate()}`;
+  return {
+    label: `${fmt(saturday)}~${fmt(friday)}주`,
+    key: parseInt(PERIOD, 10),
+    mode: 'weekly'
+  };
+}
+const pInfo = parsePeriod();
+
+// ── xlsx 로드 ─────────────────────────────────────────────
+// 반품현황.html 은 report/ 폴더 안에 위치하므로
+// report.xlsx 도 같은 폴더(report/) 안에 있음 → 상대경로 'report.xlsx'
+async function loadData() {
+  const resp = await fetch('report.xlsx');
+  if (!resp.ok) throw new Error(`report.xlsx 로드 실패 (${resp.status})`);
+  const buf = await resp.arrayBuffer();
+  const wb  = XLSX.read(buf, { type: 'array' });
+  const ws  = wb.Sheets['반품현황'];
+  if (!ws) throw new Error('반품현황 시트 없음');
+  return XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+}
+
+// ── 필터링 ────────────────────────────────────────────────
+function filterRows(raw) {
+  const periodType = pInfo.mode === 'monthly' ? '월간' : '주간';
+  const left = [], right = [];
+
+  for (let i = 2; i < raw.length; i++) {
+    const r = raw[i];
+    // 좌측: 반품/교환 상세
+    if (r[1] === periodType &&
+        String(r[2]) === String(pInfo.key) &&
+        (r[3] === '꿈비' || r[3] === '소브') &&
+        r[4] && r[4] !== '사유' && r[7] != null) {
+      left.push({ brand: r[3], reason: r[4], item: r[5], type: r[6], cnt: Number(r[7]) });
+    }
+    // 우측: 반품/교환율 (월간 고정 — 주간 선택시에도 해당 월 율 표시)
+    // J열(index9)='반품/교환율', K열(10)='월간', L열(11)=마감회차, M열(12)=브랜드, N열(13)=율
+    if (r[9] === '반품/교환율' &&
+        r[10] === '월간' &&
+        r[11] != null &&
+        (r[12] === '꿈비' || r[12] === '소브') &&
+        r[13] != null) {
+      // 모든 월간 율 저장 (key: brand+회차)
+      right.push({ brand: r[12], period: String(r[11]), rate: Number(r[13]) });
+    }
+  }
+  return { left, right };
+}
+
+// ── 추이 집계 ────────────────────────────────────────────
+// 월간: 최근 3회차 / 주간: 선택 회차 기준 최근 6주 (0값 포함)
+function buildTrend(raw, brand) {
+  const periodType = pInfo.mode === 'monthly' ? '월간' : '주간';
+  const map = {};
+  for (let i = 2; i < raw.length; i++) {
+    const r = raw[i];
+    if (r[1] === periodType && r[3] === brand &&
+        r[7] != null && r[4] !== '사유') {
+      const k = String(r[2]);
+      map[k] = (map[k] || 0) + Number(r[7]);
+    }
+  }
+
+  if (pInfo.mode === 'monthly') {
+    const sorted = Object.entries(map).sort((a,b) => a[0].localeCompare(b[0]));
+    return sorted.slice(-3);
+  }
+
+  // 주간: 엑셀에 있는 모든 주간 회차 목록을 정렬, 선택 회차 포함 최근 6주
+  // 엑셀에 없는 주도 0으로 채워야 하므로, 선택 회차 기준으로 6주 역산
+  const currentKey = String(pInfo.key); // ex: '260417'
+  // 모든 주간 회차 수집 (전체 브랜드 기준)
+  const allWeeks = new Set();
+  for (let i = 2; i < raw.length; i++) {
+    const r = raw[i];
+    if (r[1] === '주간' && r[2] != null && r[2] !== '마감회차') {
+      allWeeks.add(String(r[2]));
+    }
+  }
+  const sortedWeeks = Array.from(allWeeks).sort((a,b) => a.localeCompare(b));
+  // 선택 회차 인덱스 찾기 (없으면 가장 마지막)
+  let idx = sortedWeeks.indexOf(currentKey);
+  if (idx === -1) idx = sortedWeeks.length - 1;
+  // 최근 6주 슬라이스
+  const targetWeeks = sortedWeeks.slice(Math.max(0, idx - 5), idx + 1);
+  // 0값 포함하여 반환
+  return targetWeeks.map(w => [w, map[w] || 0]);
+}
+
+// ── 헬퍼 ─────────────────────────────────────────────────
+const fmtN = n => (n >= 1000 ? n.toLocaleString() : n);
+
+function buildLineChart(trend, color) {
+  if (!trend.length) return '<div class="no-data">데이터 없음</div>';
+  const W=260, H=120, PL=34, PR=12, PT=18, PB=10;
+  const vals = trend.map(t => t[1]);
+  const maxV = Math.max(...vals, 1);
+  const xs   = trend.map((_,i) => PL + i*(W-PL-PR)/Math.max(trend.length-1,1));
+  const ys   = vals.map(v => PT + (1 - v/maxV)*(H-PT-PB));
+  const ticks = [maxV, Math.round(maxV*0.66), Math.round(maxV*0.33), 0];
+  const tickY = [PT, PT+(H-PT-PB)/3, PT+(H-PT-PB)*2/3, H-PB];
+
+  let grids = '', tickLbls = '';
+  ticks.forEach((v,i) => {
+    grids    += `<line x1="${PL}" y1="${tickY[i].toFixed(1)}" x2="${W-PR}" y2="${tickY[i].toFixed(1)}" stroke="#e2e8f0" stroke-width="1"/>`;
+    const lbl = v >= 1000 ? (v/1000).toFixed(1)+'k' : v;
+    tickLbls += `<text x="${PL-4}" y="${(tickY[i]+4).toFixed(1)}" text-anchor="end" font-size="9" fill="#94a3b8">${lbl}</text>`;
+  });
+
+  const pts     = xs.map((x,i) => `${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+  const areaPts = [...xs.map((x,i)=>`${x.toFixed(1)},${ys[i].toFixed(1)}`),
+                    `${(W-PR).toFixed(1)},${H-PB}`, `${PL},${H-PB}`].join(' ');
+
+  let dots = '', lbls = '';
+  xs.forEach((x,i) => {
+    dots += `<circle cx="${x.toFixed(1)}" cy="${ys[i].toFixed(1)}" r="4" fill="${color}"/>`;
+    const dy = ys[i] < PT+14 ? 14 : -7;
+    lbls += `<text x="${x.toFixed(1)}" y="${(ys[i]+dy).toFixed(1)}" text-anchor="middle" font-size="10" fill="${color}" font-weight="600">${fmtN(vals[i])}</text>`;
+  });
+
+  const xLbls = trend.map(t => {
+    const k = String(t[0]);
+    const lbl = pInfo.mode === 'monthly'
+      ? k.slice(3,5)+'월'
+      : k.slice(2,4)+'/'+k.slice(4,6);
+    return `<span>${lbl}</span>`;
+  }).join('');
+
+  return `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;">
+      ${grids}${tickLbls}
+      <polygon points="${areaPts}" fill="${color}" opacity="0.08"/>
+      <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2"/>
+      ${dots}${lbls}
+    </svg>
+    <div class="x-labels">${xLbls}</div>`;
+}
+
+function buildDonut(exchCnt, retCnt, color) {
+  const total = exchCnt + retCnt || 1;
+  const R=32, CIRC=2*Math.PI*R;
+  const eDash = (exchCnt/total)*CIRC;
+  const rDash = CIRC - eDash;
+  const ePct  = Math.round(exchCnt/total*100);
+  return `
+    <div class="donut-row">
+      <div class="donut-wrap">
+        <svg viewBox="0 0 82 82">
+          <circle cx="41" cy="41" r="${R}" fill="none" stroke="${color}" stroke-width="10"
+            stroke-dasharray="${eDash.toFixed(1)} ${rDash.toFixed(1)}" stroke-dashoffset="${(CIRC*0.25).toFixed(1)}"/>
+          <circle cx="41" cy="41" r="${R}" fill="none" stroke="#e2e8f0" stroke-width="10"
+            stroke-dasharray="${rDash.toFixed(1)} ${eDash.toFixed(1)}" stroke-dashoffset="${(CIRC*0.25-eDash).toFixed(1)}"/>
+        </svg>
+        <div class="donut-center">${fmtN(total)}<br><span style="font-size:9px;color:#64748b;font-weight:400;">건</span></div>
+      </div>
+      <div class="legend-list">
+        <div><span class="ldot" style="background:${color};"></span>교환 ${fmtN(exchCnt)} (${ePct}%)</div>
+        <div><span class="ldot" style="background:#e2e8f0;"></span>반품 ${fmtN(retCnt)} (${100-ePct}%)</div>
+      </div>
+    </div>`;
+}
+
+function buildReasonPie(reasonMap, color) {
+  const sorted = Object.entries(reasonMap).sort((a,b) => b[1]-a[1]);
+  const total  = sorted.reduce((s,[,v]) => s+v, 0) || 1;
+  const R=34, CIRC=2*Math.PI*R;
+  let offset = 0, arcs = '';
+  sorted.forEach(([,v], i) => {
+    const dash = (v/total)*CIRC;
+    const c    = i===0 ? color : REASON_COLORS[i % REASON_COLORS.length];
+    const off  = -(offset - CIRC*0.25);
+    arcs += `<circle cx="44" cy="44" r="${R}" fill="none" stroke="${c}" stroke-width="16"
+      stroke-dasharray="${dash.toFixed(1)} ${(CIRC-dash).toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>`;
+    offset += dash;
+  });
+  const legend = sorted.slice(0,9).map(([reason,cnt],i) => {
+    const c   = i===0 ? color : REASON_COLORS[i % REASON_COLORS.length];
+    const pct = Math.round(cnt/total*100);
+    return `<div><span class="ldot" style="background:${c};"></span>${reason} ${pct}% (${cnt})</div>`;
+  }).join('');
+  return `
+    <div class="reason-row">
+      <div class="reason-donut">
+        <svg viewBox="0 0 88 88">${arcs}
+          <circle cx="44" cy="44" r="26" fill="#fff"/>
+        </svg>
+        <div class="reason-center">${fmtN(total)}<br><span style="font-size:9px;color:#64748b;font-weight:400;">건</span></div>
+      </div>
+      <div class="reason-legend">${legend}</div>
+    </div>`;
+}
+
+function renderBrand(brand, left, right, raw, color) {
+  const bRows   = left.filter(r => r.brand === brand);
+  const exchCnt = bRows.filter(r=>r.type==='교환').reduce((s,r)=>s+r.cnt,0);
+  const retCnt  = bRows.filter(r=>r.type==='반품').reduce((s,r)=>s+r.cnt,0);
+  const total   = exchCnt + retCnt;
+  const ga      = bRows.filter(r=>r.item==='가전').reduce((s,r)=>s+r.cnt,0);
+  const gaOth   = bRows.filter(r=>r.item==='가전외').reduce((s,r)=>s+r.cnt,0);
+  const gaTotal = ga + gaOth || 1;
+  const gaPct   = Math.round(ga/gaTotal*100);
+
+  // 반품/교환율: 월간이면 해당 월, 주간이면 해당 주가 속한 월(YY.MM월 형식) 기준
+  let rateMatchPeriod = '';
+  if (pInfo.mode === 'monthly') {
+    rateMatchPeriod = String(pInfo.key); // '26.03월'
+  } else {
+    // 주간 선택 시: period YYMMDD → '26.MM월' 로 변환
+    const k = String(pInfo.key); // ex: '260417'
+    rateMatchPeriod = k.slice(0,2) + '.' + k.slice(2,4) + '월'; // '26.04월'
+  }
+  const rateRow = right.find(r => r.brand === brand && r.period === rateMatchPeriod);
+  const rate = rateRow ? (rateRow.rate * 100).toFixed(2) + '%' : '-';
+
+  // 반품 사유: 교환+반품 전체 기준
+  const reasonMap = {};
+  bRows.forEach(r => {
+    reasonMap[r.reason] = (reasonMap[r.reason]||0) + r.cnt;
+  });
+
+  const trend = buildTrend(raw, brand);
+  const trendTitle = pInfo.mode === 'monthly' ? '월별 추이' : '주별 추이';
+  const trendSub   = pInfo.mode === 'monthly' ? '반품/교환건 월별 추이' : '반품/교환건 주별 추이';
+
+  return `
+    <div class="brand-box">
+      <div class="section-title" style="background:${color};">${brand}</div>
+      <div class="inner">
+        <div class="leftCol">
+          <div class="kpi-card" style="border-top:3px solid #991b1b;">
+            <div class="kpi-label">반품/교환율</div>
+            <div class="kpi-value" style="color:#991b1b;">${rate}</div>
+            <div class="kpi-sub">${pInfo.label}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">반품/교환 총계</div>
+            <div class="kpi-value">${fmtN(total)}<span style="font-size:13px;font-weight:400;color:#64748b;"> 건</span></div>
+            <div class="kpi-sub">교환 ${fmtN(exchCnt)} · 반품 ${fmtN(retCnt)}</div>
+          </div>
+          <div class="gaug-card">
+            <div class="gaug-label">가전 / 가전외</div>
+            <div class="gaug-num">${fmtN(ga)} <span style="font-size:12px;font-weight:400;color:#64748b;">/ ${fmtN(gaOth)}</span></div>
+            <div class="bar-track">
+              <div style="width:${gaPct}%;background:${color};"></div>
+              <div style="width:${100-gaPct}%;background:#bbb;"></div>
+            </div>
+            <div class="bar-pct">
+              <span style="color:${color};">가전 ${gaPct}%</span>
+              <span style="color:#64748b;">가전외 ${100-gaPct}%</span>
+            </div>
+          </div>
+          <div class="kpi-card" style="flex:1;">
+            <div class="kpi-label">교환 / 반품</div>
+            ${buildDonut(exchCnt, retCnt, color)}
+          </div>
+        </div>
+        <div class="rightCol">
+          <div class="trendCard">
+            <div class="card-header">
+              <div class="card-title">${trendTitle}</div>
+              <div class="card-sub">${trendSub}</div>
+            </div>
+            ${buildLineChart(trend, color)}
+          </div>
+          <div class="pieCard">
+            <div class="card-header">
+              <div class="card-title">반품 사유 비율</div>
+            </div>
+            ${Object.keys(reasonMap).length
+              ? buildReasonPie(reasonMap, color)
+              : '<div class="no-data">데이터 없음</div>'}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── 실행 ─────────────────────────────────────────────────
+async function main() {
+  let raw = null;
+  try {
+    raw = await loadData();
+  } catch(e) {
+    const el = document.getElementById('error-msg');
+    el.style.display = 'block';
+    el.textContent = '⚠️ ' + e.message;
+  }
+  document.getElementById('loading').style.display = 'none';
+  const left  = raw ? filterRows(raw).left  : [];
+  const right = raw ? filterRows(raw).right : [];
+  const safeRaw = raw || [];
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="period-badge">📅 ${pInfo.label}</div>
+    <div class="brands-grid">
+      ${renderBrand('꿈비', left, right, safeRaw, '#1e40af')}
+      ${renderBrand('소브',  left, right, safeRaw, '#0f766e')}
+    </div>`;
+  app.style.display = 'block';
+}
+
+main();
+</script>
+</body>
+</html>

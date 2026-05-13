@@ -206,7 +206,7 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
       <div class="sb-label">팀 도구</div>
       <div class="sb-item" onclick="toolNav('tool/Tool_main.html', this)">업무Tool 코딩</div>
       <div class="sb-item" onclick="toolNav('tool/downloader.html', this)">CSV 다운로더</div>
-      <div class="sb-item" onclick="toolNav('chat/chat_main.html', this)">소통Chat</div>
+      <div class="sb-item" onclick="toolNav('chat/chat_mail.html', this)">소통Chat</div>
       <div class="sb-divider"></div>
       <div class="sb-label">개인설정</div>
       <div class="sb-item" onclick="toolNav('tool/user/권미숙.html', this)">권미숙</div>
@@ -308,18 +308,48 @@ function weekRange(fridayDate) {
   return { sat, fri };
 }
 
-// 이번주 금요일 (오늘 기준, 미래면 지난주로)
+// 기본 표시 금요일:
+// 월요일(1) 이상이면 지난주 금요일, 일요일(0)/토요일(6)이면 이번주 금요일
 function thisWeekFriday() {
   const today = new Date();
-  const day = today.getDay();
+  const day = today.getDay(); // 0=일 1=월 ... 5=금 6=토
   const fri = new Date(today);
-  if (day === 6) {
+  if (day === 1) {
+    // 월요일 → 지난주 금요일 (3일 전)
+    fri.setDate(today.getDate() - 3);
+  } else if (day === 2 || day === 3 || day === 4) {
+    // 화~목 → 지난주 금요일
+    fri.setDate(today.getDate() - (day + 2));
+  } else if (day === 5) {
+    // 금요일 → 지난주 금요일 (아직 오늘자 마감 전)
+    fri.setDate(today.getDate() - 7);
+  } else if (day === 6) {
+    // 토요일 → 어제(금)가 이번주 마감
     fri.setDate(today.getDate() - 1);
   } else {
-    fri.setDate(today.getDate() + (5 - day));
-    if (fri > today) fri.setDate(fri.getDate() - 7);
+    // 일요일 → 지난 금요일 (2일 전)
+    fri.setDate(today.getDate() - 2);
   }
   return fri;
+}
+
+// 기본 표시 월: 말일 기준 전월
+// 오늘이 말일이 아니면 전월, 말일이면 당월
+function defaultMonth() {
+  const today = new Date();
+  const year  = today.getFullYear();
+  const month = today.getMonth() + 1; // 1~12
+  // 오늘이 해당월 말일인지 확인
+  const lastDay = new Date(year, month, 0).getDate();
+  if (today.getDate() === lastDay) {
+    // 말일이면 당월
+    return { year, month };
+  } else {
+    // 말일 전이면 전월
+    const prevMonth = month === 1 ? 12 : month - 1;
+    const prevYear  = month === 1 ? year - 1 : year;
+    return { year: prevYear, month: prevMonth };
+  }
 }
 
 // 올해 금요일 목록 (오늘 이전, 최신순)
@@ -337,14 +367,15 @@ function fridaysUntilToday(year) {
 
 // ── 렌더 ──────────────────────────────────────────
 function renderMonthly() {
-  const now = new Date();
+  const now  = new Date();
   const year = now.getFullYear();
-  const curM = now.getMonth() + 1;
+  const curM = now.getMonth() + 1;        // 오늘 기준 현재 월
+  const def  = defaultMonth();            // 기본 선택 월 (전월 기준)
   let html = '';
   for (let m = 1; m <= 12; m++) {
-    const period = `${year}-${pad(m)}`;   // 내부키: 2026-04
-    const off = m > curM;
-    const cur = m === curM;
+    const period = `${year}-${pad(m)}`;
+    const off = m > curM;                 // 미래월 비활성
+    const cur = m === def.month && year === def.year;  // 기본 선택
     const cls = ['sb-item', 'sub', off ? 'off' : '', cur ? 'active' : ''].filter(Boolean).join(' ');
     const dot = cur ? '<span class="now-dot"></span>' : '';
     html += `<div class="${cls}" data-type="monthly" data-period="${period}"
@@ -524,15 +555,51 @@ function switchTab(el) {
   state.tab = el.dataset.tab;
 
   const isToolTab = state.tab === '팀Tool';
+  const isKpiTab  = state.tab === '주요kpi';
+
   document.getElementById('dashSidebar').style.display = isToolTab ? 'none' : 'block';
   document.getElementById('toolSidebar').style.display = isToolTab ? 'block' : 'none';
 
+  // 주요KPI: 월간/주간/직접선택 숨김, 연간만 표시
+  const monthly  = document.getElementById('monthlyList');
+  const weekly   = document.getElementById('weeklyList');
+  const calWrap  = document.querySelector('.date-pick-wrap');
+  const sbLabels = document.querySelectorAll('#dashSidebar .sb-label');
+
+  if (isKpiTab) {
+    if (monthly)  monthly.style.display  = 'none';
+    if (weekly)   weekly.style.display   = 'none';
+    if (calWrap)  calWrap.style.display  = 'none';
+    // 월간/주간/직접선택 라벨 숨김 (연간 라벨만 남김)
+    sbLabels.forEach(lb => {
+      if (lb.textContent.trim() !== '연간현황') lb.style.display = 'none';
+    });
+    // sb-divider 도 숨김 (연간 아래 것만)
+    document.querySelectorAll('#dashSidebar .sb-divider').forEach(d => d.style.display = 'none');
+    // 주요KPI는 yearly로 신호
+    state.type   = 'yearly';
+    state.period = String(new Date().getFullYear());
+  } else {
+    // 다른 탭: 원래대로 복원
+    if (monthly)  monthly.style.display  = '';
+    if (weekly)   weekly.style.display   = '';
+    if (calWrap)  calWrap.style.display  = '';
+    sbLabels.forEach(lb => lb.style.display = '');
+    document.querySelectorAll('#dashSidebar .sb-divider').forEach(d => d.style.display = '');
+    // 기본 monthly 로 복귀 (KPI에서 다른 탭으로 이동 시)
+    if (state.type === 'yearly') {
+      const def    = defaultMonth();
+      state.type   = 'monthly';
+      state.period = `${def.year}-${pad(def.month)}`;
+    }
+  }
+
   if (isToolTab) {
     toolNav('tool/Tool_main.html', null);
-    // 팀Tool 탭 진입 시 CSV 로드 (함수가 아래 정의되어 있어도 hoisting으로 동작)
     setTimeout(() => loadAndBroadcastCSV(false), 0);
   } else {
     updateFrame();
+    updateHeader();
   }
 }
 
@@ -584,8 +651,8 @@ function updateHeader() {
 
 // ── 초기화 ─────────────────────────────────────────
 function init() {
-  const now = new Date();
-  state.period = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;  // 이번달
+  const def    = defaultMonth();
+  state.period = `${def.year}-${pad(def.month)}`;  // 전월 기준 기본
   renderMonthly();
   renderWeekly();
   updateHeader();

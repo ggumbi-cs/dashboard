@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>심우승 · 개인설정</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f0f2f5; font-family: 'Malgun Gothic', sans-serif; font-size: 13px; color: #222; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+.top-bar {
+  background: #1a2e50; padding: 7px 16px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.top-bar .user-name { color: #c8ddf0; font-weight: 700; font-size: 13px; }
+.top-bar .save-status { font-size: 11px; color: #6a9ec0; }
+.save-btn {
+  background: #2356a8; border: none; color: #fff;
+  padding: 4px 14px; border-radius: 3px; font-size: 12px;
+  cursor: pointer; font-family: inherit; font-weight: 600;
+}
+.save-btn:hover { background: #1a3a7a; }
+.save-btn.saved { background: #2a7a6f; }
+
+.slot-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 10px;
+  padding: 10px;
+  overflow: hidden;
+}
+
+.slot-card {
+  background: #fff; border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.slot-header {
+  background: #1a2e50; color: #c8ddf0;
+  padding: 7px 12px; font-size: 12px; font-weight: 600;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.slot-num { color: #5bb8f5; }
+.slot-select {
+  background: #243d6a; border: 1px solid #2e5080; color: #a8c4df;
+  padding: 3px 6px; font-size: 11.5px; border-radius: 3px;
+  cursor: pointer; outline: none; font-family: inherit; min-width: 80px;
+}
+.slot-select:focus { border-color: #5bb8f5; }
+
+.slot-body {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  color: #bbb; font-size: 12px;
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <span class="user-name">👤 심우승 · 개인 Tool 설정</span>
+  <span class="save-status" id="saveStatus">선택 설정이 자동 저장됩니다</span>
+  <button class="save-btn" id="saveBtn" onclick="saveSettings()">저장</button>
+</div>
+
+<div class="slot-grid">
+
+  <div class="slot-card">
+    <div class="slot-header">
+      <span class="slot-num">슬롯 1</span>
+      <select class="slot-select" id="slot1Tool" onchange="autoSave()">
+        <option value="">-- 선택 --</option>
+        <option value="AS1">AS1</option><option value="AS2">AS2</option>
+        <option value="AS3">AS3</option><option value="AS4">AS4</option>
+        <option value="AS5">AS5</option><option value="AS6">AS6</option>
+        <option value="AS7">AS7</option><option value="AS8">AS8</option>
+        <option value="AS9">AS9</option><option value="AS10">AS10</option>
+      </select>
+    </div>
+    <div class="slot-body">선택된 Tool이 여기에 표시됩니다</div>
+  </div>
+
+  <div class="slot-card">
+    <div class="slot-header">
+      <span class="slot-num">슬롯 2</span>
+      <select class="slot-select" id="slot2Tool" onchange="autoSave()">
+        <option value="">-- 선택 --</option>
+        <option value="AS1">AS1</option><option value="AS2">AS2</option>
+        <option value="AS3">AS3</option><option value="AS4">AS4</option>
+        <option value="AS5">AS5</option><option value="AS6">AS6</option>
+        <option value="AS7">AS7</option><option value="AS8">AS8</option>
+        <option value="AS9">AS9</option><option value="AS10">AS10</option>
+      </select>
+    </div>
+    <div class="slot-body">선택된 Tool이 여기에 표시됩니다</div>
+  </div>
+
+  <div class="slot-card">
+    <div class="slot-header">
+      <span class="slot-num">슬롯 3</span>
+      <select class="slot-select" id="slot3Tool" onchange="autoSave()">
+        <option value="">-- 선택 --</option>
+        <option value="AS1">AS1</option><option value="AS2">AS2</option>
+        <option value="AS3">AS3</option><option value="AS4">AS4</option>
+        <option value="AS5">AS5</option><option value="AS6">AS6</option>
+        <option value="AS7">AS7</option><option value="AS8">AS8</option>
+        <option value="AS9">AS9</option><option value="AS10">AS10</option>
+      </select>
+    </div>
+    <div class="slot-body">선택된 Tool이 여기에 표시됩니다</div>
+  </div>
+
+  <div class="slot-card">
+    <div class="slot-header">
+      <span class="slot-num">슬롯 4</span>
+      <select class="slot-select" id="slot4Tool" onchange="autoSave()">
+        <option value="">-- 선택 --</option>
+        <option value="AS1">AS1</option><option value="AS2">AS2</option>
+        <option value="AS3">AS3</option><option value="AS4">AS4</option>
+        <option value="AS5">AS5</option><option value="AS6">AS6</option>
+        <option value="AS7">AS7</option><option value="AS8">AS8</option>
+        <option value="AS9">AS9</option><option value="AS10">AS10</option>
+      </select>
+    </div>
+    <div class="slot-body">선택된 Tool이 여기에 표시됩니다</div>
+  </div>
+
+</div>
+
+<script>
+// 파일명에서 자동으로 키 생성 → 복사해도 각자 독립 저장
+const STORAGE_KEY = 'toolSettings_' + location.pathname.split('/').pop().replace('.html','');
+
+const TOOL_FILES = {
+  'AS1':'as.html','AS2':'as2.html','AS3':'as3.html','AS4':'as4.html',
+  'AS5':'as5.html','AS6':'as6.html','AS7':'as7.html','AS8':'as8.html',
+  'AS9':'as9.html','AS10':'as10.html'
+};
+
+const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+const BASE = isLocal ? './' : '/dashboard/tool/';
+
+function loadTool(slotNum) {
+  const key  = document.getElementById(`slot${slotNum}Tool`).value;
+  const body = document.querySelector(`.slot-grid .slot-card:nth-child(${slotNum}) .slot-body`);
+  if (!key) {
+    body.innerHTML = '선택된 Tool이 여기에 표시됩니다';
+    body.style.display = 'flex';
+    return;
+  }
+  body.style.display = 'block';
+  body.style.padding = '0';
+  body.innerHTML = `<iframe src="${BASE}${TOOL_FILES[key]}" style="width:100%;height:100%;border:none;display:block;"></iframe>`;
+}
+
+function saveSettings() {
+  const s = {
+    slot1: document.getElementById('slot1Tool').value,
+    slot2: document.getElementById('slot2Tool').value,
+    slot3: document.getElementById('slot3Tool').value,
+    slot4: document.getElementById('slot4Tool').value,
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  const btn = document.getElementById('saveBtn');
+  btn.textContent = '저장됨 ✓';
+  btn.classList.add('saved');
+  document.getElementById('saveStatus').textContent = '저장 완료 · ' + new Date().toLocaleTimeString();
+  setTimeout(() => { btn.textContent = '저장'; btn.classList.remove('saved'); }, 2000);
+}
+
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    [1,2,3,4].forEach(i => {
+      if (s[`slot${i}`]) {
+        document.getElementById(`slot${i}Tool`).value = s[`slot${i}`];
+        loadTool(i);
+      }
+    });
+  } catch(e) {}
+}
+
+let autoSaveTimer;
+function autoSave() {
+  // 선택 즉시 Tool 로드
+  [1,2,3,4].forEach(i => loadTool(i));
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(saveSettings, 800);
+}
+
+document.addEventListener('DOMContentLoaded', loadSettings);
+</script>
+</body>
+</html>

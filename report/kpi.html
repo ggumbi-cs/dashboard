@@ -241,6 +241,20 @@
   .tab-btn.active-done { background: var(--green-mid); color: #fff; }
   .tab-btn:not([class*="active"]) { background: var(--card); color: var(--text-sub); border: 1px solid var(--border); }
 
+  .sort-select {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text-sub);
+    font-family: var(--font);
+    cursor: pointer;
+    outline: none;
+  }
+  .sort-select:focus { border-color: var(--blue-mid); }
+
   .loading {
     text-align: center;
     padding: 60px 0;
@@ -337,6 +351,7 @@ function statusIcon(v) {
 }
 
 let currentFilter = 'all';
+let currentSort   = 'category';
 let kpiData = [];
 let overallRate = 0;
 
@@ -349,68 +364,88 @@ function renderAll() {
     heroDiv.querySelector('.hero-bar').style.width = barW + '%';
   }
 
-  // 그룹화
-  const groups = {};
-  kpiData.forEach(item => {
-    if (!groups[item.대분류]) groups[item.대분류] = [];
-    groups[item.대분류].push(item);
-  });
-
   const container = document.getElementById('kpiSections');
   if (!container) return;
   container.innerHTML = '';
 
-  Object.keys(groups).forEach(cat => {
-    const items = groups[cat].filter(item => {
-      if (currentFilter === 'done') return pctNum(item.달성율) >= 1;
-      if (currentFilter === 'todo') return pctNum(item.달성율) === null || pctNum(item.달성율) < 1;
-      return true;
-    });
-    if (items.length === 0) return;
-
-    const secEl = document.createElement('div');
-    const colorCls = cat === '고객응대' ? 'red' : cat === '품질관리' ? 'green' : '';
-    secEl.innerHTML = `<div class="section-title ${colorCls}">${cat}</div>`;
-
-    const grid = document.createElement('div');
-    grid.className = 'kpi-grid';
-
-    items.forEach(item => {
-      const cls   = cardClass(item.달성율);
-      const pct   = pctText(item.달성율);
-      const n     = pctNum(item.달성율);
-      const barW  = n !== null ? Math.round(n * 100) : 0;
-      const icon  = statusIcon(item.달성율);
-      const desc  = item.설명 || '-';
-      const note  = item.특이사항 || '';
-      const link  = item.링크 || '';
-      const linkBtn = link
-        ? `<a class="kpi-link-btn" href="${link}" target="_blank" title="바로가기">
-            <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
-              <polygon points="3,2 13,8 3,14"/>
-            </svg>
-           </a>`
-        : '';
-
-      const card = document.createElement('div');
-      card.className = `kpi-card ${cls}`;
-      card.innerHTML = `
-        <div class="status-icon ${icon.cls}">${icon.check}</div>
-        <div class="kpi-name">${item.명칭}</div>
-        <div class="kpi-desc">${desc}</div>
-        <div class="kpi-bottom">
-          <div class="kpi-bar-wrap"><div class="kpi-bar" style="width:${barW}%"></div></div>
-          <div class="kpi-pct-badge">${pct}</div>
-        </div>
-        <div class="kpi-note">${note}</div>
-        ${linkBtn}
-      `;
-      grid.appendChild(card);
-    });
-
-    secEl.appendChild(grid);
-    container.appendChild(secEl);
+  // 필터
+  let filtered = kpiData.filter(item => {
+    if (currentFilter === 'done') return pctNum(item.달성율) >= 1;
+    if (currentFilter === 'todo') return pctNum(item.달성율) === null || pctNum(item.달성율) < 1;
+    return true;
   });
+
+  if (currentSort === 'category') {
+    // 카테고리별 그룹
+    const groups = {};
+    filtered.forEach(item => {
+      if (!groups[item.대분류]) groups[item.대분류] = [];
+      groups[item.대분류].push(item);
+    });
+    Object.keys(groups).forEach(cat => {
+      const colorCls = cat === '고객응대' ? 'red' : cat === '품질관리' ? 'green' : '';
+      const secEl = document.createElement('div');
+      secEl.innerHTML = `<div class="section-title ${colorCls}">${cat}</div>`;
+      const grid = document.createElement('div');
+      grid.className = 'kpi-grid';
+      groups[cat].forEach(item => renderCard(grid, item));
+      secEl.appendChild(grid);
+      container.appendChild(secEl);
+    });
+  } else {
+    // 진행율 구간별 그룹
+    const bands = [
+      { label: '100% (완료)',   cls: 'green',   fn: d => pctNum(d.달성율) >= 1 },
+      { label: '76% ~ 99%',    cls: '',        fn: d => { const n = pctNum(d.달성율); return n > 0.75 && n < 1; } },
+      { label: '51% ~ 75%',    cls: '',        fn: d => { const n = pctNum(d.달성율); return n > 0.50 && n <= 0.75; } },
+      { label: '26% ~ 50%',    cls: '',        fn: d => { const n = pctNum(d.달성율); return n > 0.25 && n <= 0.50; } },
+      { label: '1% ~ 25%',     cls: '',        fn: d => { const n = pctNum(d.달성율); return n > 0 && n <= 0.25; } },
+      { label: '0% (시작전)',   cls: 'red',    fn: d => { const n = pctNum(d.달성율); return n === null || n === 0; } },
+    ];
+    bands.forEach(band => {
+      const items = filtered.filter(band.fn);
+      if (items.length === 0) return;
+      const secEl = document.createElement('div');
+      secEl.innerHTML = `<div class="section-title ${band.cls}">${band.label}</div>`;
+      const grid = document.createElement('div');
+      grid.className = 'kpi-grid';
+      items.forEach(item => renderCard(grid, item));
+      secEl.appendChild(grid);
+      container.appendChild(secEl);
+    });
+  }
+}
+
+function renderCard(grid, item) {
+  const cls   = cardClass(item.달성율);
+  const pct   = pctText(item.달성율);
+  const n     = pctNum(item.달성율);
+  const barW  = n !== null ? Math.round(n * 100) : 0;
+  const icon  = statusIcon(item.달성율);
+  const desc  = item.설명 || '-';
+  const note  = item.특이사항 || '';
+  const link  = item.링크 || '';
+  const linkBtn = link
+    ? `<a class="kpi-link-btn" href="${link}" target="_blank" title="바로가기">
+        <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="3,2 13,8 3,14"/>
+        </svg>
+       </a>`
+    : '';
+  const card = document.createElement('div');
+  card.className = `kpi-card ${cls}`;
+  card.innerHTML = `
+    <div class="status-icon ${icon.cls}">${icon.check}</div>
+    <div class="kpi-name">${item.명칭}</div>
+    <div class="kpi-desc">${desc}</div>
+    <div class="kpi-bottom">
+      <div class="kpi-bar-wrap"><div class="kpi-bar" style="width:${barW}%"></div></div>
+      <div class="kpi-pct-badge">${pct}</div>
+    </div>
+    <div class="kpi-note">${note}</div>
+    ${linkBtn}
+  `;
+  grid.appendChild(card);
 }
 
 async function init() {
@@ -453,6 +488,11 @@ async function init() {
         <button class="tab-btn active-all" onclick="setFilter('all',this)">전체</button>
         <button class="tab-btn" onclick="setFilter('todo',this)">진행중</button>
         <button class="tab-btn" onclick="setFilter('done',this)">완료</button>
+        <span style="width:1px;background:var(--border);margin:4px 4px;display:inline-block;"></span>
+        <select class="sort-select" onchange="setSort(this.value)">
+          <option value="category">정렬 : 카테고리</option>
+          <option value="rate">정렬 : 진행율</option>
+        </select>
       </div>
 
       <div id="kpiSections"></div>
@@ -482,6 +522,11 @@ function setFilter(f, btn) {
   if (f === 'all')  btn.className = 'tab-btn active-all';
   if (f === 'todo') btn.className = 'tab-btn active-todo';
   if (f === 'done') btn.className = 'tab-btn active-done';
+  renderAll();
+}
+
+function setSort(val) {
+  currentSort = val;
   renderAll();
 }
 

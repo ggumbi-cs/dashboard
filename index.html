@@ -273,6 +273,7 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
   <div class="tab" data-tab="품질관리" onclick="switchTab(this)">품질관리</div>
   <div class="tab" data-tab="Issue"    onclick="switchTab(this)">Issue <span style="font-size:10px;color:#e87a3a;margin-left:2px;">!</span></div>
   <div class="tab" data-tab="팀Tool"   onclick="switchTab(this)">팀Tool ✓</div>
+  <div class="tab" data-tab="개발자"   onclick="switchTab(this)">개발자</div>
 </div>
 
 <div class="main">
@@ -384,6 +385,7 @@ const TAB_MAP = {
   '품질관리': 'report/품질관리.html',
   'Issue':    'report/Issue.html',
   '팀Tool':   'report/팀Tool.html',
+  '개발자':   'report/개발자.html',
 };
 
 let state = {
@@ -666,7 +668,7 @@ function switchTab(el) {
   el.classList.add('active');
   state.tab = el.dataset.tab;
 
-  const isToolTab = state.tab === '팀Tool';
+  const isToolTab = state.tab === '팀Tool' || state.tab === '개발자';
   const isKpiTab  = state.tab === '주요kpi';
 
   document.getElementById('dashSidebar').style.display = isToolTab ? 'none' : 'block';
@@ -707,7 +709,8 @@ function switchTab(el) {
   }
 
   if (isToolTab) {
-    toolNav('tool/Tool_main.html', null);
+    if (state.tab === '팀Tool') toolNav('tool/Tool_main.html', null);
+    else if (state.tab === '개발자') toolNav('report/개발자.html', null);
     setTimeout(() => loadAndBroadcastCSV(false), 0);
   } else {
     updateFrame();
@@ -794,10 +797,45 @@ function init() {
 // ── 계정 정보 ──────────────────────────────────────
 const ACCOUNTS = {
   '리더급':    { pw: 'rnjsaltnr', role: 'leader' },
-  '꿈비':      { pw: 'hihi00',    role: 'user',  brand: '꿈비' },
-  '에르모어':  { pw: 'dpfmahdj', role: 'user',  brand: '에르모어' },
+  '꿈비':      { pw: 'hihi00',    role: 'ggumbi' },
+  '에르모어':  { pw: 'dpfmahdj', role: 'ermore' },
   '개발자모드': { pw: 'tladntmd', role: 'dev' },
 };
+
+// 역할별 허용 탭 목록
+// null = 전체허용
+const ROLE_TABS = {
+  'leader': ['주요kpi','상담실적','반품현황','처리현황','품질관리','Issue','팀Tool'],
+  'ggumbi': ['주요kpi','상담실적','반품현황','처리현황','품질관리','Issue','팀Tool'],
+  'ermore': ['팀Tool'],
+  'dev':    null,  // 모든 탭
+};
+
+function applyRolePermissions(role) {
+  const allowed = ROLE_TABS[role];
+  document.querySelectorAll('.tab').forEach(tab => {
+    const tabName = tab.dataset.tab;
+    if (allowed === null) {
+      // 개발자: 전부 표시
+      tab.style.display = '';
+      tab.style.pointerEvents = '';
+      tab.style.opacity = '';
+    } else if (allowed.includes(tabName)) {
+      tab.style.display = '';
+      tab.style.pointerEvents = '';
+      tab.style.opacity = '';
+    } else {
+      // 권한 없는 탭: 숨김
+      tab.style.display = 'none';
+    }
+  });
+
+  // 에르모어: 팀Tool로 바로 이동
+  if (role === 'ermore') {
+    const toolTab = document.querySelector('.tab[data-tab="팀Tool"]');
+    if (toolTab) switchTab(toolTab);
+  }
+}
 
 const REMEMBER_KEY = 'ggumbi_remember';
 let rememberChecked = false;
@@ -839,6 +877,8 @@ function tryLogin() {
 
   const btn = document.querySelector('.logout-btn');
   if (btn) btn.textContent = `🔒 ${id} · 로그아웃`;
+
+  applyRolePermissions(account.role);
 }
 
 function doLogout() {
@@ -860,6 +900,12 @@ function doLogout() {
     const btn = document.querySelector('.logout-btn');
     if (btn && id) btn.textContent = `🔒 ${id} · 로그아웃`;
     return;
+  }
+
+  // 1-1. 세션 복원 시 권한 재적용
+  const savedRole = sessionStorage.getItem('userRole');
+  if (savedRole) {
+    setTimeout(() => applyRolePermissions(savedRole), 0);
   }
 
   // 2. 기억된 로그인 정보 불러오기

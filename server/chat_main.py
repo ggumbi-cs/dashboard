@@ -69,11 +69,14 @@ def home():
     return "OK"
 
 
+# 서버 시작 시 1회만 테이블 확인
+with app.app_context():
+    ensure_table()
+
+
 @app.route("/messages", methods=["GET"])
 def get_messages():
     try:
-        ensure_table()
-
         conn = get_conn()
         cur = conn.cursor()
 
@@ -81,6 +84,7 @@ def get_messages():
             SELECT id, name, message, created_at, checked_by
             FROM messages
             ORDER BY id DESC
+            LIMIT 100
         """)
 
         rows = cur.fetchall()
@@ -125,8 +129,6 @@ def send_message():
         if not name or not message:
             return jsonify({"error": "값 없음"}), 400
 
-        ensure_table()
-
         conn = get_conn()
         cur = conn.cursor()
 
@@ -159,8 +161,6 @@ def check_message():
 
         if not checker:
             return jsonify({"error": "checker 없음"}), 400
-
-        ensure_table()
 
         conn = get_conn()
         cur = conn.cursor()

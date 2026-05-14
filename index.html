@@ -664,6 +664,20 @@ function toggleWeekly() {
 }
 
 function switchTab(el) {
+  // 권한 체크
+  const role    = sessionStorage.getItem('userRole') || '';
+  const allowed = ROLE_TABS[role];
+  const tabName = el.dataset.tab;
+  if (allowed !== null && !allowed.includes(tabName)) {
+    // 탭 active 표시는 하되 권한 없음 메시지
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    state.tab = tabName;
+    showNoPermission(tabName);
+    return;
+  }
+  hideNoPermission();
+
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   state.tab = el.dataset.tab;
@@ -802,31 +816,29 @@ const ACCOUNTS = {
   '개발자모드': { pw: 'tladntmd', role: 'dev' },
 };
 
-// 역할별 허용 탭 목록
-// null = 전체허용
+// 역할별 허용 탭 목록 (null = 전체허용)
 const ROLE_TABS = {
   'leader': ['주요kpi','상담실적','반품현황','처리현황','품질관리','Issue','팀Tool'],
   'ggumbi': ['주요kpi','상담실적','반품현황','처리현황','품질관리','Issue','팀Tool'],
   'ermore': ['팀Tool'],
-  'dev':    null,  // 모든 탭
+  'dev':    null,
 };
 
 function applyRolePermissions(role) {
   const allowed = ROLE_TABS[role];
   document.querySelectorAll('.tab').forEach(tab => {
     const tabName = tab.dataset.tab;
-    if (allowed === null) {
-      // 개발자: 전부 표시
-      tab.style.display = '';
-      tab.style.pointerEvents = '';
-      tab.style.opacity = '';
-    } else if (allowed.includes(tabName)) {
-      tab.style.display = '';
-      tab.style.pointerEvents = '';
-      tab.style.opacity = '';
-    } else {
-      // 권한 없는 탭: 숨김
+    const hasAccess = allowed === null || allowed.includes(tabName);
+    // 에르모어는 탭 숨김 X, 스타일만 흐리게
+    if (role === 'ermore' && !hasAccess) {
+      tab.style.opacity = '0.45';
+      tab.style.cursor  = 'default';
+    } else if (!hasAccess) {
       tab.style.display = 'none';
+    } else {
+      tab.style.display = '';
+      tab.style.opacity = '';
+      tab.style.cursor  = '';
     }
   });
 
@@ -835,6 +847,44 @@ function applyRolePermissions(role) {
     const toolTab = document.querySelector('.tab[data-tab="팀Tool"]');
     if (toolTab) switchTab(toolTab);
   }
+}
+
+// 권한 없는 페이지 메시지 표시
+function showNoPermission(tabName) {
+  const frame = document.getElementById('mainFrame');
+  if (!frame) return;
+  // iframe 대신 부모에 메시지 레이어 표시
+  let layer = document.getElementById('noPermLayer');
+  if (!layer) {
+    layer = document.createElement('div');
+    layer.id = 'noPermLayer';
+    layer.style.cssText = `
+      position:absolute; inset:0; z-index:10;
+      background:#f0f2f5;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      gap:12px;
+    `;
+    frame.parentNode.style.position = 'relative';
+    frame.parentNode.appendChild(layer);
+  }
+  layer.innerHTML = `
+    <div style="font-size:40px;">🔒</div>
+    <div style="font-size:16px;font-weight:600;color:#1a2e50;">${tabName} 메뉴</div>
+    <div style="font-size:13px;color:#666;text-align:center;line-height:1.8;">
+      현재 계정은 이 메뉴에 접근 권한이 없습니다.<br>
+      <span style="color:#4a9fd4;">팀Tool</span> 메뉴를 이용해 주세요.
+    </div>
+  `;
+  layer.style.display = 'flex';
+  frame.style.display = 'none';
+}
+
+function hideNoPermission() {
+  const layer = document.getElementById('noPermLayer');
+  const frame = document.getElementById('mainFrame');
+  if (layer) layer.style.display = 'none';
+  if (frame) frame.style.display = 'block';
 }
 
 const REMEMBER_KEY = 'ggumbi_remember';

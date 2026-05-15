@@ -193,14 +193,14 @@
   }
   .col-labels {
     display: grid;
-    grid-template-columns: 1fr 64px 28px;
+    grid-template-columns: 3fr 64px 28px;
     gap: 6px;
     margin-bottom: 4px;
   }
   .col-labels span { font-size: 10px; color: var(--text-sub); padding: 0 4px; }
   .item-row {
     display: grid;
-    grid-template-columns: 1fr 64px 28px;
+    grid-template-columns: 3fr 64px 28px;
     gap: 6px;
     align-items: center;
     margin-bottom: 6px;
@@ -261,14 +261,14 @@
   .pointer-wrap {
     position: absolute;
     top: 50%;
-    right: -22px;
+    right: -26px;
     transform: translateY(-50%);
   }
   .pointer {
     width: 0; height: 0;
-    border-top: 15px solid transparent;
-    border-bottom: 15px solid transparent;
-    border-right: 28px solid var(--red);
+    border-top: 20px solid transparent;
+    border-bottom: 20px solid transparent;
+    border-right: 36px solid var(--red);
     filter: drop-shadow(0 2px 4px rgba(226,75,74,0.4));
   }
   #spin-btn {
@@ -424,7 +424,7 @@
   <!-- ROULETTE -->
   <div class="roulette-panel">
     <div class="canvas-wrap">
-      <canvas id="roulette" width="300" height="300"></canvas>
+      <canvas id="roulette" width="600" height="600"></canvas>
       <div class="pointer-wrap"><div class="pointer"></div></div>
     </div>
     <button id="spin-btn">🎰 룰렛 돌리기</button>
@@ -681,8 +681,8 @@ addBtn.addEventListener('click', () => {
 // ── WHEEL ──
 function drawWheel() {
   const total = items.reduce((s, it) => s + it.votes, 0);
-  const cx = 150, cy = 150, r = 145;
-  ctx.clearRect(0, 0, 300, 300);
+  const cx = 300, cy = 300, r = 290;
+  ctx.clearRect(0, 0, 600, 600);
 
   let startAngle = currentAngle;
   items.forEach((item, i) => {
@@ -702,9 +702,9 @@ function drawWheel() {
     ctx.rotate(startAngle + slice / 2);
     ctx.textAlign = 'right';
     ctx.fillStyle = 'rgba(255,255,255,0.95)';
-    ctx.font = '600 11.5px Noto Sans KR, sans-serif';
+    ctx.font = '600 15px Noto Sans KR, sans-serif';
     const label = item.name.length > 10 ? item.name.slice(0, 10) + '…' : item.name;
-    ctx.fillText(label, r - 8, 4);
+    ctx.fillText(label, r - 14, 5);
     ctx.restore();
 
     startAngle += slice;
@@ -712,7 +712,7 @@ function drawWheel() {
 
   // center hub
   ctx.beginPath();
-  ctx.arc(cx, cy, 24, 0, Math.PI * 2);
+  ctx.arc(cx, cy, 44, 0, Math.PI * 2);
   ctx.fillStyle = '#fff';
   ctx.fill();
   ctx.strokeStyle = 'rgba(83,74,183,0.2)';

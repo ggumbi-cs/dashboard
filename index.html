@@ -321,6 +321,9 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
       <div class="sb-item" onclick="toolNav('tool/downloader.html', this)">CSV 다운로더</div>
       <div class="sb-item" onclick="toolNav('chat/chat_main.html', this)">소통Chat</div>
       <div class="sb-divider"></div>
+      <div class="sb-label">팀복지</div>
+      <div class="sb-item" onclick="toolNav('tool/팀간식룰렛.html', this)">이달의 간식 추첨</div>
+      <div class="sb-divider"></div>
       <div class="sb-label">개인설정</div>
       <div class="sb-item" onclick="toolNav('tool/user/권미숙.html', this)">권미숙</div>
       <div class="sb-item" onclick="toolNav('tool/user/심우승.html', this)">심우승</div>
@@ -739,8 +742,12 @@ function toolNav(path, el) {
     el.classList.add('active');
   }
   const frame = document.getElementById('mainFrame');
-  frame.src = path;
-  // iframe 로드 완료 후 CSV 캐시 전달
+
+  // 개발자 로그인 시 ?dev=1 파라미터 추가
+  const role = sessionStorage.getItem('userRole') || '';
+  const devParam = role === 'dev' ? (path.includes('?') ? '&dev=1' : '?dev=1') : '';
+  frame.src = path + devParam;
+
   frame.onload = () => { if (typeof pushCSVToFrame === 'function') pushCSVToFrame(); };
 }
 

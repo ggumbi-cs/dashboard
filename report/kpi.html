@@ -230,8 +230,7 @@
   .kpi-assignee {
     font-size: 11px;
     color: var(--blue-mid);
-    white-space: nowrap;
-    flex-shrink: 0;
+    margin-top: 4px;
   }
 
   /* ── 미완료 vs 완료 분리 탭 ── */
@@ -458,10 +457,8 @@ function renderCard(grid, item) {
       <div class="kpi-bar-wrap"><div class="kpi-bar" style="width:${barW}%"></div></div>
       <div class="kpi-pct-badge">${pct}</div>
     </div>
-    <div class="kpi-note-row">
-      <span class="kpi-note">${note}</span>
-      ${assignee ? `<span class="kpi-assignee">👤 ${assignee}</span>` : ''}
-    </div>
+    <div class="kpi-note">${note}</div>
+    ${assignee ? `<div class="kpi-assignee">👤 ${assignee}</div>` : ''}
     ${linkBtn}
   `;
   grid.appendChild(card);

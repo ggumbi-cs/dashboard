@@ -229,8 +229,8 @@ function buildSlots() {
 
   let html = '';
   for (let i = 1; i <= 10; i++) {
-    const def    = i <= 4 ? `AS${i}` : '';
-    const isOpen = i <= 4;
+    const def    = i <= 5 ? `AS${i}` : '';
+    const isOpen = false;
     if (def) slotKeyMap[i] = def;
 
     html += `
@@ -253,7 +253,7 @@ function buildSlots() {
   }
   wrap.innerHTML = html;
 
-  for (let i = 1; i <= 4; i++) {
+  for (let i = 1; i <= 5; i++) {
     document.getElementById(`sel${i}`).value = `AS${i}`;
   }
 

@@ -321,8 +321,11 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
       <div class="sb-item" onclick="toolNav('chat/chat_main.html', this)">소통Chat</div>
       <div class="sb-divider"></div>
       <div class="sb-label">실적마감 Tool</div>
-      <div class="sb-item" onclick="toolNav('tool/downloader.html', this)">CSV 다운로더(보수중)</div>
+      <div class="sb-item" onclick="toolNav('tool/downloader.html', this)">CSV 다운로더</div>
       <div class="sb-item" onclick="toolNav('tool/as5.html', this)">어드민 패턴 분류기</div>
+      <div class="sb-divider"></div>
+      <div class="sb-label">반품입고 Tool</div>
+      <div class="sb-item" onclick="toolNavExternal('https://cs-as-app.vercel.app/', this)">반품검사 기록</div>
       <div class="sb-divider"></div>
       <div class="sb-label">팀복지</div>
       <div class="sb-item" onclick="toolNav('tool/팀간식룰렛.html', this)">이달의 간식 추첨</div>
@@ -752,6 +755,23 @@ function toolNav(path, el) {
   frame.src = path + devParam;
 
   frame.onload = () => { if (typeof pushCSVToFrame === 'function') pushCSVToFrame(); };
+}
+
+// 외부 링크 → iframe 시도, 차단 시 새 탭으로 fallback
+function toolNavExternal(url, el) {
+  if (el) {
+    document.querySelectorAll('#toolSidebar .sb-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+  }
+  const frame = document.getElementById('mainFrame');
+  frame.src = url;
+  const timer = setTimeout(() => {
+    try { void frame.contentDocument.body; } catch(e) { window.open(url, '_blank'); }
+  }, 2000);
+  frame.onload = () => {
+    clearTimeout(timer);
+    try { void frame.contentDocument.body; } catch(e) { window.open(url, '_blank'); }
+  };
 }
 
 // ── iframe 갱신 ────────────────────────────────────

@@ -740,15 +740,24 @@ spinBtn.addEventListener('click', () => {
   const winnerIdx = weightedRandom(items.map(it => it.votes / total));
   const slices = items.map(it => (it.votes / total) * Math.PI * 2);
 
+  const startA = currentAngle; // ← 먼저 선언
+
+  // 포인터는 오른쪽(3시 = angle 0). 휠은 currentAngle 기준으로 그려지므로,
+  // 당첨 칸의 중앙이 angle=0에 오려면 currentAngle을 -(cumSlice + sliceHalf)로 만들어야 함.
   let cumSlice = 0;
   for (let i = 0; i < winnerIdx; i++) cumSlice += slices[i];
-  const targetInSlice = cumSlice + slices[winnerIdx] / 2;
+  const sliceCenter = cumSlice + slices[winnerIdx] / 2;
+
   const spins = 7 + Math.random() * 4;
-  const targetAngle = -(targetInSlice) + spins * Math.PI * 2;
+  const normalizedCurrent = ((startA % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+  const targetFinal = -sliceCenter;
+  const targetNorm = ((targetFinal % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+  let delta = targetNorm - normalizedCurrent;
+  if (delta > 0) delta -= Math.PI * 2; // 항상 반시계 방향(음수)으로
+  const targetAngle = delta - spins * Math.PI * 2;
 
   const duration = 5500;
   const start = performance.now();
-  const startA = currentAngle;
 
   function animate(now) {
     const elapsed = now - start;

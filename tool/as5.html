@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>일일루틴 자동화 툴</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Malgun Gothic', sans-serif;
+  font-size: 13px;
+  background: #f0f2f5;
+  color: #222;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── 상단 타이틀 바 ── */
+.top-bar {
+  background: #1a2e50;
+  padding: 7px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.top-bar .title { color: #c8ddf0; font-weight: 700; font-size: 13px; }
+.top-bar .status-msg { font-size: 11px; color: #6a9ec0; }
+
+/* ── 메인 레이아웃 ── */
+.main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 10px;
+  padding: 10px;
+  overflow: hidden;
+}
+
+/* ── 좌측 패널 ── */
+.panel {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panel-header {
+  background: #1a2e50;
+  color: #c8ddf0;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.panel-body {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── 드롭존 ── */
+.drop-zone {
+  border: 2px dashed #b0c4de;
+  border-radius: 6px;
+  padding: 20px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #f8fafc;
+  color: #7a9ec0;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: #2356a8;
+  background: #eef4ff;
+  color: #2356a8;
+}
+.drop-zone .drop-icon { font-size: 24px; display: block; margin-bottom: 4px; }
+.drop-zone.has-file {
+  border-color: #2a7a6f;
+  background: #f0faf8;
+  color: #2a7a6f;
+}
+
+/* ── 폼 요소 ── */
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4a6080;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.form-input {
+  border: 1px solid #d0dae8;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  color: #222;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.form-input:focus { border-color: #2356a8; }
+
+/* ── 필터 체크리스트 ── */
+.filter-scroll {
+  border: 1px solid #d0dae8;
+  border-radius: 4px;
+  max-height: 130px;
+  overflow-y: auto;
+  background: #fafbfd;
+}
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  font-size: 11.5px;
+  border-bottom: 1px solid #eef0f4;
+  cursor: pointer;
+}
+.filter-item:last-child { border-bottom: none; }
+.filter-item:hover { background: #f0f4ff; }
+.filter-item input[type=checkbox] { cursor: pointer; }
+.filter-toggle {
+  display: flex; gap: 4px; margin-bottom: 4px;
+}
+.toggle-btn {
+  font-size: 10.5px; padding: 2px 7px; border-radius: 3px;
+  border: 1px solid #b0c4de; background: #f0f4ff; color: #2356a8;
+  cursor: pointer; font-family: inherit;
+}
+.toggle-btn:hover { background: #dce8ff; }
+
+/* ── 버튼 ── */
+.btn {
+  padding: 7px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-primary { background: #2356a8; color: #fff; }
+.btn-primary:hover { background: #1a3a7a; }
+.btn-primary:disabled { background: #8aa8d0; cursor: not-allowed; }
+.btn-success { background: #2a7a6f; color: #fff; }
+.btn-success:hover { background: #1f5c53; }
+.btn-success:disabled { background: #8abdb8; cursor: not-allowed; }
+.btn-secondary { background: #e8edf5; color: #4a6080; border: 1px solid #c8d4e4; }
+.btn-secondary:hover { background: #d8e4f0; }
+.btn-row { display: flex; gap: 6px; }
+
+/* ── 우측 결과 패널 ── */
+.result-panel {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.result-header {
+  background: #1a2e50;
+  color: #c8ddf0;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.result-badge {
+  background: #2356a8;
+  color: #fff;
+  font-size: 10px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.table-wrap {
+  flex: 1;
+  overflow: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+}
+thead tr {
+  background: #e8edf5;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+thead th {
+  padding: 6px 8px;
+  text-align: left;
+  font-weight: 700;
+  color: #2a4070;
+  border-bottom: 2px solid #c8d4e4;
+  white-space: nowrap;
+}
+tbody tr { border-bottom: 1px solid #eef0f4; }
+tbody tr:hover { background: #f4f7ff; }
+tbody td {
+  padding: 5px 8px;
+  color: #333;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #aab8cc;
+  font-size: 12px;
+  gap: 8px;
+}
+.empty-icon { font-size: 32px; }
+
+/* ── 스크롤바 ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #f0f2f5; }
+::-webkit-scrollbar-thumb { background: #b0c4de; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <span class="title">📋 일일루틴 자동화 툴</span>
+  <span class="status-msg" id="statusMsg">CSV 또는 XLSX 파일을 업로드해주세요</span>
+</div>
+
+<div class="main">
+
+  <!-- 좌측 설정 패널 -->
+  <div class="panel">
+    <div class="panel-header">⚙ 설정</div>
+    <div class="panel-body">
+
+      <!-- 파일 업로드 -->
+      <div class="form-group">
+        <span class="form-label">파일 업로드</span>
+        <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+          <span class="drop-icon">📂</span>
+          CSV / XLSX 파일을 드래그하거나<br>클릭하여 선택
+        </div>
+        <input type="file" id="fileInput" accept=".csv,.xlsx,.xlsm" style="display:none">
+      </div>
+
+      <!-- 저장 파일명 -->
+      <div class="form-group">
+        <span class="form-label">저장 파일명</span>
+        <div style="display:flex;gap:4px;align-items:center">
+          <input class="form-input" type="text" id="outputName" value="결과파일" style="flex:1">
+          <span style="font-size:11px;color:#888">.xlsx</span>
+        </div>
+      </div>
+
+      <!-- 반품타입 필터 -->
+      <div class="form-group">
+        <span class="form-label">반품타입 필터</span>
+        <div class="filter-toggle">
+          <button class="toggle-btn" onclick="checkAll('type')">전체선택</button>
+          <button class="toggle-btn" onclick="uncheckAll('type')">전체해제</button>
+        </div>
+        <div class="filter-scroll" id="typeFilter"></div>
+      </div>
+
+      <!-- 제품명 필터 -->
+      <div class="form-group">
+        <span class="form-label">제품명 필터</span>
+        <div class="filter-toggle">
+          <button class="toggle-btn" onclick="checkAll('product')">전체선택</button>
+          <button class="toggle-btn" onclick="uncheckAll('product')">전체해제</button>
+        </div>
+        <div class="filter-scroll" id="productFilter"></div>
+      </div>
+
+      <!-- 버튼 -->
+      <div class="btn-row" style="margin-top:auto">
+        <button class="btn btn-primary" id="runBtn" onclick="runProcess()" disabled>▶ 실행</button>
+        <button class="btn btn-success" id="downloadBtn" onclick="downloadResult()" disabled>⬇ 다운로드</button>
+        <button class="btn btn-secondary" onclick="resetAll()">↺ 초기화</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 우측 결과 패널 -->
+  <div class="result-panel">
+    <div class="result-header">
+      <span>📊 처리 결과</span>
+      <span class="result-badge" id="resultBadge" style="display:none">0 건</span>
+    </div>
+    <div id="emptyState" class="empty-state">
+      <span class="empty-icon">📄</span>
+      <span>파일을 업로드하고 실행하면<br>결과가 여기에 표시됩니다</span>
+    </div>
+    <div class="table-wrap" id="tableWrap" style="display:none">
+      <table>
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── 고정 데이터 ──
+const VALID_TYPES = [
+  "교환 : 작동불량","교환 : 기타(제품불량)","교환 : 파손/스크래치","교환 : 오염/이염",
+  "취소 : 작동불량","취소 : 기타(제품불량)","취소 : 파손/스크래치","취소 : 오염/이염",
+  "교환 : 이물질","교환 : A_오염/이염","교환 : A_파손/스크래치",
+];
+
+const VALID_PRODUCTS = [
+  "[꿈비] 분유쉐이커",
+  "[꿈비] 출수형 분유포트",
+  "[꿈비] 스마트 센서 휴지통",
+  "[꿈비] 버블리스 분유포트(분유포트+분유쉐이커) 핑크",
+  "[집계] 젖병살균세척기",
+  "[꿈비] 젖병세척기 스팀플러스",
+  "[꿈비] UV LED 젖병소독기",
+  "[꿈비] 아이스허그 듀얼팬 쿨시트 2.0 테디베어",
+  "[꿈비] 휴대용 분유포트",
+  "[뉴어스] 음식물처리기",
+  "[꿈비] 아이스허그 듀얼팬 쿨시트 2.0 아이스패밀리",
+  "[꿈비] 스팀젖병소독기",
+  "[꿈비] 장난감 살균기 60L 세트 클린베이지",
+  "[꿈비] 유모차 웜 라이너_그레이",
+  "[꿈비] 손목보호 전동 젖병세척솔",
+  "[뉴어스] 미세먼지비움 청소기",
+  "[꿈비] 뭉침없이 조용한 분유쉐이커",
+  "[꿈비] 젖병살균세척기_크림 PRO",
+  "[꿈비] 젖병살균세척기_크림 V.1",
+  "[꿈비] 젖병살균세척기_크림 V.2",
+  "[꿈비] 젖병살균세척기_세이지그린 V.1",
+  "[꿈비] 젖병살균세척기_세이지그린 V.2",
+  "[꿈비] 젖병살균세척기_크림_리퍼_1세대",
+  "[꿈비] 젖병살균세척기_크림_리퍼_2세대",
+  "[꿈비] 분리형 분유포트 전용 배터리",
+  "[꿈비] 배터리 분리형 휴대용 분유포트",
+];
+
+// 4칸 패턴
+const PATTERNS = [
+  /~~(.*?)~(.*?)~(.*?)~(.*?)~~/s,
+  /\*\*(.*?)\*(.*?)\*(.*?)\*(.*?)\*\*/s,
+  /~(.*?)~(.*?)~(.*?)~(.*?)~~/s,
+  /~~(.*?)~(.*?)~(.*?)~(.*?)~/s,
+];
+// 3칸 패턴
+const PATTERNS_NO_NAME = [
+  /~~(.*?)~(.*?)~(.*?)~~/s,
+  /\*\*(.*?)\*(.*?)\*(.*?)\*\*/s,
+];
+
+// ── 상태 ──
+let loadedData = null;   // 원본 JSON rows
+let resultData = null;   // 처리 결과
+
+// ── 필터 체크박스 초기화 ──
+function buildFilters() {
+  buildCheckList('typeFilter', VALID_TYPES, 'type');
+  buildCheckList('productFilter', VALID_PRODUCTS, 'product');
+}
+
+function buildCheckList(containerId, items, prefix) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = items.map((item, i) => `
+    <label class="filter-item">
+      <input type="checkbox" id="${prefix}_${i}" value="${item}" checked>
+      <span>${item}</span>
+    </label>
+  `).join('');
+}
+
+function getChecked(prefix) {
+  return [...document.querySelectorAll(`input[id^="${prefix}_"]:checked`)].map(el => el.value);
+}
+function checkAll(prefix) {
+  document.querySelectorAll(`input[id^="${prefix}_"]`).forEach(el => el.checked = true);
+}
+function uncheckAll(prefix) {
+  document.querySelectorAll(`input[id^="${prefix}_"]`).forEach(el => el.checked = false);
+}
+
+// ── 파일 업로드 ──
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+});
+
+function handleFile(file) {
+  const name = file.name;
+  const ext = name.split('.').pop().toLowerCase();
+  if (!['csv','xlsx','xlsm'].includes(ext)) {
+    setStatus('❌ CSV 또는 XLSX 파일만 지원합니다');
+    return;
+  }
+
+  setStatus('📂 파일 읽는 중...');
+  const reader = new FileReader();
+
+  reader.onload = e => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: 'array', cellDates: true });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      loadedData = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      dropZone.classList.add('has-file');
+      dropZone.innerHTML = `<span class="drop-icon">✅</span>${name}<br><span style="font-size:10px">${loadedData.length}행 로드됨</span>`;
+      document.getElementById('runBtn').disabled = false;
+      setStatus(`✅ ${name} 로드 완료 (${loadedData.length}행)`);
+    } catch(err) {
+      setStatus('❌ 파일 읽기 실패: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── 유틸 ──
+function safeStr(val) {
+  if (val === null || val === undefined) return '';
+  return String(val).trim();
+}
+
+function normDate(val) {
+  if (!val) return '';
+  if (val instanceof Date) {
+    const y = val.getFullYear();
+    const m = String(val.getMonth()+1).padStart(2,'0');
+    const d = String(val.getDate()).padStart(2,'0');
+    return `${y}-${m}-${d}`;
+  }
+  const s = String(val);
+  // YYYY-MM-DD or similar
+  const m = s.match(/(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/);
+  if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  return s;
+}
+
+function parseCsHistory(text, fallbackName='') {
+  const raw = safeStr(text);
+  if (!raw) return ['','','',''];
+
+  for (const pat of PATTERNS) {
+    const m = raw.match(pat);
+    if (m && m.length >= 5) {
+      return [safeStr(m[1]), safeStr(m[2]), safeStr(m[3]), safeStr(m[4])];
+    }
+  }
+  for (const pat of PATTERNS_NO_NAME) {
+    const m = raw.match(pat);
+    if (m && m.length >= 4) {
+      return [safeStr(fallbackName), safeStr(m[1]), safeStr(m[2]), safeStr(m[3])];
+    }
+  }
+  return ['','','',''];
+}
+
+// ── 처리 ──
+function runProcess() {
+  if (!loadedData) return;
+
+  setStatus('⚙ 데이터 처리 중...');
+
+  const checkedTypes = getChecked('type');
+  const checkedProducts = getChecked('product');
+
+  // 필터
+  let work = loadedData.filter(row => {
+    const t = safeStr(row['반품타입']);
+    const p = safeStr(row['어드민상품']);
+    const typeOk = !t || checkedTypes.includes(t);
+    const prodOk = !p || checkedProducts.includes(p);
+    return typeOk && prodOk;
+  });
+
+  // 이름 fallback 컬럼
+  const nameCandidates = ['수령자','수령자 이름','수령자명','이름'];
+  let fallbackCol = null;
+  if (work.length > 0) {
+    for (const c of nameCandidates) {
+      if (c in work[0]) { fallbackCol = c; break; }
+    }
+  }
+
+  // 결과 생성
+  const rows = work.map(row => {
+    const fallback = fallbackCol ? safeStr(row[fallbackCol]) : '';
+    const [name, symptom, serial, link] = parseCsHistory(row['cs이력'] || '', fallback);
+    return {
+      '도착일': normDate(row['도착일']),
+      '주문번호': safeStr(row['주문번호']),
+      '제품명': safeStr(row['어드민상품']),
+      '고객명': name,
+      '제품증상': symptom,
+      '시리얼넘버': serial,
+      '영상링크': link,
+      '사용부품': '',
+      '과실': '',
+      '접수불량': '',
+    };
+  });
+
+  // 중복 제거 (완전 동일)
+  const seen = new Set();
+  const dedup1 = rows.filter(r => {
+    const key = JSON.stringify(r);
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  });
+
+  // 주문번호+제품명+제품증상 중복 제거
+  const seen2 = new Set();
+  resultData = dedup1.filter(r => {
+    const key = `${r['주문번호']}||${r['제품명']}||${r['제품증상']}`;
+    if (seen2.has(key)) return false;
+    seen2.add(key); return true;
+  });
+
+  renderTable(resultData);
+  document.getElementById('downloadBtn').disabled = false;
+  setStatus(`✅ 처리 완료 — ${resultData.length}건`);
+}
+
+// ── 테이블 렌더 ──
+function renderTable(data) {
+  if (!data || data.length === 0) {
+    document.getElementById('emptyState').style.display = 'flex';
+    document.getElementById('tableWrap').style.display = 'none';
+    document.getElementById('resultBadge').style.display = 'none';
+    return;
+  }
+
+  const cols = Object.keys(data[0]);
+
+  document.getElementById('tableHead').innerHTML =
+    '<tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr>';
+
+  document.getElementById('tableBody').innerHTML =
+    data.map(row =>
+      '<tr>' + cols.map(c => `<td title="${row[c]}">${row[c]}</td>`).join('') + '</tr>'
+    ).join('');
+
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('tableWrap').style.display = 'block';
+
+  const badge = document.getElementById('resultBadge');
+  badge.style.display = 'inline';
+  badge.textContent = `${data.length} 건`;
+}
+
+// ── 다운로드 ──
+function downloadResult() {
+  if (!resultData || resultData.length === 0) return;
+  const name = document.getElementById('outputName').value.trim() || '결과파일';
+  const ws = XLSX.utils.json_to_sheet(resultData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '결과');
+  XLSX.writeFile(wb, `${name}.xlsx`);
+  setStatus(`⬇ ${name}.xlsx 다운로드 완료`);
+}
+
+// ── 초기화 ──
+function resetAll() {
+  loadedData = null;
+  resultData = null;
+  fileInput.value = '';
+  dropZone.classList.remove('has-file','drag-over');
+  dropZone.innerHTML = '<span class="drop-icon">📂</span>CSV / XLSX 파일을 드래그하거나<br>클릭하여 선택';
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('downloadBtn').disabled = true;
+  document.getElementById('emptyState').style.display = 'flex';
+  document.getElementById('tableWrap').style.display = 'none';
+  document.getElementById('resultBadge').style.display = 'none';
+  checkAll('type');
+  checkAll('product');
+  setStatus('CSV 또는 XLSX 파일을 업로드해주세요');
+}
+
+function setStatus(msg) {
+  document.getElementById('statusMsg').textContent = msg;
+}
+
+// ── 초기화 실행 ──
+buildFilters();
+</script>
+</body>
+</html>

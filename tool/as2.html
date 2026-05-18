@@ -70,16 +70,17 @@ input, select {
 
 <label>모델명 입력방식</label>
 <select id="modelType">
-    <option>3종 선택</option>
+    <option>4종 선택</option>
     <option>직접입력</option>
 </select>
 
 <div id="selectWrap">
-    <label>3종 선택</label>
+    <label>4종 선택</label>
     <select id="productSelect">
         <option>분유쉐이커</option>
         <option>LED분유쉐이커</option>
         <option>휴대용분유포트</option>
+        <option>(분리형) 휴대용 분유포트</option>
     </select>
 </div>
 
@@ -90,8 +91,8 @@ input, select {
 
 <label>회수사유</label>
 <select id="reason">
-    <option>일반반품</option>
-    <option>변심반품</option>
+    <option>일반반품(개봉)</option>
+    <option>변심반품(개봉X)</option>
     <option>불량반품</option>
     <option>불량교환</option>
     <option>AS</option>
@@ -123,15 +124,15 @@ input, select {
     <button type="button" id="resetBtn">초기화</button>
 </div>
 <ul>
-    <li><strong style="color:red;">특별 본사회수(분석)대상 : 분유쉐이커 2종</strong></li>
-    <li><strong style="color:red;">증상 : 소음, 충전불량, 전원불량</strong></li>
-    <li><strong style="color:red;">회수사유 : 검수</strong></li>
+    <li><strong style="color:red;">특별 본사회수(분석)대상 : (분리형) 휴대용 분유포트</strong></li>
+    <li><strong style="color:red;">증상 : 전체 불량증상</strong></li>
+    <li><strong style="color:red;">회수사유 : 초기불량 긴급검수</strong></li>
 </ul>
 </div>
 </div>
 
 <script>
-const LINKMOM = ["분유쉐이커","LED분유쉐이커","휴대용분유포트"];
+const LINKMOM = ["분유쉐이커","LED분유쉐이커","휴대용분유포트","(분리형) 휴대용 분유포트"];
 
 const modelType = document.getElementById("modelType");
 const selectWrap = document.getElementById("selectWrap");
@@ -154,7 +155,7 @@ const copyBtn = document.getElementById("copyBtn");
 const resetBtn = document.getElementById("resetBtn");
 
 function getProduct(){
-    return modelType.value === "3종 선택"
+    return modelType.value === "4종 선택"
         ? productSelect.value.trim()
         : productInput.value.trim();
 }
@@ -170,7 +171,7 @@ function updateFields(){
         ["불량반품","불량교환","AS","검수"].includes(r) ? "block" : "none";
 
     orderWrap.style.display =
-        ["일반반품","변심반품","불량반품","불량교환"].includes(r) ? "block" : "none";
+        ["일반반품(개봉)","변심반품(개봉X)","불량반품","불량교환"].includes(r) ? "block" : "none";
 
     customerWrap.style.display =
         ["AS","검수"].includes(r) ? "block" : "none";
@@ -188,8 +189,8 @@ function buildMemo(){
     // 🔥 모든 유형 제품명 포함
 
     if(link){
-        if(r==="일반반품") return o ? `★일반반품 링크맘 엄감★${o} / ${p}` : "주문번호를 입력해주세요.";
-        if(r==="변심반품") return o ? `★변심반품 링크맘 엄감★${o} / ${p}` : "주문번호를 입력해주세요.";
+        if(r==="일반반품(개봉)") return o ? `★일반반품 링크맘 엄감★${o} / ${p}` : "주문번호를 입력해주세요.";
+        if(r==="변심반품(개봉X)") return o ? `★변심반품 링크맘 엄감★${o} / ${p}` : "주문번호를 입력해주세요.";
 
         if(r==="불량반품"||r==="불량교환"){
             if(!o) return "주문번호를 입력해주세요.";
@@ -205,7 +206,7 @@ function buildMemo(){
         }
     }
 
-    if(r==="일반반품"||r==="변심반품"){
+    if(r==="일반반품(개봉)"||r==="변심반품(개봉X)"){
         if(!o) return "주문번호를 입력해주세요.";
         if(!p) return "모델명을 입력해주세요.";
         return `★${r}★${o} / ${p}`;
@@ -245,7 +246,7 @@ document.querySelectorAll("input, select").forEach(el=>{
 });
 
 modelType.addEventListener("change", ()=>{
-    if(modelType.value==="3종 선택"){
+    if(modelType.value==="4종 선택"){
         selectWrap.style.display="block";
         inputWrap.style.display="none";
     }else{

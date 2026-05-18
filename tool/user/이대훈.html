@@ -100,15 +100,52 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', sans-serif; font-size:
   border: none;
   display: block;
   transform-origin: top left;
-  /* width/height는 JS에서 scale에 맞게 동적으로 설정 */
 }
+
+/* ── Token 모달 ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.modal-overlay.hidden { display: none; }
+.modal {
+  background: #fff; border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  width: 400px; padding: 24px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.modal h3 { font-size: 14px; color: #1a2e50; }
+.modal p  { font-size: 11.5px; color: #607090; line-height: 1.6; }
+.modal input {
+  width: 100%; border: 1px solid #d0dae8; border-radius: 4px;
+  padding: 7px 9px; font-size: 12px; font-family: inherit; outline: none;
+}
+.modal input:focus { border-color: #2356a8; }
+.modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+.modal-btns button {
+  padding: 6px 18px; border: none; border-radius: 4px;
+  font-size: 12px; font-family: inherit; font-weight: 700; cursor: pointer;
+}
+.modal-btns .btn-ok  { background: #2356a8; color: #fff; }
+.modal-btns .btn-ok:hover { background: #1a3a7a; }
+.modal-btns .btn-cancel { background: #e8edf5; color: #4a6080; border: 1px solid #c8d4e4; }
+
+/* Token 설정 버튼 */
+.btn-token {
+  background: #243d6a; border: 1px solid #2e5080; color: #a8c4df;
+  padding: 3px 9px; border-radius: 3px; font-size: 11px;
+  cursor: pointer; font-family: inherit; margin-left: 8px;
+}
+.btn-token:hover { background: #2e5080; }
 </style>
 </head>
 <body>
 
 <div class="top-bar">
   <span class="user-name">👤 심우승 · 개인 Tool 설정</span>
-  <span class="save-status" id="saveStatus">선택 설정이 자동 저장됩니다</span>
+  <span class="save-status" id="saveStatus">설정 불러오는 중...</span>
   <button class="save-btn" id="saveBtn" onclick="saveSettings()">저장</button>
 </div>
 
@@ -213,7 +250,12 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', sans-serif; font-size:
 </div>
 
 <script>
-const STORAGE_KEY = 'toolSettings_' + location.pathname.split('/').pop().replace('.html','');
+// ── Gist 설정 (하드코딩) ──
+const GITHUB_TOKEN = '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';
+const GIST_ID      = '85f95642bd8bbc2635c6f7059a11dd3a';
+
+// 파일명 기반 자동 키 → 복제 시 이름만 바꾸면 독립 저장
+const GIST_FILE = location.pathname.split('/').pop().replace('.html','') + '_settings.json';
 
 const TOOL_FILES = {
   'AS1':'as.html','AS2':'as2.html','AS3':'as3.html','AS4':'as4.html',
@@ -224,118 +266,126 @@ const TOOL_FILES = {
 const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 const BASE = isLocal ? './' : '/dashboard/tool/';
 
-// 각 슬롯의 현재 zoom scale 저장
 const slotScales = { 1: 1.0, 2: 1.0, 3: 1.0, 4: 1.0 };
 
-/* ── 크기 조정 ── */
+function setSaveStatus(msg, ok) {
+  document.getElementById('saveStatus').textContent = msg;
+  const btn = document.getElementById('saveBtn');
+  if (ok === true)  { btn.textContent = '저장됨 ✓'; btn.classList.add('saved'); setTimeout(() => { btn.textContent = '저장'; btn.classList.remove('saved'); }, 2000); }
+  if (ok === false) { btn.textContent = '저장'; btn.classList.remove('saved'); }
+}
+
+// ── Gist API ──
+async function gistLoad() {
+  setSaveStatus('설정 불러오는 중...', false);
+  try {
+    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      headers: { Authorization: `token ${GITHUB_TOKEN}`, Accept: 'application/vnd.github.v3+json' }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const content = data.files[GIST_FILE]?.content;
+    if (content) {
+      applySettings(JSON.parse(content));
+      setSaveStatus(`불러오기 완료 · ${new Date().toLocaleTimeString()}`, false);
+    } else {
+      setSaveStatus('저장된 설정 없음 (첫 사용)', false);
+    }
+  } catch(e) {
+    setSaveStatus('Gist 오류: ' + e.message, false);
+  }
+}
+
+async function gistSave() {
+  const s = {
+    slot1: document.getElementById('slot1Tool').value,
+    slot2: document.getElementById('slot2Tool').value,
+    slot3: document.getElementById('slot3Tool').value,
+    slot4: document.getElementById('slot4Tool').value,
+    zoom1: slotScales[1], zoom2: slotScales[2],
+    zoom3: slotScales[3], zoom4: slotScales[4],
+  };
+  setSaveStatus('저장 중...', false);
+  try {
+    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`,
+        Accept: 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ files: { [GIST_FILE]: { content: JSON.stringify(s, null, 2) } } })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    setSaveStatus(`저장 완료 · ${new Date().toLocaleTimeString()}`, true);
+  } catch(e) {
+    setSaveStatus('저장 실패: ' + e.message, false);
+  }
+}
+
+function applySettings(s) {
+  [1,2,3,4].forEach(i => {
+    if (s[`zoom${i}`]) {
+      const scale = s[`zoom${i}`];
+      slotScales[i] = scale;
+      document.getElementById(`zoomGroup${i}`).querySelectorAll('.zoom-btn').forEach(b => {
+        b.classList.toggle('active', parseFloat(b.dataset.scale) === scale);
+      });
+    }
+    if (s[`slot${i}`]) {
+      document.getElementById(`slot${i}Tool`).value = s[`slot${i}`];
+      loadTool(i);
+    }
+  });
+}
+
+// ── 크기 조정 ──
 function setZoom(slotNum, scale, btn) {
   slotScales[slotNum] = scale;
-
-  // 버튼 active 상태 갱신
-  const group = document.getElementById(`zoomGroup${slotNum}`);
-  group.querySelectorAll('.zoom-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`zoomGroup${slotNum}`).querySelectorAll('.zoom-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-
-  // iframe이 있으면 즉시 적용
   applyZoom(slotNum);
-
-  // 저장
-  saveSettings();
+  gistSave();
 }
 
 function applyZoom(slotNum) {
   const body = document.getElementById(`body${slotNum}`);
   const iframe = body.querySelector('iframe');
   if (!iframe) return;
-
   const scale = slotScales[slotNum];
-  const w = body.clientWidth;
-  const h = body.clientHeight;
-
-  // iframe 실제 크기 = 컨테이너 / scale → scale 후 꽉 채움
-  iframe.style.width  = (w / scale) + 'px';
-  iframe.style.height = (h / scale) + 'px';
+  iframe.style.width  = (body.clientWidth  / scale) + 'px';
+  iframe.style.height = (body.clientHeight / scale) + 'px';
   iframe.style.transform = `scale(${scale})`;
 }
 
-/* ── Tool 로드 ── */
+// ── Tool 로드 ──
 function loadTool(slotNum) {
   const key  = document.getElementById(`slot${slotNum}Tool`).value;
   const body = document.getElementById(`body${slotNum}`);
-
   if (!key) {
     body.innerHTML = '선택된 Tool이 여기에 표시됩니다';
     body.style.display = 'flex';
     return;
   }
-
   body.style.display = 'block';
   body.style.padding = '0';
   body.innerHTML = `<iframe src="${BASE}${TOOL_FILES[key]}"></iframe>`;
-
-  // iframe 로드 후 zoom 적용
   const iframe = body.querySelector('iframe');
   iframe.addEventListener('load', () => applyZoom(slotNum));
   applyZoom(slotNum);
-}
-
-/* ── 저장 / 불러오기 ── */
-function saveSettings() {
-  const s = {
-    slot1: document.getElementById('slot1Tool').value,
-    slot2: document.getElementById('slot2Tool').value,
-    slot3: document.getElementById('slot3Tool').value,
-    slot4: document.getElementById('slot4Tool').value,
-    zoom1: slotScales[1],
-    zoom2: slotScales[2],
-    zoom3: slotScales[3],
-    zoom4: slotScales[4],
-  };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-
-  const btn = document.getElementById('saveBtn');
-  btn.textContent = '저장됨 ✓';
-  btn.classList.add('saved');
-  document.getElementById('saveStatus').textContent = '저장 완료 · ' + new Date().toLocaleTimeString();
-  setTimeout(() => { btn.textContent = '저장'; btn.classList.remove('saved'); }, 2000);
-}
-
-function loadSettings() {
-  try {
-    const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-
-    [1,2,3,4].forEach(i => {
-      // zoom 복원
-      if (s[`zoom${i}`]) {
-        const scale = s[`zoom${i}`];
-        slotScales[i] = scale;
-        const group = document.getElementById(`zoomGroup${i}`);
-        group.querySelectorAll('.zoom-btn').forEach(b => {
-          b.classList.toggle('active', parseFloat(b.dataset.scale) === scale);
-        });
-      }
-      // tool 복원
-      if (s[`slot${i}`]) {
-        document.getElementById(`slot${i}Tool`).value = s[`slot${i}`];
-        loadTool(i);
-      }
-    });
-  } catch(e) {}
 }
 
 let autoSaveTimer;
 function autoSave() {
   [1,2,3,4].forEach(i => loadTool(i));
   clearTimeout(autoSaveTimer);
-  autoSaveTimer = setTimeout(saveSettings, 800);
+  autoSaveTimer = setTimeout(gistSave, 800);
 }
 
-/* 창 크기 변경 시 iframe zoom 재계산 */
-window.addEventListener('resize', () => {
-  [1,2,3,4].forEach(i => applyZoom(i));
-});
+function saveSettings() { gistSave(); }
 
-document.addEventListener('DOMContentLoaded', loadSettings);
+window.addEventListener('resize', () => { [1,2,3,4].forEach(i => applyZoom(i)); });
+document.addEventListener('DOMContentLoaded', gistLoad);
 </script>
 </body>
 </html>

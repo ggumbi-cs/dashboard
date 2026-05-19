@@ -86,11 +86,10 @@
 
   /* ── 섹션 그룹 ── */
   .section-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text-sub);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.3px;
     margin: 20px 0 10px;
     display: flex;
     align-items: center;
@@ -99,7 +98,7 @@
   .section-title::before {
     content: '';
     display: inline-block;
-    width: 4px; height: 14px;
+    width: 5px; height: 18px;
     border-radius: 2px;
     background: var(--blue-mid);
   }
@@ -322,6 +321,11 @@ function parseKpiSheet(wb) {
   const ws = wb.Sheets['주요kpi'];
   if (!ws) throw new Error("'주요kpi' 시트를 찾을 수 없습니다.");
   const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+
+  // 2행(index 1)에서 전체진행율 직접 읽기
+  const overallRow = rows[1] || [];
+  const overallFromSheet = overallRow[5]; // F2열
+
   const data = [];
   for (let i = 2; i < rows.length; i++) {
     const r = rows[i];
@@ -337,7 +341,7 @@ function parseKpiSheet(wb) {
       담당:     r[8] || '',
     });
   }
-  return data;
+  return { data, overallFromSheet };
 }
 
 function pctText(v) {
@@ -467,13 +471,16 @@ async function init() {
   const root = document.getElementById('root');
   try {
     const wb = await loadExcel();
-    kpiData = parseKpiSheet(wb);
+    const { data, overallFromSheet } = parseKpiSheet(wb);
+    kpiData = data;
 
-    // 전체 진행율 = 전체 건의 달성율 합산 / 전체 건수 (미집계는 0으로 포함)
-    const allItems = kpiData;
-    if (allItems.length > 0) {
-      const sum = allItems.reduce((s, d) => s + (pctNum(d.달성율) || 0), 0);
-      overallRate = sum / allItems.length;
+    // 전체 진행율: F2열 값 우선, 없으면 평균 계산
+    const sheetRate = pctNum(overallFromSheet);
+    if (sheetRate !== null) {
+      overallRate = sheetRate;
+    } else if (kpiData.length > 0) {
+      const sum = kpiData.reduce((s, d) => s + (pctNum(d.달성율) || 0), 0);
+      overallRate = sum / kpiData.length;
     } else {
       overallRate = 0;
     }

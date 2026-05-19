@@ -392,6 +392,13 @@ function renderAll() {
     return true;
   });
 
+  // 그룹 내 달성율 높은 순 정렬 (미집계는 -1로 처리해서 맨 뒤)
+  filtered.sort((a, b) => {
+    const na = pctNum(a.달성율) !== null ? pctNum(a.달성율) : -1;
+    const nb = pctNum(b.달성율) !== null ? pctNum(b.달성율) : -1;
+    return nb - na;
+  });
+
   if (currentSort === 'category') {
     // 카테고리별 그룹
     const groups = {};

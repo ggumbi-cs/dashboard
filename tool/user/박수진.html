@@ -101,6 +101,44 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', sans-serif; font-size:
   display: block;
   transform-origin: top left;
 }
+
+/* ── Token 모달 ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.modal-overlay.hidden { display: none; }
+.modal {
+  background: #fff; border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  width: 400px; padding: 24px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.modal h3 { font-size: 14px; color: #1a2e50; }
+.modal p  { font-size: 11.5px; color: #607090; line-height: 1.6; }
+.modal input {
+  width: 100%; border: 1px solid #d0dae8; border-radius: 4px;
+  padding: 7px 9px; font-size: 12px; font-family: inherit; outline: none;
+}
+.modal input:focus { border-color: #2356a8; }
+.modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+.modal-btns button {
+  padding: 6px 18px; border: none; border-radius: 4px;
+  font-size: 12px; font-family: inherit; font-weight: 700; cursor: pointer;
+}
+.modal-btns .btn-ok  { background: #2356a8; color: #fff; }
+.modal-btns .btn-ok:hover { background: #1a3a7a; }
+.modal-btns .btn-cancel { background: #e8edf5; color: #4a6080; border: 1px solid #c8d4e4; }
+
+/* Token 설정 버튼 */
+.btn-token {
+  background: #243d6a; border: 1px solid #2e5080; color: #a8c4df;
+  padding: 3px 9px; border-radius: 3px; font-size: 11px;
+  cursor: pointer; font-family: inherit; margin-left: 8px;
+}
+.btn-token:hover { background: #2e5080; }
 </style>
 </head>
 <body>

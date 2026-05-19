@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Issue</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: #f0f2f5; font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; font-size: 13px; color: #222; padding: 16px; }
@@ -17,8 +18,6 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', '맑은 고딕', sans-
 .card-title { font-size: 11px; color: #888; margin-bottom: 8px; }
 
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
-
-/* 그리드 */
 
 /* 환불 바차트 */
 .bar-chart-wrap { position: relative; }
@@ -45,14 +44,17 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', '맑은 고딕', sans-
 .issue-table th { background: #1a2e50; color: #fff; padding: 6px 8px; text-align: left; font-weight: 500; }
 .issue-table td { padding: 6px 8px; border-bottom: 1px solid #eee; color: #444; }
 
-#loading { text-align: center; padding: 40px; color: #888; }
+#loading { text-align: center; padding: 40px; color: #888; font-size: 14px; }
+#error   { text-align: center; padding: 40px; color: #c0392b; font-size: 13px; display: none; }
 </style>
 </head>
 <body>
-<div id="loading">데이터 로딩 중...</div>
+<div id="loading">⏳ 데이터 로딩 중...</div>
+<div id="error"></div>
 <div id="content" style="display:none;"></div>
 
 <script>
+// ── URL 파라미터 ──────────────────────────────────────────
 const params = new URLSearchParams(window.location.search);
 const type   = params.get('type')   || 'monthly';
 const period = params.get('period') || '26.05월';
@@ -66,83 +68,139 @@ function getSheetName() {
   return period;
 }
 
+// ── 상수 ─────────────────────────────────────────────────
 const COLORS = ['#e8834a','#9b59b6','#5b9bd5','#74c476','#2a7a6f','#fd8d3c','#e74c3c','#f1c40f'];
 
-const SHEET_DATA = {
-  '26.05월': {
-    환불: [
-      { 구분2: '현금환불',           건수: 980, 금액: 72103761 },
-      { 구분2: '실결제수단환불',     건수: 307, 금액: 24129808 },
-      { 구분2: '개별환불-실결제수단', 건수: 111, 금액: 11857098 },
-      { 구분2: '개별환불-현금',      건수: 15,  금액: 1047605  },
-      { 구분2: '금액조정 현금환불',  건수: 28,  금액: 342125   },
-    ],
-    회수: [
-      {일:'3/3',건수:398},{일:'3/4',건수:0},{일:'3/5',건수:490},
-      {일:'3/6',건수:128},{일:'3/9',건수:41},{일:'3/10',건수:32},
-      {일:'3/11',건수:9},{일:'3/12',건수:6},{일:'3/13',건수:19},
-      {일:'3/16',건수:26},{일:'3/17',건수:53},{일:'3/18',건수:18},
-      {일:'3/19',건수:18},{일:'3/20',건수:10},{일:'3/23',건수:13},
-      {일:'3/24',건수:8},{일:'3/25',건수:6},{일:'3/27',건수:7},
-      {일:'3/30',건수:6},{일:'3/31',건수:6},{일:'4/2',건수:3},
-      {일:'4/6',건수:5},{일:'4/7',건수:2},{일:'4/9',건수:4},
-      {일:'4/13',건수:1},{일:'4/14',건수:7},{일:'4/21',건수:5},
-      {일:'4/23',건수:2},{일:'4/27',건수:4},{일:'4/29',건수:1},
-    ],
-    네이버: [
-      { 구분2: '회수완료건',       건수: 1329 },
-      { 구분2: '중복',             건수: 148  },
-      { 구분2: '타옵션',           건수: 79   },
-      { 구분2: '회수정보없음',     건수: 29   },
-      { 구분2: '주문내역확인불가', 건수: 26   },
-      { 구분2: '기타',             건수: 5    },
-    ],
-    자재수급: [
-      { 진행상태:'결재대기', 제품구분:'[꿈비] 휴대용 분유포트',      건명:'하부커버 무상자재 지급 요청',       기안일:'2026-05-13', 기안승인:'',           예상일정:'미정', 문서제목:'[엄마감동] 휴대용 분유포트 하부커버 무상자재 지급 요청 건' },
-      { 진행상태:'결재대기', 제품구분:'[꿈비] 휴대용 분유포트',      건명:'뚜껑 무상자재 지급 요청',           기안일:'2026-05-12', 기안승인:'',           예상일정:'미정', 문서제목:'[엄마감동] 휴대용 분유포트 뚜껑 무상자재 지급 요청 건' },
-      { 진행상태:'결재대기', 제품구분:'[꿈비] 듀얼팬 아이스 쿨시트', 건명:'듀얼팬 아이스 쿨시트 케이블 발주', 기안일:'2026-05-11', 기안승인:'',           예상일정:'미정', 문서제목:'[엄마감동] 듀얼팬 쿨시트 CS처리용 케이블 발주 요청 건' },
-      { 진행상태:'미입고',   제품구분:'[꿈비] 젖병살균세척기',       건명:'26.03월 젖병살균세척기 정기 발주', 기안일:'2026-03-30', 기안승인:'2026-05-07', 예상일정:'미정', 문서제목:'[엄마감동] 젖병살균세척기 03월 CS자재 발주 요청 건' },
-      { 진행상태:'미입고',   제품구분:'[꿈비] 유모차 웜 라이너_그레이', 건명:'웜라이너 패드 발주',           기안일:'2026-01-27', 기안승인:'2026-01-28', 예상일정:'미정', 문서제목:'[엄마감동] 웜라이너 CS자재 발주 요청 건' },
-    ]
-  }
-};
+// 깃허브 Raw URL — 실제 경로로 교체 필요
+const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/issue.xlsx';
 
-// 일별 데이터 → 주단위 집계
-// 날짜 문자열 'M/D' → Date 객체 (연도는 현재 기준으로 추정)
-function parseDate(str) {
-  const [m, d] = str.split('/').map(Number);
-  return new Date(2026, m - 1, d);
+// ── 엑셀 시리얼 → 날짜 문자열 'M/D' ─────────────────────
+function serialToMD(serial) {
+  if (!serial || isNaN(serial)) return '';
+  const d = new Date(Date.UTC(1899,11,30) + serial * 86400000);
+  return (d.getUTCMonth()+1) + '/' + d.getUTCDate();
 }
-// 해당 주의 월요일 구하기
+function serialToYMD(serial) {
+  if (!serial || isNaN(serial)) return '';
+  const d = new Date(Date.UTC(1899,11,30) + serial * 86400000);
+  return d.getUTCFullYear() + '-' + String(d.getUTCMonth()+1).padStart(2,'0') + '-' + String(d.getUTCDate()).padStart(2,'0');
+}
+
+// ── 시트 rows → 섹션별 데이터 파싱 ──────────────────────
+function parseSheet(rows) {
+  const data = { 환불: [], 회수: [], 네이버: [], 자재수급: [] };
+
+  rows.forEach(row => {
+    const 대분류   = String(row['대분류']   || '').trim();
+    const 차트주제 = String(row['차트주제'] || '').trim();
+    const 구분2    = String(row['구분2']    || '').trim();
+
+    // 낮잠이불 이슈
+    if (대분류.includes('낮잠') || 대분류.includes('낙잠')) {
+      if (차트주제.includes('환불현황') || 차트주제.includes('환불비율')) {
+        if (구분2) {
+          // 같은 구분2가 이미 있으면 합산
+          const existing = data.환불.find(r => r.구분2 === 구분2);
+          const 건수 = Number(row['건수'] || 0);
+          const 금액 = Number(row['금액'] || 0);
+          if (existing) {
+            existing.건수 += 건수;
+            existing.금액 += 금액;
+          } else {
+            data.환불.push({ 구분2, 건수, 금액 });
+          }
+        }
+      }
+      if (차트주제.includes('회수')) {
+        const 회수접수일 = row['회수접수일'];
+        const 건수 = Number(row['건수'] || 0);
+        if (회수접수일) {
+          const 일 = typeof 회수접수일 === 'number' ? serialToMD(회수접수일) : String(회수접수일).trim();
+          const existing = data.회수.find(r => r.일 === 일);
+          if (existing) existing.건수 += 건수;
+          else data.회수.push({ 일, 건수 });
+        }
+      }
+      if (차트주제.includes('네이버')) {
+        if (구분2) {
+          const 건수 = Number(row['건수'] || 0);
+          const existing = data.네이버.find(r => r.구분2 === 구분2);
+          if (existing) existing.건수 += 건수;
+          else data.네이버.push({ 구분2, 건수 });
+        }
+      }
+    }
+
+    // 자재수급
+    if (대분류.includes('자재')) {
+      const 진행상태 = String(row['진행상태'] || '').trim();
+      const 제품구분 = String(row['제품구분'] || '').trim();
+      const 건명     = String(row['건명']     || '').trim();
+      const 기안일_raw   = row['기안일'];
+      const 기안승인_raw = row['기안승인'];
+      const 예상일정 = String(row['예상일정'] || '').trim();
+      const 문서제목 = String(row['문서제목'] || '').trim();
+
+      if (진행상태 || 건명) {
+        data.자재수급.push({
+          진행상태,
+          제품구분,
+          건명,
+          기안일:   typeof 기안일_raw   === 'number' ? serialToYMD(기안일_raw)   : String(기안일_raw   || '').trim(),
+          기안승인: typeof 기안승인_raw === 'number' ? serialToYMD(기안승인_raw) : String(기안승인_raw || '').trim(),
+          예상일정,
+          문서제목
+        });
+      }
+    }
+  });
+
+  // 금액 내림차순 정렬
+  data.환불.sort((a,b) => b.금액 - a.금액);
+  // 회수일 정렬 (M/D → 정렬용 숫자)
+  data.회수.sort((a,b) => {
+    const toNum = s => { const [m,d] = s.split('/').map(Number); return m*100+d; };
+    return toNum(a.일) - toNum(b.일);
+  });
+  // 네이버 건수 내림차순
+  data.네이버.sort((a,b) => b.건수 - a.건수);
+
+  return data;
+}
+
+// ── 주단위 집계 ───────────────────────────────────────────
+function parseDate(str) {
+  const [m,d] = str.split('/').map(Number);
+  return new Date(2026, m-1, d);
+}
 function getMonday(date) {
   const d = new Date(date);
-  const day = d.getDay(); // 0=일,1=월...
-  const diff = (day === 0) ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
+  const day = d.getDay();
+  d.setDate(d.getDate() + (day===0 ? -6 : 1-day));
   return d;
 }
-function fmtMD(date) {
-  return (date.getMonth()+1) + '/' + date.getDate();
-}
+function fmtMD(date) { return (date.getMonth()+1)+'/'+date.getDate(); }
 
 function groupByWeek(rows) {
   const weeks = {};
   rows.forEach(r => {
-    const d = parseDate(r.일);
+    if (!r.일) return;
+    const d   = parseDate(r.일);
     const mon = getMonday(d);
-    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-    const key = fmtMD(mon) + '~' + fmtMD(sun);
+    const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+    const key = fmtMD(mon)+'~'+fmtMD(sun);
     if (!weeks[key]) weeks[key] = { label: key, 건수: 0 };
     weeks[key].건수 += r.건수;
   });
   return Object.values(weeks);
 }
 
+// ── 도넛 SVG ─────────────────────────────────────────────
 function makeDonut(data, valKey, total) {
   const circ = 2 * Math.PI * 34;
   let offset = 0, paths = '';
-  data.forEach((d, i) => {
-    const dash = circ * (d[valKey] / total);
+  data.forEach((d,i) => {
+    const dash = circ * (d[valKey]/total);
     const gap  = circ - dash;
     paths += `<circle cx="45" cy="45" r="34" fill="none" stroke="${COLORS[i]}" stroke-width="16"
       stroke-dasharray="${dash.toFixed(1)} ${gap.toFixed(1)}"
@@ -153,86 +211,72 @@ function makeDonut(data, valKey, total) {
   return paths;
 }
 
-function render(sheetKey) {
-  const d = SHEET_DATA[sheetKey];
-  if (!d) { document.getElementById('loading').textContent = '해당 시트 없음: ' + sheetKey; return; }
-
-  // ── 환불현황 ──
-  const totalAmt = d.환불.reduce((s, r) => s + r.금액, 0);
-  const maxAmt   = Math.max(...d.환불.map(r => r.금액));
+// ── 렌더링 ────────────────────────────────────────────────
+function render(d) {
+  // 환불현황
+  const totalAmt = d.환불.reduce((s,r)=>s+r.금액,0);
+  const maxAmt   = Math.max(...d.환불.map(r=>r.금액), 1);
   const BAR_H = 110;
-  const refundBars = d.환불.map((r, i) => {
-    const h = Math.max(2, Math.round(r.금액 / maxAmt * BAR_H));
+  const refundBars = d.환불.map((r,i) => {
+    const h = Math.max(2, Math.round(r.금액/maxAmt*BAR_H));
     return `<div class="bar-group">
       <div class="bar-val">₩${Math.round(r.금액/10000).toLocaleString()}만</div>
       <div class="bar" style="height:${h}px;background:${COLORS[i]};"></div>
     </div>`;
   }).join('');
-  const refundLabels = d.환불.map(r =>
-    `<div class="bar-label">${r.구분2}</div>`
-  ).join('');
+  const refundLabels = d.환불.map(r=>`<div class="bar-label">${r.구분2}</div>`).join('');
 
-  // ── 환불비율 ──
-  const totalCnt = d.환불.reduce((s, r) => s + r.건수, 0);
-  const donut1 = makeDonut(d.환불, '건수', totalCnt);
-  const legend1 = d.환불.map((r, i) => {
-    const pct = (r.건수 / totalCnt * 100).toFixed(1);
+  // 환불비율
+  const totalCnt = d.환불.reduce((s,r)=>s+r.건수,0);
+  const donut1   = makeDonut(d.환불,'건수',totalCnt||1);
+  const legend1  = d.환불.map((r,i)=>{
+    const pct = totalCnt ? (r.건수/totalCnt*100).toFixed(1) : 0;
     return `<div><span class="ldot" style="background:${COLORS[i]};"></span><span class="dval">${r.구분2}</span> ${r.건수.toLocaleString()} (${pct}%)</div>`;
   }).join('');
 
-  // ── 회수현황 (주단위) ──
+  // 회수현황 (주단위)
   const weekly = groupByWeek(d.회수);
-  const wVals  = weekly.map(w => w.건수);
-  const maxW   = Math.max(...wVals);
+  const wVals  = weekly.map(w=>w.건수);
+  const maxW   = Math.max(...wVals, 1);
   const nW     = weekly.length;
   const svgW=400, svgH=150, pL=28, pR=8, pT=14, pB=16;
   const iW=svgW-pL-pR, iH=svgH-pT-pB;
-
-  const wPts = weekly.map((w, i) => {
-    const x = pL + (nW === 1 ? iW/2 : i/(nW-1)*iW);
-    const y = pT + (1 - w.건수/maxW) * iH;
+  const wPts = weekly.map((w,i)=>{
+    const x = pL+(nW===1?iW/2:i/(nW-1)*iW);
+    const y = pT+(1-w.건수/maxW)*iH;
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(' ');
-  const polyPts = wPts + ` ${(pL+iW).toFixed(1)},${(pT+iH).toFixed(1)} ${pL},${(pT+iH).toFixed(1)}`;
-
-  const ySteps = [0,0.5,1].map(p => ({
-    val: Math.round(maxW*p),
-    y: (pT+(1-p)*iH).toFixed(1)
-  }));
-  const yGrid = ySteps.map(s =>
+  const polyPts = wPts+` ${(pL+iW).toFixed(1)},${(pT+iH).toFixed(1)} ${pL},${(pT+iH).toFixed(1)}`;
+  const ySteps = [0,0.5,1].map(p=>({ val:Math.round(maxW*p), y:(pT+(1-p)*iH).toFixed(1) }));
+  const yGrid  = ySteps.map(s=>
     `<line x1="${pL}" y1="${s.y}" x2="${svgW-pR}" y2="${s.y}" stroke="#eee" stroke-width="1"/>
      <text x="${pL-3}" y="${parseFloat(s.y)+3}" text-anchor="end" font-size="7" fill="#aaa">${s.val}</text>`
   ).join('');
-
-  // 최대값 포인트 강조
-  const maxIdx = wVals.indexOf(maxW);
-  const wDots = weekly.map((w, i) => {
-    const x = pL + (nW === 1 ? iW/2 : i/(nW-1)*iW);
-    const y = pT + (1 - w.건수/maxW) * iH;
-    if (i !== maxIdx) return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" fill="#1a3a6e"/>`;
+  const maxIdx = wVals.indexOf(Math.max(...wVals));
+  const wDots  = weekly.map((w,i)=>{
+    const x = pL+(nW===1?iW/2:i/(nW-1)*iW);
+    const y = pT+(1-w.건수/maxW)*iH;
+    if (i!==maxIdx) return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" fill="#1a3a6e"/>`;
     return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="#1a3a6e"/>
             <text x="${x.toFixed(1)}" y="${(y-6).toFixed(1)}" text-anchor="middle" font-size="8" fill="#1a3a6e" font-weight="600">${w.건수}</text>`;
   }).join('');
+  const xLabels = weekly.map(w=>`<span style="font-size:8px;">${w.label}</span>`).join('');
 
-  const xLabels = weekly.map(w => `<span style="font-size:8px;">${w.label}</span>`).join('');
-
-  // ── 네이버폼현황 ──
-  const totalNav = d.네이버.reduce((s, r) => s + r.건수, 0);
-  const donut2 = makeDonut(d.네이버, '건수', totalNav);
-  const legend2 = d.네이버.map((r, i) => {
-    const pct = (r.건수 / totalNav * 100).toFixed(1);
+  // 네이버폼현황
+  const totalNav = d.네이버.reduce((s,r)=>s+r.건수,0);
+  const donut2   = makeDonut(d.네이버,'건수',totalNav||1);
+  const legend2  = d.네이버.map((r,i)=>{
+    const pct = totalNav ? (r.건수/totalNav*100).toFixed(1) : 0;
     return `<div><span class="ldot" style="background:${COLORS[i]};"></span><span class="dval">${r.구분2}</span> ${r.건수.toLocaleString()} (${pct}%)</div>`;
   }).join('');
 
-  // ── 자재수급 ──
-  const statusColor = { '결재대기':'#e8834a', '미입고':'#5b9bd5', '입고완료':'#74c476' };
-  const tableRows = d.자재수급.map(r =>
+  // 자재수급
+  const statusColor = { '결재대기':'#e8834a','미입고':'#5b9bd5','입고완료':'#74c476' };
+  const tableRows = d.자재수급.map(r=>
     `<tr>
       <td><span style="color:${statusColor[r.진행상태]||'#888'};font-weight:600;">${r.진행상태}</span></td>
-      <td>${r.제품구분}</td>
-      <td>${r.건명}</td>
-      <td>${r.기안일}</td>
-      <td>${r.기안승인||'-'}</td>
+      <td>${r.제품구분}</td><td>${r.건명}</td>
+      <td>${r.기안일}</td><td>${r.기안승인||'-'}</td>
       <td>${r.예상일정}</td>
       <td style="font-size:10px;color:#666;">${r.문서제목}</td>
     </tr>`
@@ -242,8 +286,6 @@ function render(sheetKey) {
   <div class="section-wrap">
     <div class="section-header sec-dark">1. 낮잠이불 Issue</div>
     <div class="grid-4">
-
-      <!-- 환불현황 -->
       <div class="card">
         <div class="card-title">환불현황</div>
         <div class="bar-chart-wrap">
@@ -252,8 +294,6 @@ function render(sheetKey) {
           <div class="bar-labels-row">${refundLabels}</div>
         </div>
       </div>
-
-      <!-- 환불비율 -->
       <div class="card">
         <div class="card-title">환불비율</div>
         <div class="donut-side-wrap">
@@ -264,8 +304,6 @@ function render(sheetKey) {
           <div class="dlegend-side">${legend1}</div>
         </div>
       </div>
-
-      <!-- 회수현황 -->
       <div class="card">
         <div class="card-title">회수현황</div>
         <svg viewBox="0 0 ${svgW} ${svgH}" style="width:100%;height:${svgH}px;">
@@ -276,8 +314,6 @@ function render(sheetKey) {
         </svg>
         <div class="x-labels">${xLabels}</div>
       </div>
-
-      <!-- 네이버폼현황 -->
       <div class="card">
         <div class="card-title">네이버폼현황</div>
         <div class="donut-side-wrap">
@@ -288,32 +324,52 @@ function render(sheetKey) {
           <div class="dlegend-side">${legend2}</div>
         </div>
       </div>
-
     </div>
   </div>
-
   <div class="section-wrap">
     <div class="section-header sec-green">2. 자재수급 Issue</div>
     <div class="card">
       <div class="card-title" style="margin-bottom:8px;">자재수급현황</div>
       <table class="issue-table">
-        <thead>
-          <tr>
-            <th>진행상태</th><th>제품구분</th><th>건명</th>
-            <th>기안일</th><th>기안승인</th><th>예상일정</th><th>문서제목</th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th>진행상태</th><th>제품구분</th><th>건명</th>
+          <th>기안일</th><th>기안승인</th><th>예상일정</th><th>문서제목</th>
+        </tr></thead>
         <tbody>${tableRows}</tbody>
       </table>
     </div>
-  </div>
-  `;
+  </div>`;
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('content').style.display = 'block';
 }
 
-render(getSheetName());
+// ── 메인: 깃허브에서 fetch → SheetJS 파싱 ────────────────
+async function main() {
+  const sheetName = getSheetName();
+  try {
+    const res = await fetch(GITHUB_RAW_URL + '?t=' + Date.now()); // 캐시 방지
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const ab   = await res.arrayBuffer();
+    const wb   = XLSX.read(ab, { type: 'array' });
+
+    if (!wb.SheetNames.includes(sheetName)) {
+      throw new Error(`시트 없음: "${sheetName}"\n사용 가능: ${wb.SheetNames.join(', ')}`);
+    }
+
+    const ws   = wb.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    const data = parseSheet(rows);
+    render(data);
+  } catch (e) {
+    document.getElementById('loading').style.display = 'none';
+    const el = document.getElementById('error');
+    el.style.display = 'block';
+    el.innerHTML = `⚠️ 데이터 로드 실패<br><small>${e.message}</small>`;
+  }
+}
+
+main();
 </script>
 </body>
 </html>

@@ -87,82 +87,89 @@ function serialToYMD(serial) {
 }
 
 // ── 시트 rows → 섹션별 데이터 파싱 ──────────────────────
-function parseSheet(rows) {
+// 엑셀이 좌(A~G) / 우(J~R) 2블록 구조
+// SheetJS로 각각 분리해서 읽음
+function parseSheetRaw(ab, sheetName) {
+  const wb   = XLSX.read(ab, { type: 'array' });
+  const ws   = wb.Sheets[sheetName];
   const data = { 환불: [], 회수: [], 네이버: [], 자재수급: [] };
 
-  rows.forEach(row => {
+  // 좌측 블록: A~G (대분류, 차트주제, 구분, 구분2, 회수접수일, 건수, 금액)
+  const leftRows = XLSX.utils.sheet_to_json(ws, {
+    defval: '',
+    range: XLSX.utils.decode_range('A1:G200')
+  });
+
+  // 우측 블록: J~R (대분류, 차트주제, 진행상태, 제품구분, 건명, 기안일, 기안승인, 예상일정, 문서제목)
+  const rightRows = XLSX.utils.sheet_to_json(ws, {
+    defval: '',
+    range: XLSX.utils.decode_range('J1:R200')
+  });
+
+  // 좌측 파싱
+  leftRows.forEach(row => {
     const 대분류   = String(row['대분류']   || '').trim();
     const 차트주제 = String(row['차트주제'] || '').trim();
     const 구분2    = String(row['구분2']    || '').trim();
 
-    // 낮잠이불 이슈
-    if (대분류.includes('낮잠') || 대분류.includes('낙잠')) {
-      if (차트주제.includes('환불현황') || 차트주제.includes('환불비율')) {
-        if (구분2) {
-          // 같은 구분2가 이미 있으면 합산
-          const existing = data.환불.find(r => r.구분2 === 구분2);
-          const 건수 = Number(row['건수'] || 0);
-          const 금액 = Number(row['금액'] || 0);
-          if (existing) {
-            existing.건수 += 건수;
-            existing.금액 += 금액;
-          } else {
-            data.환불.push({ 구분2, 건수, 금액 });
-          }
-        }
-      }
-      if (차트주제.includes('회수')) {
-        const 회수접수일 = row['회수접수일'];
+    if (!대분류) return;
+
+    if (차트주제.includes('환불')) {
+      if (구분2) {
+        const existing = data.환불.find(r => r.구분2 === 구분2);
         const 건수 = Number(row['건수'] || 0);
-        if (회수접수일) {
-          const 일 = typeof 회수접수일 === 'number' ? serialToMD(회수접수일) : String(회수접수일).trim();
-          const existing = data.회수.find(r => r.일 === 일);
-          if (existing) existing.건수 += 건수;
-          else data.회수.push({ 일, 건수 });
-        }
-      }
-      if (차트주제.includes('네이버')) {
-        if (구분2) {
-          const 건수 = Number(row['건수'] || 0);
-          const existing = data.네이버.find(r => r.구분2 === 구분2);
-          if (existing) existing.건수 += 건수;
-          else data.네이버.push({ 구분2, 건수 });
-        }
+        const 금액 = Number(row['금액'] || 0);
+        if (existing) { existing.건수 += 건수; existing.금액 += 금액; }
+        else data.환불.push({ 구분2, 건수, 금액 });
       }
     }
-
-    // 자재수급
-    if (대분류.includes('자재')) {
-      const 진행상태 = String(row['진행상태'] || '').trim();
-      const 제품구분 = String(row['제품구분'] || '').trim();
-      const 건명     = String(row['건명']     || '').trim();
-      const 기안일_raw   = row['기안일'];
-      const 기안승인_raw = row['기안승인'];
-      const 예상일정 = String(row['예상일정'] || '').trim();
-      const 문서제목 = String(row['문서제목'] || '').trim();
-
-      if (진행상태 || 건명) {
-        data.자재수급.push({
-          진행상태,
-          제품구분,
-          건명,
-          기안일:   typeof 기안일_raw   === 'number' ? serialToYMD(기안일_raw)   : String(기안일_raw   || '').trim(),
-          기안승인: typeof 기안승인_raw === 'number' ? serialToYMD(기안승인_raw) : String(기안승인_raw || '').trim(),
-          예상일정,
-          문서제목
-        });
+    if (차트주제.includes('회수')) {
+      const raw = row['회수접수일'];
+      const 건수 = Number(row['건수'] || 0);
+      if (raw) {
+        const 일 = typeof raw === 'number' ? serialToMD(raw) : String(raw).trim();
+        const existing = data.회수.find(r => r.일 === 일);
+        if (existing) existing.건수 += 건수;
+        else data.회수.push({ 일, 건수 });
+      }
+    }
+    if (차트주제.includes('네이버')) {
+      if (구분2) {
+        const 건수 = Number(row['건수'] || 0);
+        const existing = data.네이버.find(r => r.구분2 === 구분2);
+        if (existing) existing.건수 += 건수;
+        else data.네이버.push({ 구분2, 건수 });
       }
     }
   });
 
-  // 금액 내림차순 정렬
+  // 우측 파싱 (자재수급)
+  rightRows.forEach(row => {
+    const 대분류   = String(row['대분류']   || '').trim();
+    const 진행상태 = String(row['진행상태'] || '').trim();
+    const 건명     = String(row['건명']     || '').trim();
+    if (!대분류 && !진행상태 && !건명) return;
+    if (대분류 === '대분류') return; // 헤더행 스킵
+
+    const 기안일_raw   = row['기안일'];
+    const 기안승인_raw = row['기안승인'];
+    data.자재수급.push({
+      진행상태,
+      제품구분: String(row['제품구분'] || '').trim(),
+      건명,
+      기안일:   typeof 기안일_raw   === 'number' ? serialToYMD(기안일_raw)   : String(기안일_raw   || '').trim(),
+      기안승인: typeof 기안승인_raw === 'number' ? serialToYMD(기안승인_raw) : String(기안승인_raw || '').trim(),
+      예상일정: String(row['예상일정'] || '').trim(),
+      문서제목: String(row['문서제목'] || '').replace(/\xa0/g, ' ').trim()
+    });
+  });
+
+  // 정렬
   data.환불.sort((a,b) => b.금액 - a.금액);
-  // 회수일 정렬 (M/D → 정렬용 숫자)
   data.회수.sort((a,b) => {
     const toNum = s => { const [m,d] = s.split('/').map(Number); return m*100+d; };
     return toNum(a.일) - toNum(b.일);
   });
-  // 네이버 건수 내림차순
   data.네이버.sort((a,b) => b.건수 - a.건수);
 
   return data;
@@ -351,15 +358,11 @@ async function main() {
     const res = await fetch(GITHUB_RAW_URL + '?t=' + Date.now()); // 캐시 방지
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const ab   = await res.arrayBuffer();
-    const wb   = XLSX.read(ab, { type: 'array' });
-
+    const wb = XLSX.read(ab, { type: 'array' });
     if (!wb.SheetNames.includes(sheetName)) {
       throw new Error(`시트 없음: "${sheetName}"\n사용 가능: ${wb.SheetNames.join(', ')}`);
     }
-
-    const ws   = wb.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
-    const data = parseSheet(rows);
+    const data = parseSheetRaw(ab, sheetName);
     render(data);
   } catch (e) {
     document.getElementById('loading').style.display = 'none';

@@ -142,8 +142,8 @@
   .kpi-card.done::before { background: #2a9a6f; } /* 완료 - 초록 */
   .kpi-card.none::before { background: #e03030; } /* 시작전 - 빨강 */
 
-  .kpi-name { font-size: 14px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
-  .kpi-desc { font-size: 11px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5; }
+  .kpi-name { font-size: 14px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; padding-right: 30px; word-break: keep-all; line-height: 1.4; }
+  .kpi-desc { font-size: 11px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5; word-break: keep-all; }
 
   .kpi-bottom { display: flex; align-items: center; justify-content: space-between; }
   .kpi-bar-wrap { flex: 1; background: #eef0f6; border-radius: 4px; height: 6px; margin-right: 12px; }
@@ -323,10 +323,9 @@ function parseKpiSheet(wb) {
   if (!ws) throw new Error("'주요kpi' 시트를 찾을 수 없습니다.");
   const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
   const data = [];
-  for (let i = 1; i < rows.length; i++) {
+  for (let i = 2; i < rows.length; i++) {
     const r = rows[i];
-    if (!r || !r[2]) continue;
-    if (r[1] === '종합현황') continue;
+    if (!r || !r[3]) continue;
     data.push({
       주기:     r[1],
       대분류:   r[2],
@@ -441,7 +440,7 @@ function renderCard(grid, item) {
   const link  = item.링크 || '';
   const assignee = item.담당 || '';
   const linkBtn = link
-    ? `<a class="kpi-link-btn" href="${link}" target="_blank" title="바로가기">
+    ? `<a class="kpi-link-btn" href="${link}" target="_blank" title="바로가기" onclick="event.preventDefault(); alert('노션 링크 연동 준비중');">
         <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
           <polygon points="3,2 13,8 3,14"/>
         </svg>
@@ -491,7 +490,7 @@ async function init() {
         <div class="hero-left">
           <div class="hero-label">종합현황</div>
           <div class="hero-title">전체 진행율</div>
-          <div class="hero-desc">연간 KPI 전체 목표 대비 현재 달성 수준</div>
+          <div class="hero-desc">연간 KPI 전체 목표 대비 현재 달성 수준(가중치 환산)</div>
           <div class="hero-bar-wrap"><div class="hero-bar" style="width:${barW}%"></div></div>
         </div>
         <div class="hero-right">

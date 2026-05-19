@@ -268,24 +268,26 @@ function buildLineChart(trend, color) {
 
 function buildDonut(exchCnt, retCnt, color) {
   const total = exchCnt + retCnt || 1;
-  const R=32, CIRC=2*Math.PI*R;
+  const R=38, CX=50, CY=50, CIRC=2*Math.PI*R;
   const eDash = (exchCnt/total)*CIRC;
   const rDash = CIRC - eDash;
   const ePct  = Math.round(exchCnt/total*100);
   return `
-    <div class="donut-row">
-      <div class="donut-wrap">
-        <svg viewBox="0 0 82 82">
-          <circle cx="41" cy="41" r="${R}" fill="none" stroke="${color}" stroke-width="10"
+    <div style="display:flex;flex-direction:column;align-items:center;gap:7px;margin-top:6px;">
+      <div style="position:relative;width:100px;height:100px;flex-shrink:0;">
+        <svg viewBox="0 0 100 100" style="width:100px;height:100px;">
+          <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${color}" stroke-width="11"
             stroke-dasharray="${eDash.toFixed(1)} ${rDash.toFixed(1)}" stroke-dashoffset="${(CIRC*0.25).toFixed(1)}"/>
-          <circle cx="41" cy="41" r="${R}" fill="none" stroke="#e2e8f0" stroke-width="10"
+          <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="#e2e8f0" stroke-width="11"
             stroke-dasharray="${rDash.toFixed(1)} ${eDash.toFixed(1)}" stroke-dashoffset="${(CIRC*0.25-eDash).toFixed(1)}"/>
         </svg>
-        <div class="donut-center">${fmtN(total)}<br><span style="font-size:9px;color:#64748b;font-weight:400;">건</span></div>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:15px;font-weight:700;text-align:center;color:#0f1f3d;line-height:1.15;">
+          ${fmtN(total)}<br><span style="font-size:9px;color:#64748b;font-weight:400;">건</span>
+        </div>
       </div>
-      <div class="legend-list">
-        <div><span class="ldot" style="background:${color};"></span>교환 ${fmtN(exchCnt)} (${ePct}%)</div>
-        <div><span class="ldot" style="background:#e2e8f0;"></span>반품 ${fmtN(retCnt)} (${100-ePct}%)</div>
+      <div style="display:flex;justify-content:center;gap:14px;font-size:11px;color:#64748b;">
+        <span><span class="ldot" style="background:${color};"></span>교환 ${fmtN(exchCnt)} (${ePct}%)</span>
+        <span><span class="ldot" style="background:#e2e8f0;"></span>반품 ${fmtN(retCnt)} (${100-ePct}%)</span>
       </div>
     </div>`;
 }
@@ -293,13 +295,13 @@ function buildDonut(exchCnt, retCnt, color) {
 function buildReasonPie(reasonMap, color) {
   const sorted = Object.entries(reasonMap).sort((a,b) => b[1]-a[1]);
   const total  = sorted.reduce((s,[,v]) => s+v, 0) || 1;
-  const R=34, CIRC=2*Math.PI*R;
+  const R=42, CX=55, CY=55, CIRC=2*Math.PI*R;
   let offset = 0, arcs = '';
   sorted.forEach(([,v], i) => {
     const dash = (v/total)*CIRC;
     const c    = i===0 ? color : REASON_COLORS[i % REASON_COLORS.length];
     const off  = -(offset - CIRC*0.25);
-    arcs += `<circle cx="44" cy="44" r="${R}" fill="none" stroke="${c}" stroke-width="16"
+    arcs += `<circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${c}" stroke-width="18"
       stroke-dasharray="${dash.toFixed(1)} ${(CIRC-dash).toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>`;
     offset += dash;
   });
@@ -309,14 +311,16 @@ function buildReasonPie(reasonMap, color) {
     return `<div><span class="ldot" style="background:${c};"></span>${reason} ${pct}% (${cnt})</div>`;
   }).join('');
   return `
-    <div class="reason-row">
-      <div class="reason-donut">
-        <svg viewBox="0 0 88 88">${arcs}
-          <circle cx="44" cy="44" r="26" fill="#fff"/>
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+      <div style="position:relative;width:110px;height:110px;flex-shrink:0;">
+        <svg viewBox="0 0 110 110" style="width:110px;height:110px;">${arcs}
+          <circle cx="${CX}" cy="${CY}" r="32" fill="#fff"/>
         </svg>
-        <div class="reason-center">${fmtN(total)}<br><span style="font-size:9px;color:#64748b;font-weight:400;">건</span></div>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:15px;font-weight:700;text-align:center;color:#0f1f3d;line-height:1.15;">
+          ${fmtN(total)}<br><span style="font-size:9px;color:#64748b;font-weight:400;">건</span>
+        </div>
       </div>
-      <div class="reason-legend">${legend}</div>
+      <div class="reason-legend" style="flex:1;">${legend}</div>
     </div>`;
 }
 

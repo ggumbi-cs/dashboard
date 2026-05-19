@@ -250,6 +250,7 @@ async function loadXlsx() {
         구분:   r[8]  ? String(r[8]).trim()  : '',
         비용:   parseFloat(r[6]) || 0,
         소요일: parseFloat(r[13]) || 0,
+        진행현황: r[14] ? String(r[14]).trim() : '',
         // 사용부품: 쉼표 구분 분리
         부품목록: r[9] ? String(r[9]).split(',').map(p=>p.trim()).filter(Boolean) : []
       });
@@ -621,21 +622,26 @@ function render() {
     [{ label:'자재출고', color:'#0f1f3d', values: stockVals }]);
 
   // 4. 수리모델비율 (도넛) — 도넛 범위 회차
-  // 포함: 수리출고 / 제외: 수리제외
+  // 포함: 수리출고 / 제외: 진행현황=대기,취소
+  const REPAIR_EXCLUDE = new Set(['대기', '취소']);
   const repModelMap = {};
-  RAW_GM.filter(d => gmDonutRounds.has(gmKey(d)) && d.구분 === '수리출고' && d.구분 !== '수리제외').forEach(d => {
+  RAW_GM.filter(d =>
+    gmDonutRounds.has(gmKey(d)) &&
+    d.구분 === '수리출고' &&
+    !REPAIR_EXCLUDE.has(d.진행현황)
+  ).forEach(d => {
     if (!d.제품명) return;
     repModelMap[d.제품명] = (repModelMap[d.제품명]||0) + 1;
   });
   renderDonut('chart-model-repair', Object.entries(repModelMap).map(([label,val])=>({label,val})));
 
   // 5. 수리 부품교체비율 (도넛) — 사용부품 쉼표 분리
-  // 포함: 수리출고 / 제외: 수리제외 / 고급필터: 사용부품 비어있지 않으며 대체품 미포함
+  // 포함: 수리출고 / 제외: 진행현황=대기,취소 / 고급필터: 사용부품 비어있지 않으며 대체품 미포함
   const repPartMap = {};
   RAW_GM.filter(d =>
     gmDonutRounds.has(gmKey(d)) &&
     d.구분 === '수리출고' &&
-    d.구분 !== '수리제외' &&
+    !REPAIR_EXCLUDE.has(d.진행현황) &&
     d.부품목록.length > 0
   ).forEach(d => {
     d.부품목록.forEach(p => {

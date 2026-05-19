@@ -409,6 +409,37 @@ function renderAll() {
       secEl.appendChild(grid);
       container.appendChild(secEl);
     });
+  } else if (currentSort === 'assignee') {
+    const ORDER = ['미숙','우승','대훈','민성','수진','진영','지현','승연'];
+    const assigneeGroups = {};
+    ORDER.forEach(name => assigneeGroups[name] = []);
+    assigneeGroups['기타'] = [];
+
+    filtered.forEach(item => {
+      const names = (item.담당 || '').split(/[,\s]+/).map(s => s.trim()).filter(Boolean);
+      if (names.length === 0) {
+        assigneeGroups['기타'].push(item);
+      } else {
+        const primary = names[0];
+        if (assigneeGroups[primary] !== undefined) {
+          assigneeGroups[primary].push(item);
+        } else {
+          assigneeGroups['기타'].push(item);
+        }
+      }
+    });
+
+    [...ORDER, '기타'].forEach(name => {
+      const items = assigneeGroups[name];
+      if (!items || items.length === 0) return;
+      const secEl = document.createElement('div');
+      secEl.innerHTML = `<div class="section-title">👤 ${name}</div>`;
+      const grid = document.createElement('div');
+      grid.className = 'kpi-grid';
+      items.forEach(item => renderCard(grid, item));
+      secEl.appendChild(grid);
+      container.appendChild(secEl);
+    });
   } else {
     // 진행율 구간별 그룹
     const bands = [
@@ -514,6 +545,7 @@ async function init() {
         <select class="sort-select" onchange="setSort(this.value)">
           <option value="category">정렬 : 카테고리</option>
           <option value="rate">정렬 : 진행율</option>
+          <option value="assignee">정렬 : 담당자별</option>
         </select>
       </div>
 

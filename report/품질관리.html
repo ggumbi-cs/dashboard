@@ -45,7 +45,7 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', '맑은 고딕', sans-
 .row23-grid {
   display:grid;
   grid-template-columns:1.6fr 1fr 1fr 1fr;
-  grid-template-rows:auto auto;
+  grid-template-rows:1fr 1fr;
   gap:8px;
   margin-bottom:14px;
 }
@@ -56,7 +56,7 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', '맑은 고딕', sans-
 }
 .donut-rel { position:relative; flex-shrink:0; }
 .dcenter { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; line-height:1.2; }
-.sm-donut-card { background:#fff; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.08); padding:10px 12px; }
+.sm-donut-card { background:#fff; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.08); padding:10px 12px; height:100%; box-sizing:border-box; }
 .sm-donut-inner { display:flex; align-items:center; gap:10px; }
 
 .kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:8px; }
@@ -198,21 +198,24 @@ function getRecentPeriods(pi) {
     }));
   }
   if (pi.type === 'monthly') {
-    return Array.from({length:4}, (_,i) => {
+    // 2026년 1월 이전으로 가지 않도록 제한
+    const periods = [];
+    for (let i = 0; i < 4; i++) {
       let m = pi.month - (3-i), y = pi.year;
       if (m <= 0) { m += 12; y--; }
+      if (y < 2026 || (y === 2026 && m < 1)) continue; // 2026-01 미만 제외
       const yStr = String(y).slice(2).padStart(2,'0');
       const mStr = String(m).padStart(2,'0');
-      return {
+      periods.push({
         display: `${yStr}.${mStr}월`,
-        // 문자열 직접 비교
         match: dateStr => {
           if (!dateStr) return false;
           const parts = dateStr.split('-');
           return parseInt(parts[0])===y && parseInt(parts[1])===m;
         }
-      };
-    });
+      });
+    }
+    return periods;
   } else {
     return Array.from({length:4}, (_,i) => {
       const fri = new Date(pi.friday.getFullYear(), pi.friday.getMonth(), pi.friday.getDate());

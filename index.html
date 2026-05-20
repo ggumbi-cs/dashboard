@@ -757,7 +757,7 @@ function toolNav(path, el) {
   frame.onload = () => { if (typeof pushCSVToFrame === 'function') pushCSVToFrame(); };
 }
 
-// 외부 링크 → iframe 시도, 차단 시 새 탭으로 fallback
+// 외부 링크 → iframe으로만 표시
 function toolNavExternal(url, el) {
   if (el) {
     document.querySelectorAll('#toolSidebar .sb-item').forEach(i => i.classList.remove('active'));
@@ -765,13 +765,6 @@ function toolNavExternal(url, el) {
   }
   const frame = document.getElementById('mainFrame');
   frame.src = url;
-  const timer = setTimeout(() => {
-    try { void frame.contentDocument.body; } catch(e) { window.open(url, '_blank'); }
-  }, 2000);
-  frame.onload = () => {
-    clearTimeout(timer);
-    try { void frame.contentDocument.body; } catch(e) { window.open(url, '_blank'); }
-  };
 }
 
 // ── iframe 갱신 ────────────────────────────────────

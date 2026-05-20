@@ -155,11 +155,13 @@ function parsePeriod() {
     const yy = parseInt('20' + period.slice(0,2));
     const mm = parseInt(period.slice(3,5));
     return { type:'monthly', year:yy, month:mm };
+  } else if (type === 'yearly') {
+    const yy = parseInt(period);
+    return { type:'yearly', year:yy };
   } else {
     const yy = '20' + period.slice(0,2);
     const mm = period.slice(2,4);
     const dd = period.slice(4,6);
-    // 타임존 문제 없도록 날짜 직접 파싱
     const friday = new Date(parseInt(yy), parseInt(mm)-1, parseInt(dd));
     const saturday = new Date(friday);
     saturday.setDate(friday.getDate() - 6);
@@ -170,21 +172,31 @@ function parsePeriod() {
 // ── 날짜 매칭: new Date() 없이 문자열 직접 비교 ──────────────────
 function matchDate(dateStr, pi) {
   if (!dateStr) return false;
-  // dateStr 형식: 'YYYY-MM-DD'
   const parts = dateStr.split('-');
   const y = parseInt(parts[0]);
   const m = parseInt(parts[1]);
   const dayNum = parseInt(parts[2]);
   if (pi.type === 'monthly') {
     return y === pi.year && m === pi.month;
+  } else if (pi.type === 'yearly') {
+    return y === pi.year;
   } else {
-    // 주간: 날짜 객체 비교 (타임존 없이 로컬 파싱)
     const d = new Date(y, m-1, dayNum);
     return d >= pi.saturday && d <= pi.friday;
   }
 }
 
 function getRecentPeriods(pi) {
+  if (pi.type === 'yearly') {
+    return Array.from({length:12}, (_,i) => ({
+      display: `${i+1}월`,
+      match: dateStr => {
+        if (!dateStr) return false;
+        const parts = dateStr.split('-');
+        return parseInt(parts[0])===pi.year && parseInt(parts[1])===(i+1);
+      }
+    }));
+  }
   if (pi.type === 'monthly') {
     return Array.from({length:4}, (_,i) => {
       let m = pi.month - (3-i), y = pi.year;
@@ -236,6 +248,98 @@ function buildDonut(cx, cy, r, sw, vals, colors, total) {
     offset += C * (v/total);
     return out;
   }).join('');
+}
+
+// ── 스파크라인 SVG ────────────────────────────────────────────────
+function buildSparkline(vals, color) {
+  const w = 100, h = 36;
+  const max = Math.max(...vals, 1);
+  const min = 0;
+  const points = vals.map((v, i) => {
+    const x = (i / (vals.length - 1)) * w;
+    const y = h - ((v - min) / (max - min)) * (h - 4) - 2;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="display:block;">
+    <polyline points="${points}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>`;
+}
+
+// ── 스파크라인 데이터 집계 ────────────────────────────────────────
+function getSparkData(improve, pi, gubun) {
+  if (pi.type === 'yearly') {
+    return Array.from({length:12}, (_,i) =>
+      improve.filter(r => {
+        if (!r.reg) return false;
+        const parts = r.reg.split('-');
+        return parseInt(parts[0])===pi.year && parseInt(parts[1])===(i+1) && r.gubun?.includes(gubun);
+      }).length
+    );
+  }
+  if (pi.type === 'monthly') {
+    // 2026년 1월 ~ 현재 월까지
+    const months = [];
+    for (let m = 1; m <= pi.month; m++) {
+      months.push({ y: pi.year, m });
+    }
+    return months.map(({y, m}) =>
+      improve.filter(r => {
+        if (!r.reg) return false;
+        const parts = r.reg.split('-');
+        return parseInt(parts[0])===y && parseInt(parts[1])===m && r.gubun?.includes(gubun);
+      }).length
+    );
+  } else {
+    // 최근 6주
+    return Array.from({length:6}, (_,i) => {
+      const fri = new Date(pi.friday.getFullYear(), pi.friday.getMonth(), pi.friday.getDate());
+      fri.setDate(fri.getDate() - (5-i)*7);
+      const sat = new Date(fri); sat.setDate(fri.getDate() - 6);
+      return improve.filter(r => {
+        if (!r.reg) return false;
+        const p = r.reg.split('-');
+        const d = new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]));
+        return d >= sat && d <= fri && r.gubun?.includes(gubun);
+      }).length;
+    });
+  }
+}
+
+function getTotalSparkData(improve, pi) {
+  if (pi.type === 'yearly') {
+    return Array.from({length:12}, (_,i) =>
+      improve.filter(r => {
+        if (!r.reg) return false;
+        const parts = r.reg.split('-');
+        return parseInt(parts[0])===pi.year && parseInt(parts[1])===(i+1);
+      }).length
+    );
+  }
+  if (pi.type === 'monthly') {
+    const months = [];
+    for (let m = 1; m <= pi.month; m++) {
+      months.push({ y: pi.year, m });
+    }
+    return months.map(({y, m}) =>
+      improve.filter(r => {
+        if (!r.reg) return false;
+        const parts = r.reg.split('-');
+        return parseInt(parts[0])===y && parseInt(parts[1])===m;
+      }).length
+    );
+  } else {
+    return Array.from({length:6}, (_,i) => {
+      const fri = new Date(pi.friday.getFullYear(), pi.friday.getMonth(), pi.friday.getDate());
+      fri.setDate(fri.getDate() - (5-i)*7);
+      const sat = new Date(fri); sat.setDate(fri.getDate() - 6);
+      return improve.filter(r => {
+        if (!r.reg) return false;
+        const p = r.reg.split('-');
+        const d = new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]));
+        return d >= sat && d <= fri;
+      }).length;
+    });
+  }
 }
 
 function stageBadge(s) {
@@ -291,6 +395,12 @@ function render(raw, improve) {
   const kpiRequest = improveFiltered.filter(r=>r.gubun?.includes('사후개선')).length;
   const kpiSample  = improveFiltered.filter(r=>r.gubun?.includes('출시전검사')).length;
   const kpiCancel  = improveFiltered.filter(r=>r.gubun?.includes('스펙비교')).length;
+
+  // 스파크라인 데이터
+  const sparkTotal   = buildSparkline(getTotalSparkData(improve, pi), '#e05c6e');
+  const sparkRequest = buildSparkline(getSparkData(improve, pi, '사후개선'), '#e05c6e');
+  const sparkSample  = buildSparkline(getSparkData(improve, pi, '출시전검사'), '#e05c6e');
+  const sparkCancel  = buildSparkline(getSparkData(improve, pi, '스펙비교'), '#e05c6e');
 
   const bigVals   = [...top5.map(([,v])=>v), ...(othersVal>0?[othersVal]:[])];
   const bigColors = bigVals.map((_,i)=>BIG_COLORS[i]||'#ccc');
@@ -352,7 +462,7 @@ function render(raw, improve) {
     const h수리=Math.round((d.수리/maxH)*BAR);
     return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
       <span style="font-size:9px;font-weight:700;color:#333;">${d.total||''}</span>
-      <div style="width:30px;border-radius:3px 3px 0 0;overflow:hidden;display:flex;flex-direction:column;">
+      <div style="width:24px;border-radius:3px 3px 0 0;overflow:hidden;display:flex;flex-direction:column;">
         <div style="height:${h교환}px;background:#e05c6e;"></div>
         <div style="height:${h자재}px;background:#f0a0b0;"></div>
         <div style="height:${h수리}px;background:#f8d0d8;"></div>
@@ -371,8 +481,8 @@ function render(raw, improve) {
         <td>${stageBadge(r.stage)}</td>
       </tr>`).join('');
 
-  const periodLabel=type==='monthly'?`월간 · ${period}`:`주간 · ${period}`;
-  const trendLabel=type==='monthly'?'월별':'주별';
+  const periodLabel=type==='monthly'?`월간 · ${period}`:type==='yearly'?`연간 · ${period}년`:`주간 · ${period}`;
+  const trendLabel=type==='monthly'?'월별':type==='yearly'?'월별':'주별';
   const lastLabel=trendData[trendData.length-1]?.label||'';
 
   document.getElementById('content').innerHTML = `
@@ -423,10 +533,22 @@ function render(raw, improve) {
   <div class="section-wrap">
     <div class="sec-header sec-green">2. 품질 개선 현황</div>
     <div class="kpi-row">
-      <div class="kpi-card"><div class="kpi-label">총 개선 건수</div><div class="kpi-val">${kpiTotal}</div><div class="kpi-sub">${periodLabel} · 등록일 기준</div></div>
-      <div class="kpi-card"><div class="kpi-label">사후개선</div><div class="kpi-val">${kpiRequest}</div></div>
-      <div class="kpi-card"><div class="kpi-label">출시전검사</div><div class="kpi-val">${kpiSample}</div></div>
-      <div class="kpi-card"><div class="kpi-label">스펙비교</div><div class="kpi-val">${kpiCancel}</div></div>
+      <div class="kpi-card" style="display:flex;align-items:center;gap:60px;">
+        <div><div class="kpi-label">총 개선 건수</div><div class="kpi-val">${kpiTotal}</div><div class="kpi-sub">${periodLabel} · 등록일 기준</div></div>
+        <div style="opacity:0.7;">${sparkTotal}</div>
+      </div>
+      <div class="kpi-card" style="display:flex;align-items:center;gap:60px;">
+        <div><div class="kpi-label">사후개선</div><div class="kpi-val">${kpiRequest}</div></div>
+        <div style="opacity:0.7;">${sparkRequest}</div>
+      </div>
+      <div class="kpi-card" style="display:flex;align-items:center;gap:60px;">
+        <div><div class="kpi-label">출시전검사</div><div class="kpi-val">${kpiSample}</div></div>
+        <div style="opacity:0.7;">${sparkSample}</div>
+      </div>
+      <div class="kpi-card" style="display:flex;align-items:center;gap:60px;">
+        <div><div class="kpi-label">스펙비교</div><div class="kpi-val">${kpiCancel}</div></div>
+        <div style="opacity:0.7;">${sparkCancel}</div>
+      </div>
     </div>
     <div class="card">
       <div class="card-title" style="margin-bottom:8px;">개선 항목 상세 목록 &nbsp;<span style="color:#aaa;">${periodLabel} · 총 ${kpiTotal}건</span></div>

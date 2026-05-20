@@ -288,9 +288,9 @@ function render(raw, improve) {
 
   const improveFiltered = improve.filter(r => r.reg && matchDate(r.reg, pi));
   const kpiTotal   = improveFiltered.length;
-  const kpiRequest = improveFiltered.filter(r=>r.stage?.includes('개선요청')).length;
-  const kpiSample  = improveFiltered.filter(r=>r.stage?.includes('샘플테스트')).length;
-  const kpiCancel  = improveFiltered.filter(r=>r.stage?.includes('취소')||r.stage?.includes('중단')).length;
+  const kpiRequest = improveFiltered.filter(r=>r.gubun?.includes('사후개선')).length;
+  const kpiSample  = improveFiltered.filter(r=>r.gubun?.includes('출시전검사')).length;
+  const kpiCancel  = improveFiltered.filter(r=>r.gubun?.includes('스펙비교')).length;
 
   const bigVals   = [...top5.map(([,v])=>v), ...(othersVal>0?[othersVal]:[])];
   const bigColors = bigVals.map((_,i)=>BIG_COLORS[i]||'#ccc');
@@ -424,9 +424,9 @@ function render(raw, improve) {
     <div class="sec-header sec-green">2. 품질 개선 현황</div>
     <div class="kpi-row">
       <div class="kpi-card"><div class="kpi-label">총 개선 건수</div><div class="kpi-val">${kpiTotal}</div><div class="kpi-sub">${periodLabel} · 등록일 기준</div></div>
-      <div class="kpi-card"><div class="kpi-label">개선요청</div><div class="kpi-val">${kpiRequest}</div><div class="kpi-sub">1-2. 개선요청 단계</div></div>
-      <div class="kpi-card"><div class="kpi-label">샘플테스트</div><div class="kpi-val">${kpiSample}</div><div class="kpi-sub">1-1. 샘플테스트 단계</div></div>
-      <div class="kpi-card"><div class="kpi-label">취소/중단</div><div class="kpi-val">${kpiCancel}</div><div class="kpi-sub">취소 발주중단</div></div>
+      <div class="kpi-card"><div class="kpi-label">사후개선</div><div class="kpi-val">${kpiRequest}</div></div>
+      <div class="kpi-card"><div class="kpi-label">출시전검사</div><div class="kpi-val">${kpiSample}</div></div>
+      <div class="kpi-card"><div class="kpi-label">스펙비교</div><div class="kpi-val">${kpiCancel}</div></div>
     </div>
     <div class="card">
       <div class="card-title" style="margin-bottom:8px;">개선 항목 상세 목록 &nbsp;<span style="color:#aaa;">${periodLabel} · 총 ${kpiTotal}건</span></div>

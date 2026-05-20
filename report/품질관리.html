@@ -81,26 +81,37 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', '맑은 고딕', sans-
 async function loadExcel() {
   try {
     document.getElementById('loading').textContent = '📊 report.xlsx 불러오는 중...';
-    const res = await fetch('report.xlsx');
+    const res = await fetch('https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/report.xlsx');
     if (!res.ok) throw new Error('fetch 실패: ' + res.status);
     const buf = await res.arrayBuffer();
-    const wb  = XLSX.read(buf, { type:'array', cellDates:true });
+    const wb  = XLSX.read(buf, { type:'array' });
 
     // ── data_가전마감 파싱 ──
     const ws  = wb.Sheets['data_가전마감'];
-    const rows = XLSX.utils.sheet_to_json(ws, { header:1, raw:false, dateNF:'yyyy-mm-dd' });
+    const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:null });
+
+    // 엑셀 시리얼 날짜 → 'YYYY-MM-DD' 변환
+    function serialToDate(v) {
+      if (!v) return null;
+      if (typeof v === 'string' && v.match(/^\d{4}-\d{2}-\d{2}/)) return v.slice(0,10);
+      if (typeof v === 'number' && v > 40000) {
+        const d = new Date(Date.UTC(1899,11,30) + v * 86400000);
+        return d.toISOString().slice(0,10);
+      }
+      return null;
+    }
 
     const raw = [];
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i];
-      const d = r[0] ? String(r[0]).slice(0,10) : null;
+      const d = serialToDate(r[0]);
       if (!d || !r[2]) continue;
       raw.push({ d, p: r[2], g: r[8] || null, f: r[11] || null });
     }
 
     // ── 품질관리 시트 파싱 (헤더 자동 감지) ──
     const ws2  = wb.Sheets['품질관리'];
-    const rows2 = XLSX.utils.sheet_to_json(ws2, { header:1, raw:false, dateNF:'yyyy-mm-dd' });
+    const rows2 = XLSX.utils.sheet_to_json(ws2, { header:1, defval:null });
 
     let headerIdx = rows2.findIndex(r => r[0] === '구분');
     const improve = [];
@@ -109,8 +120,8 @@ async function loadExcel() {
       if (!r[0]) continue;
       improve.push({
         gubun: r[0], stage: r[1],
-        reg:   r[2] ? String(r[2]).slice(0,10) : null,
-        comp:  r[3] ? String(r[3]).slice(0,10) : null,
+        reg:   serialToDate(r[2]),
+        comp:  serialToDate(r[3]),
         prod:  r[4], kw: r[5], subject: r[6]
       });
     }
@@ -243,10 +254,8 @@ function gubunBadge(g) {
   return `<span class="badge badge-gray">${g}</span>`;
 }
 
-function render() {
+function render(raw, improve) {
   const pi  = parsePeriod();
-  const raw = window.QC_DATA.raw;
-  const improve = window.QC_DATA.improve;
 
   const filtered = raw.filter(r => r.d && matchDate(r.d, pi));
 
@@ -435,12 +444,14 @@ function render() {
 
 
 
-// ── 진입점: 엑셀 fetch 후 render ─────────────────────────────────
-loadExcel().then(data => {
+// ── 진입점 ───────────────────────────────────────────────────────
+async function main() {
+  const data = await loadExcel();
   if (!data) return;
-  window.QC_DATA = data;
-  render();
-});
+  render(data.raw, data.improve);
+}
+
+main();
 </script>
 </body>
 </html>

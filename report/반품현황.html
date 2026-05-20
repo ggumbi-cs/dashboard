@@ -140,7 +140,7 @@ const pInfo = parsePeriod();
 // 반품현황.html 은 report/ 폴더 안에 위치하므로
 // report.xlsx 도 같은 폴더(report/) 안에 있음 → 상대경로 'report.xlsx'
 async function loadData() {
-  const resp = await fetch('report.xlsx');
+  const resp = await fetch('https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/report.xlsx');
   if (!resp.ok) throw new Error(`report.xlsx 로드 실패 (${resp.status})`);
   const buf = await resp.arrayBuffer();
   const wb  = XLSX.read(buf, { type: 'array' });

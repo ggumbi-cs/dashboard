@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>품질관리</title>
 <!-- SheetJS: 엑셀 직접 파싱 -->
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: #f0f2f5; font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; font-size: 12px; color: #222; padding: 12px; }
@@ -76,12 +76,12 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', '맑은 고딕', sans-
 
 <script>
 // ── 깃허브 엑셀 fetch & 파싱 ─────────────────────────────────────
-const XLSX_URL = 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/report.xlsx';
+
 
 async function loadExcel() {
   try {
     document.getElementById('loading').textContent = '📊 report.xlsx 불러오는 중...';
-    const res = await fetch(XLSX_URL + '?t=' + Date.now()); // 캐시 방지
+    const res = await fetch('report.xlsx');
     if (!res.ok) throw new Error('fetch 실패: ' + res.status);
     const buf = await res.arrayBuffer();
     const wb  = XLSX.read(buf, { type:'array', cellDates:true });

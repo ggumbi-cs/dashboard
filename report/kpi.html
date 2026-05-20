@@ -367,6 +367,15 @@ function statusIcon(v) {
   return { cls: 'progress', check: '✓' }; // 주황
 }
 
+const NAME_MAP = {
+  '미숙': '권미숙', '우승': '심우승', '대훈': '이대훈', '민성': '강민성',
+  '수진': '박수진', '진영': '장진영', '지현': '정지현', '승연': '조승연'
+};
+
+function fullName(n) {
+  return NAME_MAP[n.trim()] || n.trim();
+}
+
 let currentFilter = 'all';
 let currentSort   = 'category';
 let kpiData = [];
@@ -418,6 +427,10 @@ function renderAll() {
     });
   } else if (currentSort === 'assignee') {
     const ORDER = ['미숙','우승','대훈','민성','수진','진영','지현','승연'];
+    const NAME_MAP = {
+      '미숙': '권미숙', '우승': '심우승', '대훈': '이대훈', '민성': '강민성',
+      '수진': '박수진', '진영': '장진영', '지현': '정지현', '승연': '조승연'
+    };
     const assigneeGroups = {};
     ORDER.forEach(name => assigneeGroups[name] = []);
     assigneeGroups['기타'] = [];
@@ -440,7 +453,7 @@ function renderAll() {
       const items = assigneeGroups[name];
       if (!items || items.length === 0) return;
       const secEl = document.createElement('div');
-      secEl.innerHTML = `<div class="section-title">👤 ${name}</div>`;
+      secEl.innerHTML = `<div class="section-title">👤 ${NAME_MAP[name] || name}</div>`;
       const grid = document.createElement('div');
       grid.className = 'kpi-grid';
       items.forEach(item => renderCard(grid, item));
@@ -481,6 +494,9 @@ function renderCard(grid, item) {
   const note  = item.특이사항 || '';
   const link  = item.링크 || '';
   const assignee = item.담당 || '';
+  const assigneeDisplay = assignee
+    ? assignee.split(/[,\s]+/).map(s => s.trim()).filter(Boolean).map(fullName).join(', ')
+    : '';
   const linkBtn = link
     ? `<a class="kpi-link-btn" href="${link}" target="_blank" title="바로가기" onclick="event.preventDefault(); alert('노션 링크 연동 준비중');">
         <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
@@ -499,7 +515,7 @@ function renderCard(grid, item) {
       <div class="kpi-pct-badge">${pct}</div>
     </div>
     <div class="kpi-note">${note}</div>
-    ${assignee ? `<div class="kpi-assignee">👤 ${assignee}</div>` : ''}
+    ${assigneeDisplay ? `<div class="kpi-assignee">👤 ${assigneeDisplay}</div>` : ''}
     ${linkBtn}
   `;
   grid.appendChild(card);

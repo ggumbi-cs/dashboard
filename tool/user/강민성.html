@@ -249,13 +249,10 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', sans-serif; font-size:
 
 </div>
 
-<script src="../../token/config.js"></script>
 <script>
-// ── Gist 설정 (config.js에서 로드) ──
-// GITHUB_TOKEN, GIST_ID 는 ../../token/config.js 에서 주입됨
-
+// ── 로컬 저장 설정 ──
 // 파일명 기반 자동 키 → 복제 시 이름만 바꾸면 독립 저장
-const GIST_FILE = location.pathname.split('/').pop().replace('.html','') + '_settings.json';
+const STORAGE_KEY = 'toolSettings_' + location.pathname.split('/').pop().replace('.html','');
 
 const TOOL_FILES = {
   'AS1':'as.html','AS2':'as2.html','AS3':'as3.html','AS4':'as4.html',
@@ -275,36 +272,7 @@ function setSaveStatus(msg, ok) {
   if (ok === false) { btn.textContent = '저장'; btn.classList.remove('saved'); }
 }
 
-// ── Gist API ──
-async function gistLoad() {
-  setSaveStatus('설정 불러오는 중...', false);
-  try {
-    const url = `https://api.github.com/gists/${GIST_ID}`;
-    const tokenPreview = GITHUB_TOKEN ? GITHUB_TOKEN.slice(0,8)+'...' : '(없음)';
-    setSaveStatus(`[진단] Token:${tokenPreview} GistID:${GIST_ID.slice(0,8)}... 파일:${GIST_FILE}`, false);
-    const res = await fetch(url, {
-      headers: { Authorization: `token ${GITHUB_TOKEN}`, Accept: 'application/vnd.github.v3+json' }
-    });
-    const statusTxt = `HTTP ${res.status} ${res.statusText}`;
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`${statusTxt} / ${body.slice(0,120)}`);
-    }
-    const data = await res.json();
-    const fileList = Object.keys(data.files).join(', ');
-    const content = data.files[GIST_FILE]?.content;
-    if (content) {
-      applySettings(JSON.parse(content));
-      setSaveStatus(`불러오기 완료 · ${new Date().toLocaleTimeString()}`, false);
-    } else {
-      setSaveStatus(`[진단] Gist OK(${statusTxt}) / 파일목록: [${fileList}] / '${GIST_FILE}' 없음→첫사용`, false);
-    }
-  } catch(e) {
-    setSaveStatus('[진단] 로드실패: ' + e.message, false);
-  }
-}
-
-async function gistSave() {
+function saveSettings() {
   const s = {
     slot1: document.getElementById('slot1Tool').value,
     slot2: document.getElementById('slot2Tool').value,
@@ -313,42 +281,30 @@ async function gistSave() {
     zoom1: slotScales[1], zoom2: slotScales[2],
     zoom3: slotScales[3], zoom4: slotScales[4],
   };
-  setSaveStatus('저장 중...', false);
-  try {
-    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-      method: 'PATCH',
-      headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
-        Accept: 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ files: { [GIST_FILE]: { content: JSON.stringify(s, null, 2) } } })
-    });
-    const statusTxt = `HTTP ${res.status} ${res.statusText}`;
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`${statusTxt} / ${body.slice(0,120)}`);
-    }
-    setSaveStatus(`저장 완료 · ${new Date().toLocaleTimeString()}`, true);
-  } catch(e) {
-    setSaveStatus('[진단] 저장실패: ' + e.message, false);
-  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  setSaveStatus('저장 완료 · ' + new Date().toLocaleTimeString(), true);
 }
 
-function applySettings(s) {
-  [1,2,3,4].forEach(i => {
-    if (s[`zoom${i}`]) {
-      const scale = s[`zoom${i}`];
-      slotScales[i] = scale;
-      document.getElementById(`zoomGroup${i}`).querySelectorAll('.zoom-btn').forEach(b => {
-        b.classList.toggle('active', parseFloat(b.dataset.scale) === scale);
-      });
-    }
-    if (s[`slot${i}`]) {
-      document.getElementById(`slot${i}Tool`).value = s[`slot${i}`];
-      loadTool(i);
-    }
-  });
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    [1,2,3,4].forEach(i => {
+      if (s[`zoom${i}`]) {
+        const scale = s[`zoom${i}`];
+        slotScales[i] = scale;
+        document.getElementById(`zoomGroup${i}`).querySelectorAll('.zoom-btn').forEach(b => {
+          b.classList.toggle('active', parseFloat(b.dataset.scale) === scale);
+        });
+      }
+      if (s[`slot${i}`]) {
+        document.getElementById(`slot${i}Tool`).value = s[`slot${i}`];
+        loadTool(i);
+      }
+    });
+    setSaveStatus('설정 복원 완료', false);
+  } catch(e) {
+    setSaveStatus('설정 없음 (첫 사용)', false);
+  }
 }
 
 // ── 크기 조정 ──
@@ -357,7 +313,7 @@ function setZoom(slotNum, scale, btn) {
   document.getElementById(`zoomGroup${slotNum}`).querySelectorAll('.zoom-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   applyZoom(slotNum);
-  gistSave();
+  saveSettings();
 }
 
 function applyZoom(slotNum) {
@@ -391,13 +347,11 @@ let autoSaveTimer;
 function autoSave() {
   [1,2,3,4].forEach(i => loadTool(i));
   clearTimeout(autoSaveTimer);
-  autoSaveTimer = setTimeout(gistSave, 800);
+  autoSaveTimer = setTimeout(saveSettings, 800);
 }
 
-function saveSettings() { gistSave(); }
-
 window.addEventListener('resize', () => { [1,2,3,4].forEach(i => applyZoom(i)); });
-document.addEventListener('DOMContentLoaded', gistLoad);
+document.addEventListener('DOMContentLoaded', loadSettings);
 </script>
 </body>
 </html>

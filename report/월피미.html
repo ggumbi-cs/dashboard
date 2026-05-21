@@ -66,11 +66,26 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .kpi-val   { font-size:26px; font-weight:800; color:var(--text); line-height:1; }
 .kpi-sub   { font-size:11px; color:var(--sub); margin-top:4px; }
 .kpi-delta { font-size:11px; font-weight:700; margin-top:5px; }
-.delta-up   { color:var(--green); } /* 상담건수/반품/AS는 up이 나쁨 — 별도 처리 */
-.delta-dn   { color:var(--red); }
-.delta-good { color:var(--green); }
-.delta-bad  { color:var(--red); }
+.delta-up   { color:var(--green); } .delta-dn { color:var(--red); }
+.delta-good { color:var(--green); } .delta-bad { color:var(--red); }
 .delta-eq   { color:var(--muted); }
+.kpi-insight {
+  margin-top:8px; padding-top:8px;
+  border-top:1px solid rgba(255,255,255,0.1);
+  font-size:11px; line-height:1.5; color:rgba(255,255,255,0.6);
+  min-height:0; font-style:italic;
+}
+.kpi-insight.loading { opacity:.4; }
+.kpi-insight:empty { display:none; }
+.card-insight {
+  margin-top:12px; padding:10px 12px;
+  background:linear-gradient(135deg,rgba(35,86,168,0.06),rgba(42,122,111,0.06));
+  border-radius:8px; border-left:3px solid var(--navy-light);
+  font-size:12px; line-height:1.6; color:var(--sub);
+  font-style:italic;
+}
+.card-insight:empty { display:none; }
+.card-insight.loading { color:var(--muted); }
 
 /* 테이블 */
 .report-table { width:100%; border-collapse:collapse; font-size:12px; }
@@ -110,8 +125,14 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .ai-panel { background:linear-gradient(135deg,#1a1a3e 0%,#2d1b6e 100%); border-radius:10px; padding:20px 24px; color:#fff; position:relative; overflow:hidden; }
 .ai-panel::before { content:'✦'; position:absolute; right:20px; top:16px; font-size:40px; opacity:.08; color:#a78bfa; }
 .ai-panel-title { font-size:13px; font-weight:700; margin-bottom:14px; display:flex; align-items:center; gap:8px; color:#c4b5fd; }
-.ai-output { font-size:13px; line-height:1.8; color:#e0d9ff; white-space:pre-wrap; min-height:80px; }
+.ai-output { font-size:13px; line-height:1.8; color:#e0d9ff; min-height:80px; }
 .ai-output.loading { color:#9b8fd4; font-style:italic; }
+.ai-output h2 { font-size:15px; font-weight:700; color:#c4b5fd; margin:16px 0 8px; border-bottom:1px solid rgba(167,139,250,0.3); padding-bottom:6px; }
+.ai-output h3 { font-size:13px; font-weight:700; color:#a78bfa; margin:12px 0 6px; }
+.ai-output strong { color:#fff; font-weight:700; }
+.ai-output ul { padding-left:18px; margin:6px 0; }
+.ai-output ul li { margin:4px 0; color:#e0d9ff; }
+.ai-output p { margin:6px 0; }
 
 /* VOC 바 */
 .voc-bar-wrap { display:flex; flex-direction:column; gap:8px; }
@@ -137,14 +158,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
     <div class="sub">목표 → 실적 → 원인 → 개선 대안 → 실행 진도율</div>
   </div>
   <div class="header-right">
-    <select class="period-select" id="periodSelect" onchange="onPeriodChange()">
-      <option value="2026년">2026년 (연간)</option>
-      <option value="26.05월">2026년 05월</option>
-      <option value="26.04월">2026년 04월</option>
-      <option value="26.03월">2026년 03월</option>
-      <option value="26.02월">2026년 02월</option>
-      <option value="26.01월">2026년 01월</option>
-    </select>
+    <span id="periodLabel" style="font-size:12px;opacity:.8;padding:4px 10px;background:rgba(255,255,255,.15);border-radius:6px;border:1px solid rgba(255,255,255,.3);">기간 로딩 중...</span>
     <button class="hdr-btn" onclick="loadAllData()">↺ 새로고침</button>
     <span class="load-status loading" id="loadStatus"><span class="spinner"></span> 로딩 중...</span>
     <button class="ai-btn" id="aiBtn" onclick="runAI('summary')" disabled>✦ AI 분석</button>
@@ -171,58 +185,68 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
         <div class="kpi-val" id="s-total">-</div>
         <div class="kpi-sub">카카오+네이버+전화</div>
         <div class="kpi-delta" id="d-total"></div>
+        <div class="kpi-insight" id="i-total"></div>
       </div>
       <div class="kpi-card teal">
         <div class="kpi-label">ALF 해결율</div>
         <div class="kpi-val" id="s-alf">-</div>
         <div class="kpi-sub">자동화 해결</div>
         <div class="kpi-delta" id="d-alf"></div>
+        <div class="kpi-insight" id="i-alf"></div>
       </div>
       <div class="kpi-card orange">
         <div class="kpi-label">반품/교환율 (꿈비)</div>
         <div class="kpi-val" id="s-return">-</div>
         <div class="kpi-sub" id="s-return-sub">최근 월 기준</div>
         <div class="kpi-delta" id="d-return"></div>
+        <div class="kpi-insight" id="i-return"></div>
       </div>
       <div class="kpi-card red">
         <div class="kpi-label">품질 개선요청</div>
         <div class="kpi-val" id="s-quality">-</div>
         <div class="kpi-sub">사후개선 기준</div>
         <div class="kpi-delta" id="d-quality"></div>
+        <div class="kpi-insight" id="i-quality"></div>
       </div>
       <div class="kpi-card green">
         <div class="kpi-label">가전 AS 처리</div>
         <div class="kpi-val" id="s-as">-</div>
         <div class="kpi-sub">유/무상 합계</div>
         <div class="kpi-delta" id="d-as"></div>
+        <div class="kpi-insight" id="i-as"></div>
       </div>
       <div class="kpi-card yellow">
         <div class="kpi-label">자재 미입고 건</div>
         <div class="kpi-val" id="s-issue">-</div>
         <div class="kpi-sub">자재수급 Issue</div>
         <div class="kpi-delta" id="d-issue"></div>
+        <div class="kpi-insight" id="i-issue"></div>
       </div>
       <div class="kpi-card blue">
         <div class="kpi-label">고객 만족도</div>
         <div class="kpi-val" id="s-satisfaction">-</div>
         <div class="kpi-sub">최근 월 기준</div>
         <div class="kpi-delta" id="d-satisfaction"></div>
+        <div class="kpi-insight" id="i-satisfaction"></div>
       </div>
       <div class="kpi-card teal">
         <div class="kpi-label">수신 응답율</div>
         <div class="kpi-val" id="s-answer">-</div>
         <div class="kpi-sub">최근 주간 기준</div>
         <div class="kpi-delta" id="d-answer"></div>
+        <div class="kpi-insight" id="i-answer"></div>
       </div>
     </div>
     <div class="grid-2">
       <div class="card">
         <div class="card-title"><span class="dot" style="background:var(--navy-mid)"></span>채널별 인입 현황</div>
         <div id="channelChart"></div>
+        <div class="card-insight" id="i-channel"></div>
       </div>
       <div class="card">
         <div class="card-title"><span class="dot" style="background:var(--orange)"></span>반품 사유 TOP 5 (꿈비)</div>
         <div id="returnChart"></div>
+        <div class="card-insight" id="i-returnchart"></div>
       </div>
     </div>
   </div>
@@ -336,14 +360,14 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 const REPORT_URL = 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/report.xlsx';
 const ISSUE_URL  = 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/issue.xlsx';
 // ★ Apps Script 배포 후 여기에 웹앱 URL 입력
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQcWzXKZkfWolloVK8rBLMMOaeWrzMLRw_tQIDp50E3eh9P-4Yy7nYLJ1P_T8_DBHuIw/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxL78NZRfY9ZgfmtooU60kPxT7Qz_A83pMQhkBUbrGwjoMf-UJObpqeogSeQVa9xCyqeg/exec';
 
 const COLORS = ['#2356a8','#4a9fd4','#2a7a6f','#e8834a','#9b59b6','#e74c3c','#f1c40f','#1abc9c','#e67e22','#c0392b'];
 
 // ══════════════════════════════════════════════════════════════
 // 전역 상태
 // ══════════════════════════════════════════════════════════════
-let DATA = { report: null, issue: null, period: '26.05월' };
+let DATA = { report: null, issue: null, type: 'monthly', period: '26.05월' };
 // 전회차 비교용
 let PREV = { total:null, alf:null, returnRate:null, quality:null, as:null, issue:null, satisfaction:null, answer:null };
 let CUR  = { total:null, alf:null, returnRate:null, quality:null, as:null, issue:null, satisfaction:null, answer:null };
@@ -358,6 +382,22 @@ function showSection(id, el) {
   document.querySelectorAll('.snav-item').forEach(s=>s.classList.remove('active'));
   document.getElementById('sec-'+id).classList.add('active');
   el.classList.add('active');
+  // 현재 섹션 기억 (페이지 리로드 시 복원용)
+  sessionStorage.setItem('walpimiSection', id);
+}
+
+function restoreSection() {
+  const saved = sessionStorage.getItem('walpimiSection');
+  if (!saved) return;
+  const secEl = document.getElementById('sec-'+saved);
+  const navEls = document.querySelectorAll('.snav-item');
+  const navMap = { summary:0, report:1, voc:2, action:3, ai:4 };
+  if (secEl && navMap[saved] !== undefined) {
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.snav-item').forEach(s=>s.classList.remove('active'));
+    secEl.classList.add('active');
+    navEls[navMap[saved]].classList.add('active');
+  }
 }
 function setStatus(cls, msg, spin) {
   const el = document.getElementById('loadStatus');
@@ -366,10 +406,42 @@ function setStatus(cls, msg, spin) {
 }
 function setText(id, val) { const el=document.getElementById(id); if(el) el.textContent=val; }
 function esc(v) { return (v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
-function onPeriodChange() {
-  DATA.period = document.getElementById('periodSelect').value;
-  if (DATA.report || DATA.issue) renderAll();
+// ══════════════════════════════════════════════════════════════
+// URL 파라미터에서 기간 읽기 (index.html이 넘겨줌)
+// ?type=yearly&period=2026
+// ?type=monthly&period=26.04월
+// ?type=weekly&period=260417
+// ══════════════════════════════════════════════════════════════
+function readPeriodFromURL() {
+  const params = new URLSearchParams(location.search);
+  const type   = params.get('type')   || 'monthly';
+  const period = params.get('period') || '';
+
+  DATA.type   = type;
+  DATA.period = period || (type === 'yearly' ? '2026년' : '26.05월');
+
+  // 헤더 라벨
+  let label = '';
+  if (type === 'yearly')  label = `${period}년 연간`;
+  else if (type === 'monthly') label = `20${period.replace('월','').replace('.','')} → ${period}`;
+  else if (type === 'weekly' || type === 'direct') {
+    // 260417 → 2026.04.17 주간
+    const s = String(period);
+    label = `20${s.slice(0,2)}.${s.slice(2,4)}.${s.slice(4,6)} 주간`;
+  }
+  const lbl = document.getElementById('periodLabel');
+  if (lbl) lbl.textContent = label || period;
 }
+
+// index.html이 URL을 바꿔서 iframe reload → 자동 반영
+// 추가로 postMessage도 수신 (혹시 모를 동적 전달 대비)
+window.addEventListener('message', e => {
+  if (e.data && e.data.type === 'PERIOD_UPDATE') {
+    DATA.type   = e.data.periodType   || DATA.type;
+    DATA.period = e.data.periodValue  || DATA.period;
+    renderAll();
+  }
+});
 
 // ══════════════════════════════════════════════════════════════
 // 전회차 증감 표시
@@ -408,7 +480,12 @@ async function loadAllData() {
   try { DATA.report = await fetchXlsx(REPORT_URL); ok++; } catch(e) { console.warn(e); }
   try { DATA.issue  = await fetchXlsx(ISSUE_URL);  ok++; } catch(e) { console.warn(e); }
   setStatus(ok>0?'ok':'err', ok===2?'✓ 데이터 로드 완료':ok===1?'✓ 일부 로드 완료':'⚠ 로드 실패');
-  if (ok>0) { document.getElementById('aiBtn').disabled=false; renderAll(); }
+  if (ok>0) {
+    document.getElementById('aiBtn').disabled=false;
+    renderAll();
+    // 핵심 Summary 자동 AI 인사이트
+    runAutoInsight();
+  }
   // 액션현황판은 구글시트에서 자동 로드
   loadFromSheet();
 }
@@ -421,21 +498,41 @@ function renderAll() { renderSummary(); renderReport(); renderVOC(); }
 // ══════════════════════════════════════════════════════════════
 // 기간 파싱 유틸
 // ══════════════════════════════════════════════════════════════
-function parsePeriod(period) {
-  // '26.05월' → 월간 모드
-  // '2026년'  → 연간 모드
-  if (period.endsWith('년')) {
-    return { mode: 'year', year: period.replace('년',''), monthStr: null, prevMonthStr: null, weekPrefix: null, prevWeekPrefix: null };
+function parsePeriod() {
+  const type   = DATA.type   || 'monthly';
+  const period = DATA.period || '';
+
+  if (type === 'yearly') {
+    return { mode:'year', monthStr:null, prevMonthStr:null, weekPrefix:null, prevWeekPrefix:null, yyMM:null };
   }
-  const m = period.match(/^(\d{2})\.(\d{2})월$/);
-  if (!m) return null;
-  const yy = m[1], mm = parseInt(m[2]);
-  const weekPrefix     = parseInt(yy + m[2]);
-  let prevMM = mm-1, prevYY = parseInt(yy);
-  if (prevMM === 0) { prevMM = 12; prevYY--; }
-  const prevMonthStr   = `${String(prevYY).padStart(2,'0')}.${String(prevMM).padStart(2,'0')}월`;
-  const prevWeekPrefix = parseInt(String(prevYY).padStart(2,'0') + String(prevMM).padStart(2,'0'));
-  return { mode:'month', yyMM: yy+m[2], monthStr: period, prevMonthStr, weekPrefix, prevWeekPrefix };
+
+  if (type === 'monthly') {
+    // period = '26.04월'
+    const m = period.match(/^(\d{2})\.(\d{2})월$/);
+    if (!m) return null;
+    const yy=m[1], mm=parseInt(m[2]);
+    const weekPrefix=parseInt(yy+m[2]);
+    let prevMM=mm-1, prevYY=parseInt(yy);
+    if(prevMM===0){prevMM=12;prevYY--;}
+    const prevMonthStr=`${String(prevYY).padStart(2,'0')}.${String(prevMM).padStart(2,'0')}월`;
+    const prevWeekPrefix=parseInt(String(prevYY).padStart(2,'0')+String(prevMM).padStart(2,'0'));
+    return { mode:'month', yyMM:yy+m[2], monthStr:period, prevMonthStr, weekPrefix, prevWeekPrefix };
+  }
+
+  if (type === 'weekly' || type === 'direct') {
+    // period = '260417' → 해당 주 포함 월 기준
+    const s = String(period);
+    const yy=s.slice(0,2), mm=s.slice(2,4);
+    const weekPrefix=parseInt(yy+mm);
+    let prevMM=parseInt(mm)-1, prevYY=parseInt(yy);
+    if(prevMM===0){prevMM=12;prevYY--;}
+    const monthStr=`${yy}.${mm}월`;
+    const prevMonthStr=`${String(prevYY).padStart(2,'0')}.${String(prevMM).padStart(2,'0')}월`;
+    const prevWeekPrefix=parseInt(String(prevYY).padStart(2,'0')+String(prevMM).padStart(2,'0'));
+    return { mode:'week', yyMM:yy+mm, monthStr, prevMonthStr, weekPrefix, prevWeekPrefix, weekKey:parseInt(period) };
+  }
+
+  return null;
 }
 
 function weekInMonth(wk, prefix) {
@@ -447,7 +544,7 @@ function weekInMonth(wk, prefix) {
 // ══════════════════════════════════════════════════════════════
 function renderSummary() {
   if (!DATA.report && !DATA.issue) return;
-  const P = parsePeriod(DATA.period);
+  const P = parsePeriod();
   if (!P) return;
 
   if (DATA.report) {
@@ -456,77 +553,49 @@ function renderSummary() {
     if (ws1) {
       const rows = XLSX.utils.sheet_to_json(ws1, {header:1, defval:null});
 
-      // 채널별 인입 집계
+      // 총인입: 주기='월간' 행 기준으로 직접 매칭
       const curChMap={}, prevChMap={};
       let curTotal=0, prevTotal=0;
-
-      if (P.mode === 'year') {
-        // 연간: 전체 합산 (주간 데이터 전부)
-        for (let i=2; i<rows.length; i++) {
-          const r=rows[i]; if(!r||r[0]!=='총인입데이터'||r[1]!=='주간'||!r[3]) continue;
-          curChMap[r[3]]=(curChMap[r[3]]||0)+(r[4]||0);
-          curTotal+=(r[4]||0);
+      for (let i=2; i<rows.length; i++) {
+        const r=rows[i]; if(!r||r[0]!=='총인입데이터'||r[1]!=='월간'||!r[3]) continue;
+        if(P.mode==='year') {
+          curChMap[r[3]]=(curChMap[r[3]]||0)+(r[4]||0); curTotal+=(r[4]||0);
+        } else {
+          if(r[2]===P.monthStr)     { curChMap[r[3]]=(curChMap[r[3]]||0)+(r[4]||0); curTotal+=(r[4]||0); }
+          if(r[2]===P.prevMonthStr) { prevChMap[r[3]]=(prevChMap[r[3]]||0)+(r[4]||0); prevTotal+=(r[4]||0); }
         }
-        // 연간은 전회차 비교 없음
-        CUR.total=curTotal||null; PREV.total=null;
-      } else {
-        // 월간: 해당 월 주차만
-        for (let i=2; i<rows.length; i++) {
-          const r=rows[i]; if(!r||r[0]!=='총인입데이터'||r[1]!=='주간'||!r[3]) continue;
-          if (weekInMonth(r[2], P.weekPrefix))     { curChMap[r[3]]=(curChMap[r[3]]||0)+(r[4]||0); curTotal+=(r[4]||0); }
-          if (weekInMonth(r[2], P.prevWeekPrefix)) { prevChMap[r[3]]=(prevChMap[r[3]]||0)+(r[4]||0); prevTotal+=(r[4]||0); }
-        }
-        // 해당 월 데이터 없으면 전체 최신 주차로 fallback
-        if (curTotal === 0) {
-          const allWeeks={};
-          for (let i=2; i<rows.length; i++) {
-            const r=rows[i]; if(!r||r[0]!=='총인입데이터'||r[1]!=='주간'||!r[2]||!r[3]) continue;
-            if(!allWeeks[r[2]]) allWeeks[r[2]]={map:{},total:0};
-            allWeeks[r[2]].map[r[3]]=(allWeeks[r[2]].map[r[3]]||0)+(r[4]||0);
-            allWeeks[r[2]].total+=(r[4]||0);
-          }
-          const sorted=Object.keys(allWeeks).sort((a,b)=>b-a);
-          if(sorted[0]){Object.assign(curChMap,allWeeks[sorted[0]].map); curTotal=allWeeks[sorted[0]].total;}
-          if(sorted[1]){prevTotal=allWeeks[sorted[1]].total;}
-        }
-        CUR.total=curTotal||null; PREV.total=prevTotal||null;
       }
+      CUR.total=curTotal||null; PREV.total=prevTotal||null;
       setText('s-total', curTotal ? curTotal.toLocaleString()+'건' : '-');
       if(P.mode==='month') renderDelta('d-total', CUR.total, PREV.total, '건', false, 0);
       else document.getElementById('d-total').innerHTML='';
       renderVocBars('channelChart', curChMap, COLORS);
 
-      // ALF (col6=타이틀, col8=월, col9=구분, col10=건수)
+      // ALF: 주기='월간', 마감회차='26.04월' 직접 매칭
       const alfMap={};
       for (let i=2; i<rows.length; i++) {
-        const r=rows[i]; if(!r||r[6]!=='ALF관여/해결율'||!r[8]) continue;
+        const r=rows[i]; if(!r||r[6]!=='ALF관여/해결율'||r[7]!=='월간'||!r[8]) continue;
         if(!alfMap[r[8]]) alfMap[r[8]]={heal:0,total:0};
         if(r[9]==='해결') alfMap[r[8]].heal+=(r[10]||0);
         alfMap[r[8]].total+=(r[10]||0);
       }
       let alfCur=null, alfPrev=null;
       if(P.mode==='year'){
-        // 연간: 전체 합산
         let h=0,t=0; Object.values(alfMap).forEach(v=>{h+=v.heal;t+=v.total;});
-        alfCur = t ? h/t*100 : null;
+        alfCur=t?h/t*100:null;
       } else {
-        alfCur  = alfMap[P.monthStr]     && alfMap[P.monthStr].total     ? alfMap[P.monthStr].heal/alfMap[P.monthStr].total*100         : null;
+        alfCur  = alfMap[P.monthStr]     && alfMap[P.monthStr].total     ? alfMap[P.monthStr].heal/alfMap[P.monthStr].total*100     : null;
         alfPrev = alfMap[P.prevMonthStr] && alfMap[P.prevMonthStr].total ? alfMap[P.prevMonthStr].heal/alfMap[P.prevMonthStr].total*100 : null;
-        // fallback: 데이터 없으면 최신 월
-        if(alfCur===null){
-          const latest=Object.keys(alfMap).sort().reverse()[0];
-          if(latest) alfCur=alfMap[latest].heal/alfMap[latest].total*100;
-        }
       }
       CUR.alf=alfCur; PREV.alf=alfPrev;
       setText('s-alf', alfCur!==null ? alfCur.toFixed(1)+'%' : '-');
       if(P.mode==='month') renderDelta('d-alf', alfCur, alfPrev, '%p', false, 1);
       else document.getElementById('d-alf').innerHTML='';
 
-      // 만족도 (col20=타이틀, col22=월, col27=점수)
+      // 만족도: 주기='월간', col20=타이틀, col21=주기, col22=마감회차, col27=점수
       const satMap={};
       for (let i=2; i<rows.length; i++) {
-        const r=rows[i]; if(!r||r[20]!=='만족도조사'||!r[22]||!r[27]) continue;
+        const r=rows[i]; if(!r||r[20]!=='만족도조사'||r[21]!=='월간'||!r[22]||!r[27]) continue;
         satMap[r[22]]=r[27];
       }
       let satCur=null, satPrev=null;
@@ -535,14 +604,13 @@ function renderSummary() {
       } else {
         satCur  = satMap[P.monthStr]     || null;
         satPrev = satMap[P.prevMonthStr] || null;
-        if(satCur===null){ const k=Object.keys(satMap).sort().reverse()[0]; if(k) satCur=satMap[k]; }
       }
       CUR.satisfaction=satCur; PREV.satisfaction=satPrev;
       setText('s-satisfaction', satCur ? satCur.toFixed(2)+'점' : '-');
       if(P.mode==='month') renderDelta('d-satisfaction', satCur, satPrev, '점', false, 2);
       else document.getElementById('d-satisfaction').innerHTML='';
 
-      // 응답율 (col12=타이틀, col13=주기, col14=주간회차숫자, col18=응답율)
+      // 응답율: 주간 데이터만 존재 → 해당 월 prefix로 필터, 그 월 최신 주차값
       const ansRows=[];
       for (let i=2; i<rows.length; i++) {
         const r=rows[i]; if(!r||r[12]!=='수신응답율, 통화성골률, 총유입Call'||r[13]!=='주간'||!r[14]||!r[18]) continue;
@@ -551,11 +619,11 @@ function renderSummary() {
       ansRows.sort((a,b)=>b.wk-a.wk);
       let ansCur=null, ansPrev=null;
       if(P.mode==='year'){
-        ansCur = ansRows[0] ? ansRows[0].v*100 : null;
+        ansCur=ansRows[0]?ansRows[0].v*100:null;
       } else {
         const curAns  = ansRows.find(a=>weekInMonth(a.wk, P.weekPrefix));
         const prevAns = ansRows.find(a=>weekInMonth(a.wk, P.prevWeekPrefix));
-        ansCur  = curAns  ? curAns.v*100  : (ansRows[0] ? ansRows[0].v*100 : null);
+        ansCur  = curAns  ? curAns.v*100  : null;
         ansPrev = prevAns ? prevAns.v*100 : null;
       }
       CUR.answer=ansCur; PREV.answer=ansPrev;
@@ -590,11 +658,20 @@ function renderSummary() {
       else document.getElementById('d-return').innerHTML='';
 
       // 반품 사유 (col0=타이틀, col2=마감회차, col3=브랜드, col4=사유, col7=건수)
+      // 마감회차가 '26.01월'(월간) 또는 260102(주간숫자) 두 형식 혼재
       const reasonMap={};
       for (let i=2; i<rows.length; i++) {
         const r=rows[i]; if(!r||r[0]!=='반품현황 (반품/교환율만 제외)'||r[3]!=='꿈비'||!r[4]) continue;
-        if(P.mode==='month' && r[2]!==P.monthStr) continue;
-        reasonMap[r[4]]=(reasonMap[r[4]]||0)+(r[7]||0);
+        if(P.mode==='year') {
+          reasonMap[r[4]]=(reasonMap[r[4]]||0)+(r[7]||0);
+        } else {
+          const wk = r[2];
+          // 월간 문자열 매칭 ('26.04월')
+          const monthMatch = (wk === P.monthStr);
+          // 주간 숫자 매칭 (260403, 260410 등 → prefix 2604)
+          const weekMatch  = (typeof wk === 'number' && weekInMonth(wk, P.weekPrefix));
+          if (monthMatch || weekMatch) reasonMap[r[4]]=(reasonMap[r[4]]||0)+(r[7]||0);
+        }
       }
       const top5=Object.fromEntries(Object.entries(reasonMap).sort((a,b)=>b[1]-a[1]).slice(0,5));
       renderVocBars('returnChart', top5, ['#e8834a','#f39c12','#e74c3c','#9b59b6','#3498db']);
@@ -604,7 +681,23 @@ function renderSummary() {
     const ws3 = DATA.report.Sheets['품질관리'];
     if (ws3) {
       const rows = XLSX.utils.sheet_to_json(ws3, {header:1, defval:null});
-      const cnt = rows.slice(2).filter(r=>r&&r[1]&&r[1].includes('개선요청')).length;
+      let cnt = 0;
+      if (P.mode === 'year') {
+        cnt = rows.slice(2).filter(r=>r&&r[1]&&r[1].includes('개선요청')).length;
+      } else {
+        // 등록일(col2) 엑셀 시리얼 → 월 비교
+        cnt = rows.slice(2).filter(r => {
+          if (!r || !r[1] || !r[1].includes('개선요청') || !r[2]) return false;
+          let ym = '';
+          if (typeof r[2] === 'number') {
+            const d = new Date((r[2]-25569)*86400000);
+            ym = `${String(d.getFullYear()).slice(2)}.${String(d.getMonth()+1).padStart(2,'0')}월`;
+          } else {
+            ym = String(r[2]).slice(0,7); // 이미 문자열이면 앞 7자
+          }
+          return ym === P.monthStr;
+        }).length;
+      }
       CUR.quality=cnt; PREV.quality=null;
       setText('s-quality', cnt+'건');
       document.getElementById('d-quality').innerHTML='';
@@ -636,18 +729,44 @@ function renderSummary() {
     }
   }
 
-  // ── Issue ──────────────────────────────────────────────────
+  // ── Issue: 기안일 기준 누적 미입고 (결재대기 + 미입고) ──
   if (DATA.issue) {
     const sheetNames = DATA.issue.SheetNames;
-    const ws  = DATA.issue.Sheets[P.monthStr||''] || DATA.issue.Sheets[sheetNames[sheetNames.length-1]];
-    const ws2 = DATA.issue.Sheets[P.prevMonthStr||''] || (P.mode==='month' ? DATA.issue.Sheets[sheetNames[sheetNames.length-2]] : null);
-    const count = s => {
-      if(!s) return null;
-      const rows=XLSX.utils.sheet_to_json(s,{header:1,defval:null});
-      return rows.filter(r=>r&&r[9]==='자재수급 Issue'&&r[11]==='미입고').length;
+    // 최신 시트 사용 (모든 이슈가 한 시트에 있음)
+    const ws  = DATA.issue.Sheets[DATA.issue.SheetNames[DATA.issue.SheetNames.length-1]];
+    const wsPrev = ws; // 같은 시트에서 기안일 기준으로 필터
+
+    const countIssue = (targetMonthStr) => {
+      if (!ws) return null;
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+      // targetMonthStr = '26.04월' → 해당 월까지 기안된 미완료 건 누적
+      const [tyy, tmm] = targetMonthStr ? targetMonthStr.replace('월','').split('.').map(Number) : [99,99];
+      const targetYM = tyy*100 + tmm; // 2604
+
+      return rows.filter(r => {
+        if (!r || r[9] !== '자재수급 Issue' || !r[13]) return false;
+        // 결재대기 + 미입고 모두 포함
+        if (r[11] !== '미입고' && r[11] !== '결재대기') return false;
+        // 기안일(col14) 엑셀 시리얼 → YearMonth
+        const serial = r[14];
+        if (!serial || typeof serial !== 'number') return false;
+        const d = new Date((serial - 25569) * 86400000);
+        const itemYM = (d.getFullYear() % 100) * 100 + (d.getMonth() + 1); // 2601, 2603...
+        // 해당 월까지 기안된 것만 (누적)
+        return itemYM <= targetYM;
+      }).length;
     };
-    CUR.issue=count(ws); PREV.issue=count(ws2);
-    setText('s-issue', CUR.issue!==null ? CUR.issue+'건' : '-');
+
+    if (P.mode === 'year') {
+      // 연간: 전체 미완료 건수
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+      CUR.issue = rows.filter(r=>r&&r[9]==='자재수급 Issue'&&r[13]&&(r[11]==='미입고'||r[11]==='결재대기')).length;
+      PREV.issue = null;
+    } else {
+      CUR.issue  = countIssue(P.monthStr);
+      PREV.issue = countIssue(P.prevMonthStr);
+    }
+    setText('s-issue', CUR.issue !== null ? CUR.issue+'건' : '-');
     if(P.mode==='month') renderDelta('d-issue', CUR.issue, PREV.issue, '건', true, 0);
     else document.getElementById('d-issue').innerHTML='';
   }
@@ -708,17 +827,87 @@ function renderReport() {
 // ══════════════════════════════════════════════════════════════
 function renderVOC() {
   if (!DATA.report) return;
+  const P = parsePeriod();
+  if (!P) return;
+
   const ws2=DATA.report.Sheets['반품현황'];
   if (ws2) {
     const rows=XLSX.utils.sheet_to_json(ws2,{header:1,defval:null});
     const rm={},pm={};
-    for(let i=2;i<rows.length;i++){const r=rows[i];if(!r||r[0]!=='반품현황 (반품/교환율만 제외)'||r[3]!=='꿈비')continue;if(r[4])rm[r[4]]=(rm[r[4]]||0)+(r[7]||0);if(r[5])pm[r[5]]=(pm[r[5]]||0)+(r[7]||0);}
+    for(let i=2;i<rows.length;i++){
+      const r=rows[i];
+      if(!r||r[0]!=='반품현황 (반품/교환율만 제외)'||r[3]!=='꿈비') continue;
+      // 월 필터: 월간 문자열 OR 주간 숫자 prefix
+      if(P.mode!=='year'){
+        const wk=r[2];
+        const ok=(wk===P.monthStr)||(typeof wk==='number'&&weekInMonth(wk,P.weekPrefix));
+        if(!ok) continue;
+      }
+      if(r[4]) rm[r[4]]=(rm[r[4]]||0)+(r[7]||0);
+      if(r[5]) pm[r[5]]=(pm[r[5]]||0)+(r[7]||0);
+    }
     renderVocBars('vocReturn',rm,['#e8834a','#f39c12','#e74c3c','#9b59b6','#3498db','#1abc9c']);
     renderVocBars('vocProduct',pm,COLORS);
   }
+
   const ws4=DATA.report.Sheets['data_가전마감'];
-  if(ws4){const rows=XLSX.utils.sheet_to_json(ws4,{header:1,defval:null});const sm={};rows.slice(1).filter(r=>r&&r[11]).forEach(r=>{sm[r[11]]=(sm[r[11]]||0)+1;});renderVocBars('vocAS',Object.fromEntries(Object.entries(sm).sort((a,b)=>b[1]-a[1]).slice(0,10)),['#c0392b','#e74c3c','#e8834a','#f39c12','#f1c40f','#d4ac0d','#a04000','#784212','#6e2f1a','#922b21']);}
-  if(DATA.issue){const ws=DATA.issue.Sheets[DATA.period]||DATA.issue.Sheets[DATA.issue.SheetNames[0]];if(ws){const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});const el=document.getElementById('issueList');const ir=rows.filter(r=>r&&r[9]==='자재수급 Issue'&&r[13]);el.innerHTML=ir.length?ir.map(r=>{const c=r[11]==='미입고'?'pill-delay':r[11]==='결재대기'?'pill-ing':'pill-done';return`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef0f5;"><span class="status-pill ${c}">${r[11]||''}</span><span style="flex:1;font-size:11px;">${(r[13]||'').replace(/\[(꿈비|리코코)\] /g,'')}</span></div>`;}).join(''):'<div style="color:#aaa;font-size:12px;padding:10px;">데이터 없음</div>';}}
+  if(ws4){
+    const rows=XLSX.utils.sheet_to_json(ws4,{header:1,defval:null});
+    const sm={};
+    for(let i=1;i<rows.length;i++){
+      const r=rows[i]; if(!r||!r[11]) continue;
+      // 월 필터
+      if(P.mode!=='year' && r[0]){
+        const d=typeof r[0]==='number'?new Date((r[0]-25569)*86400000):new Date(r[0]);
+        const ym=`${String(d.getFullYear()).slice(2)}.${String(d.getMonth()+1).padStart(2,'0')}월`;
+        if(ym!==P.monthStr) continue;
+      }
+      sm[r[11]]=(sm[r[11]]||0)+1;
+    }
+    renderVocBars('vocAS',Object.fromEntries(Object.entries(sm).sort((a,b)=>b[1]-a[1]).slice(0,10)),
+      ['#c0392b','#e74c3c','#e8834a','#f39c12','#f1c40f','#d4ac0d','#a04000','#784212','#6e2f1a','#922b21']);
+  }
+
+  if(DATA.issue){
+    const ws=DATA.issue.Sheets[DATA.issue.SheetNames[DATA.issue.SheetNames.length-1]];
+    if(ws){
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+      const el=document.getElementById('issueList');
+
+      // 기안일 기준 누적 필터 (결재대기 + 미입고)
+      let targetYM = 9999;
+      if(P.mode !== 'year' && P.monthStr){
+        const [tyy, tmm] = P.monthStr.replace('월','').split('.').map(Number);
+        targetYM = tyy*100 + tmm;
+      }
+
+      const ir = rows.filter(r => {
+        if(!r || r[9] !== '자재수급 Issue' || !r[13]) return false;
+        if(r[11] !== '미입고' && r[11] !== '결재대기') return false;
+        if(P.mode === 'year') return true;
+        const serial = r[14];
+        if(!serial || typeof serial !== 'number') return false;
+        const d = new Date((serial-25569)*86400000);
+        const itemYM = (d.getFullYear()%100)*100 + (d.getMonth()+1);
+        return itemYM <= targetYM;
+      });
+
+      el.innerHTML=ir.length?ir.map(r=>{
+        // 기안일 날짜 표시
+        let dateStr = '';
+        if(r[14] && typeof r[14]==='number'){
+          const d=new Date((r[14]-25569)*86400000);
+          dateStr=`${d.getMonth()+1}/${d.getDate()}`;
+        }
+        const c=r[11]==='미입고'?'pill-delay':'pill-ing'; // 결재대기는 주황
+        return`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef0f5;">
+          <span class="status-pill ${c}">${r[11]||''}</span>
+          <span style="flex:1;font-size:11px;">${(r[13]||'').replace(/\[(꿈비|리코코)\] /g,'')}</span>
+          <span style="font-size:10px;color:var(--muted);">${dateStr}</span>
+        </div>`;
+      }).join(''):'<div style="color:#aaa;font-size:12px;padding:10px;">해당 기간 미입고 없음</div>';
+    }
+  }
 }
 
 function renderVocBars(id,dataObj,colors){
@@ -841,8 +1030,11 @@ async function runAI(type){
   document.querySelectorAll('.snav-item').forEach(s=>s.classList.remove('active'));
   document.getElementById('sec-ai').classList.add('active');
   document.querySelectorAll('.snav-item')[4].classList.add('active');
+  sessionStorage.setItem('walpimiSection','ai');
+
   const output=document.getElementById('aiOutput');
   output.className='ai-output loading'; output.textContent='✦ AI 분석 중입니다...';
+
   const ds=buildDataSummary();
   const prompts={
     summary:`당신은 품질·고객센터 월간 보고 분석 전문가입니다. 아래 데이터를 바탕으로 월피미 보고용 핵심 요약을 작성해주세요.\n\n형식:\n1. 이번 달 핵심 현황 (3줄)\n2. 주요 성과 (2가지)\n3. 개선 필요 항목 (2가지)\n4. 다음 달 중점 과제 (2가지)\n\n임원 보고에 적합한 간결한 언어로 작성해주세요.\n\n데이터:\n${ds}`,
@@ -850,12 +1042,103 @@ async function runAI(type){
     action:`당신은 고객센터·품질 개선 컨설턴트입니다. 아래 데이터를 바탕으로 구체적인 개선 대안을 제안해주세요.\n\n형식:\n1. 단기 개선안 (1개월 내, 3가지)\n2. 중기 개선안 (3개월 내, 2가지)\n3. 예상 효과\n\n데이터:\n${ds}`,
     report:`당신은 월간 보고서 작성 전문가입니다. 아래 데이터를 바탕으로 회의용 보고 문구를 작성해주세요.\n\n[이번 달 현황]\n[주요 성과]\n[미달성 항목 및 원인]\n[개선 대안 및 실행 계획]\n[다음 달 중점 추진 사항]\n\n데이터:\n${ds}`,
   };
+
   try {
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompts[type]||prompts.summary}]})});
-    const data=await resp.json();
+    // Apps Script 경유 Gemini 호출 (CORS 우회)
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'ai', prompt: prompts[type] || prompts.summary })
+    });
+    const data = await resp.json();
     output.className='ai-output';
-    output.textContent=data.content?.map(c=>c.text||'').join('')||'응답 오류';
-  } catch(e){output.className='ai-output';output.textContent='⚠ AI 연결 오류: '+e.message;}
+    output.innerHTML = data.ok ? renderMarkdown(data.text) : ('⚠ 오류: ' + data.msg);
+  } catch(e){
+    output.className='ai-output';
+    output.textContent='⚠ 연결 오류: ' + e.message;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// AI 자동 인사이트 — 데이터 로드 후 자동 실행
+// ══════════════════════════════════════════════════════════════
+async function runAutoInsight() {
+  // 인사이트 영역 로딩 표시
+  const ids = ['total','alf','return','quality','as','issue','satisfaction','answer','channel','returnchart'];
+  ids.forEach(id => {
+    const el = document.getElementById('i-'+id);
+    if (el) { el.className = (id==='channel'||id==='returnchart') ? 'card-insight loading' : 'kpi-insight loading'; el.textContent = '분석 중...'; }
+  });
+
+  const ds = buildDataSummary();
+  const prompt = `당신은 품질·고객센터 데이터 분석가입니다.
+아래 데이터를 보고 각 지표별 핵심 인사이트를 PPT 문구처럼 짧고 날카롭게 작성해주세요.
+문장형 설명 NO, 마크다운 NO, 각 항목은 1~2줄 이내.
+
+반드시 아래 JSON 형식으로만 응답하세요 (다른 텍스트 없이):
+{
+  "total": "총 상담 인입 한줄 인사이트",
+  "alf": "ALF 해결율 한줄 인사이트",
+  "return": "반품/교환율 한줄 인사이트",
+  "quality": "품질 개선요청 한줄 인사이트",
+  "as": "AS 처리 한줄 인사이트",
+  "issue": "자재 미입고 한줄 인사이트",
+  "satisfaction": "고객 만족도 한줄 인사이트",
+  "answer": "수신 응답율 한줄 인사이트",
+  "channel": "채널별 인입 특이점 2줄 이내",
+  "returnchart": "반품 사유 특이점 2줄 이내"
+}
+
+데이터:
+${ds}`;
+
+  try {
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'ai', prompt })
+    });
+    const data = await resp.json();
+    if (!data.ok) throw new Error(data.msg);
+
+    // JSON 파싱
+    let insights;
+    try {
+      const clean = data.text.replace(/```json|```/g,'').trim();
+      insights = JSON.parse(clean);
+    } catch(e) {
+      console.warn('인사이트 JSON 파싱 실패:', data.text);
+      return;
+    }
+
+    // 각 카드에 적용
+    ids.forEach(id => {
+      const el = document.getElementById('i-'+id);
+      if (el && insights[id]) {
+        el.className = (id==='channel'||id==='returnchart') ? 'card-insight' : 'kpi-insight';
+        el.textContent = insights[id];
+      } else if (el) {
+        el.textContent = '';
+      }
+    });
+
+  } catch(e) {
+    ids.forEach(id => {
+      const el = document.getElementById('i-'+id);
+      if (el) el.textContent = '';
+    });
+    console.warn('자동 인사이트 오류:', e);
+  }
+}
+function renderMarkdown(text) {
+  let html = text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^\* (.+)$/gm, '<li>$1</li>')
+    .replace(/\n/g, '<br>');
+  // li 태그 ul로 묶기
+  html = html.replace(/(<li>.*?<\/li>)(<br>(<li>.*?<\/li>))*/g, m => '<ul>' + m.replace(/<br>/g,'') + '</ul>');
+  return html;
 }
 
 function buildDataSummary(){
@@ -879,6 +1162,8 @@ function buildDataSummary(){
 // ══════════════════════════════════════════════════════════════
 // 초기 실행
 // ══════════════════════════════════════════════════════════════
+readPeriodFromURL();
+restoreSection();   // 이전에 보던 섹션 복원
 renderActionTable();
 loadAllData();
 </script>

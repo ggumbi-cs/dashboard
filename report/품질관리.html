@@ -519,8 +519,8 @@ function render(raw, improve) {
       ${top5[0]?topDonutCard(1,top5[0][0],top5[0][1],TOP_COLORS[0]):'<div class="sm-donut-card"><div class="sm-card-title">Top.1 -</div></div>'}
       ${top5[1]?topDonutCard(2,top5[1][0],top5[1][1],TOP_COLORS[1]):'<div class="sm-donut-card"><div class="sm-card-title">Top.2 -</div></div>'}
       ${top5[2]?topDonutCard(3,top5[2][0],top5[2][1],TOP_COLORS[2]):'<div class="sm-donut-card"><div class="sm-card-title">Top.3 -</div></div>'}
-      <div style="grid-column:2;grid-row:2;">${top5[3]?topDonutCard(4,top5[3][0],top5[3][1],TOP_COLORS[3]):'<div class="sm-donut-card"><div class="sm-card-title">Top.4 -</div></div>'}</div>
-      <div style="grid-column:3;grid-row:2;">${top5[4]?topDonutCard(5,top5[4][0],top5[4][1],TOP_COLORS[4]):'<div class="sm-donut-card"><div class="sm-card-title">Top.5 -</div></div>'}</div>
+      <div style="grid-column:2;grid-row:2;">${top5[3]?topDonutCard(4,top5[3][0],top5[3][1],TOP_COLORS[3]):'<div class="sm-donut-card" style="height:100%;box-sizing:border-box;"><div class="sm-card-title">Top.4 -</div></div>'}</div>
+      <div style="grid-column:3;grid-row:2;">${top5[4]?topDonutCard(5,top5[4][0],top5[4][1],TOP_COLORS[4]):'<div class="sm-donut-card" style="height:100%;box-sizing:border-box;"><div class="sm-card-title">Top.5 -</div></div>'}</div>
       <div class="sm-donut-card" style="grid-column:4;grid-row:2;">
         <div class="sm-card-title">불량 추이 — ${trendLabel}</div>
         <div style="font-size:9px;color:#999;margin-bottom:10px;">${lastLabel}까지 누적 · 접수일 기준</div>

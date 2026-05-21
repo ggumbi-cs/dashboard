@@ -249,10 +249,10 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', sans-serif; font-size:
 
 </div>
 
+<script src="../../token/config.js"></script>
 <script>
-// ── Gist 설정 (하드코딩) ──
-const GITHUB_TOKEN = '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';
-const GIST_ID      = '85f95642bd8bbc2635c6f7059a11dd3a';
+// ── Gist 설정 (config.js에서 로드) ──
+// GITHUB_TOKEN, GIST_ID 는 ../../token/config.js 에서 주입됨
 
 // 파일명 기반 자동 키 → 복제 시 이름만 바꾸면 독립 저장
 const GIST_FILE = location.pathname.split('/').pop().replace('.html','') + '_settings.json';

@@ -251,7 +251,7 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', sans-serif; font-size:
 
 <script>
 // ── Gist 설정 (하드코딩) ──
-const GITHUB_TOKEN = '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';
+const GITHUB_TOKEN = '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';
 const GIST_ID      = '85f95642bd8bbc2635c6f7059a11dd3a';
 
 // 파일명 기반 자동 키 → 복제 시 이름만 바꾸면 독립 저장
@@ -279,20 +279,28 @@ function setSaveStatus(msg, ok) {
 async function gistLoad() {
   setSaveStatus('설정 불러오는 중...', false);
   try {
-    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+    const url = `https://api.github.com/gists/${GIST_ID}`;
+    const tokenPreview = GITHUB_TOKEN ? GITHUB_TOKEN.slice(0,8)+'...' : '(없음)';
+    setSaveStatus(`[진단] Token:${tokenPreview} GistID:${GIST_ID.slice(0,8)}... 파일:${GIST_FILE}`, false);
+    const res = await fetch(url, {
       headers: { Authorization: `token ${GITHUB_TOKEN}`, Accept: 'application/vnd.github.v3+json' }
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const statusTxt = `HTTP ${res.status} ${res.statusText}`;
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`${statusTxt} / ${body.slice(0,120)}`);
+    }
     const data = await res.json();
+    const fileList = Object.keys(data.files).join(', ');
     const content = data.files[GIST_FILE]?.content;
     if (content) {
       applySettings(JSON.parse(content));
       setSaveStatus(`불러오기 완료 · ${new Date().toLocaleTimeString()}`, false);
     } else {
-      setSaveStatus('저장된 설정 없음 (첫 사용)', false);
+      setSaveStatus(`[진단] Gist OK(${statusTxt}) / 파일목록: [${fileList}] / '${GIST_FILE}' 없음→첫사용`, false);
     }
   } catch(e) {
-    setSaveStatus('Gist 오류: ' + e.message, false);
+    setSaveStatus('[진단] 로드실패: ' + e.message, false);
   }
 }
 
@@ -316,10 +324,14 @@ async function gistSave() {
       },
       body: JSON.stringify({ files: { [GIST_FILE]: { content: JSON.stringify(s, null, 2) } } })
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const statusTxt = `HTTP ${res.status} ${res.statusText}`;
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`${statusTxt} / ${body.slice(0,120)}`);
+    }
     setSaveStatus(`저장 완료 · ${new Date().toLocaleTimeString()}`, true);
   } catch(e) {
-    setSaveStatus('저장 실패: ' + e.message, false);
+    setSaveStatus('[진단] 저장실패: ' + e.message, false);
   }
 }
 

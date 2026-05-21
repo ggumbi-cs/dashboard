@@ -253,8 +253,8 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', sans-serif; font-size:
 <script>
 // ── 설정 ──
 const STORAGE_KEY  = 'toolSettings_' + location.pathname.split('/').pop().replace('.html','');
-const USER_NAME    = location.pathname.split('/').pop().replace('.html','');
-const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbw0RET5vYxUuuOMqCA46bi8-BXdqme4Ar3E9kuCL84RNlqQ1Jdh_ECzbAMxWZgjM1Eyyw/exec';
+const USER_NAME    = decodeURIComponent(location.pathname.split('/').pop().replace('.html',''));
+const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbx8mYZBhJ_4gqMxbcHyBoPE8LqV4aSCDT15KCc5VOq8stbB9x1ik5fLQNjS6YD-Sd5e/exec';
 
 const TOOL_FILES = {
   'AS1':'as.html','AS2':'as2.html','AS3':'as3.html','AS4':'as4.html',
@@ -263,7 +263,7 @@ const TOOL_FILES = {
 };
 
 const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-const BASE = isLocal ? './' : '/dashboard/tool/';
+const BASE = isLocal ? '/tool/' : '/dashboard/tool/';
 
 const slotScales = { 1: 1.0, 2: 1.0, 3: 1.0, 4: 1.0 };
 
@@ -409,10 +409,15 @@ function autoSave() {
 
 window.addEventListener('resize', () => { [1,2,3,4].forEach(i => applyZoom(i)); });
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // 로컬 먼저 복원 (빠름)
-  applySettings(localLoad());
-  setSaveStatus('로컬 설정 복원됨', false);
+  const local = localLoad();
+  if (local && Object.keys(local).length > 0) {
+    applySettings(local);
+    setSaveStatus('로컬 복원됨 — 시트 동기화 중...', false);
+  }
+  // 시트에서 자동 불러오기
+  await sheetLoad();
 });
 </script>
 </body>

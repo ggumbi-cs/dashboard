@@ -405,7 +405,15 @@ function setStatus(cls, msg, spin) {
   el.innerHTML = (spin ? '<span class="spinner"></span> ' : '') + msg;
 }
 function setText(id, val) { const el=document.getElementById(id); if(el) el.textContent=val; }
-function esc(v) { return (v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+function formatDate(val) {
+  if (!val) return '';
+  const s = String(val);
+  // ISO 형식 (2026-05-10T15:00:00.000Z 등) → yyyy-MM-dd
+  if (s.includes('T')) return s.split('T')[0];
+  // 이미 yyyy-MM-dd 형식
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  return s;
+}
 // ══════════════════════════════════════════════════════════════
 // URL 파라미터에서 기간 읽기 (index.html이 넘겨줌)
 // ?type=yearly&period=2026
@@ -938,7 +946,7 @@ function renderActionTable() {
       <td><input value="${esc(it.과제명)}" onchange="updateAction(${i},'과제명',this.value)" style="width:100%;border:none;font-size:12px;background:transparent;font-family:var(--font);"></td>
       <td class="center"><input value="${esc(it.담당부서)}" onchange="updateAction(${i},'담당부서',this.value)" style="width:100%;border:none;font-size:11px;background:transparent;text-align:center;font-family:var(--font);"></td>
       <td><input value="${esc(it.완료기준)}" onchange="updateAction(${i},'완료기준',this.value)" style="width:100%;border:none;font-size:11px;background:transparent;font-family:var(--font);"></td>
-      <td class="center"><input type="date" value="${it.완료기한||''}" onchange="updateAction(${i},'완료기한',this.value)" style="border:none;font-size:11px;background:transparent;font-family:var(--font);"></td>
+      <td class="center"><input type="date" value="${formatDate(it.완료기한)}" onchange="updateAction(${i},'완료기한',this.value)" style="border:none;font-size:11px;background:transparent;font-family:var(--font);"></td>
       <td>
         <div style="display:flex;align-items:center;gap:6px;">
           <div class="progress-wrap" style="flex:1;"><div class="progress-bar ${barCls}" style="width:${pct}%;"></div></div>
@@ -1071,21 +1079,27 @@ async function runAutoInsight() {
 
   const ds = buildDataSummary();
   const prompt = `당신은 품질·고객센터 데이터 분석가입니다.
-아래 데이터를 보고 각 지표별 핵심 인사이트를 PPT 문구처럼 짧고 날카롭게 작성해주세요.
-문장형 설명 NO, 마크다운 NO, 각 항목은 1~2줄 이내.
+아래 실제 데이터를 보고 각 지표별 핵심 인사이트를 작성해주세요.
 
-반드시 아래 JSON 형식으로만 응답하세요 (다른 텍스트 없이):
+규칙:
+- PPT 문구처럼 짧고 날카롭게 (1~2줄)
+- 실제 수치와 트렌드 기반으로 작성
+- "데이터 부재", "파악 불가" 같은 말 절대 금지
+- 마크다운 기호 없이 순수 텍스트만
+- 채널/반품 항목은 특이점·트렌드 중심으로 2줄
+
+반드시 아래 JSON 형식으로만 응답 (다른 텍스트 없이):
 {
-  "total": "총 상담 인입 한줄 인사이트",
-  "alf": "ALF 해결율 한줄 인사이트",
-  "return": "반품/교환율 한줄 인사이트",
-  "quality": "품질 개선요청 한줄 인사이트",
-  "as": "AS 처리 한줄 인사이트",
-  "issue": "자재 미입고 한줄 인사이트",
-  "satisfaction": "고객 만족도 한줄 인사이트",
-  "answer": "수신 응답율 한줄 인사이트",
-  "channel": "채널별 인입 특이점 2줄 이내",
-  "returnchart": "반품 사유 특이점 2줄 이내"
+  "total": "총 상담 인입 인사이트",
+  "alf": "ALF 해결율 인사이트",
+  "return": "반품/교환율 인사이트",
+  "quality": "품질 개선요청 인사이트",
+  "as": "AS 처리 인사이트",
+  "issue": "자재 미입고 인사이트",
+  "satisfaction": "고객 만족도 인사이트",
+  "answer": "수신 응답율 인사이트",
+  "channel": "채널별 인입 특이점·트렌드 2줄",
+  "returnchart": "반품 사유 특이점·주의사항 2줄"
 }
 
 데이터:
@@ -1142,20 +1156,88 @@ function renderMarkdown(text) {
 }
 
 function buildDataSummary(){
+  const P = parsePeriod();
   const lines=[`분석 기간: ${DATA.period}`];
-  if(CUR.total!==null) lines.push(`총 인입: ${CUR.total}건 (전회차: ${PREV.total||'-'}건)`);
-  if(CUR.alf!==null)   lines.push(`ALF 해결율: ${CUR.alf.toFixed(1)}% (전회차: ${PREV.alf?PREV.alf.toFixed(1)+'%':'-'})`);
-  if(CUR.returnRate!==null) lines.push(`반품율: ${CUR.returnRate.toFixed(2)}% (전회차: ${PREV.returnRate?PREV.returnRate.toFixed(2)+'%':'-'})`);
-  if(CUR.satisfaction!==null) lines.push(`만족도: ${CUR.satisfaction.toFixed(2)}점 (전회차: ${PREV.satisfaction?PREV.satisfaction.toFixed(2)+'점':'-'})`);
+
+  // KPI 수치 (전회차 포함)
+  if(CUR.total!==null)        lines.push(`총 상담 인입: ${CUR.total.toLocaleString()}건 (전회차: ${PREV.total?PREV.total.toLocaleString()+'건':'-'})`);
+  if(CUR.alf!==null)          lines.push(`ALF 해결율: ${CUR.alf.toFixed(1)}% (전회차: ${PREV.alf?PREV.alf.toFixed(1)+'%':'-'})`);
+  if(CUR.returnRate!==null)   lines.push(`반품/교환율: ${CUR.returnRate.toFixed(2)}% (전회차: ${PREV.returnRate?PREV.returnRate.toFixed(2)+'%':'-'})`);
+  if(CUR.satisfaction!==null) lines.push(`고객 만족도: ${CUR.satisfaction.toFixed(2)}점 (전회차: ${PREV.satisfaction?PREV.satisfaction.toFixed(2)+'점':'-'})`);
+  if(CUR.answer!==null)       lines.push(`수신 응답율: ${CUR.answer.toFixed(1)}% (전회차: ${PREV.answer?PREV.answer.toFixed(1)+'%':'-'})`);
+  if(CUR.as!==null)           lines.push(`AS 처리: ${CUR.as}건 (전회차: ${PREV.as?PREV.as+'건':'-'})`);
+  if(CUR.issue!==null)        lines.push(`자재 미입고: ${CUR.issue}건 (전회차: ${PREV.issue!==null?PREV.issue+'건':'-'})`);
+  if(CUR.quality!==null)      lines.push(`품질 개선요청: ${CUR.quality}건`);
+
   if(DATA.report){
+    // 채널별 인입 상세
+    const ws1=DATA.report.Sheets['상담실적'];
+    if(ws1){
+      const rows=XLSX.utils.sheet_to_json(ws1,{header:1,defval:null});
+      const curCh={}, prevCh={};
+      for(let i=2;i<rows.length;i++){
+        const r=rows[i]; if(!r||r[0]!=='총인입데이터'||r[1]!=='월간'||!r[3]) continue;
+        if(P&&r[2]===P.monthStr)     curCh[r[3]]=(curCh[r[3]]||0)+(r[4]||0);
+        if(P&&r[2]===P.prevMonthStr) prevCh[r[3]]=(prevCh[r[3]]||0)+(r[4]||0);
+      }
+      if(Object.keys(curCh).length){
+        lines.push('\n[채널별 인입 (이번달 vs 전월)]');
+        Object.entries(curCh).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
+          const prev=prevCh[k]||0;
+          const diff=v-prev;
+          const sign=diff>0?'+':'';
+          lines.push(`  ${k}: ${v}건 (전월대비 ${sign}${diff}건)`);
+        });
+      }
+    }
+
+    // 반품 사유 (월 필터 적용)
     const ws2=DATA.report.Sheets['반품현황'];
-    if(ws2){const rows=XLSX.utils.sheet_to_json(ws2,{header:1,defval:null});const rm={};for(let i=2;i<rows.length;i++){const r=rows[i];if(!r||r[0]!=='반품현황 (반품/교환율만 제외)'||r[3]!=='꿈비'||!r[4])continue;rm[r[4]]=(rm[r[4]]||0)+(r[7]||0);}lines.push('\n[반품 사유]');Object.entries(rm).sort((a,b)=>b[1]-a[1]).slice(0,6).forEach(([k,v])=>lines.push(`  ${k}: ${v}건`));}
+    if(ws2){
+      const rows=XLSX.utils.sheet_to_json(ws2,{header:1,defval:null});
+      const rm={};
+      for(let i=2;i<rows.length;i++){
+        const r=rows[i]; if(!r||r[0]!=='반품현황 (반품/교환율만 제외)'||r[3]!=='꿈비'||!r[4]) continue;
+        if(P&&P.mode!=='year'){
+          const wk=r[2];
+          if(wk!==P.monthStr && !(typeof wk==='number'&&weekInMonth(wk,P.weekPrefix))) continue;
+        }
+        rm[r[4]]=(rm[r[4]]||0)+(r[7]||0);
+      }
+      lines.push('\n[반품 사유 TOP5 (꿈비)]');
+      Object.entries(rm).sort((a,b)=>b[1]-a[1]).slice(0,5).forEach(([k,v])=>lines.push(`  ${k}: ${v}건`));
+    }
+
+    // 품질 개선 요청
     const ws3=DATA.report.Sheets['품질관리'];
-    if(ws3){const rows=XLSX.utils.sheet_to_json(ws3,{header:1,defval:null});lines.push('\n[품질 개선 요청]');rows.slice(2,12).filter(r=>r&&r[4]).forEach(r=>lines.push(`  [${r[1]||''}] ${r[4]||''} - ${r[5]||''}`.substring(0,60)));}
+    if(ws3){
+      const rows=XLSX.utils.sheet_to_json(ws3,{header:1,defval:null});
+      lines.push('\n[품질 개선 요청]');
+      rows.slice(2,12).filter(r=>r&&r[4]).forEach(r=>lines.push(`  [${r[1]||''}] ${r[4]||''} - ${r[5]||''}`.substring(0,60)));
+    }
+
+    // AS 증상 TOP5
     const ws4=DATA.report.Sheets['data_가전마감'];
-    if(ws4){const rows=XLSX.utils.sheet_to_json(ws4,{header:1,defval:null});const sm={};rows.slice(1).filter(r=>r&&r[11]).forEach(r=>{sm[r[11]]=(sm[r[11]]||0)+1;});lines.push('\n[AS 증상 TOP5]');Object.entries(sm).sort((a,b)=>b[1]-a[1]).slice(0,5).forEach(([k,v])=>lines.push(`  ${k}: ${v}건`));}
+    if(ws4){
+      const rows=XLSX.utils.sheet_to_json(ws4,{header:1,defval:null});
+      const sm={};
+      rows.slice(1).filter(r=>r&&r[11]).forEach(r=>{sm[r[11]]=(sm[r[11]]||0)+1;});
+      lines.push('\n[AS 증상 TOP5]');
+      Object.entries(sm).sort((a,b)=>b[1]-a[1]).slice(0,5).forEach(([k,v])=>lines.push(`  ${k}: ${v}건`));
+    }
   }
-  if(DATA.issue){const ws=DATA.issue.Sheets[DATA.period]||DATA.issue.Sheets[DATA.issue.SheetNames[0]];if(ws){const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});lines.push('\n[자재수급 이슈]');rows.filter(r=>r&&r[9]==='자재수급 Issue'&&r[13]).slice(0,8).forEach(r=>lines.push(`  [${r[11]||''}] ${r[13]||''}`));}}
+
+  // 자재수급 이슈
+  if(DATA.issue){
+    const ws=DATA.issue.Sheets[DATA.issue.SheetNames[DATA.issue.SheetNames.length-1]];
+    if(ws){
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+      lines.push('\n[자재수급 이슈]');
+      rows.filter(r=>r&&r[9]==='자재수급 Issue'&&r[13]&&(r[11]==='미입고'||r[11]==='결재대기'))
+          .slice(0,8).forEach(r=>lines.push(`  [${r[11]||''}] ${r[13]||''}`));
+    }
+  }
+
   return lines.join('\n');
 }
 

@@ -146,6 +146,7 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', sans-serif; font-size:
 <div class="top-bar">
   <span class="user-name">👤 장진영 · 개인 Tool 설정</span>
   <span class="save-status" id="saveStatus">설정 불러오는 중...</span>
+  <button class="save-btn" style="background:#2a7a6f;margin-right:4px" onclick="sheetLoad()">↓ 불러오기</button>
   <button class="save-btn" id="saveBtn" onclick="saveSettings()">저장</button>
 </div>
 
@@ -250,9 +251,10 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', sans-serif; font-size:
 </div>
 
 <script>
-// ── 로컬 저장 설정 ──
-// 파일명 기반 자동 키 → 복제 시 이름만 바꾸면 독립 저장
-const STORAGE_KEY = 'toolSettings_' + location.pathname.split('/').pop().replace('.html','');
+// ── 설정 ──
+const STORAGE_KEY  = 'toolSettings_' + location.pathname.split('/').pop().replace('.html','');
+const USER_NAME    = location.pathname.split('/').pop().replace('.html','');
+const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbw0RET5vYxUuuOMqCA46bi8-BXdqme4Ar3E9kuCL84RNlqQ1Jdh_ECzbAMxWZgjM1Eyyw/exec';
 
 const TOOL_FILES = {
   'AS1':'as.html','AS2':'as2.html','AS3':'as3.html','AS4':'as4.html',
@@ -272,40 +274,83 @@ function setSaveStatus(msg, ok) {
   if (ok === false) { btn.textContent = '저장'; btn.classList.remove('saved'); }
 }
 
-function saveSettings() {
+// ── 로컬 저장 ──
+function localSave(s) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+}
+
+function localLoad() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) { return {}; }
+}
+
+// ── 구글시트 저장 ──
+async function sheetSave() {
   const s = {
-    slot1: document.getElementById('slot1Tool').value,
-    slot2: document.getElementById('slot2Tool').value,
-    slot3: document.getElementById('slot3Tool').value,
-    slot4: document.getElementById('slot4Tool').value,
+    name: USER_NAME,
+    슬롯1: document.getElementById('slot1Tool').value,
+    슬롯2: document.getElementById('slot2Tool').value,
+    슬롯3: document.getElementById('slot3Tool').value,
+    슬롯4: document.getElementById('slot4Tool').value,
     zoom1: slotScales[1], zoom2: slotScales[2],
     zoom3: slotScales[3], zoom4: slotScales[4],
   };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-  setSaveStatus('저장 완료 · ' + new Date().toLocaleTimeString(), true);
-}
-
-function loadSettings() {
+  localSave({
+    slot1: s.슬롯1, slot2: s.슬롯2, slot3: s.슬롯3, slot4: s.슬롯4,
+    zoom1: s.zoom1, zoom2: s.zoom2, zoom3: s.zoom3, zoom4: s.zoom4,
+  });
+  setSaveStatus('저장 중...', false);
   try {
-    const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    [1,2,3,4].forEach(i => {
-      if (s[`zoom${i}`]) {
-        const scale = s[`zoom${i}`];
-        slotScales[i] = scale;
-        document.getElementById(`zoomGroup${i}`).querySelectorAll('.zoom-btn').forEach(b => {
-          b.classList.toggle('active', parseFloat(b.dataset.scale) === scale);
-        });
-      }
-      if (s[`slot${i}`]) {
-        document.getElementById(`slot${i}Tool`).value = s[`slot${i}`];
-        loadTool(i);
-      }
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(s)
     });
-    setSaveStatus('설정 복원 완료', false);
+    setSaveStatus('저장 완료 · ' + new Date().toLocaleTimeString(), true);
   } catch(e) {
-    setSaveStatus('설정 없음 (첫 사용)', false);
+    setSaveStatus('시트 저장 실패 (로컬만 저장됨)', false);
   }
 }
+
+// ── 구글시트 불러오기 ──
+async function sheetLoad() {
+  setSaveStatus('시트에서 불러오는 중...', false);
+  try {
+    const res = await fetch(SCRIPT_URL + '?name=' + encodeURIComponent(USER_NAME));
+    const json = await res.json();
+    if (json.ok && json.data) {
+      const d = json.data;
+      const s = {
+        slot1: d['슬롯1'], slot2: d['슬롯2'], slot3: d['슬롯3'], slot4: d['슬롯4'],
+        zoom1: d['zoom1'], zoom2: d['zoom2'], zoom3: d['zoom3'], zoom4: d['zoom4'],
+      };
+      localSave(s);
+      applySettings(s);
+      setSaveStatus('시트 불러오기 완료 · ' + new Date().toLocaleTimeString(), false);
+    } else {
+      setSaveStatus('시트에 저장된 설정 없음', false);
+    }
+  } catch(e) {
+    setSaveStatus('시트 불러오기 실패 — 로컬 설정 사용', false);
+    applySettings(localLoad());
+  }
+}
+
+function applySettings(s) {
+  [1,2,3,4].forEach(i => {
+    if (s[`zoom${i}`]) {
+      const scale = parseFloat(s[`zoom${i}`]);
+      slotScales[i] = scale;
+      document.getElementById(`zoomGroup${i}`).querySelectorAll('.zoom-btn').forEach(b => {
+        b.classList.toggle('active', parseFloat(b.dataset.scale) === scale);
+      });
+    }
+    if (s[`slot${i}`]) {
+      document.getElementById(`slot${i}Tool`).value = s[`slot${i}`];
+      loadTool(i);
+    }
+  });
+}
+
+function saveSettings() { sheetSave(); }
 
 // ── 크기 조정 ──
 function setZoom(slotNum, scale, btn) {
@@ -313,7 +358,13 @@ function setZoom(slotNum, scale, btn) {
   document.getElementById(`zoomGroup${slotNum}`).querySelectorAll('.zoom-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   applyZoom(slotNum);
-  saveSettings();
+  localSave({
+    slot1: document.getElementById('slot1Tool').value,
+    slot2: document.getElementById('slot2Tool').value,
+    slot3: document.getElementById('slot3Tool').value,
+    slot4: document.getElementById('slot4Tool').value,
+    zoom1: slotScales[1], zoom2: slotScales[2], zoom3: slotScales[3], zoom4: slotScales[4],
+  });
 }
 
 function applyZoom(slotNum) {
@@ -347,11 +398,22 @@ let autoSaveTimer;
 function autoSave() {
   [1,2,3,4].forEach(i => loadTool(i));
   clearTimeout(autoSaveTimer);
-  autoSaveTimer = setTimeout(saveSettings, 800);
+  autoSaveTimer = setTimeout(() => localSave({
+    slot1: document.getElementById('slot1Tool').value,
+    slot2: document.getElementById('slot2Tool').value,
+    slot3: document.getElementById('slot3Tool').value,
+    slot4: document.getElementById('slot4Tool').value,
+    zoom1: slotScales[1], zoom2: slotScales[2], zoom3: slotScales[3], zoom4: slotScales[4],
+  }), 800);
 }
 
 window.addEventListener('resize', () => { [1,2,3,4].forEach(i => applyZoom(i)); });
-document.addEventListener('DOMContentLoaded', loadSettings);
+
+document.addEventListener('DOMContentLoaded', () => {
+  // 로컬 먼저 복원 (빠름)
+  applySettings(localLoad());
+  setSaveStatus('로컬 설정 복원됨', false);
+});
 </script>
 </body>
 </html>

@@ -115,7 +115,14 @@ const REASON_COLORS = [
   '#f59e0b','#fd8d3c','#e74c3c','#9b59b6',
   '#3498db','#2ecc71','#e8834a','#64748b'
 ];
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxL78NZRfY9ZgfmtooU60kPxT7Qz_A83pMQhkBUbrGwjoMf-UJObpqeogSeQVa9xCyqeg/exec';
+// SCRIPT_URL: index.html에서 postMessage로 수신 (중앙 관리)
+// 단독 실행 시에도 동작하도록 fallback 빈 문자열
+let SCRIPT_URL = '';
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'SCRIPT_URL' && e.data.url) {
+    SCRIPT_URL = e.data.url;
+  }
+});;
 
 // ── URL 파라미터 ──────────────────────────────────────────
 const params = new URLSearchParams(window.location.search);

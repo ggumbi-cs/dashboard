@@ -442,7 +442,14 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 const REPORT_URL = 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/report.xlsx';
 const ISSUE_URL  = 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/issue.xlsx';
 // ★ Apps Script 배포 후 여기에 웹앱 URL 입력
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxL78NZRfY9ZgfmtooU60kPxT7Qz_A83pMQhkBUbrGwjoMf-UJObpqeogSeQVa9xCyqeg/exec';
+// SCRIPT_URL: index.html에서 postMessage로 수신 (중앙 관리)
+// 단독 실행 시에도 동작하도록 fallback 빈 문자열
+let SCRIPT_URL = '';
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'SCRIPT_URL' && e.data.url) {
+    SCRIPT_URL = e.data.url;
+  }
+});;
 
 const COLORS = ['#2356a8','#4a9fd4','#2a7a6f','#e8834a','#9b59b6','#e74c3c','#f1c40f','#1abc9c','#e67e22','#c0392b'];
 

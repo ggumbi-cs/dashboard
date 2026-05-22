@@ -81,9 +81,7 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', '맑은 고딕', sans-
 async function loadExcel() {
   try {
     document.getElementById('loading').textContent = '📊 report.xlsx 불러오는 중...';
-    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    const XLSX_URL = isLocal ? 'report.xlsx' : 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/report.xlsx';
-    const res = await fetch(XLSX_URL);
+    const res = await fetch('https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/report.xlsx');
     if (!res.ok) throw new Error('fetch 실패: ' + res.status);
     const buf = await res.arrayBuffer();
     const wb  = XLSX.read(buf, { type:'array' });
@@ -140,7 +138,14 @@ async function loadExcel() {
 
 const params = new URLSearchParams(window.location.search);
 const type   = params.get('type')   || 'monthly';
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxL78NZRfY9ZgfmtooU60kPxT7Qz_A83pMQhkBUbrGwjoMf-UJObpqeogSeQVa9xCyqeg/exec';
+// SCRIPT_URL: index.html에서 postMessage로 수신 (중앙 관리)
+// 단독 실행 시에도 동작하도록 fallback 빈 문자열
+let SCRIPT_URL = '';
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'SCRIPT_URL' && e.data.url) {
+    SCRIPT_URL = e.data.url;
+  }
+});;
 const period = decodeURIComponent(params.get('period') || '');
 
 const TOP_COLORS = [

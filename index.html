@@ -387,6 +387,10 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
 //  }
 // ═══════════════════════════════════════════════════
 
+// ── 중앙 관리 SCRIPT_URL ───────────────────────────
+// 앱스크립트 배포 URL이 바뀌면 여기만 수정
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec';
+
 const TAB_MAP = {
   '주요kpi':  'report/kpi.html',
   '상담실적': 'report/상담실적.html',
@@ -779,7 +783,15 @@ function updateFrame() {
   if (!base) return;
   const periodParam = toPeriodParam(state.type, state.period);
   const url = `${base}?type=${encodeURIComponent(state.type)}&period=${encodeURIComponent(periodParam)}`;
-  document.getElementById('mainFrame').src = url;
+  const frame = document.getElementById('mainFrame');
+  frame.src = url;
+  // iframe 로드 완료 후 SCRIPT_URL 전달
+  frame.onload = () => {
+    try {
+      frame.contentWindow.postMessage({ type: 'SCRIPT_URL', url: SCRIPT_URL }, '*');
+    } catch(e) {}
+    if (typeof pushCSVToFrame === 'function') pushCSVToFrame();
+  };
 }
 
 // ── 헤더 날짜 ─────────────────────────────────────

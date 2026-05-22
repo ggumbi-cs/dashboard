@@ -581,7 +581,7 @@ async function loadAllData() {
   let ok = 0;
   try { DATA.report = await fetchXlsx(REPORT_URL); ok++; } catch(e) { console.warn(e); }
   try { DATA.issue  = await fetchXlsx(ISSUE_URL);  ok++; } catch(e) { console.warn(e); }
-  // 분석용요약 시트에서 현재 기간 탭별 요약 불러오기
+  // 분析용요약 시트에서 현재 기간 탭별 요약 불러오기
   try {
     const res = await fetch(`${SCRIPT_URL}?type=summary&period=${encodeURIComponent(DATA.period)}&t=${Date.now()}`);
     const json = await res.json();
@@ -591,15 +591,14 @@ async function loadAllData() {
     } else {
       DATA.tabSummaries = null;
     }
-  } catch(e) { console.warn('분석용요약 불러오기 실패:', e); DATA.tabSummaries = null; }
+  } catch(e) { console.warn('분析용요약 불러오기 실패:', e); DATA.tabSummaries = null; }
   setStatus(ok>0?'ok':'err', ok===2?'✓ 데이터 로드 완료':ok===1?'✓ 일부 로드 완료':'⚠ 로드 실패');
   if (ok>0) {
     document.getElementById('aiBtn').disabled=false;
     renderAll();
-    loadInsightFromSheet(); // 저장된 인사이트 불러오기
-    loadFavFromSheet();     // 즐겨찾기 구글시트에서 복원
+    loadInsightFromSheet();
+    loadFavFromSheet();
   }
-  // 액션현황판은 구글시트에서 자동 로드
   loadFromSheet();
 }
 
@@ -718,30 +717,47 @@ function renderSummary() {
     if (ws1) {
       const rows = XLSX.utils.sheet_to_json(ws1, {header:1, defval:null});
 
-      // 총인입: 월간 마감 행 우선, 없으면 해당 월 소속 주간 행 합산(fallback)
+      // 총인입 + 채널별
+      // - 월간: 월간 마감 행 사용
+      // - 주간: 해당 주차 단일값 / 전회차 = 직전 주차 단일값
+      // - 연간: 전체 합산
       const curChMap={}, prevChMap={};
       let curTotal=0, prevTotal=0;
-      // 1차: 월간 마감 행
-      for (let i=2; i<rows.length; i++) {
-        const r=rows[i]; if(!r||r[0]!=='총인입데이터'||r[1]!=='월간'||!r[3]) continue;
-        if(P.mode==='year') {
+
+      if(P.mode==='year') {
+        for (let i=2; i<rows.length; i++) {
+          const r=rows[i]; if(!r||r[0]!=='총인입데이터'||r[1]!=='월간'||!r[3]) continue;
           curChMap[r[3]]=(curChMap[r[3]]||0)+(r[4]||0); curTotal+=(r[4]||0);
-        } else {
+        }
+      } else if(P.mode==='month') {
+        for (let i=2; i<rows.length; i++) {
+          const r=rows[i]; if(!r||r[0]!=='총인입데이터'||r[1]!=='월간'||!r[3]) continue;
           if(r[2]===P.monthStr)     { curChMap[r[3]]=(curChMap[r[3]]||0)+(r[4]||0); curTotal+=(r[4]||0); }
           if(r[2]===P.prevMonthStr) { prevChMap[r[3]]=(prevChMap[r[3]]||0)+(r[4]||0); prevTotal+=(r[4]||0); }
         }
-      }
-      // 2차 fallback: 월간 마감 없으면 해당 월 소속 주간 행 합산
-      if(P.mode!=='year' && curTotal===0) {
+      } else {
+        // 주간: 해당 주차 정확 매칭 + 직전 주차 정확 매칭
+        const curWk  = P.weekKey;                    // ex) 260515
+        const prevWk = (() => {                       // 직전 금요일 7일 전
+          const allWks = [];
+          for (let i=2; i<rows.length; i++) {
+            const r=rows[i]; if(!r||r[0]!=='총인입데이터'||r[1]!=='주간'||typeof r[2]!=='number') continue;
+            if(!allWks.includes(r[2])) allWks.push(r[2]);
+          }
+          allWks.sort((a,b)=>a-b);
+          const idx = allWks.indexOf(curWk);
+          return idx > 0 ? allWks[idx-1] : null;
+        })();
         for (let i=2; i<rows.length; i++) {
           const r=rows[i]; if(!r||r[0]!=='총인입데이터'||r[1]!=='주간'||!r[3]) continue;
-          if(weekInMonth(r[2],P.weekPrefix))      { curChMap[r[3]]=(curChMap[r[3]]||0)+(r[4]||0); curTotal+=(r[4]||0); }
-          if(weekInMonth(r[2],P.prevWeekPrefix))  { prevChMap[r[3]]=(prevChMap[r[3]]||0)+(r[4]||0); prevTotal+=(r[4]||0); }
+          if(r[2]===curWk)  { curChMap[r[3]]=(curChMap[r[3]]||0)+(r[4]||0);  curTotal+=(r[4]||0); }
+          if(r[2]===prevWk) { prevChMap[r[3]]=(prevChMap[r[3]]||0)+(r[4]||0); prevTotal+=(r[4]||0); }
         }
       }
+
       CUR.total=curTotal||null; PREV.total=prevTotal||null;
       setText('s-total', curTotal ? curTotal.toLocaleString()+'건' : '-');
-      if(P.mode==='month') renderDelta('d-total', CUR.total, PREV.total, '건', false, 0);
+      if(P.mode!=='year') renderDelta('d-total', CUR.total, PREV.total, '건', false, 0);
       else document.getElementById('d-total').innerHTML='';
       renderVocBars('channelChart', curChMap, COLORS);
 
@@ -865,7 +881,9 @@ function renderSummary() {
       if(P.mode==='month') renderDelta('d-satisfaction', satCur, satPrev, '점', false, 2);
       else document.getElementById('d-satisfaction').innerHTML='';
 
-      // 응답율: 주간 데이터만 존재 → 해당 월 prefix 주간 중 최신 주차값
+      // 응답율: 주간 데이터만 존재
+      // - 월간: 해당 월 소속 주간 중 최신값
+      // - 주간: 해당 주차 정확 매칭 / 전회차 = 직전 주차
       const ansRows=[];
       for (let i=2; i<rows.length; i++) {
         const r=rows[i]; if(!r||r[12]!=='수신응답율, 통화성골률, 총유입Call'||r[13]!=='주간'||!r[14]||!r[18]) continue;
@@ -875,16 +893,24 @@ function renderSummary() {
       let ansCur=null, ansPrev=null;
       if(P.mode==='year'){
         ansCur=ansRows[0]?ansRows[0].v*100:null;
-      } else {
-        // 해당 월 주간 데이터 중 최신 주차 (월간 마감 없어도 주간은 항상 존재)
+      } else if(P.mode==='month') {
         const curAns  = ansRows.find(a=>weekInMonth(a.wk, P.weekPrefix));
         const prevAns = ansRows.find(a=>weekInMonth(a.wk, P.prevWeekPrefix));
+        ansCur  = curAns  ? curAns.v*100  : null;
+        ansPrev = prevAns ? prevAns.v*100 : null;
+      } else {
+        // 주간: 선택 주차 정확 매칭 / 전회차 = 직전 주차
+        const curAns  = ansRows.find(a=>a.wk===P.weekKey);
+        const allWks  = ansRows.map(a=>a.wk).sort((a,b)=>a-b);
+        const idx     = allWks.indexOf(P.weekKey);
+        const prevWk  = idx > 0 ? allWks[idx-1] : null;
+        const prevAns = prevWk!=null ? ansRows.find(a=>a.wk===prevWk) : null;
         ansCur  = curAns  ? curAns.v*100  : null;
         ansPrev = prevAns ? prevAns.v*100 : null;
       }
       CUR.answer=ansCur; PREV.answer=ansPrev;
       setText('s-answer', ansCur ? ansCur.toFixed(1)+'%' : '-');
-      if(P.mode==='month') renderDelta('d-answer', ansCur, ansPrev, '%p', false, 1);
+      if(P.mode!=='year') renderDelta('d-answer', ansCur, ansPrev, '%p', false, 1);
       else document.getElementById('d-answer').innerHTML='';
     }
 
@@ -963,18 +989,22 @@ function renderSummary() {
 
       // 반품 사유 (col0=타이틀, col2=마감회차, col3=브랜드, col4=사유, col7=건수)
       // 마감회차가 '26.01월'(월간) 또는 260102(주간숫자) 두 형식 혼재
+      // 반품 사유 차트
+      // - 월간: 월간 마감 행 매칭
+      // - 주간: 해당 주차 숫자 정확 매칭
       const reasonMap={};
       for (let i=2; i<rows.length; i++) {
         const r=rows[i]; if(!r||r[0]!=='반품현황 (반품/교환율만 제외)'||r[3]!=='꿈비'||!r[4]) continue;
         if(P.mode==='year') {
           reasonMap[r[4]]=(reasonMap[r[4]]||0)+(r[7]||0);
-        } else {
+        } else if(P.mode==='month') {
           const wk = r[2];
-          // 월간 문자열 매칭 ('26.04월')
           const monthMatch = (wk === P.monthStr);
-          // 주간 숫자 매칭 (260403, 260410 등 → prefix 2604)
           const weekMatch  = (typeof wk === 'number' && weekInMonth(wk, P.weekPrefix));
           if (monthMatch || weekMatch) reasonMap[r[4]]=(reasonMap[r[4]]||0)+(r[7]||0);
+        } else {
+          // 주간: 해당 주차 정확 매칭
+          if(r[2]===P.weekKey) reasonMap[r[4]]=(reasonMap[r[4]]||0)+(r[7]||0);
         }
       }
       const top5=Object.fromEntries(Object.entries(reasonMap).sort((a,b)=>b[1]-a[1]).slice(0,5));
@@ -1032,7 +1062,8 @@ function renderSummary() {
       let curCnt=0, prevCnt=0;
       if(P.mode==='year'){
         curCnt=rows.length-1;
-      } else {
+      } else if(P.mode==='month') {
+        // 월간: 접수일(col0) 기준 해당 월
         const selYY=2000+parseInt(P.yyMM.substring(0,2)), selMM=parseInt(P.yyMM.substring(2,4));
         const curYM=selYY*100+selMM, prevYM=selMM===1?(selYY-1)*100+12:selYY*100+(selMM-1);
         for(let i=1;i<rows.length;i++){
@@ -1042,11 +1073,27 @@ function renderSummary() {
           if(ym===curYM) curCnt++;
           if(ym===prevYM) prevCnt++;
         }
-        // fallback 제거: 데이터 없으면 0으로 표시 (전체값 오염 방지)
+      } else {
+        // 주간: 처리일(col5) 기준 해당 주차 / 전회차 = 직전 주차
+        // 주차 범위: 해당 주 금요일(weekKey=YYMMDD) 기준 토~금(7일)
+        const wkStr = String(P.weekKey); // ex) '260515'
+        const fri = new Date(2000+parseInt(wkStr.slice(0,2)), parseInt(wkStr.slice(2,4))-1, parseInt(wkStr.slice(4,6)));
+        const sat = new Date(fri); sat.setDate(fri.getDate()-6);
+        // 직전 주차
+        const prevFri = new Date(fri); prevFri.setDate(fri.getDate()-7);
+        const prevSat = new Date(sat); prevSat.setDate(sat.getDate()-7);
+        for(let i=1;i<rows.length;i++){
+          const r=rows[i]; if(!r||!r[5]) continue; // col5=처리일
+          const d=typeof r[5]==='number'?new Date(Date.UTC(1899,11,30)+r[5]*86400000):new Date(r[5]);
+          if(isNaN(d)) continue;
+          const dLocal = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+          if(dLocal>=sat  && dLocal<=fri)     curCnt++;
+          if(dLocal>=prevSat && dLocal<=prevFri) prevCnt++;
+        }
       }
       CUR.as=curCnt||null; PREV.as=prevCnt||null;
       setText('s-as', curCnt>0 ? curCnt+'건' : '-');
-      if(P.mode==='month'&&prevCnt>0) renderDelta('d-as', CUR.as, PREV.as, '건', false, 0);
+      if(P.mode!=='year'&&prevCnt>0) renderDelta('d-as', CUR.as, PREV.as, '건', false, 0);
       else document.getElementById('d-as').innerHTML='';
     }
   }
@@ -1543,8 +1590,10 @@ async function runAutoInsight() {
   });
 
   const ds = buildDataSummary();
+  const periodType = DATA.type==='weekly'||DATA.type==='direct' ? '주간' : '월간';
   const prompt = `당신은 품질·고객센터 데이터 분석가입니다.
 아래 실제 데이터를 보고 각 지표별 핵심 인사이트를 작성해주세요.
+현재 분석 기간 유형: ${periodType}
 
 작성 규칙:
 - PPT 보고서 스타일 (문장 서술형 절대 금지)
@@ -1556,21 +1605,33 @@ async function runAutoInsight() {
 - 부정적 표현 대신 현황·수치·연관관계 중심으로 서술
 - 긍정/중립 톤 유지 (보고자가 불리해지는 표현 금지)
 
-나쁜 예: "채널톡 메시지 인입이 크게 감소한 반면 전화 인입은 급증하여 고객 문의 채널이 온라인 채팅에서 전화로 전환되는 트렌드가 포착됩니다"
-좋은 예: "채널톡 -944건 / 전화 +943건 · 채팅→전화 전환 트렌드 · ALF 하락 연관"
+항목별 작성 가이드:
+- total: 이번 ${periodType} 총인입 수치 + 전회차 대비 증감건수
+- channel: 채널별 수치 나열 + 전회차 대비 증감 + 특이 채널 변화
+- return: 반품교환율 + 전회차비교 · 상승요인(사유별 건수·비중) · 감소요인 · 가전/가전외 비중 변화 (데이터에 있는 수치 최대한 활용)
+- returnchart: 사유TOP3 건수+비중+전회차대비증감 · 반품/교환 구분 · 품질개선 연계 가능성
+- alf: ALF 해결율 수치 + 기준월 명시
+- satisfaction: 만족도 점수 + 참여율
+- as: AS처리 건수 + 전회차 대비
+- quality: 품질개선요청 건수 + 진행단계별 현황
+- issue: 미입고 건수 + 주요 품목
+- answer: 수신응답률 수치 + 전회차 대비
+
+나쁜 예: "반품/교환율 4.34% · 전회차 3.30% 대비 1.04%p 상승 · 반품/교환 추이 상승"
+좋은 예: "반품교환율 4.34%(전회차+1.04%p) · 작동불량 172건(39%)↑ 단순변심 129건(29%) 주도 · 가전외 232건>가전 208건 비중 확대"
 
 반드시 아래 JSON 형식으로만 응답 (다른 텍스트 없이):
 {
   "total": "총 상담 인입 인사이트",
   "alf": "ALF 해결율 인사이트",
-  "return": "반품/교환율 인사이트",
+  "return": "반품/교환율 + 상승/감소 요인 수치 포함",
   "quality": "품질 개선요청 인사이트",
   "as": "AS 처리 인사이트",
   "issue": "자재 미입고 인사이트",
   "satisfaction": "고객 만족도 인사이트",
   "answer": "수신 응답율 인사이트",
-  "channel": "채널별 수치 포함 특이점 2줄",
-  "returnchart": "반품사유 수치+제품명+품질개선 연계 2줄"
+  "channel": "채널별 수치+전회차 증감 포함 2줄",
+  "returnchart": "사유TOP3 건수+비중+증감+교환반품구분 2줄"
 }
 
 데이터:
@@ -1658,21 +1719,97 @@ function buildDataSummary(){
       }
     }
 
-    // 반품 사유 (월 필터 적용)
+    // 반품 사유 + 상세 구조화 (월/주간 구분)
     const ws2=DATA.report.Sheets['반품현황'];
     if(ws2){
       const rows=XLSX.utils.sheet_to_json(ws2,{header:1,defval:null});
-      const rm={};
+
+      // 반품 사유별 건수 (꿈비)
+      const rm={}, rmPrev={};
+      // 교환/반품 구분 집계
+      const typeMap={cur:{교환:0,반품:0}, prev:{교환:0,반품:0}};
+      // 가전/가전외 구분
+      const itemMap={cur:{가전:0,가전외:0}, prev:{가전:0,가전외:0}};
+
+      // 이전 회차 기준 계산
+      const prevRound = P.mode==='week'
+        ? (()=>{
+            const allWks=[];
+            for(let i=2;i<rows.length;i++){
+              const r=rows[i];
+              if(r&&r[0]==='반품현황 (반품/교환율만 제외)'&&typeof r[2]==='number'&&!allWks.includes(r[2])) allWks.push(r[2]);
+            }
+            allWks.sort((a,b)=>a-b);
+            const idx=allWks.indexOf(P.weekKey);
+            return idx>0?allWks[idx-1]:null;
+          })()
+        : null;
+
       for(let i=2;i<rows.length;i++){
-        const r=rows[i]; if(!r||r[0]!=='반품현황 (반품/교환율만 제외)'||r[3]!=='꿈비'||!r[4]) continue;
-        if(P&&P.mode!=='year'){
-          const wk=r[2];
-          if(wk!==P.monthStr && !(typeof wk==='number'&&weekInMonth(wk,P.weekPrefix))) continue;
+        const r=rows[i];
+        if(!r||r[0]!=='반품현황 (반품/교환율만 제외)'||r[3]!=='꿈비'||!r[4]) continue;
+        const wk=r[2];
+        let isCur=false, isPrev=false;
+        if(P.mode==='year'){ isCur=true; }
+        else if(P.mode==='month'){
+          isCur  = (wk===P.monthStr)||(typeof wk==='number'&&weekInMonth(wk,P.weekPrefix));
+          isPrev = (wk===P.prevMonthStr)||(typeof wk==='number'&&weekInMonth(wk,P.prevWeekPrefix));
+        } else {
+          isCur  = (wk===P.weekKey);
+          isPrev = (prevRound!==null && wk===prevRound);
         }
-        rm[r[4]]=(rm[r[4]]||0)+(r[7]||0);
+        if(isCur){
+          rm[r[4]]=(rm[r[4]]||0)+(r[7]||0);
+          if(r[6]==='교환'||r[6]==='반품') typeMap.cur[r[6]]=(typeMap.cur[r[6]]||0)+(r[7]||0);
+          if(r[5]==='가전'||r[5]==='가전외') itemMap.cur[r[5]]=(itemMap.cur[r[5]]||0)+(r[7]||0);
+        }
+        if(isPrev){
+          rmPrev[r[4]]=(rmPrev[r[4]]||0)+(r[7]||0);
+          if(r[6]==='교환'||r[6]==='반품') typeMap.prev[r[6]]=(typeMap.prev[r[6]]||0)+(r[7]||0);
+          if(r[5]==='가전'||r[5]==='가전외') itemMap.prev[r[5]]=(itemMap.prev[r[5]]||0)+(r[7]||0);
+        }
       }
-      lines.push('\n[반품 사유 TOP5 (꿈비)]');
-      Object.entries(rm).sort((a,b)=>b[1]-a[1]).slice(0,5).forEach(([k,v])=>lines.push(`  ${k}: ${v}건`));
+
+      const totalCur  = Object.values(rm).reduce((a,b)=>a+b,0);
+      const totalPrev = Object.values(rmPrev).reduce((a,b)=>a+b,0);
+      const periodLabel = P.mode==='week' ? `${P.weekKey}주` : P.monthStr;
+      const prevLabel   = P.mode==='week' && prevRound ? `${prevRound}주` : P.prevMonthStr;
+
+      lines.push('\n[반품/교환 상세 (꿈비)]');
+      lines.push(`  이번(${periodLabel}): 총${totalCur}건 · 교환 ${typeMap.cur.교환}건 / 반품 ${typeMap.cur.반품}건`);
+      if(totalPrev>0) {
+        const diff=totalCur-totalPrev;
+        const sign=diff>0?'+':'';
+        lines.push(`  전회차(${prevLabel}): 총${totalPrev}건 · 교환 ${typeMap.prev.교환}건 / 반품 ${typeMap.prev.반품}건 → 전회차 대비 ${sign}${diff}건`);
+      }
+      lines.push(`  가전 ${itemMap.cur.가전}건 / 가전외 ${itemMap.cur.가전외}건`);
+      if(itemMap.prev.가전>0||itemMap.prev.가전외>0)
+        lines.push(`  전회차 가전 ${itemMap.prev.가전}건 / 가전외 ${itemMap.prev.가전외}건`);
+
+      lines.push(`  반품사유 TOP5:`);
+      Object.entries(rm).sort((a,b)=>b[1]-a[1]).slice(0,5).forEach(([k,v])=>{
+        const pct=totalCur>0?((v/totalCur)*100).toFixed(1):'0';
+        const prevV=rmPrev[k]||0;
+        const diff=v-prevV;
+        const sign=diff>0?'+':'';
+        const diffStr=prevV>0?` (전회차 ${prevV}건, ${sign}${diff}건)`:'';
+        lines.push(`    ${k}: ${v}건 (${pct}%)${diffStr}`);
+      });
+
+      // 전회차 대비 증가한 사유 강조
+      const raisedReasons = Object.entries(rm)
+        .filter(([k,v])=>rmPrev[k]!=null && v>(rmPrev[k]||0))
+        .sort((a,b)=>(b[1]-(rmPrev[b[0]]||0))-(a[1]-(rmPrev[a[0]]||0)))
+        .slice(0,3);
+      if(raisedReasons.length>0)
+        lines.push(`  ↑ 상승요인: `+raisedReasons.map(([k,v])=>`${k} +${v-(rmPrev[k]||0)}건`).join(', '));
+
+      const droppedReasons = Object.entries(rmPrev)
+        .filter(([k,v])=>(rm[k]||0)<v)
+        .sort((a,b)=>(b[1]-(rm[b[0]]||0))-(a[1]-(rm[a[0]]||0)))
+        .slice(0,3);
+      if(droppedReasons.length>0)
+        lines.push(`  ↓ 감소요인: `+droppedReasons.map(([k,v])=>`${k} -${v-(rm[k]||0)}건`).join(', '));
     }
 
     // AS 증상별 제품 TOP5 (col11=접수불량, col2=제품명)
@@ -1718,60 +1855,67 @@ function buildDataSummary(){
     }
   }
 
-  // ── 분석용요약 시트에서 저장된 각 탭 마감 데이터 포함
-  if (DATA.tabSummaries && Object.keys(DATA.tabSummaries).length > 0) {
-    lines.push('\n[현황탭 마감 집계 데이터 (각 탭 직접 전달)]');
+  // 분析용요약 시트 — 각 현황탭 마감 집계 데이터
+  if(DATA.tabSummaries && Object.keys(DATA.tabSummaries).length>0){
+    lines.push('\n[현황탭 마감 집계 (각 탭 직접 전달)]');
 
-    const cs = DATA.tabSummaries['상담실적'];
-    if (cs && cs.data) {
-      const d = cs.data;
-      lines.push(`\n[상담실적 마감 (${cs.period} · 저장: ${cs.savedAt})]`);
-      if (d.총인입 != null) lines.push(`  총인입: ${Number(d.총인입).toLocaleString()}건`);
-      if (d.수신응답률 != null) lines.push(`  수신응답률: ${d.수신응답률}%`);
-      if (d.총유입Call != null) lines.push(`  총유입Call: ${Number(d.총유입Call).toLocaleString()}건`);
-      if (d.만족도점수 != null) lines.push(`  만족도: ${d.만족도점수}점 (참여율 ${d.만족도참여율}%)`);
-      if (d.태그별 && Object.keys(d.태그별).length)
-        lines.push(`  태그별: ` + Object.entries(d.태그별).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`${k} ${v}건`).join(', '));
-      if (d.ALF관여해결 && Object.keys(d.ALF관여해결).length)
-        lines.push(`  ALF관여/해결: ` + Object.entries(d.ALF관여해결).map(([k,v])=>`${k} ${v}건`).join(', ') + ` (기준: ${d.ALF기준회차||''})`);
+    // 상담실적
+    const cs=DATA.tabSummaries['상담실적'];
+    if(cs&&cs.data){
+      const d=cs.data;
+      lines.push(`\n[상담실적 마감 (${cs.period} · ${cs.savedAt})]`);
+      if(d.총인입!=null) lines.push(`  총인입: ${Number(d.총인입).toLocaleString()}건`);
+      if(d.수신응답률!=null) lines.push(`  수신응답률: ${d.수신응답률}%`);
+      if(d.총유입Call!=null) lines.push(`  총유입Call: ${Number(d.총유입Call).toLocaleString()}건`);
+      if(d.만족도점수!=null) lines.push(`  만족도: ${d.만족도점수}점 (참여율 ${d.만족도참여율}%)`);
+      if(d.태그별&&Object.keys(d.태그별).length)
+        lines.push(`  태그별: `+Object.entries(d.태그별).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`${k} ${v}건`).join(', '));
+      if(d.ALF관여해결&&Object.keys(d.ALF관여해결).length)
+        lines.push(`  ALF관여/해결: `+Object.entries(d.ALF관여해결).map(([k,v])=>`${k} ${v}건`).join(', ')+` (기준: ${d.ALF기준회차||''})`);
     }
 
-    const rh = DATA.tabSummaries['반품현황'];
-    if (rh && rh.data && rh.data.브랜드별) {
-      lines.push(`\n[반품현황 마감 (${rh.period} · 저장: ${rh.savedAt})]`);
-      Object.entries(rh.data.브랜드별).forEach(([brand, bData]) => {
-        lines.push(`  ${brand} — 총${bData.합계}건 (교환 ${bData.교환} / 반품 ${bData.반품}) · 반품교환율 ${bData.반품교환율??'-'}%`);
-        lines.push(`    가전 ${bData.가전}건 / 가전외 ${bData.가전외}건`);
-        if (bData.사유TOP5 && Object.keys(bData.사유TOP5).length)
-          lines.push(`    반품사유 TOP: ` + Object.entries(bData.사유TOP5).slice(0,3).map(([k,v])=>`${k}(${v}건)`).join(', '));
+    // 반품현황 — 사유별/브랜드별 상세
+    const rh=DATA.tabSummaries['반품현황'];
+    if(rh&&rh.data&&rh.data.브랜드별){
+      lines.push(`\n[반품현황 마감 상세 (${rh.period} · ${rh.savedAt})]`);
+      Object.entries(rh.data.브랜드별).forEach(([brand,b])=>{
+        lines.push(`  ${brand}: 총${b.합계}건 (교환 ${b.교환} / 반품 ${b.반품}) · 반품교환율 ${b.반품교환율??'-'}%`);
+        lines.push(`    가전 ${b.가전}건 / 가전외 ${b.가전외}건`);
+        if(b.사유TOP5&&Object.keys(b.사유TOP5).length){
+          const total=Object.values(b.사유TOP5).reduce((a,c)=>a+c,0);
+          lines.push(`    사유TOP5: `+Object.entries(b.사유TOP5).sort((a,c)=>c[1]-a[1])
+            .map(([k,v])=>`${k} ${v}건(${total>0?((v/total)*100).toFixed(0):'0'}%)`).join(', '));
+        }
       });
     }
 
-    const th = DATA.tabSummaries['처리현황'];
-    if (th && th.data) {
-      const d = th.data;
-      lines.push(`\n[처리현황 마감 (${th.period} · 저장: ${th.savedAt})]`);
-      if (d.전자제품) {
-        const e = d.전자제품;
-        lines.push(`  전자제품 수리: 총${e.수리총계}건 (무상${e.무상수리}/유상${e.유상수리}) · 유상금액 ${Number(e.유상금액||0).toLocaleString()}원 · 평균소요일 ${e.평균소요일??'-'}일`);
+    // 처리현황
+    const th=DATA.tabSummaries['처리현황'];
+    if(th&&th.data){
+      const d=th.data;
+      lines.push(`\n[처리현황 마감 (${th.period} · ${th.savedAt})]`);
+      if(d.전자제품){
+        const e=d.전자제품;
+        lines.push(`  전자제품 수리: 총${e.수리총계}건 (무상 ${e.무상수리} / 유상 ${e.유상수리}) · 유상금액 ${Number(e.유상금액||0).toLocaleString()}원 · 평균소요일 ${e.평균소요일??'-'}일`);
         lines.push(`  자재출고: ${e.자재출고}건`);
-        if (e.모델TOP3 && Object.keys(e.모델TOP3).length)
-          lines.push(`  수리모델 TOP: ` + Object.entries(e.모델TOP3).map(([k,v])=>`${k}(${v}건)`).join(', '));
+        if(e.모델TOP3&&Object.keys(e.모델TOP3).length)
+          lines.push(`  수리모델 TOP: `+Object.entries(e.모델TOP3).map(([k,v])=>`${k}(${v}건)`).join(', '));
       }
-      if (d.전자제품외) {
-        const g = d.전자제품외;
-        lines.push(`  전자제품外: 총${g.총계}건 (무상${g.무상}/유상${g.유상}) · 유상금액 ${Number(g.유상금액||0).toLocaleString()}원 · 평균소요일 ${g.평균소요일??'-'}일`);
+      if(d.전자제품외){
+        const g=d.전자제품외;
+        lines.push(`  전자제품外: 총${g.총계}건 (무상 ${g.무상} / 유상 ${g.유상}) · 유상금액 ${Number(g.유상금액||0).toLocaleString()}원 · 평균소요일 ${g.평균소요일??'-'}일`);
       }
     }
 
-    const qm = DATA.tabSummaries['품질관리'];
-    if (qm && qm.data) {
-      const d = qm.data;
-      lines.push(`\n[품질관리 마감 (${qm.period} · 저장: ${qm.savedAt})]`);
-      if (d.접수총계 != null) lines.push(`  AS접수 총계: ${d.접수총계}건`);
-      if (d.접수불량별 && Object.keys(d.접수불량별).length)
-        lines.push(`  접수불량 TOP: ` + Object.entries(d.접수불량별).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`${k}(${v}건)`).join(', '));
-      if (d.개선요청총계 != null)
+    // 품질관리
+    const qm=DATA.tabSummaries['품질관리'];
+    if(qm&&qm.data){
+      const d=qm.data;
+      lines.push(`\n[품질관리 마감 (${qm.period} · ${qm.savedAt})]`);
+      if(d.접수총계!=null) lines.push(`  AS접수 총계: ${d.접수총계}건`);
+      if(d.접수불량별&&Object.keys(d.접수불량별).length)
+        lines.push(`  접수불량 TOP: `+Object.entries(d.접수불량별).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`${k}(${v}건)`).join(', '));
+      if(d.개선요청총계!=null)
         lines.push(`  품질개선요청: 총${d.개선요청총계}건 (진행중 ${d.진행중||0} / 완료 ${d.완료||0})`);
     }
   }

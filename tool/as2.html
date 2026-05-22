@@ -231,7 +231,7 @@ function buildMemo(){
         if(!o) return "주문번호를 입력해주세요.";
         if(!p) return "모델명을 입력해주세요.";
         if(!d) return "직접입력 내용을 입력해주세요.";
-        return `★기타(직접입력)★${o} / ${p} / ${d}`;
+        return `★기타(${d})★${o} / ${p}`;
     }
 
     if(r==="불량반품"||r==="불량교환"){

@@ -198,8 +198,8 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 <div class="page-header">
   <div class="header-left">
     <div class="badge">품질 &amp; 고객센터 · 엄마감동팀</div>
-    <h1>월피미 보고</h1>
-    <div class="sub">목표 → 실적 → 원인 → 개선 대안 → 실행 진도율</div>
+    <h1 id="page-title">월피미 보고</h1>
+    <div class="sub" id="page-sub">목표 → 실적 → 원인 → 개선 대안 → 실행 진도율</div>
   </div>
   <div class="header-right">
     <span id="periodLabel" style="font-size:12px;opacity:.8;padding:4px 10px;background:rgba(255,255,255,.15);border-radius:6px;border:1px solid rgba(255,255,255,.3);">기간 로딩 중...</span>
@@ -473,12 +473,23 @@ function readPeriodFromURL() {
   DATA.type   = type;
   DATA.period = period || (type === 'yearly' ? '2026년' : '26.05월');
 
-  // 헤더 라벨
+  // ── type 확정 즉시 텍스트 교체 (깜빡임 없음) ──
+  const isWeek = (type === 'weekly' || type === 'direct');
+  const isYear = (type === 'yearly');
+  const titleEl = document.getElementById('page-title');
+  const subEl   = document.getElementById('page-sub');
+  const summaryEl = document.getElementById('summary-title');
+  if(titleEl)   titleEl.textContent  = isWeek ? '주피미 보고' : '월피미 보고';
+  if(subEl)     subEl.textContent    = isWeek
+    ? '주간 실적 → 원인 → 개선 대안 → 실행 진도율'
+    : '목표 → 실적 → 원인 → 개선 대안 → 실행 진도율';
+  if(summaryEl) summaryEl.textContent = isWeek ? '이번 주 핵심 지표' : '이번 달 핵심 지표';
+
+  // 헤더 periodLabel
   let label = '';
   if (type === 'yearly')  label = `${period}년 연간`;
   else if (type === 'monthly') label = `20${period.replace('월','').replace('.','')} → ${period}`;
   else if (type === 'weekly' || type === 'direct') {
-    // 260417 → 2026.04.17 주간
     const s = String(period);
     label = `20${s.slice(0,2)}.${s.slice(2,4)}.${s.slice(4,6)} 주간`;
   }
@@ -547,29 +558,24 @@ async function loadAllData() {
 // ══════════════════════════════════════════════════════════════
 function renderAll() { renderSummary(); renderReport(); renderVOC(); updatePeriodLabels(); debugPeriodFilter(); }
 
-// 주간/월간에 따라 '월·달' ↔ '주' 텍스트 교체
+// 주간/월간에 따라 추가 텍스트 교체 (renderAll 후 호출)
 function updatePeriodLabels() {
   const isWeek = (DATA.type === 'weekly' || DATA.type === 'direct');
 
-  // ① sec-title (span만 교체해서 ::before pseudo 유지)
-  const secTitleSpan = document.getElementById('summary-title');
-  if(secTitleSpan) secTitleSpan.textContent = isWeek ? '이번 주 핵심 지표' : '이번 달 핵심 지표';
-
-  // ② 고객 만족도 kpi-sub
+  // 고객 만족도 kpi-sub (s-return-sub은 반품 로직이 따로 관리)
   document.querySelectorAll('.kpi-card').forEach(card => {
     const label = card.querySelector('.kpi-label')?.textContent?.trim();
-    const sub   = card.querySelector('.kpi-sub:not(#s-return-sub)'); // return-sub은 JS가 따로 관리
-    if(!sub) return;
-    if(label === '고객 만족도') {
-      sub.textContent = isWeek ? '최근 주 기준' : '최근 월 기준';
-    }
+    const sub   = card.querySelector('.kpi-sub:not(#s-return-sub)');
+    if(!sub || !label) return;
+    if(label === '고객 만족도') sub.textContent = isWeek ? '최근 주 기준' : '최근 월 기준';
   });
 
-  // ③ kpi-delta 내 "전회차 대비" → 주간엔 "전주차 대비"
-  //    renderDelta 호출 후 실행되므로 DOM 치환으로 처리
+  // kpi-delta 내 "전회차" → 주간엔 "전주차"
   if(isWeek) {
     document.querySelectorAll('.kpi-delta').forEach(el => {
-      el.innerHTML = el.innerHTML.replace(/전회차 대비/g, '전주차 대비');
+      el.innerHTML = el.innerHTML
+        .replace(/전회차 대비/g, '전주차 대비')
+        .replace(/전회차 동일/g, '전주차 동일');
     });
   }
 }
@@ -580,12 +586,23 @@ function debugPeriodFilter() {
   if (!P) return;
   console.group(`[월피미 기간필터 검증] mode=${P.mode} / 이번=${P.monthStr} / 전회차=${P.prevMonthStr}`);
   console.log('총인입  CUR:', CUR.total,  '/ PREV:', PREV.total);
-  console.log('ALF     CUR:', CUR.alf?.toFixed(1)+'%', '/ PREV:', PREV.alf?.toFixed(1)+'%');
+  console.log('ALF     CUR:', CUR.alf!=null?CUR.alf.toFixed(1)+'%':null, '/ PREV:', PREV.alf!=null?PREV.alf.toFixed(1)+'%':null);
   console.log('만족도  CUR:', CUR.satisfaction, '/ PREV:', PREV.satisfaction);
-  console.log('응답율  CUR:', CUR.answer?.toFixed(1)+'%', '/ PREV:', PREV.answer?.toFixed(1)+'%');
-  console.log('반품율  CUR:', CUR.returnRate, '/ PREV:', PREV.returnRate);
+  console.log('응답율  CUR:', CUR.answer!=null?CUR.answer.toFixed(1)+'%':null, '/ PREV:', PREV.answer!=null?PREV.answer.toFixed(1)+'%':null);
+  console.log('반품율  CUR:', CUR.returnRate, '/ PREV:', PREV.returnRate, '/ s-return-sub:', document.getElementById('s-return-sub')?.textContent);
   console.log('AS      CUR:', CUR.as, '/ PREV:', PREV.as);
   console.log('자재이슈 CUR:', CUR.issue, '/ PREV:', PREV.issue);
+
+  // 반품 rateMap 상세 (어떤 키가 수집됐는지)
+  if(DATA.report?.Sheets['반품현황']) {
+    const rows = XLSX.utils.sheet_to_json(DATA.report.Sheets['반품현황'], {header:1, defval:null});
+    const rm={};
+    for(let i=2;i<rows.length;i++){
+      const r=rows[i]; if(!r||r[9]!=='반품/교환율'||r[12]!=='꿈비'||!r[13]) continue;
+      rm[r[11]]=r[13]*100;
+    }
+    console.log('반품율 rateMap (전체):', rm, '→ sorted:', Object.keys(rm).sort((a,b)=>monthKeyToNum(b)-monthKeyToNum(a)));
+  }
   console.groupEnd();
 }
 

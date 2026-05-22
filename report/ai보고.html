@@ -189,6 +189,17 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .sec-title { font-size:15px; font-weight:800; color:var(--navy); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
 .sec-title::before { content:''; display:inline-block; width:4px; height:18px; background:var(--navy-mid); border-radius:2px; }
 
+/* 즐겨찾기 별 버튼 */
+.fav-btn {
+  background:none; border:none; cursor:pointer;
+  font-size:16px; line-height:1; padding:2px 4px;
+  color:#ddd; transition:color .15s, transform .1s;
+  display:block; margin:0 auto;
+}
+.fav-btn:hover { color:#f39c12; transform:scale(1.2); }
+.fav-btn.active { color:#f39c12; }
+.fav-row td { background:#fffbf0 !important; }
+
 @media(max-width:900px){ .grid-4{grid-template-columns:repeat(2,1fr);} .grid-2{grid-template-columns:1fr;} }
 </style>
 </head>
@@ -297,27 +308,20 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 
   <!-- ② 보고 -->
   <div class="section" id="sec-report">
-    <div class="sec-title">목표 대비 실적 리뷰</div>
-    <div class="card" style="margin-bottom:16px;">
-      <div class="card-title"><span class="dot" style="background:var(--navy-mid)"></span>주요KPI 달성 현황</div>
+    <div class="sec-title">품질 개선 요청 현황</div>
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:var(--teal)"></span>품질 개선 요청 현황 <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:8px;">⭐ 즐겨찾기 체크 시 액션현황판에 자동 등록</span></div>
       <table class="report-table">
         <thead><tr>
-          <th style="width:22%">항목</th>
-          <th style="width:10%">달성률</th>
-          <th style="width:10%">전회차</th>
-          <th style="width:8%">담당</th>
-          <th style="width:23%">원인 분석</th>
-          <th style="width:23%">개선 대안</th>
-          <th style="width:4%">상태</th>
+          <th style="width:4%">⭐</th>
+          <th style="width:8%">구분</th>
+          <th style="width:20%">제품명</th>
+          <th style="width:12%">핵심키워드</th>
+          <th style="width:32%">요청내용</th>
+          <th style="width:12%">진행단계</th>
+          <th style="width:12%">요청자</th>
         </tr></thead>
-        <tbody id="reportBody"><tr><td colspan="7" style="text-align:center;color:#aaa;padding:30px;">로딩 중...</td></tr></tbody>
-      </table>
-    </div>
-    <div class="card">
-      <div class="card-title"><span class="dot" style="background:var(--teal)"></span>품질 개선 요청 현황</div>
-      <table class="report-table">
-        <thead><tr><th>구분</th><th>제품명</th><th>핵심키워드</th><th>요청내용</th><th>진행단계</th><th>요청자</th></tr></thead>
-        <tbody id="qualityBody"><tr><td colspan="6" style="text-align:center;color:#aaa;padding:30px;">로딩 중...</td></tr></tbody>
+        <tbody id="qualityBody"><tr><td colspan="7" style="text-align:center;color:#aaa;padding:30px;">로딩 중...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -548,6 +552,7 @@ async function loadAllData() {
     document.getElementById('aiBtn').disabled=false;
     renderAll();
     loadInsightFromSheet(); // 저장된 인사이트 불러오기
+    loadFavFromSheet();     // 즐겨찾기 구글시트에서 복원
   }
   // 액션현황판은 구글시트에서 자동 로드
   loadFromSheet();
@@ -995,53 +1000,135 @@ function renderSummary() {
 }
 
 // ══════════════════════════════════════════════════════════════
-// ② 보고 테이블
+// ② 보고 — 품질 개선 요청 현황 (즐겨찾기 → 액션현황판 연동)
 // ══════════════════════════════════════════════════════════════
+
+// 즐겨찾기 상태 저장 (세션 유지)
+// 즐겨찾기 상태 — 구글시트에서 로드 (PC 무관 동기화)
+let qualityFavs = new Set();
+
 function renderReport() {
   if (!DATA.report) return;
-  const ws = DATA.report.Sheets['주요kpi'];
-  const rows = ws ? XLSX.utils.sheet_to_json(ws, {header:1, defval:null}) : [];
-  const tbody = document.getElementById('reportBody');
-  const items = rows.slice(1).filter(r=>r&&r[3]);
-  if (!items.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#aaa;padding:20px;">데이터 없음</td></tr>'; return; }
+  const wsQ = DATA.report.Sheets['품질관리'];
+  if (!wsQ) { document.getElementById('qualityBody').innerHTML='<tr><td colspan="7" style="text-align:center;color:#aaa;padding:30px;">데이터 없음</td></tr>'; return; }
 
-  tbody.innerHTML = items.map((r,idx) => {
-    const rate=r[5];
-    const pct=typeof rate==='number'?(rate*100).toFixed(0)+'%':'-';
-    const cls=!rate?'rate-bad':rate>=1?'rate-good':rate>=0.7?'rate-warn':'rate-bad';
-    // 전회차: 같은 시트 내에서 이전 회차 달성율 비교 (col14=이전달성율 가정, 없으면 '-')
-    const prevRate=typeof r[14]==='number'?(r[14]*100).toFixed(0)+'%':'-';
-    return `<tr>
-      <td title="${esc(r[3])}">${r[3].substring(0,28)}${r[3].length>28?'…':''}</td>
-      <td class="center"><span class="rate-badge ${cls}">${pct}</span></td>
-      <td class="center" style="color:var(--muted);font-size:11px;">${prevRate}</td>
-      <td class="center">${r[8]||'-'}</td>
-      <td><textarea rows="2" style="width:100%;border:1px solid #eee;border-radius:4px;font-size:11px;padding:4px;font-family:var(--font);resize:none;" placeholder="원인 분석..."></textarea></td>
-      <td><textarea rows="2" style="width:100%;border:1px solid #eee;border-radius:4px;font-size:11px;padding:4px;font-family:var(--font);resize:none;" placeholder="개선 대안..."></textarea></td>
+  const qrows = XLSX.utils.sheet_to_json(wsQ, {header:1, defval:null}).slice(2).filter(r=>r&&r[1]);
+  const tbody = document.getElementById('qualityBody');
+  if(!qrows.length){ tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#aaa;padding:30px;">데이터 없음</td></tr>'; return; }
+
+  tbody.innerHTML = qrows.slice(0,30).map((r,idx) => {
+    const s    = r[1]||'';
+    const prod = (r[4]||'').replace(/\[(꿈비|리코코)\] /g,'');
+    const kw   = r[5]||'';
+    const key  = `${prod}__${kw}`; // 즐겨찾기 식별키
+    const isFav = qualityFavs.has(key);
+    const cls  = s.includes('완료')?'pill-done':s.includes('요청')?'pill-ing':'pill-pending';
+    const rowCls = isFav ? 'fav-row' : '';
+    return `<tr class="${rowCls}" id="qrow-${idx}">
       <td class="center">
-        <select style="border:1px solid #eee;border-radius:4px;font-size:11px;padding:2px;font-family:var(--font);">
-          <option>진행중</option><option>완료</option><option>지연</option><option>미착수</option>
-        </select>
+        <button class="fav-btn ${isFav?'active':''}" onclick="toggleQualityFav(${idx},'${key.replace(/'/g,"\\'")}')" title="${isFav?'집중관리 해제':'집중관리 등록'}">
+          ${isFav?'⭐':'☆'}
+        </button>
       </td>
+      <td>${r[0]||''}</td>
+      <td title="${esc(prod)}">${prod.substring(0,22)}${prod.length>22?'…':''}</td>
+      <td>${kw.substring(0,14)}${kw.length>14?'…':''}</td>
+      <td style="font-size:11px;">${(r[7]||'').substring(0,40)}${(r[7]||'').length>40?'…':''}</td>
+      <td class="center"><span class="status-pill ${cls}">${s}</span></td>
+      <td>${(r[8]||'').replace('엄마감동팀 ','')}</td>
     </tr>`;
   }).join('');
 
-  // 품질
-  const wsQ = DATA.report.Sheets['품질관리'];
-  if (wsQ) {
-    const qrows = XLSX.utils.sheet_to_json(wsQ, {header:1, defval:null}).slice(2).filter(r=>r&&r[1]);
-    document.getElementById('qualityBody').innerHTML = qrows.slice(0,20).map(r=>{
-      const s=r[1]||''; const cls=s.includes('완료')?'pill-done':s.includes('요청')?'pill-ing':'pill-pending';
-      return `<tr>
-        <td>${r[0]||''}</td>
-        <td>${(r[4]||'').replace(/\[(꿈비|리코코)\] /g,'')}</td>
-        <td>${r[5]||''}</td>
-        <td style="font-size:11px;">${(r[7]||'').substring(0,40)}${(r[7]||'').length>40?'…':''}</td>
-        <td class="center"><span class="status-pill ${cls}">${s}</span></td>
-        <td>${(r[8]||'').replace('엄마감동팀 ','')}</td>
-      </tr>`;
-    }).join('');
+  // 즐겨찾기된 항목을 상단으로 정렬
+  sortQualityTable();
+}
+
+function toggleQualityFav(idx, key) {
+  const wsQ = DATA.report?.Sheets['품질관리'];
+  if(!wsQ) return;
+  const qrows = XLSX.utils.sheet_to_json(wsQ, {header:1, defval:null}).slice(2).filter(r=>r&&r[1]);
+  const r = qrows[idx];
+  if(!r) return;
+
+  const prod = (r[4]||'').replace(/\[(꿈비|리코코)\] /g,'');
+  const kw   = r[5]||'';
+  const taskName = `[집중관리] ${prod}${kw?' — '+kw:''}`;
+
+  if(qualityFavs.has(key)) {
+    // ── 해제
+    qualityFavs.delete(key);
+    saveFavToSheet([...qualityFavs]);
+    renderReport();
+    // 액션현황판에서도 제거 여부 확인
+    const actionIdx = actionItems.findIndex(a=>a.과제명===taskName);
+    if(actionIdx>=0){
+      if(confirm(`액션현황판의 "${taskName}"도 함께 제거할까요?`)){
+        actionItems.splice(actionIdx,1);
+        renderActionTable();
+        fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'delete',name:taskName})}).catch(()=>{});
+      }
+    }
+  } else {
+    // ── 등록
+    qualityFavs.add(key);
+    saveFavToSheet([...qualityFavs]);
+    renderReport();
+
+    // 액션현황판 중복 체크 후 추가
+    const exists = actionItems.some(a=>a.과제명===taskName);
+    if(!exists){
+      const newItem = {
+        과제명:   taskName,
+        담당부서: '품질팀',
+        완료기준: kw || '개선 완료 확인',
+        완료기한: '',
+        진행률:   0,
+        상태:     '진행중',
+        지연사유: '',
+        보완계획: ''
+      };
+      actionItems.push(newItem);
+      renderActionTable();
+      fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'upsert',row:newItem})})
+        .then(r=>r.json()).then(d=>{
+          showToast(d.ok?'⭐ 액션현황판 등록 완료':'저장 오류: '+d.msg, d.ok?'save-ok':'save-err');
+        }).catch(()=>showToast('연결 오류','save-err'));
+    } else {
+      showToast('이미 액션현황판에 등록된 항목입니다','save-ing');
+    }
   }
+}
+
+// 구글시트에 즐겨찾기 저장
+function saveFavToSheet(favArr) {
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action:'saveFav', favs: favArr })
+  }).catch(e => console.warn('즐겨찾기 저장 실패:', e));
+}
+
+// 구글시트에서 즐겨찾기 로드 → renderReport 재호출
+async function loadFavFromSheet() {
+  try {
+    const res  = await fetch(`${SCRIPT_URL}?type=qualFav&t=${Date.now()}`);
+    const data = await res.json();
+    if(data.ok && Array.isArray(data.favs)) {
+      qualityFavs = new Set(data.favs);
+      renderReport(); // 즐겨찾기 반영 재렌더
+    }
+  } catch(e) {
+    console.warn('즐겨찾기 로드 실패:', e);
+  }
+}
+
+function sortQualityTable() {
+  // 즐겨찾기 행을 테이블 상단으로 올림
+  const tbody = document.getElementById('qualityBody');
+  if(!tbody) return;
+  const rows = [...tbody.querySelectorAll('tr')];
+  const favs = rows.filter(r=>r.classList.contains('fav-row'));
+  const rest  = rows.filter(r=>!r.classList.contains('fav-row'));
+  [...favs,...rest].forEach(r=>tbody.appendChild(r));
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1209,8 +1296,27 @@ function clearDone(){
 
 function showSaveStatus(msg, cls) {
   const el=document.getElementById('saveStatus');
-  el.style.display='inline-block'; el.className='save-status '+cls; el.textContent=msg;
-  if(cls==='save-ok') setTimeout(()=>{el.style.display='none';}, 3000);
+  if(el){ el.style.display='inline-block'; el.className='save-status '+cls; el.textContent=msg;
+    if(cls==='save-ok') setTimeout(()=>{el.style.display='none';}, 3000); }
+  showToast(msg, cls);
+}
+
+function showToast(msg, cls) {
+  let toast = document.getElementById('globalToast');
+  if(!toast){
+    toast = document.createElement('div');
+    toast.id = 'globalToast';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;padding:10px 18px;border-radius:8px;font-size:12px;font-weight:600;z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,0.15);';
+    document.body.appendChild(toast);
+  }
+  const bgMap = {'save-ok':'#e8f8f0','save-err':'#fef0ee','save-ing':'#fff8e8'};
+  const clrMap = {'save-ok':'#27ae60','save-err':'#c0392b','save-ing':'#f39c12'};
+  toast.style.background = bgMap[cls]||'#f0f2f5';
+  toast.style.color       = clrMap[cls]||'#333';
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(()=>{ toast.style.opacity='0'; }, 2500);
 }
 
 // 💾 구글시트 저장 — 전체 목록을 시트에 반영 (saveAll)

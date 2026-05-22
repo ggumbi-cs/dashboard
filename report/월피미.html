@@ -1187,7 +1187,10 @@ ${ds}`;
   } catch(e) {
     ids.forEach(id => {
       const el = document.getElementById('i-'+id);
-      if (el) el.textContent = '';
+      if (el) {
+        el.className = (id==='channel'||id==='returnchart') ? 'card-insight' : 'kpi-insight';
+        el.textContent = e.message.includes('quota') ? '⏳ 잠시 후 재시도' : '';
+      }
     });
     console.warn('자동 인사이트 오류:', e);
   }

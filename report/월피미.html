@@ -531,8 +531,7 @@ async function loadAllData() {
   if (ok>0) {
     document.getElementById('aiBtn').disabled=false;
     renderAll();
-    // 핵심 Summary 자동 AI 인사이트
-    runAutoInsight();
+    scheduleAutoInsight();
   }
   // 액션현황판은 구글시트에서 자동 로드
   loadFromSheet();
@@ -1106,9 +1105,11 @@ async function runAI(type){
   }
 }
 
-// ══════════════════════════════════════════════════════════════
-// AI 자동 인사이트 — 데이터 로드 후 자동 실행
-// ══════════════════════════════════════════════════════════════
+let autoInsightTimer = null;
+function scheduleAutoInsight() {
+  clearTimeout(autoInsightTimer);
+  autoInsightTimer = setTimeout(runAutoInsight, 2000);
+}
 async function runAutoInsight() {
   // 인사이트 영역 로딩 표시
   const ids = ['total','alf','return','quality','as','issue','satisfaction','answer','channel','returnchart'];

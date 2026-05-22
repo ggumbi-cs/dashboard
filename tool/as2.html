@@ -97,6 +97,7 @@ input, select {
     <option>불량교환</option>
     <option>AS</option>
     <option>검수</option>
+    <option>기타(직접입력)</option>
 </select>
 
 <div id="symptomWrap">
@@ -107,6 +108,16 @@ input, select {
 <div id="orderWrap">
     <label>주문번호</label>
     <input type="text" id="order">
+</div>
+
+<div id="directWrap" style="display:none;">
+    <label>직접입력</label>
+    <input type="text" id="directInput">
+</div>
+
+<div id="directWrap" style="display:none;">
+    <label>직접입력</label>
+    <input type="text" id="directInput">
 </div>
 
 <div id="customerWrap">
@@ -171,10 +182,13 @@ function updateFields(){
         ["불량반품","불량교환","AS","검수"].includes(r) ? "block" : "none";
 
     orderWrap.style.display =
-        ["일반반품(개봉)","변심반품(개봉X)","불량반품","불량교환"].includes(r) ? "block" : "none";
+        ["일반반품(개봉)","변심반품(개봉X)","불량반품","불량교환","기타(직접입력)"].includes(r) ? "block" : "none";
 
     customerWrap.style.display =
         ["AS","검수"].includes(r) ? "block" : "none";
+
+    document.getElementById("directWrap").style.display =
+        r === "기타(직접입력)" ? "block" : "none";
 }
 
 function buildMemo(){
@@ -210,6 +224,14 @@ function buildMemo(){
         if(!o) return "주문번호를 입력해주세요.";
         if(!p) return "모델명을 입력해주세요.";
         return `★${r}★${o} / ${p}`;
+    }
+
+    if(r==="기타(직접입력)"){
+        const d = document.getElementById("directInput").value.trim();
+        if(!o) return "주문번호를 입력해주세요.";
+        if(!p) return "모델명을 입력해주세요.";
+        if(!d) return "직접입력 내용을 입력해주세요.";
+        return `★기타(직접입력)★${o} / ${p} / ${d}`;
     }
 
     if(r==="불량반품"||r==="불량교환"){

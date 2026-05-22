@@ -55,7 +55,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
 
 /* KPI 카드 */
-.kpi-card { background:var(--card); border-radius:10px; box-shadow:var(--shadow); padding:16px 18px; border-left:4px solid transparent; }
+.kpi-card { background:var(--card); border-radius:10px; box-shadow:var(--shadow); padding:16px 18px 32px; border-left:4px solid transparent; }
 .kpi-card.blue   { border-left-color:var(--navy-mid); }
 .kpi-card.teal   { border-left-color:var(--teal); }
 .kpi-card.orange { border-left-color:var(--orange); }
@@ -70,29 +70,66 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .delta-good { color:var(--green); } .delta-bad { color:var(--red); }
 .delta-eq   { color:var(--muted); }
 .kpi-inner { display:flex; gap:10px; align-items:stretch; height:100%; }
-.kpi-left  { flex:0 0 auto; }
+.kpi-left  { flex:1; min-width:0; }
+
+/* kpi-insight: 카드 우측 하단 고정 뱃지 */
+.kpi-card { position:relative; }
 .kpi-insight {
-  flex:1; min-width:0;
-  display:flex; align-items:center;
-  padding:6px 8px;
-  background:rgba(255,255,255,0.08);
-  border-radius:6px;
-  border-left:2px solid rgba(255,255,255,0.15);
-  font-size:11px; line-height:1.5; color:rgba(255,255,255,0.55);
-  font-style:italic; word-break:keep-all;
-  min-height:40px;
+  display:none; /* 기본 숨김 */
 }
-.kpi-insight.loading { opacity:.5; }
-.kpi-insight.done { color:rgba(255,255,255,0.85); font-style:normal; }
+.kpi-insight.loading,
+.kpi-insight.error,
+.kpi-insight.done {
+  display:block;
+  position:absolute;
+  bottom:10px; right:12px;
+  font-size:10px; font-weight:600;
+  padding:3px 8px;
+  border-radius:10px;
+  white-space:nowrap;
+  max-width:calc(100% - 24px);
+  overflow:hidden; text-overflow:ellipsis;
+  pointer-events:none;
+}
+.kpi-insight.loading {
+  background:rgba(243,156,18,0.12);
+  color:var(--yellow);
+  border:1px solid rgba(243,156,18,0.3);
+}
+.kpi-insight.error {
+  background:rgba(192,57,43,0.08);
+  color:var(--red);
+  border:1px solid rgba(192,57,43,0.2);
+}
+.kpi-insight.done {
+  background:rgba(35,86,168,0.07);
+  color:var(--navy-mid);
+  border:1px solid rgba(35,86,168,0.15);
+  font-style:normal; font-weight:400; font-size:10px;
+  line-height:1.4;
+  white-space:normal;
+  max-width:calc(100% - 24px);
+}
 .card-insight {
-  margin-top:12px; padding:10px 12px;
+  margin-top:12px; padding:8px 12px;
   background:linear-gradient(135deg,rgba(35,86,168,0.06),rgba(42,122,111,0.06));
   border-radius:8px; border-left:3px solid var(--navy-light);
   font-size:12px; line-height:1.6; color:var(--sub);
   font-style:italic;
 }
 .card-insight:empty { display:none; }
-.card-insight.loading { color:var(--muted); }
+.card-insight.loading {
+  color:var(--yellow);
+  background:rgba(243,156,18,0.06);
+  border-left-color:var(--yellow);
+  font-style:normal; font-weight:600; font-size:11px;
+}
+.card-insight.error {
+  color:var(--red);
+  background:rgba(192,57,43,0.06);
+  border-left-color:var(--red);
+  font-style:normal; font-weight:600; font-size:11px;
+}
 
 /* 테이블 */
 .report-table { width:100%; border-collapse:collapse; font-size:12px; }
@@ -188,92 +225,60 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
     <div class="sec-title">이번 달 핵심 지표</div>
     <div class="grid-4" style="margin-bottom:16px;">
       <div class="kpi-card blue">
-        <div class="kpi-inner">
-          <div class="kpi-left">
-            <div class="kpi-label">총 상담 인입</div>
-            <div class="kpi-val" id="s-total">-</div>
-            <div class="kpi-sub">카카오+네이버+전화</div>
-            <div class="kpi-delta" id="d-total"></div>
-          </div>
-          <div class="kpi-insight" id="i-total"></div>
-        </div>
+        <div class="kpi-label">총 상담 인입</div>
+        <div class="kpi-val" id="s-total">-</div>
+        <div class="kpi-sub">카카오+네이버+전화</div>
+        <div class="kpi-delta" id="d-total"></div>
+        <div class="kpi-insight" id="i-total"></div>
       </div>
       <div class="kpi-card teal">
-        <div class="kpi-inner">
-          <div class="kpi-left">
-            <div class="kpi-label">ALF 해결율</div>
-            <div class="kpi-val" id="s-alf">-</div>
-            <div class="kpi-sub">자동화 해결</div>
-            <div class="kpi-delta" id="d-alf"></div>
-          </div>
-          <div class="kpi-insight" id="i-alf"></div>
-        </div>
+        <div class="kpi-label">ALF 해결율</div>
+        <div class="kpi-val" id="s-alf">-</div>
+        <div class="kpi-sub">자동화 해결</div>
+        <div class="kpi-delta" id="d-alf"></div>
+        <div class="kpi-insight" id="i-alf"></div>
       </div>
       <div class="kpi-card orange">
-        <div class="kpi-inner">
-          <div class="kpi-left">
-            <div class="kpi-label">반품/교환율 (꿈비)</div>
-            <div class="kpi-val" id="s-return">-</div>
-            <div class="kpi-sub" id="s-return-sub">최근 월 기준</div>
-            <div class="kpi-delta" id="d-return"></div>
-          </div>
-          <div class="kpi-insight" id="i-return"></div>
-        </div>
+        <div class="kpi-label">반품/교환율 (꿈비)</div>
+        <div class="kpi-val" id="s-return">-</div>
+        <div class="kpi-sub" id="s-return-sub">최근 월 기준</div>
+        <div class="kpi-delta" id="d-return"></div>
+        <div class="kpi-insight" id="i-return"></div>
       </div>
       <div class="kpi-card red">
-        <div class="kpi-inner">
-          <div class="kpi-left">
-            <div class="kpi-label">품질 개선요청</div>
-            <div class="kpi-val" id="s-quality">-</div>
-            <div class="kpi-sub">사후개선 기준</div>
-            <div class="kpi-delta" id="d-quality"></div>
-          </div>
-          <div class="kpi-insight" id="i-quality"></div>
-        </div>
+        <div class="kpi-label">품질 개선요청</div>
+        <div class="kpi-val" id="s-quality">-</div>
+        <div class="kpi-sub">사후개선 기준</div>
+        <div class="kpi-delta" id="d-quality"></div>
+        <div class="kpi-insight" id="i-quality"></div>
       </div>
       <div class="kpi-card green">
-        <div class="kpi-inner">
-          <div class="kpi-left">
-            <div class="kpi-label">가전 AS 처리</div>
-            <div class="kpi-val" id="s-as">-</div>
-            <div class="kpi-sub">유/무상 합계</div>
-            <div class="kpi-delta" id="d-as"></div>
-          </div>
-          <div class="kpi-insight" id="i-as"></div>
-        </div>
+        <div class="kpi-label">가전 AS 처리</div>
+        <div class="kpi-val" id="s-as">-</div>
+        <div class="kpi-sub">유/무상 합계</div>
+        <div class="kpi-delta" id="d-as"></div>
+        <div class="kpi-insight" id="i-as"></div>
       </div>
       <div class="kpi-card yellow">
-        <div class="kpi-inner">
-          <div class="kpi-left">
-            <div class="kpi-label">자재 미입고 건</div>
-            <div class="kpi-val" id="s-issue">-</div>
-            <div class="kpi-sub">자재수급 Issue</div>
-            <div class="kpi-delta" id="d-issue"></div>
-          </div>
-          <div class="kpi-insight" id="i-issue"></div>
-        </div>
+        <div class="kpi-label">자재 미입고 건</div>
+        <div class="kpi-val" id="s-issue">-</div>
+        <div class="kpi-sub">자재수급 Issue</div>
+        <div class="kpi-delta" id="d-issue"></div>
+        <div class="kpi-insight" id="i-issue"></div>
       </div>
       <div class="kpi-card blue">
-        <div class="kpi-inner">
-          <div class="kpi-left">
-            <div class="kpi-label">고객 만족도</div>
-            <div class="kpi-val" id="s-satisfaction">-</div>
-            <div class="kpi-sub">최근 월 기준</div>
-            <div class="kpi-delta" id="d-satisfaction"></div>
-          </div>
-          <div class="kpi-insight" id="i-satisfaction"></div>
-        </div>
+        <div class="kpi-label">고객 만족도</div>
+        <div class="kpi-val" id="s-satisfaction">-</div>
+        <div class="kpi-sub">최근 월 기준</div>
+        <div class="kpi-delta" id="d-satisfaction"></div>
+        <div class="kpi-insight" id="i-satisfaction"></div>
       </div>
       <div class="kpi-card teal">
-        <div class="kpi-inner">
-          <div class="kpi-left">
-            <div class="kpi-label">수신 응답율</div>
-            <div class="kpi-val" id="s-answer">-</div>
-            <div class="kpi-sub">최근 주간 기준</div>
-            <div class="kpi-delta" id="d-answer"></div>
-          </div>
-          <div class="kpi-insight" id="i-answer"></div>
-        </div>
+        <div class="kpi-label">수신 응답율</div>
+        <div class="kpi-val" id="s-answer">-</div>
+        <div class="kpi-sub">최근 주간 기준</div>
+        <div class="kpi-delta" id="d-answer"></div>
+        <div class="kpi-insight" id="i-answer"></div>
       </div>
     </div>
     <div class="grid-2">
@@ -1122,23 +1127,26 @@ async function loadInsightFromSheet() {
       if (el && data.savedAt) el.title = '저장: ' + data.savedAt;
     } else {
       // 저장된 인사이트 없으면 빈 상태 유지
-      setInsightPlaceholder('AI 분석 버튼을 눌러 인사이트를 생성하세요');
+      setInsightPlaceholder('AI 분석 버튼을 눌러 인사이트를 생성하세요', '');
     }
   } catch(e) {
-    setInsightPlaceholder('');
+    setInsightPlaceholder('', '');
     console.warn('인사이트 불러오기 실패:', e);
   }
 }
 
-function setInsightPlaceholder(msg) {
+function setInsightPlaceholder(msg, state) {
+  // state: 'loading' | 'error' | '' (숨김)
+  const cls = state ? 'kpi-insight ' + state : 'kpi-insight';
   const kpiIds = ['total','alf','return','quality','as','issue','satisfaction','answer'];
   kpiIds.forEach(id => {
     const el = document.getElementById('i-'+id);
-    if (el) { el.className='kpi-insight'; el.textContent=msg; }
+    if (el) { el.className=cls; el.textContent=msg; }
   });
+  const cardCls = state ? 'card-insight ' + state : 'card-insight';
   ['channel','returnchart'].forEach(id => {
     const el = document.getElementById('i-'+id);
-    if (el) { el.className='card-insight'; el.textContent=msg; }
+    if (el) { el.className=cardCls; el.textContent=msg; }
   });
 }
 
@@ -1211,7 +1219,7 @@ ${ds}`;
       insights = JSON.parse(clean);
     } catch(e) {
       console.warn('인사이트 JSON 파싱 실패:', data.text);
-      setInsightPlaceholder('⚠ 파싱 오류 — 재시도해주세요');
+      setInsightPlaceholder('⚠ 파싱 오류 — 재시도해주세요', 'error');
       return;
     }
 
@@ -1225,8 +1233,8 @@ ${ds}`;
     }).catch(e => console.warn('인사이트 저장 실패:', e));
 
   } catch(e) {
-    const msg = e.message.includes('quota') ? '⏳ 한도 초과 — 잠시 후 재시도' : '⚠ 오류 — 재시도해주세요';
-    setInsightPlaceholder(msg);
+    const msg = e.message.includes('quota') ? '⚠ 한도 초과 — 잠시 후 재시도' : '⚠ 오류 — 재시도해주세요';
+    setInsightPlaceholder(msg, 'error');
     console.warn('인사이트 오류:', e);
   }
 }

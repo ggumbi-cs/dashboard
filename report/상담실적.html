@@ -60,6 +60,12 @@ body{
 </head>
 <body>
 
+<div id="summary-toast" style="display:none;position:fixed;bottom:18px;right:18px;background:#0f1f3d;color:#fff;font-size:12px;padding:8px 16px;border-radius:6px;z-index:9999;"></div>
+<div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+  <button id="btn-save-summary" onclick="saveSummaryToSheet()" style="font-size:12px;font-weight:600;padding:7px 16px;background:#0f1f3d;color:#fff;border:none;border-radius:6px;cursor:pointer;letter-spacing:.02em;">
+    ☁ 이번 마감 데이터 AI에 전달
+  </button>
+</div>
 <div class="main-row">
   <div class="left-col">
     <div class="donut-row">
@@ -124,6 +130,7 @@ const PALETTE = [
 
 // ── xlsx 파일 경로 (같은 report\ 폴더 기준)
 const XLSX_PATH = 'report.xlsx';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxL78NZRfY9ZgfmtooU60kPxT7Qz_A83pMQhkBUbrGwjoMf-UJObpqeogSeQVa9xCyqeg/exec';
 
 // ── 데이터 로드
 async function loadData() {
@@ -403,6 +410,74 @@ function renderCallRate(data) {
       <thead><tr><th>회차</th><th>총유입</th><th>IN</th><th>부재중</th><th>수신도(IN)</th><th>통화성공률(IN)</th><th>비고</th></tr></thead>
       <tbody>${tbody}</tbody>
     </table>`);
+}
+
+// ── 마감 데이터 구글시트 저장
+async function saveSummaryToSheet() {
+  const btn = document.getElementById('btn-save-summary');
+  btn.disabled = true; btn.textContent = '저장 중...';
+
+  try {
+    const raw  = await loadData();
+    const data = parseRows(raw);
+
+    // 현재 period/round 기준 핵심 수치 추출
+    const inflowRows = f(data.inflow, FILTER.period, FILTER.round);
+    const totalInflow = inflowRows.reduce((s,d) => s + d.val, 0);
+
+    const tagRows = f(data.tag, FILTER.period, FILTER.round);
+    const tagSummary = {};
+    tagRows.forEach(d => { tagSummary[d.item] = (tagSummary[d.item]||0) + d.val; });
+
+    // ALF
+    let alfPeriod = FILTER.period, alfRound = FILTER.round;
+    if (FILTER.period === '주간') {
+      const monthRounds = [...new Set(data.alf.filter(d=>d.period==='월간').map(d=>d.round))].sort();
+      alfPeriod = '월간'; alfRound = monthRounds[monthRounds.length-1] || '';
+    }
+    const alfRows = f(data.alf, alfPeriod, alfRound);
+    const alfTotal = alfRows.reduce((s,d)=>s+d.val,0);
+    const alfSum = {};
+    alfRows.forEach(d => { alfSum[d.item] = d.val; });
+
+    // 수신응답률 (최근 1개)
+    const validCall = data.callStat.filter(d=>d.rate!=null&&d.total>0);
+    const recent1 = getRecent6(validCall, FILTER.period, FILTER.round).slice(-1)[0] || null;
+
+    // 만족도 (최근 1개)
+    const satRecent = getRecent6(data.satisfy, '월간', FILTER.period==='월간'?FILTER.round:'99.99월').slice(-1)[0]||null;
+
+    const summaryData = {
+      period: FILTER.period,
+      round:  FILTER.round,
+      총인입:  totalInflow,
+      태그별:  tagSummary,
+      ALF관여해결:   alfSum,
+      ALF총계:       alfTotal,
+      ALF기준회차:   alfPeriod==='월간'?alfRound:alfRound+'(월간)',
+      수신응답률:    recent1 ? +(recent1.rate*100).toFixed(2) : null,
+      총유입Call:    recent1 ? recent1.total : null,
+      만족도점수:    satRecent ? satRecent.score : null,
+      만족도참여율:  satRecent ? +(satRecent.joinRate*100).toFixed(1) : null,
+    };
+
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'saveSummary', tab: '상담실적', period: FILTER.round || FILTER.period, data: summaryData })
+    });
+    const json = await resp.json();
+    showToast(json.ok ? `✓ 저장 완료 (${json.mode === 'update' ? '갱신' : '신규'})` : '⚠ 저장 실패: ' + json.msg, json.ok ? '#0f1f3d' : '#991b1b');
+  } catch(e) {
+    showToast('⚠ 오류: ' + e.message, '#991b1b');
+  } finally {
+    btn.disabled = false; btn.textContent = '☁ 이번 마감 데이터 AI에 전달';
+  }
+}
+
+function showToast(msg, bg) {
+  const el = document.getElementById('summary-toast');
+  el.textContent = msg; el.style.background = bg || '#0f1f3d'; el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 3000);
 }
 
 // ── 메인 실행

@@ -72,21 +72,26 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .kpi-inner { display:flex; gap:10px; align-items:stretch; height:100%; }
 .kpi-left  { flex:1; min-width:0; }
 
-/* kpi-insight: 카드 하단 인라인 배치 */
-.kpi-card { position:relative; }
+/* kpi-insight: 수치 오른쪽 flex 배치 */
+.kpi-card { position:relative; display:flex; flex-direction:column; }
+.kpi-card-body { display:flex; gap:10px; align-items:flex-start; flex:1; }
+.kpi-card-left { flex:1; min-width:0; }
 .kpi-insight {
   display:none;
+  flex:0 0 52%;  /* 카드 우측 기준 고정 너비 */
 }
 .kpi-insight.loading,
 .kpi-insight.error,
 .kpi-insight.done {
-  display:block;
-  margin-top:8px;
+  display:flex;
+  align-items:center;
+  flex:0 0 52%;
   font-size:10.5px;
   line-height:1.5;
-  padding:5px 8px;
+  padding:6px 8px;
   border-radius:6px;
   word-break:keep-all;
+  align-self:stretch;
 }
 .kpi-insight.loading {
   background:rgba(243,156,18,0.08);
@@ -101,7 +106,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
   font-weight:600;
 }
 .kpi-insight.done {
-  background:rgba(35,86,168,0.05);
+  background:rgba(35,86,168,0.04);
   color:var(--sub);
   border-left:2px solid rgba(35,86,168,0.2);
   font-style:italic;
@@ -233,66 +238,98 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
     <div class="grid-4" style="margin-bottom:16px;">
       <div class="kpi-card blue">
         <div class="kpi-label">총 상담 인입</div>
-        <div class="kpi-val" id="s-total">-</div>
-        <div class="kpi-sub">카카오+네이버+전화</div>
-        <div class="kpi-delta" id="d-total"></div>
-        <div class="kpi-insight" id="i-total"></div>
+        <div class="kpi-card-body">
+          <div class="kpi-card-left">
+            <div class="kpi-val" id="s-total">-</div>
+            <div class="kpi-sub">카카오+네이버+전화</div>
+            <div class="kpi-delta" id="d-total"></div>
+          </div>
+          <div class="kpi-insight" id="i-total"></div>
+        </div>
       </div>
       <div class="kpi-card teal">
         <div class="kpi-label">ALF 해결율</div>
-        <div class="kpi-val" id="s-alf">-</div>
-        <div class="kpi-sub">자동화 해결</div>
-        <div class="kpi-delta" id="d-alf"></div>
-        <div class="kpi-insight" id="i-alf"></div>
+        <div class="kpi-card-body">
+          <div class="kpi-card-left">
+            <div class="kpi-val" id="s-alf">-</div>
+            <div class="kpi-sub" id="s-alf-sub">자동화 해결</div>
+            <div class="kpi-delta" id="d-alf"></div>
+          </div>
+          <div class="kpi-insight" id="i-alf"></div>
+        </div>
       </div>
       <div class="kpi-card orange">
         <div class="kpi-label">반품/교환율 (꿈비)</div>
-        <div class="kpi-val" id="s-return">-</div>
-        <div class="kpi-sub" id="s-return-sub">최근 월 기준</div>
-        <div class="kpi-delta" id="d-return"></div>
-        <div class="kpi-insight" id="i-return"></div>
+        <div class="kpi-card-body">
+          <div class="kpi-card-left">
+            <div class="kpi-val" id="s-return">-</div>
+            <div class="kpi-sub" id="s-return-sub">최근 월 기준</div>
+            <div class="kpi-delta" id="d-return"></div>
+          </div>
+          <div class="kpi-insight" id="i-return"></div>
+        </div>
       </div>
       <div class="kpi-card red">
-        <div class="kpi-label">품질 개선요청</div>
-        <div class="kpi-val" id="s-quality">-</div>
-        <div class="kpi-sub">사후개선 기준</div>
-        <div class="kpi-delta" id="d-quality"></div>
-        <div class="kpi-insight" id="i-quality"></div>
+        <div class="kpi-label">품질검사</div>
+        <div class="kpi-card-body">
+          <div class="kpi-card-left">
+            <div class="kpi-val" id="s-quality">-</div>
+            <div class="kpi-sub" id="s-quality-sub" style="line-height:1.7;">사후개선 -건</div>
+            <div class="kpi-delta" id="d-quality"></div>
+          </div>
+          <div class="kpi-insight" id="i-quality"></div>
+        </div>
       </div>
       <div class="kpi-card green">
         <div class="kpi-label">가전 AS 처리</div>
-        <div class="kpi-val" id="s-as">-</div>
-        <div class="kpi-sub">유/무상 합계</div>
-        <div class="kpi-delta" id="d-as"></div>
-        <div class="kpi-insight" id="i-as"></div>
+        <div class="kpi-card-body">
+          <div class="kpi-card-left">
+            <div class="kpi-val" id="s-as">-</div>
+            <div class="kpi-sub">유/무상 합계</div>
+            <div class="kpi-delta" id="d-as"></div>
+          </div>
+          <div class="kpi-insight" id="i-as"></div>
+        </div>
       </div>
       <div class="kpi-card yellow">
         <div class="kpi-label">자재 미입고 건</div>
-        <div class="kpi-val" id="s-issue">-</div>
-        <div class="kpi-sub">자재수급 Issue</div>
-        <div class="kpi-delta" id="d-issue"></div>
-        <div class="kpi-insight" id="i-issue"></div>
+        <div class="kpi-card-body">
+          <div class="kpi-card-left">
+            <div class="kpi-val" id="s-issue">-</div>
+            <div class="kpi-sub">자재수급 Issue</div>
+            <div class="kpi-delta" id="d-issue"></div>
+          </div>
+          <div class="kpi-insight" id="i-issue"></div>
+        </div>
       </div>
       <div class="kpi-card blue">
         <div class="kpi-label">고객 만족도</div>
-        <div class="kpi-val" id="s-satisfaction">-</div>
-        <div class="kpi-sub">최근 월 기준</div>
-        <div class="kpi-delta" id="d-satisfaction"></div>
-        <div class="kpi-insight" id="i-satisfaction"></div>
+        <div class="kpi-card-body">
+          <div class="kpi-card-left">
+            <div class="kpi-val" id="s-satisfaction">-</div>
+            <div class="kpi-sub" id="s-satisfaction-sub">최근 월 기준</div>
+            <div class="kpi-delta" id="d-satisfaction"></div>
+          </div>
+          <div class="kpi-insight" id="i-satisfaction"></div>
+        </div>
       </div>
       <div class="kpi-card teal">
         <div class="kpi-label">수신 응답율</div>
-        <div class="kpi-val" id="s-answer">-</div>
-        <div class="kpi-sub">최근 주간 기준</div>
-        <div class="kpi-delta" id="d-answer"></div>
-        <div class="kpi-insight" id="i-answer"></div>
+        <div class="kpi-card-body">
+          <div class="kpi-card-left">
+            <div class="kpi-val" id="s-answer">-</div>
+            <div class="kpi-sub">최근 주간 기준</div>
+            <div class="kpi-delta" id="d-answer"></div>
+          </div>
+          <div class="kpi-insight" id="i-answer"></div>
+        </div>
       </div>
     </div>
     <div class="grid-2">
       <div class="card" style="display:flex;flex-direction:column;">
         <div class="card-title"><span class="dot" style="background:var(--navy-mid)"></span>채널별 인입 현황</div>
-        <div style="flex:1;"></div>
         <div id="channelChart"></div>
+        <div style="flex:1;"></div>
         <div class="card-insight" id="i-channel"></div>
       </div>
       <div class="card" style="display:flex;flex-direction:column;">
@@ -412,7 +449,7 @@ const COLORS = ['#2356a8','#4a9fd4','#2a7a6f','#e8834a','#9b59b6','#e74c3c','#f1
 // ══════════════════════════════════════════════════════════════
 // 전역 상태
 // ══════════════════════════════════════════════════════════════
-let DATA = { report: null, issue: null, type: 'monthly', period: '26.05월' };
+let DATA = { report: null, issue: null, type: 'monthly', period: '26.05월', tabSummaries: null };
 // 전회차 비교용
 let PREV = { total:null, alf:null, returnRate:null, quality:null, as:null, issue:null, satisfaction:null, answer:null };
 let CUR  = { total:null, alf:null, returnRate:null, quality:null, as:null, issue:null, satisfaction:null, answer:null };
@@ -544,6 +581,17 @@ async function loadAllData() {
   let ok = 0;
   try { DATA.report = await fetchXlsx(REPORT_URL); ok++; } catch(e) { console.warn(e); }
   try { DATA.issue  = await fetchXlsx(ISSUE_URL);  ok++; } catch(e) { console.warn(e); }
+  // 분석용요약 시트에서 현재 기간 탭별 요약 불러오기
+  try {
+    const res = await fetch(`${SCRIPT_URL}?type=summary&period=${encodeURIComponent(DATA.period)}&t=${Date.now()}`);
+    const json = await res.json();
+    if (json.ok && json.tabs && json.tabs.length > 0) {
+      DATA.tabSummaries = {};
+      json.tabs.forEach(t => { DATA.tabSummaries[t.tab] = t; });
+    } else {
+      DATA.tabSummaries = null;
+    }
+  } catch(e) { console.warn('분석용요약 불러오기 실패:', e); DATA.tabSummaries = null; }
   setStatus(ok>0?'ok':'err', ok===2?'✓ 데이터 로드 완료':ok===1?'✓ 일부 로드 완료':'⚠ 로드 실패');
   if (ok>0) {
     document.getElementById('aiBtn').disabled=false;
@@ -564,13 +612,12 @@ function renderAll() { renderSummary(); renderReport(); renderVOC(); updatePerio
 function updatePeriodLabels() {
   const isWeek = (DATA.type === 'weekly' || DATA.type === 'direct');
 
-  // 고객 만족도 kpi-sub (s-return-sub은 반품 로직이 따로 관리)
-  document.querySelectorAll('.kpi-card').forEach(card => {
-    const label = card.querySelector('.kpi-label')?.textContent?.trim();
-    const sub   = card.querySelector('.kpi-sub:not(#s-return-sub)');
-    if(!sub || !label) return;
-    if(label === '고객 만족도') sub.textContent = isWeek ? '최근 주 기준' : '최근 월 기준';
-  });
+  // 고객 만족도 sub: renderSummary에서 기준월 이미 세팅됨
+  // 기준월 없을 때(year모드 등)만 기본값 세팅
+  if(!isWeek) {
+    const subEl = document.getElementById('s-satisfaction-sub');
+    if(subEl && subEl.textContent === '최근 월 기준') subEl.textContent = '최근 월 기준';
+  }
 
   // kpi-delta 내 "전회차" → 주간엔 "전주차"
   if(isWeek) {
@@ -752,39 +799,69 @@ function renderSummary() {
       }
       CUR.alf=alfCur; PREV.alf=alfPrev;
       setText('s-alf', alfCur!==null ? alfCur.toFixed(1)+'%' : '-');
+
+      // ALF sub텍스트: 실제 사용된 기준월 표시
+      if(P.mode!=='year') {
+        const alfSelNum = monthKeyToNum(P.monthStr);
+        let alfDisplayKey = alfMonthKeys.find(k => k === P.monthStr)
+          || (alfSelNum > latestAlfNum ? latestAlfKey : alfMonthKeys.find(k=>monthKeyToNum(k)<=alfSelNum))
+          || null;
+        if(alfDisplayKey && alfDisplayKey !== P.monthStr)
+          setText('s-alf-sub', alfDisplayKey+' 기준 (최신마감)');
+        else if(alfDisplayKey)
+          setText('s-alf-sub', alfDisplayKey+' 기준');
+        else
+          setText('s-alf-sub', '자동화 해결');
+      }
+
       if(P.mode==='month') renderDelta('d-alf', alfCur, alfPrev, '%p', false, 1);
       else document.getElementById('d-alf').innerHTML='';
 
-      // 만족도: 월간 마감 우선, 없으면 해당 월 주간 최신값 fallback
-      const satMap={};   // key=마감회차(월간문자 또는 주간숫자), val={v, type, wk}
+      // 만족도: 월간 마감 우선, 없으면 리미트 규칙(최신 월간 마감) fallback
+      const satMonthMap={};  // key=마감회차, val=점수
       for (let i=2; i<rows.length; i++) {
         const r=rows[i]; if(!r||r[20]!=='만족도조사'||!r[22]||!r[27]) continue;
-        if(r[21]==='월간') {
-          satMap[r[22]]={v:r[27],type:'월간'};
-        } else if(r[21]==='주간' && typeof r[22]==='number') {
-          satMap['wk_'+r[22]]={v:r[27],type:'주간',wk:r[22]};
-        }
+        if(r[21]==='월간') satMonthMap[r[22]]=r[27];
       }
-      let satCur=null, satPrev=null;
+      const satMonthKeys = Object.keys(satMonthMap).sort((a,b)=>monthKeyToNum(b)-monthKeyToNum(a));
+      const latestSatKey = satMonthKeys[0] || null;
+      const latestSatNum = latestSatKey ? monthKeyToNum(latestSatKey) : 0;
+
+      const calcSat = (monthKey) => {
+        // 1차: 정확 매칭
+        if(satMonthMap[monthKey] != null) return {v:satMonthMap[monthKey], key:monthKey};
+        // 2차: 리미트 — 최신 마감 기준
+        if(!latestSatKey) return {v:null, key:null};
+        const selNum = monthKeyToNum(monthKey);
+        const useKey = selNum > latestSatNum
+          ? latestSatKey
+          : (satMonthKeys.find(k=>monthKeyToNum(k)<=selNum) || null);
+        return useKey ? {v:satMonthMap[useKey], key:useKey} : {v:null, key:null};
+      };
+
+      let satCur=null, satPrev=null, satDisplayKey=null;
       if(P.mode==='year'){
-        const vals=Object.values(satMap).filter(s=>s.type==='월간').map(s=>s.v);
+        const vals=Object.values(satMonthMap);
         satCur=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
       } else {
-        // 1차: 월간 마감
-        if(satMap[P.monthStr])     satCur  = satMap[P.monthStr].v;
-        if(satMap[P.prevMonthStr]) satPrev = satMap[P.prevMonthStr].v;
-        // 2차 fallback: 해당 월 주간 중 최신값
-        if(satCur===null) {
-          const wkVals=Object.values(satMap).filter(s=>s.type==='주간'&&weekInMonth(s.wk,P.weekPrefix));
-          if(wkVals.length) satCur=wkVals.sort((a,b)=>b.wk-a.wk)[0].v;
-        }
-        if(satPrev===null) {
-          const wkVals=Object.values(satMap).filter(s=>s.type==='주간'&&weekInMonth(s.wk,P.prevWeekPrefix));
-          if(wkVals.length) satPrev=wkVals.sort((a,b)=>b.wk-a.wk)[0].v;
-        }
+        const sc=calcSat(P.monthStr);
+        const sp=calcSat(P.prevMonthStr);
+        satCur=sc.v; satDisplayKey=sc.key;
+        satPrev=sp.v;
       }
       CUR.satisfaction=satCur; PREV.satisfaction=satPrev;
       setText('s-satisfaction', satCur ? satCur.toFixed(2)+'점' : '-');
+
+      // 만족도 sub텍스트: ALF와 동일한 방식
+      if(P.mode!=='year') {
+        if(satDisplayKey && satDisplayKey!==P.monthStr)
+          setText('s-satisfaction-sub', satDisplayKey+' 기준 (최신마감)');
+        else if(satDisplayKey)
+          setText('s-satisfaction-sub', satDisplayKey+' 기준');
+        else
+          setText('s-satisfaction-sub', '최근 월 기준');
+      }
+
       if(P.mode==='month') renderDelta('d-satisfaction', satCur, satPrev, '점', false, 2);
       else document.getElementById('d-satisfaction').innerHTML='';
 
@@ -819,7 +896,10 @@ function renderSummary() {
       // rateMap: {'26.03월': 3.1, '26.04월': 3.3, ...}
       const rateMap={};
       for (let i=2; i<rows.length; i++) {
-        const r=rows[i]; if(!r||r[9]!=='반품/교환율'||r[12]!=='꿈비'||!r[13]) continue;
+        const r=rows[i];
+        if(!r) continue;
+        const t=r[9];
+        if((t!=='반품/교환율'&&t!=='교환/반품율')||r[12]!=='꿈비'||!r[13]) continue;
         rateMap[r[11]]=r[13]*100;
       }
 
@@ -905,26 +985,44 @@ function renderSummary() {
     const ws3 = DATA.report.Sheets['품질관리'];
     if (ws3) {
       const rows = XLSX.utils.sheet_to_json(ws3, {header:1, defval:null});
-      let cnt = 0;
-      if (P.mode === 'year') {
-        cnt = rows.slice(2).filter(r=>r&&r[1]&&r[1].includes('개선요청')).length;
-      } else {
-        // 등록일(col2) 엑셀 시리얼 → 월 비교
-        cnt = rows.slice(2).filter(r => {
-          if (!r || !r[1] || !r[1].includes('개선요청') || !r[2]) return false;
+      // 구분(col0)별 건수 집계
+      const 구분Map = {};
+      let total = 0;
+      rows.slice(2).forEach(r => {
+        if(!r || !r[0]) return;
+        const 구분 = String(r[0]);
+        // 월간 모드: 등록일 기준 해당 월 필터 / 주간도 누적 전체 (품질은 월단위 관리)
+        if(P.mode !== 'year') {
+          if(!r[2]) return;
           let ym = '';
-          if (typeof r[2] === 'number') {
+          if(typeof r[2]==='number') {
             const d = new Date((r[2]-25569)*86400000);
             ym = `${String(d.getFullYear()).slice(2)}.${String(d.getMonth()+1).padStart(2,'0')}월`;
           } else {
-            ym = String(r[2]).slice(0,7); // 이미 문자열이면 앞 7자
+            ym = String(r[2]).slice(0,7);
           }
-          return ym === P.monthStr;
-        }).length;
+          // 주간 선택 시 → 해당 주 소속 월 기준 (리미트 없이 전체 현황)
+          const targetMonth = P.monthStr;
+          if(ym !== targetMonth) return;
+        }
+        구분Map[구분] = (구분Map[구분]||0) + 1;
+        total++;
+      });
+
+      CUR.quality = total;
+      setText('s-quality', total + '건');
+      document.getElementById('d-quality').innerHTML = '';
+
+      // sub: 구분별 건수 표시
+      const subLines = ['사후개선','출시전검사','스펙비교']
+        .filter(k => 구분Map[k] != null)
+        .map(k => `${k} ${구분Map[k]}건`)
+        .join('\n');
+      const subEl = document.getElementById('s-quality-sub');
+      if(subEl) {
+        subEl.style.whiteSpace = 'pre-line';
+        subEl.textContent = subLines || '집계 없음';
       }
-      CUR.quality=cnt; PREV.quality=null;
-      setText('s-quality', cnt+'건');
-      document.getElementById('d-quality').innerHTML='';
     }
 
     // ── AS ────────────────────────────────────────────────────
@@ -1617,6 +1715,64 @@ function buildDataSummary(){
       lines.push('\n[자재수급 이슈]');
       rows.filter(r=>r&&r[9]==='자재수급 Issue'&&r[13]&&(r[11]==='미입고'||r[11]==='결재대기'))
           .slice(0,8).forEach(r=>lines.push(`  [${r[11]||''}] ${r[13]||''}`));
+    }
+  }
+
+  // ── 분석용요약 시트에서 저장된 각 탭 마감 데이터 포함
+  if (DATA.tabSummaries && Object.keys(DATA.tabSummaries).length > 0) {
+    lines.push('\n[현황탭 마감 집계 데이터 (각 탭 직접 전달)]');
+
+    const cs = DATA.tabSummaries['상담실적'];
+    if (cs && cs.data) {
+      const d = cs.data;
+      lines.push(`\n[상담실적 마감 (${cs.period} · 저장: ${cs.savedAt})]`);
+      if (d.총인입 != null) lines.push(`  총인입: ${Number(d.총인입).toLocaleString()}건`);
+      if (d.수신응답률 != null) lines.push(`  수신응답률: ${d.수신응답률}%`);
+      if (d.총유입Call != null) lines.push(`  총유입Call: ${Number(d.총유입Call).toLocaleString()}건`);
+      if (d.만족도점수 != null) lines.push(`  만족도: ${d.만족도점수}점 (참여율 ${d.만족도참여율}%)`);
+      if (d.태그별 && Object.keys(d.태그별).length)
+        lines.push(`  태그별: ` + Object.entries(d.태그별).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`${k} ${v}건`).join(', '));
+      if (d.ALF관여해결 && Object.keys(d.ALF관여해결).length)
+        lines.push(`  ALF관여/해결: ` + Object.entries(d.ALF관여해결).map(([k,v])=>`${k} ${v}건`).join(', ') + ` (기준: ${d.ALF기준회차||''})`);
+    }
+
+    const rh = DATA.tabSummaries['반품현황'];
+    if (rh && rh.data && rh.data.브랜드별) {
+      lines.push(`\n[반품현황 마감 (${rh.period} · 저장: ${rh.savedAt})]`);
+      Object.entries(rh.data.브랜드별).forEach(([brand, bData]) => {
+        lines.push(`  ${brand} — 총${bData.합계}건 (교환 ${bData.교환} / 반품 ${bData.반품}) · 반품교환율 ${bData.반품교환율??'-'}%`);
+        lines.push(`    가전 ${bData.가전}건 / 가전외 ${bData.가전외}건`);
+        if (bData.사유TOP5 && Object.keys(bData.사유TOP5).length)
+          lines.push(`    반품사유 TOP: ` + Object.entries(bData.사유TOP5).slice(0,3).map(([k,v])=>`${k}(${v}건)`).join(', '));
+      });
+    }
+
+    const th = DATA.tabSummaries['처리현황'];
+    if (th && th.data) {
+      const d = th.data;
+      lines.push(`\n[처리현황 마감 (${th.period} · 저장: ${th.savedAt})]`);
+      if (d.전자제품) {
+        const e = d.전자제품;
+        lines.push(`  전자제품 수리: 총${e.수리총계}건 (무상${e.무상수리}/유상${e.유상수리}) · 유상금액 ${Number(e.유상금액||0).toLocaleString()}원 · 평균소요일 ${e.평균소요일??'-'}일`);
+        lines.push(`  자재출고: ${e.자재출고}건`);
+        if (e.모델TOP3 && Object.keys(e.모델TOP3).length)
+          lines.push(`  수리모델 TOP: ` + Object.entries(e.모델TOP3).map(([k,v])=>`${k}(${v}건)`).join(', '));
+      }
+      if (d.전자제품외) {
+        const g = d.전자제품외;
+        lines.push(`  전자제품外: 총${g.총계}건 (무상${g.무상}/유상${g.유상}) · 유상금액 ${Number(g.유상금액||0).toLocaleString()}원 · 평균소요일 ${g.평균소요일??'-'}일`);
+      }
+    }
+
+    const qm = DATA.tabSummaries['품질관리'];
+    if (qm && qm.data) {
+      const d = qm.data;
+      lines.push(`\n[품질관리 마감 (${qm.period} · 저장: ${qm.savedAt})]`);
+      if (d.접수총계 != null) lines.push(`  AS접수 총계: ${d.접수총계}건`);
+      if (d.접수불량별 && Object.keys(d.접수불량별).length)
+        lines.push(`  접수불량 TOP: ` + Object.entries(d.접수불량별).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`${k}(${v}건)`).join(', '));
+      if (d.개선요청총계 != null)
+        lines.push(`  품질개선요청: 총${d.개선요청총계}건 (진행중 ${d.진행중||0} / 완료 ${d.완료||0})`);
     }
   }
 

@@ -69,6 +69,10 @@ body { background:var(--bg); font-family:'Malgun Gothic',sans-serif; font-size:1
 </style>
 </head>
 <body>
+<div id="summary-toast" style="display:none;position:fixed;bottom:18px;right:18px;background:#0f1f3d;color:#fff;font-size:12px;padding:8px 16px;border-radius:6px;z-index:9999;"></div>
+<div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+  <button id="btn-save-summary" onclick="saveSummaryToSheet()" style="font-size:12px;font-weight:600;padding:7px 16px;background:#0f766e;color:#fff;border:none;border-radius:6px;cursor:pointer;">☁ 이번 마감 데이터 AI에 전달</button>
+</div>
 <div id="root">
 
 <!-- ════ 전자제품 ════ -->
@@ -169,6 +173,7 @@ const COLORS = [
   '#22c55e','#eab308','#06b6d4','#ec4899','#64748b',
   '#3b82f6','#10b981','#f59e0b','#a855f7','#6366f1'
 ];
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxL78NZRfY9ZgfmtooU60kPxT7Qz_A83pMQhkBUbrGwjoMf-UJObpqeogSeQVa9xCyqeg/exec';
 
 // ══════════════════════════════════════
 // 전역 상태
@@ -747,6 +752,91 @@ function scaleRoot() {
 // ══════════════════════════════════════
 // 초기화
 // ══════════════════════════════════════
+// ── 토스트
+function showToast(msg, bg) {
+  const el = document.getElementById('summary-toast');
+  el.textContent=msg; el.style.background=bg||'#0f1f3d'; el.style.display='block';
+  setTimeout(()=>{ el.style.display='none'; }, 3000);
+}
+
+// ── 마감 데이터 구글시트 저장
+async function saveSummaryToSheet() {
+  const btn = document.getElementById('btn-save-summary');
+  btn.disabled=true; btn.textContent='저장 중...';
+  try {
+    if (!RAW_GM.length && !RAW_GE.length) throw new Error('데이터가 아직 로드되지 않았습니다');
+
+    const gmKey = r => CUR_PERIOD==='월간' ? toMonthRound(r.처리일) : toWeekRound(r.처리일);
+    const geKey = r => CUR_PERIOD==='월간' ? toMonthRound(r.완료일) : toWeekRound(r.완료일);
+
+    // 선택 회차 필터 (CUR_ROUND 없으면 가장 최근 회차)
+    const rounds = getRounds();
+    const targetRound = CUR_ROUND || rounds[rounds.length-1] || '';
+
+    const repairRecs = RAW_GM.filter(d=>gmKey(d)===targetRound && d.구분==='수리출고');
+    const stockRecs  = RAW_GM.filter(d=>gmKey(d)===targetRound && d.구분==='자재출고');
+    const geRecs     = RAW_GE.filter(d=>geKey(d)===targetRound);
+
+    const EXCLUDE = new Set(['대기','취소']);
+    const repairValid = repairRecs.filter(d=>!EXCLUDE.has(d.진행현황));
+
+    // 전자제품 수리 집계
+    const repairMu = repairValid.filter(d=>d.유무상.includes('무상')).length;
+    const repairYu = repairValid.filter(d=>d.유무상.includes('유상')).length;
+    const repairFee = repairValid.filter(d=>d.유무상.includes('유상')).reduce((s,d)=>s+(d.비용||0),0);
+    const repairAvgDay = repairValid.length
+      ? +(repairValid.reduce((s,d)=>s+(d.소요일||0),0)/repairValid.length).toFixed(2) : null;
+
+    // 자재출고 집계
+    const stockTotal = stockRecs.length;
+
+    // 전자제품外 집계
+    const geMu = geRecs.filter(d=>d.유무상.includes('무상')).length;
+    const geYu = geRecs.filter(d=>d.유무상.includes('유상')).length;
+    const geFee = geRecs.filter(d=>d.유무상.includes('유상')).reduce((s,d)=>s+(d.비용||0),0);
+    const geAvgDay = geRecs.length
+      ? +(geRecs.reduce((s,d)=>s+(d.소요일||0),0)/geRecs.length).toFixed(2) : null;
+
+    // 수리 모델 TOP3
+    const modelMap = {};
+    repairValid.forEach(d=>{ if(d.제품명) modelMap[d.제품명]=(modelMap[d.제품명]||0)+1; });
+    const modelTop3 = Object.entries(modelMap).sort((a,b)=>b[1]-a[1]).slice(0,3)
+      .reduce((obj,[k,v])=>{ obj[k]=v; return obj; }, {});
+
+    const summaryData = {
+      period:     CUR_PERIOD,
+      round:      targetRound,
+      전자제품: {
+        수리총계:   repairMu+repairYu,
+        무상수리:   repairMu,
+        유상수리:   repairYu,
+        유상금액:   repairFee,
+        평균소요일: repairAvgDay,
+        자재출고:   stockTotal,
+        모델TOP3:   modelTop3
+      },
+      전자제품외: {
+        총계:     geMu+geYu,
+        무상:     geMu,
+        유상:     geYu,
+        유상금액: geFee,
+        평균소요일: geAvgDay
+      }
+    };
+
+    const resp = await fetch(SCRIPT_URL, {
+      method:'POST',
+      body: JSON.stringify({ action:'saveSummary', tab:'처리현황', period: targetRound, data: summaryData })
+    });
+    const json = await resp.json();
+    showToast(json.ok?`✓ 저장 완료 (${json.mode==='update'?'갱신':'신규'})`:'⚠ 저장 실패: '+json.msg, json.ok?'#0f1f3d':'#991b1b');
+  } catch(e) {
+    showToast('⚠ 오류: '+e.message,'#991b1b');
+  } finally {
+    btn.disabled=false; btn.textContent='☁ 이번 마감 데이터 AI에 전달';
+  }
+}
+
 readUrlParams();
 scaleRoot();
 window.addEventListener('resize', () => { scaleRoot(); equalizeGeCards(); });

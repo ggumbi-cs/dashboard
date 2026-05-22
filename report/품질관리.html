@@ -81,7 +81,9 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', '맑은 고딕', sans-
 async function loadExcel() {
   try {
     document.getElementById('loading').textContent = '📊 report.xlsx 불러오는 중...';
-    const res = await fetch('https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/report.xlsx');
+    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    const XLSX_URL = isLocal ? 'report.xlsx' : 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/report.xlsx';
+    const res = await fetch(XLSX_URL);
     if (!res.ok) throw new Error('fetch 실패: ' + res.status);
     const buf = await res.arrayBuffer();
     const wb  = XLSX.read(buf, { type:'array' });
@@ -138,6 +140,7 @@ async function loadExcel() {
 
 const params = new URLSearchParams(window.location.search);
 const type   = params.get('type')   || 'monthly';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxL78NZRfY9ZgfmtooU60kPxT7Qz_A83pMQhkBUbrGwjoMf-UJObpqeogSeQVa9xCyqeg/exec';
 const period = decodeURIComponent(params.get('period') || '');
 
 const TOP_COLORS = [
@@ -569,11 +572,83 @@ function render(raw, improve) {
 
 
 
+// ── 토스트
+function showToast(msg, bg) {
+  let el = document.getElementById('summary-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'summary-toast';
+    el.style.cssText = 'display:none;position:fixed;bottom:18px;right:18px;background:#0f1f3d;color:#fff;font-size:12px;padding:8px 16px;border-radius:6px;z-index:9999;';
+    document.body.appendChild(el);
+  }
+  el.textContent=msg; el.style.background=bg||'#0f1f3d'; el.style.display='block';
+  setTimeout(()=>{ el.style.display='none'; }, 3000);
+}
+
+// ── 마감 데이터 구글시트 저장
+async function saveSummaryToSheet() {
+  const btn = document.getElementById('btn-save-summary');
+  if (btn) { btn.disabled=true; btn.textContent='저장 중...'; }
+  try {
+    const data = await loadExcel();
+    if (!data) throw new Error('데이터 로드 실패');
+    const { raw, improve } = data;
+    const pi = parsePeriod();
+
+    // 현재 기간 접수불량 집계
+    const filtered = raw.filter(r => matchDate(r.d, pi));
+    const symMap = {};
+    filtered.forEach(r => { if(r.g) symMap[r.g]=(symMap[r.g]||0)+1; });
+    const symTop5 = Object.entries(symMap).sort((a,b)=>b[1]-a[1]).slice(0,5)
+      .reduce((obj,[k,v])=>{ obj[k]=v; return obj; }, {});
+
+    // 품질 개선요청 집계
+    const impFiltered = improve.filter(r => matchDate(r.reg, pi));
+    const stageMap = {};
+    impFiltered.forEach(r => { if(r.stage) stageMap[r.stage]=(stageMap[r.stage]||0)+1; });
+
+    const periodLabel = pi.type==='monthly'
+      ? `${String(pi.year).slice(2)}.${String(pi.month).padStart(2,'0')}월`
+      : pi.type==='weekly'
+        ? `${String(pi.friday.getFullYear()).slice(2)}${String(pi.friday.getMonth()+1).padStart(2,'0')}${String(pi.friday.getDate()).padStart(2,'0')}`
+        : String(pi.year);
+
+    const summaryData = {
+      period:     pi.type,
+      round:      periodLabel,
+      접수총계:   filtered.length,
+      접수불량별: symTop5,
+      개선요청총계: impFiltered.length,
+      단계별:       stageMap,
+      진행중:       impFiltered.filter(r=>r.stage&&r.stage.includes('진행')).length,
+      완료:         impFiltered.filter(r=>r.stage&&r.stage.includes('완료')).length,
+    };
+
+    const resp = await fetch(SCRIPT_URL, {
+      method:'POST',
+      body: JSON.stringify({ action:'saveSummary', tab:'품질관리', period: periodLabel, data: summaryData })
+    });
+    const json = await resp.json();
+    showToast(json.ok?`✓ 저장 완료 (${json.mode==='update'?'갱신':'신규'})`:'⚠ 저장 실패: '+json.msg, json.ok?'#0f1f3d':'#991b1b');
+  } catch(e) {
+    showToast('⚠ 오류: '+e.message,'#991b1b');
+  } finally {
+    if (btn) { btn.disabled=false; btn.textContent='☁ 이번 마감 데이터 AI에 전달'; }
+  }
+}
+
 // ── 진입점 ───────────────────────────────────────────────────────
 async function main() {
   const data = await loadExcel();
   if (!data) return;
   render(data.raw, data.improve);
+
+  // 렌더 후 버튼 주입
+  const btnWrap = document.createElement('div');
+  btnWrap.style.cssText = 'display:flex;justify-content:flex-end;margin-bottom:10px;';
+  btnWrap.innerHTML = `<button id="btn-save-summary" onclick="saveSummaryToSheet()" style="font-size:12px;font-weight:600;padding:7px 16px;background:#2356a8;color:#fff;border:none;border-radius:6px;cursor:pointer;">☁ 이번 마감 데이터 AI에 전달</button>`;
+  const content = document.getElementById('content');
+  if (content) content.insertAdjacentElement('beforebegin', btnWrap);
 }
 
 main();

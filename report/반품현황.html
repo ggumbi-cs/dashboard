@@ -103,6 +103,8 @@ body {
 </head>
 <body>
 
+<div id="summary-toast" style="display:none;position:fixed;bottom:18px;right:18px;background:#0f1f3d;color:#fff;font-size:12px;padding:8px 16px;border-radius:6px;z-index:9999;"></div>
+
 <div id="error-msg"></div>
 <div id="loading"><div class="spinner"></div> 데이터 불러오는 중...</div>
 <div id="app" style="display:none;"></div>
@@ -113,6 +115,7 @@ const REASON_COLORS = [
   '#f59e0b','#fd8d3c','#e74c3c','#9b59b6',
   '#3498db','#2ecc71','#e8834a','#64748b'
 ];
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxL78NZRfY9ZgfmtooU60kPxT7Qz_A83pMQhkBUbrGwjoMf-UJObpqeogSeQVa9xCyqeg/exec';
 
 // ── URL 파라미터 ──────────────────────────────────────────
 const params = new URLSearchParams(window.location.search);
@@ -410,6 +413,70 @@ function renderBrand(brand, left, right, raw, color) {
 }
 
 // ── 실행 ─────────────────────────────────────────────────
+function showToast(msg, bg) {
+  const el = document.getElementById('summary-toast');
+  el.textContent = msg; el.style.background = bg||'#0f1f3d'; el.style.display='block';
+  setTimeout(()=>{ el.style.display='none'; }, 3000);
+}
+
+async function saveSummaryToSheet() {
+  const btn = document.getElementById('btn-save-summary');
+  btn.disabled = true; btn.textContent = '저장 중...';
+  try {
+    const raw  = await loadData();
+    const { left, right } = filterRows(raw);
+
+    const brands = ['꿈비', '소브'];
+    const brandData = {};
+    brands.forEach(brand => {
+      const bRows   = left.filter(r => r.brand === brand);
+      const exchCnt = bRows.filter(r=>r.type==='교환').reduce((s,r)=>s+r.cnt,0);
+      const retCnt  = bRows.filter(r=>r.type==='반품').reduce((s,r)=>s+r.cnt,0);
+
+      // 반품 사유 TOP5
+      const reasonMap = {};
+      bRows.forEach(r => { reasonMap[r.reason] = (reasonMap[r.reason]||0)+r.cnt; });
+      const topReasons = Object.entries(reasonMap).sort((a,b)=>b[1]-a[1]).slice(0,5)
+        .reduce((obj,[k,v])=>{ obj[k]=v; return obj; }, {});
+
+      // 반품/교환율
+      let rateMatchPeriod = pInfo.mode==='monthly'
+        ? String(pInfo.key)
+        : String(pInfo.key).slice(0,2)+'.'+String(pInfo.key).slice(2,4)+'월';
+      const rateRow = right.find(r=>r.brand===brand&&r.period===rateMatchPeriod);
+
+      brandData[brand] = {
+        교환: exchCnt,
+        반품: retCnt,
+        합계: exchCnt+retCnt,
+        반품교환율: rateRow ? +(rateRow.rate*100).toFixed(2) : null,
+        사유TOP5: topReasons,
+        가전: bRows.filter(r=>r.item==='가전').reduce((s,r)=>s+r.cnt,0),
+        가전외: bRows.filter(r=>r.item==='가전외').reduce((s,r)=>s+r.cnt,0),
+      };
+    });
+
+    const summaryData = {
+      period: pInfo.mode,
+      round:  String(pInfo.key),
+      label:  pInfo.label,
+      브랜드별: brandData
+    };
+
+    const periodKey = String(pInfo.key);
+    const resp = await fetch(SCRIPT_URL, {
+      method:'POST',
+      body: JSON.stringify({ action:'saveSummary', tab:'반품현황', period: periodKey, data: summaryData })
+    });
+    const json = await resp.json();
+    showToast(json.ok?`✓ 저장 완료 (${json.mode==='update'?'갱신':'신규'})`:'⚠ 저장 실패: '+json.msg, json.ok?'#0f1f3d':'#991b1b');
+  } catch(e) {
+    showToast('⚠ 오류: '+e.message, '#991b1b');
+  } finally {
+    btn.disabled=false; btn.textContent='☁ 이번 마감 데이터 AI에 전달';
+  }
+}
+
 async function main() {
   let raw = null;
   try {
@@ -433,7 +500,13 @@ async function main() {
   app.style.display = 'block';
 }
 
-main();
+main().then(() => {
+  // 마감 버튼 주입 (데이터 로드 후)
+  const btn = document.createElement('div');
+  btn.style.cssText = 'display:flex;justify-content:flex-end;margin-bottom:10px;';
+  btn.innerHTML = `<button id="btn-save-summary" onclick="saveSummaryToSheet()" style="font-size:12px;font-weight:600;padding:7px 16px;background:#1e40af;color:#fff;border:none;border-radius:6px;cursor:pointer;">☁ 이번 마감 데이터 AI에 전달</button>`;
+  document.getElementById('app').insertAdjacentElement('beforebegin', btn);
+});
 </script>
 </body>
 </html>

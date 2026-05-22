@@ -405,6 +405,7 @@ function setStatus(cls, msg, spin) {
   el.innerHTML = (spin ? '<span class="spinner"></span> ' : '') + msg;
 }
 function setText(id, val) { const el=document.getElementById(id); if(el) el.textContent=val; }
+function esc(v) { return (v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
 function formatDate(val) {
   if (!val) return '';
   const s = String(val);

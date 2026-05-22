@@ -69,14 +69,20 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .delta-up   { color:var(--green); } .delta-dn { color:var(--red); }
 .delta-good { color:var(--green); } .delta-bad { color:var(--red); }
 .delta-eq   { color:var(--muted); }
+.kpi-inner { display:flex; gap:10px; align-items:stretch; height:100%; }
+.kpi-left  { flex:0 0 auto; }
 .kpi-insight {
-  margin-top:8px; padding-top:8px;
-  border-top:1px solid rgba(255,255,255,0.1);
-  font-size:11px; line-height:1.5; color:rgba(255,255,255,0.6);
-  min-height:0; font-style:italic;
+  flex:1; min-width:0;
+  display:flex; align-items:center;
+  padding:6px 8px;
+  background:rgba(255,255,255,0.08);
+  border-radius:6px;
+  border-left:2px solid rgba(255,255,255,0.15);
+  font-size:11px; line-height:1.5; color:rgba(255,255,255,0.7);
+  font-style:italic; word-break:keep-all;
 }
 .kpi-insight.loading { opacity:.4; }
-.kpi-insight:empty { display:none; }
+.kpi-insight:empty   { display:none; }
 .card-insight {
   margin-top:12px; padding:10px 12px;
   background:linear-gradient(135deg,rgba(35,86,168,0.06),rgba(42,122,111,0.06));
@@ -181,60 +187,92 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
     <div class="sec-title">이번 달 핵심 지표</div>
     <div class="grid-4" style="margin-bottom:16px;">
       <div class="kpi-card blue">
-        <div class="kpi-label">총 상담 인입</div>
-        <div class="kpi-val" id="s-total">-</div>
-        <div class="kpi-sub">카카오+네이버+전화</div>
-        <div class="kpi-delta" id="d-total"></div>
-        <div class="kpi-insight" id="i-total"></div>
+        <div class="kpi-inner">
+          <div class="kpi-left">
+            <div class="kpi-label">총 상담 인입</div>
+            <div class="kpi-val" id="s-total">-</div>
+            <div class="kpi-sub">카카오+네이버+전화</div>
+            <div class="kpi-delta" id="d-total"></div>
+          </div>
+          <div class="kpi-insight" id="i-total"></div>
+        </div>
       </div>
       <div class="kpi-card teal">
-        <div class="kpi-label">ALF 해결율</div>
-        <div class="kpi-val" id="s-alf">-</div>
-        <div class="kpi-sub">자동화 해결</div>
-        <div class="kpi-delta" id="d-alf"></div>
-        <div class="kpi-insight" id="i-alf"></div>
+        <div class="kpi-inner">
+          <div class="kpi-left">
+            <div class="kpi-label">ALF 해결율</div>
+            <div class="kpi-val" id="s-alf">-</div>
+            <div class="kpi-sub">자동화 해결</div>
+            <div class="kpi-delta" id="d-alf"></div>
+          </div>
+          <div class="kpi-insight" id="i-alf"></div>
+        </div>
       </div>
       <div class="kpi-card orange">
-        <div class="kpi-label">반품/교환율 (꿈비)</div>
-        <div class="kpi-val" id="s-return">-</div>
-        <div class="kpi-sub" id="s-return-sub">최근 월 기준</div>
-        <div class="kpi-delta" id="d-return"></div>
-        <div class="kpi-insight" id="i-return"></div>
+        <div class="kpi-inner">
+          <div class="kpi-left">
+            <div class="kpi-label">반품/교환율 (꿈비)</div>
+            <div class="kpi-val" id="s-return">-</div>
+            <div class="kpi-sub" id="s-return-sub">최근 월 기준</div>
+            <div class="kpi-delta" id="d-return"></div>
+          </div>
+          <div class="kpi-insight" id="i-return"></div>
+        </div>
       </div>
       <div class="kpi-card red">
-        <div class="kpi-label">품질 개선요청</div>
-        <div class="kpi-val" id="s-quality">-</div>
-        <div class="kpi-sub">사후개선 기준</div>
-        <div class="kpi-delta" id="d-quality"></div>
-        <div class="kpi-insight" id="i-quality"></div>
+        <div class="kpi-inner">
+          <div class="kpi-left">
+            <div class="kpi-label">품질 개선요청</div>
+            <div class="kpi-val" id="s-quality">-</div>
+            <div class="kpi-sub">사후개선 기준</div>
+            <div class="kpi-delta" id="d-quality"></div>
+          </div>
+          <div class="kpi-insight" id="i-quality"></div>
+        </div>
       </div>
       <div class="kpi-card green">
-        <div class="kpi-label">가전 AS 처리</div>
-        <div class="kpi-val" id="s-as">-</div>
-        <div class="kpi-sub">유/무상 합계</div>
-        <div class="kpi-delta" id="d-as"></div>
-        <div class="kpi-insight" id="i-as"></div>
+        <div class="kpi-inner">
+          <div class="kpi-left">
+            <div class="kpi-label">가전 AS 처리</div>
+            <div class="kpi-val" id="s-as">-</div>
+            <div class="kpi-sub">유/무상 합계</div>
+            <div class="kpi-delta" id="d-as"></div>
+          </div>
+          <div class="kpi-insight" id="i-as"></div>
+        </div>
       </div>
       <div class="kpi-card yellow">
-        <div class="kpi-label">자재 미입고 건</div>
-        <div class="kpi-val" id="s-issue">-</div>
-        <div class="kpi-sub">자재수급 Issue</div>
-        <div class="kpi-delta" id="d-issue"></div>
-        <div class="kpi-insight" id="i-issue"></div>
+        <div class="kpi-inner">
+          <div class="kpi-left">
+            <div class="kpi-label">자재 미입고 건</div>
+            <div class="kpi-val" id="s-issue">-</div>
+            <div class="kpi-sub">자재수급 Issue</div>
+            <div class="kpi-delta" id="d-issue"></div>
+          </div>
+          <div class="kpi-insight" id="i-issue"></div>
+        </div>
       </div>
       <div class="kpi-card blue">
-        <div class="kpi-label">고객 만족도</div>
-        <div class="kpi-val" id="s-satisfaction">-</div>
-        <div class="kpi-sub">최근 월 기준</div>
-        <div class="kpi-delta" id="d-satisfaction"></div>
-        <div class="kpi-insight" id="i-satisfaction"></div>
+        <div class="kpi-inner">
+          <div class="kpi-left">
+            <div class="kpi-label">고객 만족도</div>
+            <div class="kpi-val" id="s-satisfaction">-</div>
+            <div class="kpi-sub">최근 월 기준</div>
+            <div class="kpi-delta" id="d-satisfaction"></div>
+          </div>
+          <div class="kpi-insight" id="i-satisfaction"></div>
+        </div>
       </div>
       <div class="kpi-card teal">
-        <div class="kpi-label">수신 응답율</div>
-        <div class="kpi-val" id="s-answer">-</div>
-        <div class="kpi-sub">최근 주간 기준</div>
-        <div class="kpi-delta" id="d-answer"></div>
-        <div class="kpi-insight" id="i-answer"></div>
+        <div class="kpi-inner">
+          <div class="kpi-left">
+            <div class="kpi-label">수신 응답율</div>
+            <div class="kpi-val" id="s-answer">-</div>
+            <div class="kpi-sub">최근 주간 기준</div>
+            <div class="kpi-delta" id="d-answer"></div>
+          </div>
+          <div class="kpi-insight" id="i-answer"></div>
+        </div>
       </div>
     </div>
     <div class="grid-2">
@@ -1082,12 +1120,16 @@ async function runAutoInsight() {
   const prompt = `당신은 품질·고객센터 데이터 분석가입니다.
 아래 실제 데이터를 보고 각 지표별 핵심 인사이트를 작성해주세요.
 
-규칙:
-- PPT 문구처럼 짧고 날카롭게 (1~2줄)
-- 실제 수치와 트렌드 기반으로 작성
-- "데이터 부재", "파악 불가" 같은 말 절대 금지
-- 마크다운 기호 없이 순수 텍스트만
-- 채널/반품 항목은 특이점·트렌드 중심으로 2줄
+작성 규칙:
+- PPT 보고서 스타일 (문장 서술형 절대 금지)
+- 명사/단어 중심, 조사 최소화
+- 실제 수치 반드시 포함
+- 마크다운 기호 없이 순수 텍스트
+- 각 항목 2줄 이내
+- channel, returnchart는 수치 기반 특이점·트렌드 핵심만
+
+나쁜 예: "채널톡 메시지 인입이 크게 감소한 반면 전화 인입은 급증하여 고객 문의 채널이 온라인 채팅에서 전화로 전환되는 트렌드가 포착됩니다"
+좋은 예: "채널톡 -944건 / 전화 +943건 · 채팅→전화 전환 트렌드 · ALF 하락 연관"
 
 반드시 아래 JSON 형식으로만 응답 (다른 텍스트 없이):
 {
@@ -1099,8 +1141,8 @@ async function runAutoInsight() {
   "issue": "자재 미입고 인사이트",
   "satisfaction": "고객 만족도 인사이트",
   "answer": "수신 응답율 인사이트",
-  "channel": "채널별 인입 특이점·트렌드 2줄",
-  "returnchart": "반품 사유 특이점·주의사항 2줄"
+  "channel": "채널별 수치 포함 특이점 2줄",
+  "returnchart": "반품사유 수치+제품명+품질개선 연계 2줄"
 }
 
 데이터:
@@ -1209,22 +1251,35 @@ function buildDataSummary(){
       Object.entries(rm).sort((a,b)=>b[1]-a[1]).slice(0,5).forEach(([k,v])=>lines.push(`  ${k}: ${v}건`));
     }
 
-    // 품질 개선 요청
-    const ws3=DATA.report.Sheets['품질관리'];
-    if(ws3){
-      const rows=XLSX.utils.sheet_to_json(ws3,{header:1,defval:null});
-      lines.push('\n[품질 개선 요청]');
-      rows.slice(2,12).filter(r=>r&&r[4]).forEach(r=>lines.push(`  [${r[1]||''}] ${r[4]||''} - ${r[5]||''}`.substring(0,60)));
-    }
-
-    // AS 증상 TOP5
+    // AS 증상별 제품 TOP5 (col11=접수불량, col2=제품명)
     const ws4=DATA.report.Sheets['data_가전마감'];
     if(ws4){
       const rows=XLSX.utils.sheet_to_json(ws4,{header:1,defval:null});
-      const sm={};
-      rows.slice(1).filter(r=>r&&r[11]).forEach(r=>{sm[r[11]]=(sm[r[11]]||0)+1;});
-      lines.push('\n[AS 증상 TOP5]');
-      Object.entries(sm).sort((a,b)=>b[1]-a[1]).slice(0,5).forEach(([k,v])=>lines.push(`  ${k}: ${v}건`));
+      const symProd={};
+      rows.slice(1).forEach(r=>{
+        if(!r||!r[11]||!r[2]) return;
+        const sym=r[11], prod=String(r[2]).replace('[집계] ','').trim().substring(0,20);
+        if(!symProd[sym]) symProd[sym]={};
+        symProd[sym][prod]=(symProd[sym][prod]||0)+1;
+      });
+      lines.push('\n[AS 접수불량별 주요 제품]');
+      Object.entries(symProd).sort((a,b)=>Object.values(b[1]).reduce((x,y)=>x+y,0)-Object.values(a[1]).reduce((x,y)=>x+y,0)).slice(0,5).forEach(([sym,prods])=>{
+        const total=Object.values(prods).reduce((a,b)=>a+b,0);
+        const top=Object.entries(prods).sort((a,b)=>b[1]-a[1]).slice(0,2).map(([p,c])=>`${p}(${c}건)`).join(', ');
+        lines.push(`  [${sym}] 총${total}건 → ${top}`);
+      });
+    }
+
+    // 품질관리 진행중 개선요청
+    const ws3=DATA.report.Sheets['품질관리'];
+    if(ws3){
+      const rows=XLSX.utils.sheet_to_json(ws3,{header:1,defval:null});
+      lines.push('\n[품질 개선요청 진행중]');
+      rows.slice(2).filter(r=>r&&r[1]&&String(r[1]).includes('개선요청')&&r[4]).slice(0,10).forEach(r=>{
+        const prod=String(r[4]).replace(/\[(꿈비|리코코)\] /g,'').substring(0,25);
+        const kw=r[5]?String(r[5]).substring(0,15):'';
+        lines.push(`  ${prod} - ${kw}`);
+      });
     }
   }
 

@@ -78,11 +78,12 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
   background:rgba(255,255,255,0.08);
   border-radius:6px;
   border-left:2px solid rgba(255,255,255,0.15);
-  font-size:11px; line-height:1.5; color:rgba(255,255,255,0.7);
+  font-size:11px; line-height:1.5; color:rgba(255,255,255,0.55);
   font-style:italic; word-break:keep-all;
+  min-height:40px;
 }
-.kpi-insight.loading { opacity:.4; }
-.kpi-insight:empty   { display:none; }
+.kpi-insight.loading { opacity:.5; }
+.kpi-insight.done { color:rgba(255,255,255,0.85); font-style:normal; }
 .card-insight {
   margin-top:12px; padding:10px 12px;
   background:linear-gradient(135deg,rgba(35,86,168,0.06),rgba(42,122,111,0.06));
@@ -1113,7 +1114,10 @@ async function runAutoInsight() {
   const ids = ['total','alf','return','quality','as','issue','satisfaction','answer','channel','returnchart'];
   ids.forEach(id => {
     const el = document.getElementById('i-'+id);
-    if (el) { el.className = (id==='channel'||id==='returnchart') ? 'card-insight loading' : 'kpi-insight loading'; el.textContent = '분석 중...'; }
+    if (el) {
+      el.className = (id==='channel'||id==='returnchart') ? 'card-insight loading' : 'kpi-insight loading';
+      el.textContent = '분석 중...';
+    }
   });
 
   const ds = buildDataSummary();
@@ -1124,8 +1128,9 @@ async function runAutoInsight() {
 - PPT 보고서 스타일 (문장 서술형 절대 금지)
 - 명사/단어 중심, 조사 최소화
 - 실제 수치 반드시 포함
-- 마크다운 기호 없이 순수 텍스트
-- 각 항목 2줄 이내
+- 절대 금지 문구: "시급", "경고", "심각", "문제 발생", "개선 필요", "파악 불가", "데이터 부재"
+- 부정적 표현 대신 현황·수치·연관관계 중심으로 서술
+- 긍정/중립 톤 유지 (보고자가 불리해지는 표현 금지)
 - channel, returnchart는 수치 기반 특이점·트렌드 핵심만
 
 나쁜 예: "채널톡 메시지 인입이 크게 감소한 반면 전화 인입은 급증하여 고객 문의 채널이 온라인 채팅에서 전화로 전환되는 트렌드가 포착됩니다"
@@ -1170,9 +1175,10 @@ ${ds}`;
     ids.forEach(id => {
       const el = document.getElementById('i-'+id);
       if (el && insights[id]) {
-        el.className = (id==='channel'||id==='returnchart') ? 'card-insight' : 'kpi-insight';
+        el.className = (id==='channel'||id==='returnchart') ? 'card-insight' : 'kpi-insight done';
         el.textContent = insights[id];
       } else if (el) {
+        el.className = (id==='channel'||id==='returnchart') ? 'card-insight' : 'kpi-insight';
         el.textContent = '';
       }
     });

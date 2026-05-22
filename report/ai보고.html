@@ -222,7 +222,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 
   <!-- ① Summary -->
   <div class="section active" id="sec-summary">
-    <div class="sec-title">이번 달 핵심 지표</div>
+    <div class="sec-title"><span id="summary-title">이번 달 핵심 지표</span></div>
     <div class="grid-4" style="margin-bottom:16px;">
       <div class="kpi-card blue">
         <div class="kpi-label">총 상담 인입</div>
@@ -545,7 +545,49 @@ async function loadAllData() {
 // ══════════════════════════════════════════════════════════════
 // 전체 렌더
 // ══════════════════════════════════════════════════════════════
-function renderAll() { renderSummary(); renderReport(); renderVOC(); }
+function renderAll() { renderSummary(); renderReport(); renderVOC(); updatePeriodLabels(); debugPeriodFilter(); }
+
+// 주간/월간에 따라 '월·달' ↔ '주' 텍스트 교체
+function updatePeriodLabels() {
+  const isWeek = (DATA.type === 'weekly' || DATA.type === 'direct');
+
+  // ① sec-title (span만 교체해서 ::before pseudo 유지)
+  const secTitleSpan = document.getElementById('summary-title');
+  if(secTitleSpan) secTitleSpan.textContent = isWeek ? '이번 주 핵심 지표' : '이번 달 핵심 지표';
+
+  // ② 고객 만족도 kpi-sub
+  document.querySelectorAll('.kpi-card').forEach(card => {
+    const label = card.querySelector('.kpi-label')?.textContent?.trim();
+    const sub   = card.querySelector('.kpi-sub:not(#s-return-sub)'); // return-sub은 JS가 따로 관리
+    if(!sub) return;
+    if(label === '고객 만족도') {
+      sub.textContent = isWeek ? '최근 주 기준' : '최근 월 기준';
+    }
+  });
+
+  // ③ kpi-delta 내 "전회차 대비" → 주간엔 "전주차 대비"
+  //    renderDelta 호출 후 실행되므로 DOM 치환으로 처리
+  if(isWeek) {
+    document.querySelectorAll('.kpi-delta').forEach(el => {
+      el.innerHTML = el.innerHTML.replace(/전회차 대비/g, '전주차 대비');
+    });
+  }
+}
+
+// 기간 필터 검증용 콘솔 출력 (개발/검증용)
+function debugPeriodFilter() {
+  const P = parsePeriod();
+  if (!P) return;
+  console.group(`[월피미 기간필터 검증] mode=${P.mode} / 이번=${P.monthStr} / 전회차=${P.prevMonthStr}`);
+  console.log('총인입  CUR:', CUR.total,  '/ PREV:', PREV.total);
+  console.log('ALF     CUR:', CUR.alf?.toFixed(1)+'%', '/ PREV:', PREV.alf?.toFixed(1)+'%');
+  console.log('만족도  CUR:', CUR.satisfaction, '/ PREV:', PREV.satisfaction);
+  console.log('응답율  CUR:', CUR.answer?.toFixed(1)+'%', '/ PREV:', PREV.answer?.toFixed(1)+'%');
+  console.log('반품율  CUR:', CUR.returnRate, '/ PREV:', PREV.returnRate);
+  console.log('AS      CUR:', CUR.as, '/ PREV:', PREV.as);
+  console.log('자재이슈 CUR:', CUR.issue, '/ PREV:', PREV.issue);
+  console.groupEnd();
+}
 
 // ══════════════════════════════════════════════════════════════
 // 기간 파싱 유틸
@@ -590,6 +632,11 @@ function parsePeriod() {
 function weekInMonth(wk, prefix) {
   return wk && typeof wk === 'number' && Math.floor(wk / 100) === prefix;
 }
+// '26.04월' → 2604 숫자 변환 (월간 마감 정렬용)
+function monthKeyToNum(k) {
+  const m = String(k).match(/^(\d{2})\.(\d{2})월$/);
+  return m ? parseInt(m[1])*100+parseInt(m[2]) : 0;
+}
 
 // ══════════════════════════════════════════════════════════════
 // ① Summary + 전회차 비교
@@ -605,9 +652,10 @@ function renderSummary() {
     if (ws1) {
       const rows = XLSX.utils.sheet_to_json(ws1, {header:1, defval:null});
 
-      // 총인입: 주기='월간' 행 기준으로 직접 매칭
+      // 총인입: 월간 마감 행 우선, 없으면 해당 월 소속 주간 행 합산(fallback)
       const curChMap={}, prevChMap={};
       let curTotal=0, prevTotal=0;
+      // 1차: 월간 마감 행
       for (let i=2; i<rows.length; i++) {
         const r=rows[i]; if(!r||r[0]!=='총인입데이터'||r[1]!=='월간'||!r[3]) continue;
         if(P.mode==='year') {
@@ -617,52 +665,111 @@ function renderSummary() {
           if(r[2]===P.prevMonthStr) { prevChMap[r[3]]=(prevChMap[r[3]]||0)+(r[4]||0); prevTotal+=(r[4]||0); }
         }
       }
+      // 2차 fallback: 월간 마감 없으면 해당 월 소속 주간 행 합산
+      if(P.mode!=='year' && curTotal===0) {
+        for (let i=2; i<rows.length; i++) {
+          const r=rows[i]; if(!r||r[0]!=='총인입데이터'||r[1]!=='주간'||!r[3]) continue;
+          if(weekInMonth(r[2],P.weekPrefix))      { curChMap[r[3]]=(curChMap[r[3]]||0)+(r[4]||0); curTotal+=(r[4]||0); }
+          if(weekInMonth(r[2],P.prevWeekPrefix))  { prevChMap[r[3]]=(prevChMap[r[3]]||0)+(r[4]||0); prevTotal+=(r[4]||0); }
+        }
+      }
       CUR.total=curTotal||null; PREV.total=prevTotal||null;
       setText('s-total', curTotal ? curTotal.toLocaleString()+'건' : '-');
       if(P.mode==='month') renderDelta('d-total', CUR.total, PREV.total, '건', false, 0);
       else document.getElementById('d-total').innerHTML='';
       renderVocBars('channelChart', curChMap, COLORS);
 
-      // ALF: 주기='월간', 마감회차='26.04월' 직접 매칭
-      const alfMap={};
+      // ALF: 월간 마감 우선 → 없으면 최신 마감 리미트 → 주간 합산 fallback
+      const alfMonthMap={};  // key=월간마감문자열, val={heal,total}
+      const alfWeekMap={};   // key=주간숫자, val={heal,total}
       for (let i=2; i<rows.length; i++) {
-        const r=rows[i]; if(!r||r[6]!=='ALF관여/해결율'||r[7]!=='월간'||!r[8]) continue;
-        if(!alfMap[r[8]]) alfMap[r[8]]={heal:0,total:0};
-        if(r[9]==='해결') alfMap[r[8]].heal+=(r[10]||0);
-        alfMap[r[8]].total+=(r[10]||0);
+        const r=rows[i]; if(!r||r[6]!=='ALF관여/해결율'||!r[8]) continue;
+        if(r[7]==='월간') {
+          if(!alfMonthMap[r[8]]) alfMonthMap[r[8]]={heal:0,total:0};
+          if(r[9]==='해결') alfMonthMap[r[8]].heal+=(r[10]||0);
+          alfMonthMap[r[8]].total+=(r[10]||0);
+        } else if(r[7]==='주간' && typeof r[8]==='number') {
+          if(!alfWeekMap[r[8]]) alfWeekMap[r[8]]={heal:0,total:0};
+          if(r[9]==='해결') alfWeekMap[r[8]].heal+=(r[10]||0);
+          alfWeekMap[r[8]].total+=(r[10]||0);
+        }
       }
+
+      // 월간 마감 키 숫자 정렬 헬퍼
+      const alfMonthKeys = Object.keys(alfMonthMap).sort((a,b)=>monthKeyToNum(b)-monthKeyToNum(a));
+      const latestAlfKey = alfMonthKeys[0] || null;
+      const latestAlfNum = latestAlfKey ? monthKeyToNum(latestAlfKey) : 0;
+
+      const calcAlf = (monthKey, weekPrefix) => {
+        // 1차: 월간 마감 정확 매칭
+        if(alfMonthMap[monthKey]?.total) {
+          return alfMonthMap[monthKey].heal / alfMonthMap[monthKey].total * 100;
+        }
+        // 2차: 리미트 — 선택 월 > 최신 마감이면 최신 마감 사용
+        const selNum = monthKeyToNum(monthKey);
+        if(latestAlfKey) {
+          const useKey = selNum > latestAlfNum
+            ? latestAlfKey
+            : (alfMonthKeys.find(k=>monthKeyToNum(k)<=selNum) || null);
+          if(useKey && alfMonthMap[useKey]?.total) {
+            return alfMonthMap[useKey].heal / alfMonthMap[useKey].total * 100;
+          }
+        }
+        // 3차: 해당 월 소속 주간 합산
+        let h=0,t=0;
+        Object.entries(alfWeekMap).forEach(([wk,v])=>{
+          if(weekInMonth(Number(wk), weekPrefix)){h+=v.heal;t+=v.total;}
+        });
+        return t>0 ? h/t*100 : null;
+      };
+
       let alfCur=null, alfPrev=null;
       if(P.mode==='year'){
-        let h=0,t=0; Object.values(alfMap).forEach(v=>{h+=v.heal;t+=v.total;});
+        let h=0,t=0; Object.values(alfMonthMap).forEach(v=>{h+=v.heal;t+=v.total;});
         alfCur=t?h/t*100:null;
       } else {
-        alfCur  = alfMap[P.monthStr]     && alfMap[P.monthStr].total     ? alfMap[P.monthStr].heal/alfMap[P.monthStr].total*100     : null;
-        alfPrev = alfMap[P.prevMonthStr] && alfMap[P.prevMonthStr].total ? alfMap[P.prevMonthStr].heal/alfMap[P.prevMonthStr].total*100 : null;
+        alfCur  = calcAlf(P.monthStr,     P.weekPrefix);
+        alfPrev = calcAlf(P.prevMonthStr, P.prevWeekPrefix);
       }
       CUR.alf=alfCur; PREV.alf=alfPrev;
       setText('s-alf', alfCur!==null ? alfCur.toFixed(1)+'%' : '-');
       if(P.mode==='month') renderDelta('d-alf', alfCur, alfPrev, '%p', false, 1);
       else document.getElementById('d-alf').innerHTML='';
 
-      // 만족도: 주기='월간', col20=타이틀, col21=주기, col22=마감회차, col27=점수
-      const satMap={};
+      // 만족도: 월간 마감 우선, 없으면 해당 월 주간 최신값 fallback
+      const satMap={};   // key=마감회차(월간문자 또는 주간숫자), val={v, type, wk}
       for (let i=2; i<rows.length; i++) {
-        const r=rows[i]; if(!r||r[20]!=='만족도조사'||r[21]!=='월간'||!r[22]||!r[27]) continue;
-        satMap[r[22]]=r[27];
+        const r=rows[i]; if(!r||r[20]!=='만족도조사'||!r[22]||!r[27]) continue;
+        if(r[21]==='월간') {
+          satMap[r[22]]={v:r[27],type:'월간'};
+        } else if(r[21]==='주간' && typeof r[22]==='number') {
+          satMap['wk_'+r[22]]={v:r[27],type:'주간',wk:r[22]};
+        }
       }
       let satCur=null, satPrev=null;
       if(P.mode==='year'){
-        const vals=Object.values(satMap); satCur=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
+        const vals=Object.values(satMap).filter(s=>s.type==='월간').map(s=>s.v);
+        satCur=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
       } else {
-        satCur  = satMap[P.monthStr]     || null;
-        satPrev = satMap[P.prevMonthStr] || null;
+        // 1차: 월간 마감
+        if(satMap[P.monthStr])     satCur  = satMap[P.monthStr].v;
+        if(satMap[P.prevMonthStr]) satPrev = satMap[P.prevMonthStr].v;
+        // 2차 fallback: 해당 월 주간 중 최신값
+        if(satCur===null) {
+          const wkVals=Object.values(satMap).filter(s=>s.type==='주간'&&weekInMonth(s.wk,P.weekPrefix));
+          if(wkVals.length) satCur=wkVals.sort((a,b)=>b.wk-a.wk)[0].v;
+        }
+        if(satPrev===null) {
+          const wkVals=Object.values(satMap).filter(s=>s.type==='주간'&&weekInMonth(s.wk,P.prevWeekPrefix));
+          if(wkVals.length) satPrev=wkVals.sort((a,b)=>b.wk-a.wk)[0].v;
+        }
       }
       CUR.satisfaction=satCur; PREV.satisfaction=satPrev;
       setText('s-satisfaction', satCur ? satCur.toFixed(2)+'점' : '-');
       if(P.mode==='month') renderDelta('d-satisfaction', satCur, satPrev, '점', false, 2);
       else document.getElementById('d-satisfaction').innerHTML='';
 
-      // 응답율: 주간 데이터만 존재 → 해당 월 prefix로 필터, 그 월 최신 주차값
+      // 응답율: 주간 데이터만 존재 → 해당 월 prefix 주간 중 최신 주차값
       const ansRows=[];
       for (let i=2; i<rows.length; i++) {
         const r=rows[i]; if(!r||r[12]!=='수신응답율, 통화성골률, 총유입Call'||r[13]!=='주간'||!r[14]||!r[18]) continue;
@@ -673,6 +780,7 @@ function renderSummary() {
       if(P.mode==='year'){
         ansCur=ansRows[0]?ansRows[0].v*100:null;
       } else {
+        // 해당 월 주간 데이터 중 최신 주차 (월간 마감 없어도 주간은 항상 존재)
         const curAns  = ansRows.find(a=>weekInMonth(a.wk, P.weekPrefix));
         const prevAns = ansRows.find(a=>weekInMonth(a.wk, P.prevWeekPrefix));
         ansCur  = curAns  ? curAns.v*100  : null;
@@ -688,24 +796,69 @@ function renderSummary() {
     const ws2 = DATA.report.Sheets['반품현황'];
     if (ws2) {
       const rows = XLSX.utils.sheet_to_json(ws2, {header:1, defval:null});
-      // 반품/교환율 (col9=타이틀, col11=월, col12=브랜드, col13=비율)
+
+      // rateMap: {'26.03월': 3.1, '26.04월': 3.3, ...}
       const rateMap={};
       for (let i=2; i<rows.length; i++) {
         const r=rows[i]; if(!r||r[9]!=='반품/교환율'||r[12]!=='꿈비'||!r[13]) continue;
         rateMap[r[11]]=r[13]*100;
       }
-      let curRate=null, prevRate=null;
+
+      // 월간 마감 키를 숫자로 정렬 ('26.04월' → 2604) — 공통 헬퍼 monthKeyToNum() 사용
+      const sortedMonthKeys = Object.keys(rateMap).sort((a,b) => monthKeyToNum(b)-monthKeyToNum(a));
+      // 가장 최신 월간 마감
+      const latestMonthKey = sortedMonthKeys[0] || null;
+      const latestMonthNum = latestMonthKey ? monthKeyToNum(latestMonthKey) : 0;
+
+      let curRate=null, prevRate=null, displayKey=null;
+
       if(P.mode==='year'){
-        const vals=Object.values(rateMap); curRate=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
+        const vals=Object.values(rateMap);
+        curRate=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
       } else {
-        curRate  = rateMap[P.monthStr]     || null;
-        prevRate = rateMap[P.prevMonthStr] || null;
-        // fallback: 최신 월
-        if(curRate===null){ const k=Object.keys(rateMap).sort().reverse()[0]; if(k){curRate=rateMap[k]; setText('s-return-sub',k+' 꿈비 기준 (최신)');} }
-        else { setText('s-return-sub', P.monthStr+' 꿈비 기준'); }
+        // 1차: 선택 월 정확 매칭
+        if(rateMap[P.monthStr] != null) {
+          curRate   = rateMap[P.monthStr];
+          prevRate  = rateMap[P.prevMonthStr] || null;
+          displayKey = P.monthStr;
+        } else {
+          // 2차: 리미트 규칙 — 선택 월 > 최신 마감월이면 최신 마감 사용
+          // 단, 주간 선택이고 해당 주가 최신 마감월보다 이전 월이면 그 월 마감 사용
+          const selNum = monthKeyToNum(P.monthStr); // ex. 2605
+          if(latestMonthKey) {
+            if(selNum > latestMonthNum) {
+              // 선택월이 마감보다 미래 → 최신 마감 사용
+              curRate    = rateMap[latestMonthKey];
+              displayKey = latestMonthKey;
+              // 전회차: 최신 마감의 이전 월
+              const prevKey = sortedMonthKeys[1] || null;
+              prevRate = prevKey ? rateMap[prevKey] : null;
+            } else {
+              // 선택월 <= 최신 마감 → 가장 가까운 마감 사용
+              const closest = sortedMonthKeys.find(k => monthKeyToNum(k) <= selNum);
+              if(closest) {
+                curRate    = rateMap[closest];
+                displayKey = closest;
+                const idx  = sortedMonthKeys.indexOf(closest);
+                prevRate   = idx+1 < sortedMonthKeys.length ? rateMap[sortedMonthKeys[idx+1]] : null;
+              }
+            }
+          }
+        }
       }
+
       CUR.returnRate=curRate; PREV.returnRate=prevRate;
       setText('s-return', curRate!==null ? curRate.toFixed(1)+'%' : '-');
+
+      // sub 텍스트: 표시 기준 명시
+      if(displayKey && displayKey !== P.monthStr) {
+        setText('s-return-sub', displayKey+' 꿈비 기준 (최신마감)');
+      } else if(displayKey) {
+        setText('s-return-sub', displayKey+' 꿈비 기준');
+      } else {
+        setText('s-return-sub', '월 마감 기준');
+      }
+
       if(P.mode==='month') renderDelta('d-return', curRate, prevRate, '%p', true, 2);
       else document.getElementById('d-return').innerHTML='';
 
@@ -768,14 +921,14 @@ function renderSummary() {
         for(let i=1;i<rows.length;i++){
           const r=rows[i]; if(!r||!r[0]) continue;
           const d=typeof r[0]==='number'?new Date((r[0]-25569)*86400000):new Date(r[0]);
-          const ym=d.getFullYear()*100+d.getMonth()+1;
+          const ym=d.getFullYear()*100+(d.getMonth()+1);
           if(ym===curYM) curCnt++;
           if(ym===prevYM) prevCnt++;
         }
-        if(curCnt===0) curCnt=rows.length-1; // fallback
+        // fallback 제거: 데이터 없으면 0으로 표시 (전체값 오염 방지)
       }
       CUR.as=curCnt||null; PREV.as=prevCnt||null;
-      setText('s-as', curCnt+'건');
+      setText('s-as', curCnt>0 ? curCnt+'건' : '-');
       if(P.mode==='month'&&prevCnt>0) renderDelta('d-as', CUR.as, PREV.as, '건', false, 0);
       else document.getElementById('d-as').innerHTML='';
     }

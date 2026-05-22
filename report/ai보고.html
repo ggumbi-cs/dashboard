@@ -51,11 +51,11 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .card { background:var(--card); border-radius:10px; box-shadow:var(--shadow); padding:18px 20px; }
 .card-title { font-size:13px; font-weight:700; color:var(--navy); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
 .card-title .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:stretch; }
 .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
 
 /* KPI 카드 */
-.kpi-card { background:var(--card); border-radius:10px; box-shadow:var(--shadow); padding:16px 18px 32px; border-left:4px solid transparent; }
+.kpi-card { background:var(--card); border-radius:10px; box-shadow:var(--shadow); padding:16px 18px; border-left:4px solid transparent; }
 .kpi-card.blue   { border-left-color:var(--navy-mid); }
 .kpi-card.teal   { border-left-color:var(--teal); }
 .kpi-card.orange { border-left-color:var(--orange); }
@@ -72,43 +72,39 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .kpi-inner { display:flex; gap:10px; align-items:stretch; height:100%; }
 .kpi-left  { flex:1; min-width:0; }
 
-/* kpi-insight: 카드 우측 하단 고정 뱃지 */
+/* kpi-insight: 카드 하단 인라인 배치 */
 .kpi-card { position:relative; }
 .kpi-insight {
-  display:none; /* 기본 숨김 */
+  display:none;
 }
 .kpi-insight.loading,
 .kpi-insight.error,
 .kpi-insight.done {
   display:block;
-  position:absolute;
-  bottom:10px; right:12px;
-  font-size:10px; font-weight:600;
-  padding:3px 8px;
-  border-radius:10px;
-  white-space:nowrap;
-  max-width:calc(100% - 24px);
-  overflow:hidden; text-overflow:ellipsis;
-  pointer-events:none;
+  margin-top:8px;
+  font-size:10.5px;
+  line-height:1.5;
+  padding:5px 8px;
+  border-radius:6px;
+  word-break:keep-all;
 }
 .kpi-insight.loading {
-  background:rgba(243,156,18,0.12);
+  background:rgba(243,156,18,0.08);
   color:var(--yellow);
-  border:1px solid rgba(243,156,18,0.3);
+  border:1px solid rgba(243,156,18,0.25);
+  font-weight:600;
 }
 .kpi-insight.error {
-  background:rgba(192,57,43,0.08);
+  background:rgba(192,57,43,0.07);
   color:var(--red);
   border:1px solid rgba(192,57,43,0.2);
+  font-weight:600;
 }
 .kpi-insight.done {
-  background:rgba(35,86,168,0.07);
-  color:var(--navy-mid);
-  border:1px solid rgba(35,86,168,0.15);
-  font-style:normal; font-weight:400; font-size:10px;
-  line-height:1.4;
-  white-space:normal;
-  max-width:calc(100% - 24px);
+  background:rgba(35,86,168,0.05);
+  color:var(--sub);
+  border-left:2px solid rgba(35,86,168,0.2);
+  font-style:italic;
 }
 .card-insight {
   margin-top:12px; padding:8px 12px;
@@ -293,12 +289,13 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
       </div>
     </div>
     <div class="grid-2">
-      <div class="card">
+      <div class="card" style="display:flex;flex-direction:column;">
         <div class="card-title"><span class="dot" style="background:var(--navy-mid)"></span>채널별 인입 현황</div>
+        <div style="flex:1;"></div>
         <div id="channelChart"></div>
         <div class="card-insight" id="i-channel"></div>
       </div>
-      <div class="card">
+      <div class="card" style="display:flex;flex-direction:column;">
         <div class="card-title"><span class="dot" style="background:var(--orange)"></span>반품 사유 TOP 5 (꿈비)</div>
         <div id="returnChart"></div>
         <div class="card-insight" id="i-returnchart"></div>

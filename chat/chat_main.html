@@ -449,7 +449,7 @@ body {
 </div>
 
 <script>
-const SERVER = "https://adaptable-expression-production-ba28.up.railway.app";
+const SERVER = "https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec";
 
 let alarmEnabled = true;
 let knownLastMessageKey = null;
@@ -532,14 +532,13 @@ function render(data) {
 
     const list = [...data].slice(0, 30).reverse();
 
-    list.forEach(d => {
+    chat.innerHTML = list.map(d => {
         const isMe = (d.name || "").trim() === getFullName();
         const checkedBy = normalizeCheckedByText(d.checked_by || "");
         const checkedClass = checkedBy ? "checked" : "";
         const checkedTitle = checkedBy ? escapeHtml(checkedBy) : "";
-       
 
-        chat.innerHTML += `
+        return `
             <div class="msg-row ${isMe ? 'me' : 'other'}">
                 <div class="msg-wrap">
                     <div class="name">${escapeHtml(d.name || "")}</div>
@@ -549,13 +548,13 @@ function render(data) {
                             class="check-btn ${checkedClass}"
                             title="${checkedTitle}"
                             onclick="toggleCheck(${d.id})"
-                        >✔</div>                       
+                        >✔</div>
                     </div>
                     <div class="time">${escapeHtml(d.created_at || d.time || "")}</div>
                 </div>
             </div>
         `;
-    });
+    }).join("");
 
     if (prevScrollHeight === 0) {
         chat.scrollTop = chat.scrollHeight;
@@ -675,7 +674,7 @@ function checkNewIncomingMessage(data) {
 
 async function load() {
     try {
-        const res = await fetch(SERVER + "/messages", {
+        const res = await fetch(SERVER + "?action=getMessages", {
             method: "GET"
         });
 
@@ -715,12 +714,13 @@ window.send = async function () {
     sendBtn.disabled = true;
 
     try {
-        const res = await fetch(SERVER + "/send", {
+        const res = await fetch(SERVER, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
+                action: "send",
                 name: team + " " + name,
                 message: msg
             })
@@ -754,12 +754,13 @@ window.toggleCheck = async function (id) {
     }
 
     try {
-        const res = await fetch(SERVER + "/check", {
+        const res = await fetch(SERVER, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
+                action: "check",
                 id: id,
                 checker: fullName
             })

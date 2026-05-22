@@ -174,7 +174,7 @@ body {
 </div>
 
 <script>
-const SERVER = "https://adaptable-expression-production-ba28.up.railway.app";
+const SERVER = "https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec";
 
 function setVersion() {
     const d = new Date();
@@ -243,8 +243,7 @@ function render(data) {
         return;
     }
 
-    list.forEach(d => {
-        chat.innerHTML += `
+    chat.innerHTML = list.map(d => `
             <div class="msg-row other">
                 <div class="msg-wrap">
                     <div class="name">${escapeHtml(d.name || "")}</div>
@@ -259,8 +258,7 @@ function render(data) {
                     <div class="time">${escapeHtml(d.created_at || d.time || "")}</div>
                 </div>
             </div>
-        `;
-    });
+        `).join("");
 
     if (prevScrollHeight === 0) {
         chat.scrollTop = chat.scrollHeight;
@@ -278,7 +276,7 @@ function render(data) {
 
 async function load() {
     try {
-        const res = await fetch(SERVER + "/messages", {
+        const res = await fetch(SERVER + "?action=getMessages", {
             method: "GET"
         });
 
@@ -308,12 +306,13 @@ window.toggleCheck = async function (id) {
     }
 
     try {
-        const res = await fetch(SERVER + "/check", {
+        const res = await fetch(SERVER, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
+                action: "check",
                 id: id,
                 checker: fullName
             })

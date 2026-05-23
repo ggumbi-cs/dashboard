@@ -306,16 +306,13 @@ window.toggleCheck = async function (id) {
     }
 
     try {
-        const res = await fetch(SERVER, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                action: "check",
-                id: id,
-                checker: fullName
-            })
+        const checkParams = new URLSearchParams({
+            action: "check",
+            id: id,
+            checker: fullName
+        });
+        const res = await fetch(SERVER + "?" + checkParams.toString(), {
+            method: "GET"
         });
 
         if (!res.ok) {

@@ -618,7 +618,7 @@ function cancelAttach() {
     document.getElementById("previewName").textContent = "";
 }
 
-async function uploadFile(file) {
+async function uploadFile(file, senderName) {
     const indicator = document.getElementById("uploadingIndicator");
     indicator.classList.add("show");
     try {
@@ -630,20 +630,26 @@ async function uploadFile(file) {
         });
 
         const isVideo = file.type.startsWith("video/");
-        const params = new URLSearchParams({
-            action: "uploadFile",
-            fileName: file.name,
-            mimeType: file.type,
-            fileData: base64
+
+        // no-cors POST로 GAS에 전송 — GAS가 드라이브 저장 + 시트에 메시지 직접 기록
+        await fetch(SERVER, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                action: "uploadFile",
+                fileName: file.name,
+                mimeType: file.type,
+                fileData: base64,
+                isVideo: isVideo,
+                senderName: senderName || ""
+            })
         });
 
-        const res = await fetch(SERVER + "?" + params.toString(), { method: "GET" });
-        const data = await res.json();
+        // no-cors라 응답 못 받음 → 4초 대기 후 폴링으로 확인
+        await new Promise(r => setTimeout(r, 4000));
+        return { uploaded: true };
 
-        if (data.url) {
-            return { url: data.url, isVideo };
-        }
-        return null;
     } catch(e) {
         console.log("파일 업로드 실패", e);
         return null;
@@ -864,38 +870,33 @@ window.send = async function () {
     sendBtn.disabled = true;
 
     try {
-        let messageText = msg;
-
-        // 파일 첨부가 있으면 먼저 업로드
+        // 파일 첨부가 있으면 업로드 (GAS가 시트에 직접 저장)
         if (pendingFile) {
-            const uploaded = await uploadFile(pendingFile);
+            const senderName = team + " " + name;
+            const uploaded = await uploadFile(pendingFile, senderName);
             if (!uploaded) {
                 alert("파일 업로드 실패");
                 return;
             }
-            const prefix = uploaded.isVideo ? "[VIDEO]" : "[IMG]";
-            const fileMsg = prefix + uploaded.url;
-            // 텍스트 메시지가 있으면 파일 먼저 전송 후 텍스트 전송
-            const sendParams2 = new URLSearchParams({
-                action: "send",
-                name: team + " " + name,
-                message: fileMsg
-            });
-            await fetch(SERVER + "?" + sendParams2.toString(), { method: "GET" });
             cancelAttach();
-            if (!msg) {
-                msgBox.value = "";
-                await load();
-                return;
+            // 텍스트도 있으면 이어서 전송
+            if (msg) {
+                const sendParams2 = new URLSearchParams({
+                    action: "send",
+                    name: senderName,
+                    message: msg
+                });
+                await fetch(SERVER + "?" + sendParams2.toString(), { method: "GET" });
             }
+            msgBox.value = "";
+            await load();
+            return;
         }
-
-        if (!messageText) { await load(); return; }
 
         const sendParams = new URLSearchParams({
             action: "send",
             name: team + " " + name,
-            message: messageText
+            message: msg
         });
         const res = await fetch(SERVER + "?" + sendParams.toString(), {
             method: "GET"

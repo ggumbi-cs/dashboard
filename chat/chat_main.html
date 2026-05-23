@@ -397,6 +397,74 @@ body {
         min-width: 0;
     }
 }
+
+/* ===== 링크 / 미디어 ===== */
+.bubble a {
+    color: #1a6fdb;
+    text-decoration: underline;
+    word-break: break-all;
+}
+
+.bubble img.chat-img {
+    max-width: 220px;
+    max-height: 180px;
+    border-radius: 8px;
+    display: block;
+    margin-top: 4px;
+    cursor: pointer;
+}
+
+.bubble video.chat-video {
+    max-width: 220px;
+    border-radius: 8px;
+    display: block;
+    margin-top: 4px;
+}
+
+.attach-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.85);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+.attach-btn:hover { background: #fff; }
+
+.upload-preview {
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.6);
+    font-size: 12px;
+    color: #333;
+    display: none;
+    align-items: center;
+    gap: 8px;
+}
+
+.upload-preview.show { display: flex; }
+
+.upload-preview .cancel-btn {
+    cursor: pointer;
+    color: #e33;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.uploading-indicator {
+    font-size: 12px;
+    color: #666;
+    padding: 4px 12px;
+    display: none;
+}
+
+.uploading-indicator.show { display: block; }
 </style>
 </head>
 <body>
@@ -428,7 +496,14 @@ body {
     <div id="chat" class="chat-box"></div>
 
     <div class="bottom-area">
+        <div id="uploadPreview" class="upload-preview">
+            <span id="previewName"></span>
+            <span class="cancel-btn" onclick="cancelAttach()">✕</span>
+        </div>
+        <div id="uploadingIndicator" class="uploading-indicator">업로드 중...</div>
         <div class="input-row">
+            <button type="button" class="attach-btn" onclick="document.getElementById('fileInput').click()" title="파일 첨부">📎</button>
+            <input type="file" id="fileInput" accept="image/*,video/*" style="display:none" onchange="onFileSelected(this)">
             <textarea id="msg" placeholder="메시지 입력"></textarea>
             <button type="button" id="sendBtn" onclick="send()">전송</button>
         </div>
@@ -502,6 +577,81 @@ function escapeHtml(text) {
         .replaceAll("'", "&#039;");
 }
 
+function renderMessage(text) {
+    const str = String(text || "");
+
+    // 이미지 링크
+    if (/^\[IMG\](.+)$/.test(str)) {
+        const url = str.replace("[IMG]", "").trim();
+        return `<img class="chat-img" src="${escapeHtml(url)}" onclick="window.open('${escapeHtml(url)}','_blank')" loading="lazy">`;
+    }
+
+    // 영상 링크
+    if (/^\[VIDEO\](.+)$/.test(str)) {
+        const url = str.replace("[VIDEO]", "").trim();
+        return `<video class="chat-video" src="${escapeHtml(url)}" controls></video>`;
+    }
+
+    // 일반 텍스트 - URL을 클릭 가능한 링크로 변환
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return escapeHtml(str).replace(
+        /(https?:\/\/[^\s&]+)/g,
+        '<a href="$1" target="_blank" rel="noopener">$1</a>'
+    );
+}
+
+// ===== 파일 첨부 =====
+let pendingFile = null;
+
+function onFileSelected(input) {
+    const file = input.files[0];
+    if (!file) return;
+    pendingFile = file;
+    document.getElementById("previewName").textContent = "📎 " + file.name;
+    document.getElementById("uploadPreview").classList.add("show");
+    input.value = "";
+}
+
+function cancelAttach() {
+    pendingFile = null;
+    document.getElementById("uploadPreview").classList.remove("show");
+    document.getElementById("previewName").textContent = "";
+}
+
+async function uploadFile(file) {
+    const indicator = document.getElementById("uploadingIndicator");
+    indicator.classList.add("show");
+    try {
+        const base64 = await new Promise((res, rej) => {
+            const r = new FileReader();
+            r.onload = () => res(r.result.split(",")[1]);
+            r.onerror = rej;
+            r.readAsDataURL(file);
+        });
+
+        const isVideo = file.type.startsWith("video/");
+        const params = new URLSearchParams({
+            action: "uploadFile",
+            fileName: file.name,
+            mimeType: file.type,
+            fileData: base64
+        });
+
+        const res = await fetch(SERVER + "?" + params.toString(), { method: "GET" });
+        const data = await res.json();
+
+        if (data.url) {
+            return { url: data.url, isVideo };
+        }
+        return null;
+    } catch(e) {
+        console.log("파일 업로드 실패", e);
+        return null;
+    } finally {
+        indicator.classList.remove("show");
+    }
+}
+
 function normalizeCheckedByText(value) {
     const items = String(value || "")
         .split(",")
@@ -543,7 +693,7 @@ function render(data) {
                 <div class="msg-wrap">
                     <div class="name">${escapeHtml(d.name || "")}</div>
                     <div class="bubble-line">
-                        <div class="bubble">${escapeHtml(d.message || "")}</div>
+                        <div class="bubble">${renderMessage(d.message || "")}</div>
                         <div
                             class="check-btn ${checkedClass}"
                             title="${checkedTitle}"
@@ -709,15 +859,43 @@ window.send = async function () {
         return;
     }
 
-    if (!msg) return;
+    if (!msg && !pendingFile) return;
 
     sendBtn.disabled = true;
 
     try {
+        let messageText = msg;
+
+        // 파일 첨부가 있으면 먼저 업로드
+        if (pendingFile) {
+            const uploaded = await uploadFile(pendingFile);
+            if (!uploaded) {
+                alert("파일 업로드 실패");
+                return;
+            }
+            const prefix = uploaded.isVideo ? "[VIDEO]" : "[IMG]";
+            const fileMsg = prefix + uploaded.url;
+            // 텍스트 메시지가 있으면 파일 먼저 전송 후 텍스트 전송
+            const sendParams2 = new URLSearchParams({
+                action: "send",
+                name: team + " " + name,
+                message: fileMsg
+            });
+            await fetch(SERVER + "?" + sendParams2.toString(), { method: "GET" });
+            cancelAttach();
+            if (!msg) {
+                msgBox.value = "";
+                await load();
+                return;
+            }
+        }
+
+        if (!messageText) { await load(); return; }
+
         const sendParams = new URLSearchParams({
             action: "send",
             name: team + " " + name,
-            message: msg
+            message: messageText
         });
         const res = await fetch(SERVER + "?" + sendParams.toString(), {
             method: "GET"

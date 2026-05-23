@@ -181,11 +181,15 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 
 /* VOC 바 */
 .voc-bar-wrap { display:flex; flex-direction:column; gap:8px; }
-.voc-row  { display:flex; align-items:center; gap:10px; }
-.voc-label { font-size:11px; color:var(--sub); min-width:120px; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.voc-track { flex:1; background:#eef0f5; border-radius:4px; height:16px; }
+.voc-row  { display:flex; align-items:center; gap:8px; }
+.voc-label { font-size:11px; color:var(--sub); min-width:110px; max-width:110px; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.voc-track { width:30%; min-width:60px; background:#eef0f5; border-radius:4px; height:16px; flex-shrink:0; }
 .voc-fill  { height:100%; border-radius:4px; display:flex; align-items:center; padding-left:6px; font-size:10px; color:#fff; font-weight:600; min-width:24px; transition:width .8s ease; }
-.voc-cnt   { font-size:11px; color:var(--sub); min-width:36px; text-align:right; }
+.voc-cnt   { font-size:11px; color:var(--sub); min-width:30px; text-align:right; flex-shrink:0; }
+.voc-delta { font-size:10px; min-width:44px; text-align:left; flex-shrink:0; }
+.voc-delta.up   { color:#c0392b; }
+.voc-delta.down { color:#27ae60; }
+.voc-delta.eq   { color:#aaa; }
 
 .sec-title { font-size:15px; font-weight:800; color:var(--navy); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
 .sec-title::before { content:''; display:inline-block; width:4px; height:18px; background:var(--navy-mid); border-radius:2px; }
@@ -366,17 +370,26 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
     <div class="grid-2" style="margin-bottom:14px;">
       <div class="card">
         <div class="card-title"><span class="dot" style="background:var(--orange)"></span>반품 사유별 건수 (꿈비)</div>
-        <div class="voc-bar-wrap" id="vocReturn"></div>
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="flex:1;min-width:0;"><div class="voc-bar-wrap" id="vocReturn"></div></div>
+          <div class="card-insight" id="i-vocReturn" style="width:38%;flex-shrink:0;"></div>
+        </div>
       </div>
       <div class="card">
         <div class="card-title"><span class="dot" style="background:var(--red)"></span>AS 접수불량 유형 TOP 10</div>
-        <div class="voc-bar-wrap" id="vocAS"></div>
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="flex:1;min-width:0;"><div class="voc-bar-wrap" id="vocAS"></div></div>
+          <div class="card-insight" id="i-vocAS" style="width:38%;flex-shrink:0;"></div>
+        </div>
       </div>
     </div>
     <div class="grid-2">
       <div class="card">
         <div class="card-title"><span class="dot" style="background:var(--teal)"></span>반품 제품별 집계</div>
-        <div class="voc-bar-wrap" id="vocProduct"></div>
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="flex:1;min-width:0;"><div class="voc-bar-wrap" id="vocProduct"></div></div>
+          <div class="card-insight" id="i-vocProduct" style="width:38%;flex-shrink:0;"></div>
+        </div>
       </div>
       <div class="card">
         <div class="card-title"><span class="dot" style="background:var(--navy-light)"></span>자재수급 이슈 현황</div>
@@ -394,21 +407,29 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
       </div>
       <div style="display:flex;gap:8px;">
         <button onclick="addAction()" style="background:var(--teal);border:none;color:#fff;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">+ 과제 추가</button>
-        <button onclick="saveToSheet()" style="background:var(--navy-mid);border:none;color:#fff;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">💾 구글시트 저장</button>
         <button onclick="loadFromSheet()" style="background:#eee;border:none;color:#555;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">☁ 불러오기</button>
         <button onclick="clearDone()" style="background:#f5f5f5;border:none;color:#999;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">완료 정리</button>
       </div>
     </div>
+    <!-- 상태 필터 버튼 -->
+    <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center;">
+      <span style="font-size:11px;color:#aaa;margin-right:2px;">필터</span>
+      <button id="filter-all"    onclick="setActionFilter('all')"    style="padding:4px 12px;border-radius:20px;border:1.5px solid #ccc;background:#f5f5f5;color:#555;font-size:11.5px;cursor:pointer;font-family:var(--font);font-weight:600;">전체</button>
+      <button id="filter-미착수" onclick="setActionFilter('미착수')" style="padding:4px 12px;border-radius:20px;border:1.5px solid #c8d6e5;background:#f0f4f8;color:#5a7a9a;font-size:11.5px;cursor:pointer;font-family:var(--font);">미착수</button>
+      <button id="filter-진행중" onclick="setActionFilter('진행중')" style="padding:4px 12px;border-radius:20px;border:1.5px solid #b3d4f0;background:#e8f4fc;color:#1a6aa0;font-size:11.5px;cursor:pointer;font-family:var(--font);">진행중</button>
+      <button id="filter-지연"   onclick="setActionFilter('지연')"   style="padding:4px 12px;border-radius:20px;border:1.5px solid #f5c6a0;background:#fef3ea;color:#c06820;font-size:11.5px;cursor:pointer;font-family:var(--font);">지연</button>
+      <button id="filter-완료"   onclick="setActionFilter('완료')"   style="padding:4px 12px;border-radius:20px;border:1.5px solid #b2dfce;background:#eaf6f0;color:#1a7a50;font-size:11.5px;cursor:pointer;font-family:var(--font);">완료</button>
+      <span id="filter-count" style="font-size:11px;color:#aaa;margin-left:4px;"></span>
+    </div>
     <div class="card">
       <table class="action-table">
         <thead><tr>
-          <th style="width:3%">#</th>
-          <th style="width:18%">과제명</th>
-          <th style="width:9%">담당부서</th>
-          <th style="width:12%">완료 기준</th>
-          <th style="width:8%">완료기한</th>
-          <th style="width:13%">진행률</th>
-          <th style="width:7%">상태</th>
+          <th style="width:7%">구분</th>
+          <th style="width:22%">과제명</th>
+          <th style="width:14%">완료 기준</th>
+          <th style="width:9%">완료기한</th>
+          <th style="width:14%">진행률</th>
+          <th style="width:8%">상태</th>
           <th style="width:13%">지연 사유</th>
           <th style="width:13%">보완계획</th>
           <th style="width:4%">삭제</th>
@@ -1291,39 +1312,69 @@ function renderVOC() {
   const ws2=DATA.report.Sheets['반품현황'];
   if (ws2) {
     const rows=XLSX.utils.sheet_to_json(ws2,{header:1,defval:null});
-    const rm={},pm={};
+    const rm={}, pm={}, rmPrev={}, pmPrev={};
+
+    // 전회차 기준 계산
+    const prevRound = P.mode==='week'
+      ? (()=>{
+          const allWks=[];
+          for(let i=2;i<rows.length;i++){
+            const r=rows[i];
+            if(r&&r[0]==='반품현황 (반품/교환율만 제외)'&&typeof r[2]==='number'&&!allWks.includes(r[2])) allWks.push(r[2]);
+          }
+          allWks.sort((a,b)=>a-b);
+          const idx=allWks.indexOf(P.weekKey);
+          return idx>0?allWks[idx-1]:null;
+        })()
+      : null;
+
     for(let i=2;i<rows.length;i++){
       const r=rows[i];
       if(!r||r[0]!=='반품현황 (반품/교환율만 제외)'||r[3]!=='꿈비') continue;
-      // 월 필터: 월간 문자열 OR 주간 숫자 prefix
-      if(P.mode!=='year'){
-        const wk=r[2];
-        const ok=(wk===P.monthStr)||(typeof wk==='number'&&weekInMonth(wk,P.weekPrefix));
-        if(!ok) continue;
+      const wk=r[2];
+      let isCur=false, isPrev=false;
+      if(P.mode==='year'){ isCur=true; }
+      else if(P.mode==='month'){
+        isCur  = (wk===P.monthStr)||(typeof wk==='number'&&weekInMonth(wk,P.weekPrefix));
+        isPrev = (wk===P.prevMonthStr)||(typeof wk==='number'&&weekInMonth(wk,P.prevWeekPrefix));
+      } else {
+        isCur  = (wk===P.weekKey);
+        isPrev = (prevRound!==null && wk===prevRound);
       }
-      if(r[4]) rm[r[4]]=(rm[r[4]]||0)+(r[7]||0);
-      if(r[5]) pm[r[5]]=(pm[r[5]]||0)+(r[7]||0);
+      if(isCur){
+        if(r[4]) rm[r[4]]=(rm[r[4]]||0)+(r[7]||0);
+        if(r[5]) pm[r[5]]=(pm[r[5]]||0)+(r[7]||0);
+      }
+      if(isPrev){
+        if(r[4]) rmPrev[r[4]]=(rmPrev[r[4]]||0)+(r[7]||0);
+        if(r[5]) pmPrev[r[5]]=(pmPrev[r[5]]||0)+(r[7]||0);
+      }
     }
-    renderVocBars('vocReturn',rm,['#e8834a','#f39c12','#e74c3c','#9b59b6','#3498db','#1abc9c']);
-    renderVocBars('vocProduct',pm,COLORS);
+    renderVocBars('vocReturn', rm, ['#e8834a','#f39c12','#e74c3c','#9b59b6','#3498db','#1abc9c'], rmPrev);
+    renderVocBars('vocProduct', pm, COLORS, pmPrev);
   }
 
   const ws4=DATA.report.Sheets['data_가전마감'];
   if(ws4){
     const rows=XLSX.utils.sheet_to_json(ws4,{header:1,defval:null});
-    const sm={};
+    const sm={}, smPrev={};
+    const P2 = parsePeriod();
     for(let i=1;i<rows.length;i++){
       const r=rows[i]; if(!r||!r[11]) continue;
-      // 월 필터
-      if(P.mode!=='year' && r[0]){
+      if(P2.mode!=='year' && r[0]){
         const d=typeof r[0]==='number'?new Date((r[0]-25569)*86400000):new Date(r[0]);
         const ym=`${String(d.getFullYear()).slice(2)}.${String(d.getMonth()+1).padStart(2,'0')}월`;
-        if(ym!==P.monthStr) continue;
+        if(ym===P2.monthStr) sm[r[11]]=(sm[r[11]]||0)+1;
+        else if(ym===P2.prevMonthStr) smPrev[r[11]]=(smPrev[r[11]]||0)+1;
+        continue;
       }
-      sm[r[11]]=(sm[r[11]]||0)+1;
+      if(P2.mode==='year') sm[r[11]]=(sm[r[11]]||0)+1;
     }
-    renderVocBars('vocAS',Object.fromEntries(Object.entries(sm).sort((a,b)=>b[1]-a[1]).slice(0,10)),
-      ['#c0392b','#e74c3c','#e8834a','#f39c12','#f1c40f','#d4ac0d','#a04000','#784212','#6e2f1a','#922b21']);
+    renderVocBars('vocAS',
+      Object.fromEntries(Object.entries(sm).sort((a,b)=>b[1]-a[1]).slice(0,10)),
+      ['#c0392b','#e74c3c','#e8834a','#f39c12','#f1c40f','#d4ac0d','#a04000','#784212','#6e2f1a','#922b21'],
+      smPrev
+    );
   }
 
   if(DATA.issue){
@@ -1368,49 +1419,133 @@ function renderVOC() {
   }
 }
 
-function renderVocBars(id,dataObj,colors){
-  const el=document.getElementById(id);if(!el)return;
+function renderVocBars(id, dataObj, colors, prevMap){
+  const el=document.getElementById(id); if(!el) return;
   const entries=Object.entries(dataObj).sort((a,b)=>b[1]-a[1]);
-  if(!entries.length){el.innerHTML='<div style="color:#aaa;font-size:12px;padding:10px;">데이터 없음</div>';return;}
+  if(!entries.length){ el.innerHTML='<div style="color:#aaa;font-size:12px;padding:10px;">데이터 없음</div>'; return; }
   const max=entries[0][1];
-  el.innerHTML=`<div class="voc-bar-wrap">`+entries.map((e,i)=>`<div class="voc-row"><div class="voc-label" title="${e[0]}">${e[0].substring(0,14)}${e[0].length>14?'…':''}</div><div class="voc-track"><div class="voc-fill" style="width:${max?e[1]/max*100:0}%;background:${colors[i%colors.length]};">${e[1]}</div></div><div class="voc-cnt">${Number(e[1]).toLocaleString()}</div></div>`).join('')+`</div>`;
+  el.innerHTML=entries.map((e,i)=>{
+    const barW = max ? Math.min(e[1]/max*100, 100) : 0;
+    // 전회차 증감
+    let deltaHtml = '';
+    if(prevMap) {
+      const prev = prevMap[e[0]] || 0;
+      const diff = e[1] - prev;
+      if(diff > 0)      deltaHtml = `<span class="voc-delta up">▲${diff}</span>`;
+      else if(diff < 0) deltaHtml = `<span class="voc-delta down">▼${Math.abs(diff)}</span>`;
+      else              deltaHtml = `<span class="voc-delta eq">-</span>`;
+    }
+    return `<div class="voc-row">
+      <div class="voc-label" title="${e[0]}">${e[0].substring(0,13)}${e[0].length>13?'…':''}</div>
+      <div class="voc-track"><div class="voc-fill" style="width:${barW}%;background:${colors[i%colors.length]};">${e[1]}</div></div>
+      <div class="voc-cnt">${Number(e[1]).toLocaleString()}</div>
+      ${deltaHtml}
+    </div>`;
+  }).join('');
 }
 
 // ══════════════════════════════════════════════════════════════
 // ④ 액션 현황판 — Google Sheets 연동
 // ══════════════════════════════════════════════════════════════
+let actionFilter = 'all'; // 현재 필터 상태
+
+function setActionFilter(val) {
+  actionFilter = val;
+
+  const defaultStyle = {
+    all:   { bg:'#f5f5f5', border:'#ccc',    color:'#555'    },
+    미착수: { bg:'#f0f4f8', border:'#c8d6e5', color:'#5a7a9a' },
+    진행중: { bg:'#e8f4fc', border:'#b3d4f0', color:'#1a6aa0' },
+    지연:   { bg:'#fef3ea', border:'#f5c6a0', color:'#c06820' },
+    완료:   { bg:'#eaf6f0', border:'#b2dfce', color:'#1a7a50' },
+  };
+  const activeStyle = {
+    all:   { bg:'#e8edf2', border:'#aab8c8', color:'#2a4060' },
+    미착수: { bg:'#dce8f4', border:'#7aa8cc', color:'#1a4a7a' },
+    진행중: { bg:'#c8e4f8', border:'#4a9fd4', color:'#0a5080' },
+    지연:   { bg:'#fde8d0', border:'#e08040', color:'#a04010' },
+    완료:   { bg:'#d4f0e4', border:'#40a870', color:'#0a6030' },
+  };
+
+  ['all','미착수','진행중','지연','완료'].forEach(s => {
+    const btn = document.getElementById('filter-' + s);
+    if (!btn) return;
+    const isActive = val === s;
+    const st = isActive ? activeStyle[s] : defaultStyle[s];
+    btn.style.background   = st.bg;
+    btn.style.borderColor  = st.border;
+    btn.style.color        = st.color;
+    btn.style.fontWeight   = isActive ? '700' : '';
+    btn.style.boxShadow    = isActive ? '0 0 0 2px rgba(42,100,180,0.25)' : '';
+  });
+
+  renderActionTable();
+}
+
 function renderActionTable() {
   const tbody=document.getElementById('actionBody');
-  if(!actionItems.length){
+  const filtered = actionFilter === 'all'
+    ? actionItems
+    : actionItems.filter(it => it.상태 === actionFilter);
+
+  // 필터 카운트 표시
+  const countEl = document.getElementById('filter-count');
+  if (countEl) {
+    if (actionFilter === 'all') {
+      countEl.textContent = actionItems.length ? `전체 ${actionItems.length}건` : '';
+    } else {
+      countEl.textContent = `${filtered.length} / ${actionItems.length}건`;
+    }
+  }
+
+  if(!filtered.length){
     tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;color:#aaa;padding:30px;">
-      + 과제 추가 버튼으로 액션 아이템을 등록하세요<br>
-      <small style="font-size:11px;margin-top:4px;display:block;">구글시트에서 직접 추가해도 ☁ 불러오기로 반영돼요</small>
+      ${actionFilter === 'all'
+        ? '+ 과제 추가 버튼으로 액션 아이템을 등록하세요<br><small style="font-size:11px;margin-top:4px;display:block;">구글시트에서 직접 추가해도 ☁ 불러오기로 반영돼요</small>'
+        : `<b>${actionFilter}</b> 상태의 항목이 없습니다`
+      }
     </td></tr>`;
     return;
   }
-  tbody.innerHTML=actionItems.map((it,i)=>{
+  // 일반 과제(AI 과제 제외) 순번 계산용
+  let normalSeq = 0;
+
+  tbody.innerHTML=filtered.map((it,i)=>{
+    // 원본 인덱스 (삭제/수정에 필요)
+    const origIdx = actionItems.indexOf(it);
+    // # 열: AI 과제는 아이콘, 일반 과제는 1부터 순번
+    const seqCell = it._isAiTask
+      ? `<td class="center" style="padding:4px 2px;">
+           <span style="display:inline-block;background:#f59e0b;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:0.3px;white-space:nowrap;">🤖 AI추천</span>
+         </td>`
+      : (() => {
+          normalSeq++;
+          return `<td class="center" style="padding:4px 2px;">
+            <span style="display:inline-block;background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;white-space:nowrap;">핵심과제</span>
+          </td>`;
+        })();
     const pct=Number(it.진행률)||0;
     const barCls=pct>=80?'':pct>=40?'warn':'bad';
-    return`<tr>
-      <td class="center" style="color:#aaa;">${i+1}</td>
-      <td><input value="${esc(it.과제명)}" onchange="updateAction(${i},'과제명',this.value)" style="width:100%;border:none;font-size:12px;background:transparent;font-family:var(--font);"></td>
-      <td class="center"><input value="${esc(it.담당부서)}" onchange="updateAction(${i},'담당부서',this.value)" style="width:100%;border:none;font-size:11px;background:transparent;text-align:center;font-family:var(--font);"></td>
-      <td><input value="${esc(it.완료기준)}" onchange="updateAction(${i},'완료기준',this.value)" style="width:100%;border:none;font-size:11px;background:transparent;font-family:var(--font);"></td>
-      <td class="center"><input type="date" value="${formatDate(it.완료기한)}" onchange="updateAction(${i},'완료기한',this.value)" style="border:none;font-size:11px;background:transparent;font-family:var(--font);"></td>
+    const rowStyle = it._isAiTask ? 'background:#fffbeb;' : '';
+    return`<tr style="${rowStyle}">
+      ${seqCell}
+      <td><input value="${esc(it.과제명)}" onchange="updateAction(${origIdx},'과제명',this.value)" style="width:100%;border:none;font-size:12px;background:transparent;font-family:var(--font);${it._isAiTask?'font-weight:600;color:#b45309;':''}"></td>
+      <td><input value="${esc(it.완료기준)}" onchange="updateAction(${origIdx},'완료기준',this.value)" style="width:100%;border:none;font-size:11px;background:transparent;font-family:var(--font);"></td>
+      <td class="center"><input type="date" value="${formatDate(it.완료기한)}" onchange="updateAction(${origIdx},'완료기한',this.value)" style="border:none;font-size:11px;background:transparent;font-family:var(--font);"></td>
       <td>
         <div style="display:flex;align-items:center;gap:6px;">
           <div class="progress-wrap" style="flex:1;"><div class="progress-bar ${barCls}" style="width:${pct}%;"></div></div>
-          <input type="number" min="0" max="100" value="${pct}" onchange="updateAction(${i},'진행률',+this.value)" style="width:36px;border:1px solid #eee;border-radius:3px;font-size:11px;padding:1px 3px;text-align:center;">%
+          <input type="number" min="0" max="100" value="${pct}" onchange="updateAction(${origIdx},'진행률',+this.value)" style="width:36px;border:1px solid #eee;border-radius:3px;font-size:11px;padding:1px 3px;text-align:center;">%
         </div>
       </td>
       <td class="center">
-        <select onchange="updateAction(${i},'상태',this.value)" style="border:1px solid #eee;border-radius:4px;font-size:11px;padding:2px;font-family:var(--font);">
+        <select onchange="updateAction(${origIdx},'상태',this.value)" style="border:1px solid #eee;border-radius:4px;font-size:11px;padding:2px;font-family:var(--font);">
           ${['진행중','완료','지연','미착수'].map(s=>`<option ${it.상태===s?'selected':''}>${s}</option>`).join('')}
         </select>
       </td>
-      <td><input value="${esc(it.지연사유)}" onchange="updateAction(${i},'지연사유',this.value)" style="width:100%;border:none;font-size:11px;background:transparent;font-family:var(--font);" placeholder="-"></td>
-      <td><input value="${esc(it.보완계획)}" onchange="updateAction(${i},'보완계획',this.value)" style="width:100%;border:none;font-size:11px;background:transparent;font-family:var(--font);" placeholder="-"></td>
-      <td class="center"><button onclick="deleteAction(${i})" style="background:none;border:none;color:#ddd;cursor:pointer;font-size:14px;" title="삭제">✕</button></td>
+      <td><input value="${esc(it.지연사유)}" onchange="updateAction(${origIdx},'지연사유',this.value)" style="width:100%;border:none;font-size:11px;background:transparent;font-family:var(--font);" placeholder="-"></td>
+      <td><input value="${esc(it.보완계획)}" onchange="updateAction(${origIdx},'보완계획',this.value)" style="width:100%;border:none;font-size:11px;background:transparent;font-family:var(--font);" placeholder="-"></td>
+      <td class="center"><button onclick="deleteAction(${origIdx})" style="background:none;border:none;color:#ddd;cursor:pointer;font-size:14px;" title="삭제">✕</button></td>
     </tr>`;
   }).join('');
 }
@@ -1418,28 +1553,32 @@ function renderActionTable() {
 function addAction(){
   actionItems.push({과제명:'',담당부서:'품질/CS',완료기준:'',완료기한:'',진행률:0,상태:'미착수',지연사유:'',보완계획:''});
   renderActionTable();
-  // 새 행 맨 아래로 스크롤 + 과제명 input에 포커스
+  triggerAutoSave();
   setTimeout(()=>{
     const inputs=document.querySelectorAll('#actionBody input');
-    if(inputs.length) inputs[inputs.length-8].focus();
+    if(inputs.length) inputs[inputs.length-7].focus();
   },50);
 }
-function updateAction(i,key,val){ if(actionItems[i]){ actionItems[i][key]=val; } }
+function updateAction(i,key,val){
+  if(actionItems[i]){ actionItems[i][key]=val; triggerAutoSave(); }
+}
 function deleteAction(i){
   const name=actionItems[i]?.과제명||'이 항목';
   if(!confirm(`"${name}"을(를) 삭제하시겠습니까?`)) return;
   const deletedName=actionItems[i].과제명;
+  const isAi=actionItems[i]._isAiTask;
   actionItems.splice(i,1);
   renderActionTable();
-  // 구글시트에서도 삭제
-  if(deletedName) fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'delete',name:deletedName})}).catch(()=>{});
+  // AI 추천 과제는 구글시트에 없으므로 delete 호출 불필요
+  if(deletedName && !isAi)
+    fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'delete',name:deletedName})}).catch(()=>{});
 }
 function clearDone(){
   if(!confirm('완료 항목을 삭제하시겠습니까?')) return;
-  const doneNames=actionItems.filter(it=>it.상태==='완료').map(it=>it.과제명);
+  const doneNames=actionItems.filter(it=>it.상태==='완료'&&!it._isAiTask).map(it=>it.과제명);
   actionItems=actionItems.filter(it=>it.상태!=='완료');
   renderActionTable();
-  // 구글시트에서도 일괄 삭제
+  triggerAutoSave();
   doneNames.forEach(name=>fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'delete',name})}).catch(()=>{}));
 }
 
@@ -1468,12 +1607,21 @@ function showToast(msg, cls) {
   toast._timer = setTimeout(()=>{ toast.style.opacity='0'; }, 2500);
 }
 
-// 💾 구글시트 저장 — 전체 목록을 시트에 반영 (saveAll)
+// 💾 자동저장 — 수정 후 1.5초 디바운스
+let _saveTimer = null;
+function triggerAutoSave() {
+  clearTimeout(_saveTimer);
+  showSaveStatus('저장 대기...', 'save-ing');
+  _saveTimer = setTimeout(saveToSheet, 1500);
+}
+
 async function saveToSheet(){
   showSaveStatus('저장 중...','save-ing');
   try {
-    await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'saveAll',rows:actionItems})});
-    showSaveStatus('✓ 저장 완료','save-ok');
+    // AI 추천 과제(_isAiTask)는 구글시트에 저장하지 않음
+    const saveRows = actionItems.filter(it => !it._isAiTask);
+    await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'saveAll',rows:saveRows})});
+    showSaveStatus('✓ 자동저장','save-ok');
   } catch(e){ showSaveStatus('⚠ 저장 실패','save-err'); }
 }
 
@@ -1483,6 +1631,8 @@ async function loadFromSheet(){
     const res=await fetch(SCRIPT_URL+'?t='+Date.now());
     const json=await res.json();
     if(json.ok && Array.isArray(json.rows)){
+      // 기존 AI 추천 과제 보존 (구글시트에는 _isAiTask 저장 안 됨)
+      const existingAiTask = actionItems.find(it => it._isAiTask) || null;
       actionItems=json.rows.map(r=>({
         과제명:   r['과제명']||'',
         담당부서: r['담당부서']||'',
@@ -1493,6 +1643,8 @@ async function loadFromSheet(){
         지연사유: r['지연사유']||'',
         보완계획: r['보완계획']||'',
       }));
+      // AI 추천 과제 맨 앞에 복원
+      if (existingAiTask) actionItems.unshift(existingAiTask);
       renderActionTable();
       if(json.rows.length>0) showSaveStatus('☁ 불러오기 완료','save-ok');
     }
@@ -1546,12 +1698,15 @@ async function loadInsightFromSheet() {
     const data = await res.json();
     if (data.ok && data.insights) {
       applyInsights(data.insights);
-      // 저장 시각 표시
-      const ids = ['total','alf','return','quality','as','issue','satisfaction','answer'];
       const el = document.getElementById('i-total');
       if (el && data.savedAt) el.title = '저장: ' + data.savedAt;
+      // AI 추천 과제 복원
+      if (data.insights._aiTask) {
+        actionItems = actionItems.filter(it => !it._isAiTask);
+        actionItems.unshift({ ...data.insights._aiTask, _isAiTask: true });
+        renderActionTable();
+      }
     } else {
-      // 저장된 인사이트 없으면 빈 상태 유지
       setInsightPlaceholder('AI 분석 버튼을 눌러 인사이트를 생성하세요', '');
     }
   } catch(e) {
@@ -1576,22 +1731,28 @@ function setInsightPlaceholder(msg, state) {
 }
 
 function applyInsights(insights) {
-  const ids = ['total','alf','return','quality','as','issue','satisfaction','answer','channel','returnchart'];
+  const ids = ['total','alf','return','quality','as','issue','satisfaction','answer','channel','returnchart','vocReturn','vocAS','vocProduct'];
   ids.forEach(id => {
     const el = document.getElementById('i-'+id);
     if (!el) return;
+    const isCard = ['channel','returnchart','vocReturn','vocAS','vocProduct'].includes(id);
     if (insights[id]) {
-      el.className = (id==='channel'||id==='returnchart') ? 'card-insight' : 'kpi-insight done';
+      el.className = isCard ? 'card-insight' : 'kpi-insight done';
       el.textContent = insights[id];
     }
   });
 }
 async function runAutoInsight() {
-  const ids = ['total','alf','return','quality','as','issue','satisfaction','answer','channel','returnchart'];
+  const btn = document.getElementById('aiBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;"></span>분석 중...';
+
+  const ids = ['total','alf','return','quality','as','issue','satisfaction','answer','channel','returnchart','vocReturn','vocAS','vocProduct'];
   ids.forEach(id => {
     const el = document.getElementById('i-'+id);
     if (el) {
-      el.className = (id==='channel'||id==='returnchart') ? 'card-insight loading' : 'kpi-insight loading';
+      const isCard = ['channel','returnchart','vocReturn','vocAS','vocProduct'].includes(id);
+      el.className = isCard ? 'card-insight loading' : 'kpi-insight loading';
       el.textContent = '분석 중...';
     }
   });
@@ -1638,7 +1799,10 @@ async function runAutoInsight() {
   "satisfaction": "고객 만족도 인사이트",
   "answer": "수신 응답율 인사이트",
   "channel": "채널별 수치+전회차 증감 포함 2줄",
-  "returnchart": "사유TOP3 건수+비중+증감+교환반품구분 2줄"
+  "returnchart": "사유TOP3 건수+비중+증감+교환반품구분 2줄",
+  "vocReturn": "반품사유 TOP3 건수·비중·전회차증감 1줄",
+  "vocAS": "AS불량유형 TOP3 건수·전회차증감 1줄",
+  "vocProduct": "반품제품 TOP3 건수·전회차증감 1줄"
 }
 
 데이터:
@@ -1659,21 +1823,76 @@ ${ds}`;
     } catch(e) {
       console.warn('인사이트 JSON 파싱 실패:', data.text);
       setInsightPlaceholder('⚠ 파싱 오류 — 재시도해주세요', 'error');
+      btn.disabled = false; btn.innerHTML = '✦ 인사이트 분석';
       return;
     }
 
     // 화면에 적용
     applyInsights(insights);
 
-    // 구글시트에 저장
+    // AI 추천 과제 생성 → 액션현황판 첫줄에 삽입
+    // 버튼 상태 업데이트
+    btn.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;"></span>과제 추천 중...';
+
+    const taskPrompt = `당신은 품질·고객센터 운영 전문가입니다.
+아래 이번 ${periodType} 데이터 분석 결과를 보고, 이번 주 가장 우선순위가 높은 액션 과제 1건만 추천해주세요.
+
+조건:
+- 과제명: 15자 이내, 구체적 행동 중심 (예: "작동불량 TOP3 제품 원인분석 착수")
+- 담당부서: 품질/CS 중 해당 부서
+- 완료기준: 20자 이내
+- 완료기한: 오늘부터 2주 이내 (${new Date().toISOString().slice(0,10)} 기준)
+- 반드시 아래 JSON 형식으로만 응답 (다른 텍스트 없이):
+{"과제명":"...","담당부서":"품질/CS","완료기준":"...","완료기한":"YYYY-MM-DD"}
+
+분석 데이터 요약:
+${insights.return||''}
+${insights.quality||''}
+${insights.as||''}
+${insights.total||''}`;
+
+    let aiTask = null;
+    try {
+      const taskResp = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'ai', prompt: taskPrompt })
+      });
+      const taskData = await taskResp.json();
+      if (taskData.ok) {
+        const clean = taskData.text.replace(/```json|```/g,'').trim();
+        const task = JSON.parse(clean);
+        if (task.과제명) {
+          aiTask = {
+            과제명:   task.과제명,
+            담당부서: task.담당부서 || '품질/CS',
+            완료기준: task.완료기준 || '',
+            완료기한: task.완료기한 || '',
+            진행률:   0,
+            상태:     '미착수',
+            지연사유: '',
+            보완계획: ''
+          };
+          actionItems = actionItems.filter(it => !it._isAiTask);
+          actionItems.unshift({ ...aiTask, _isAiTask: true });
+          renderActionTable();
+        }
+      }
+    } catch(e) { console.warn('AI 추천 과제 생성 실패:', e); }
+
+    // AI 추천 과제를 insights에 포함해서 구글시트에 함께 저장
+    if (aiTask) insights._aiTask = aiTask;
     fetch(SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify({ action: 'saveInsight', period: DATA.period, insights })
     }).catch(e => console.warn('인사이트 저장 실패:', e));
 
+    // 완료 후 버튼 복귀
+    btn.disabled = false; btn.innerHTML = '✦ 인사이트 분석';
+
   } catch(e) {
     const msg = e.message.includes('quota') ? '⚠ 한도 초과 — 잠시 후 재시도' : '⚠ 오류 — 재시도해주세요';
     setInsightPlaceholder(msg, 'error');
+    btn.disabled = false; btn.innerHTML = '✦ 인사이트 분석';
     console.warn('인사이트 오류:', e);
   }
 }

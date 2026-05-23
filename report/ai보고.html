@@ -465,11 +465,14 @@ const REPORT_URL = 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/r
 const ISSUE_URL  = 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/issue.xlsx';
 // ★ Apps Script 배포 후 여기에 웹앱 URL 입력
 // SCRIPT_URL: index.html에서 postMessage로 수신 (중앙 관리)
-// 단독 실행 시에도 동작하도록 fallback 빈 문자열
+// 단독 실행 fallback 포함
 let SCRIPT_URL = '';
+let _dataLoaded = false;
 window.addEventListener('message', function(e) {
   if (e.data && e.data.type === 'SCRIPT_URL' && e.data.url) {
     SCRIPT_URL = e.data.url;
+    // SCRIPT_URL 받은 후 아직 데이터 로드 안 됐으면 실행
+    if (!_dataLoaded) { _dataLoaded = true; loadAllData(); }
   }
 });;
 
@@ -2202,7 +2205,9 @@ function buildDataSummary(){
 readPeriodFromURL();
 restoreSection();   // 이전에 보던 섹션 복원
 renderActionTable();
-loadAllData();
+// loadAllData()는 SCRIPT_URL postMessage 수신 후 자동 실행
+// index.html 없이 단독 실행 시를 위한 fallback (1.5초 후)
+setTimeout(() => { if (!_dataLoaded) { _dataLoaded = true; loadAllData(); } }, 1500);
 </script>
 </body>
 </html>

@@ -442,11 +442,12 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
   <!-- ⑤ AI -->
   <div class="section" id="sec-ai">
     <div class="sec-title">AI 종합 분석</div>
-    <div style="margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="ai-btn" onclick="runAI('summary')">✦ 핵심 요약</button>
-      <button class="ai-btn" onclick="runAI('voc')">✦ VOC 패턴 분석</button>
-      <button class="ai-btn" onclick="runAI('action')">✦ 개선 대안 제안</button>
-      <button class="ai-btn" onclick="runAI('report')">✦ 보고서 문구 생성</button>
+    <div style="margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <button class="ai-btn" onclick="runAIWithCache('summary')">✦ 핵심 요약</button>
+      <button class="ai-btn" onclick="runAIWithCache('voc')">✦ VOC 패턴 분석</button>
+      <button class="ai-btn" onclick="runAIWithCache('action')">✦ 개선 대안 제안</button>
+      <button class="ai-btn" onclick="runAIWithCache('report')">✦ 보고서 문구 생성</button>
+      <span id="aiOutputSavedAt" style="font-size:11px;color:#aaa;margin-left:4px;"></span>
     </div>
     <div class="ai-panel">
       <div class="ai-panel-title">✦ AI 분석 결과</div>
@@ -1661,11 +1662,13 @@ async function runAI(type){
   document.querySelectorAll('.snav-item')[4].classList.add('active');
   sessionStorage.setItem('walpimiSection','ai');
 
-  const output=document.getElementById('aiOutput');
+  const output = document.getElementById('aiOutput');
+  const savedAt = document.getElementById('aiOutputSavedAt');
   output.className='ai-output loading'; output.textContent='✦ AI 분석 중입니다...';
+  if(savedAt) savedAt.textContent='';
 
-  const ds=buildDataSummary();
-  const prompts={
+  const ds = buildDataSummary();
+  const prompts = {
     summary:`당신은 품질·고객센터 월간 보고 분석 전문가입니다. 아래 데이터를 바탕으로 월피미 보고용 핵심 요약을 작성해주세요.\n\n형식:\n1. 이번 달 핵심 현황 (3줄)\n2. 주요 성과 (2가지)\n3. 개선 필요 항목 (2가지)\n4. 다음 달 중점 과제 (2가지)\n\n임원 보고에 적합한 간결한 언어로 작성해주세요.\n\n데이터:\n${ds}`,
     voc:`당신은 VOC 분석 전문가입니다. 아래 반품/AS/이슈 데이터에서 반복 패턴과 리스크를 파악해주세요.\n\n형식:\n1. 반복 발생 주요 이슈 TOP 3 (원인 포함)\n2. 제품별 리스크 우선순위\n3. 즉시 조치 필요 항목\n4. 예방 가능한 개선 제안\n\n데이터:\n${ds}`,
     action:`당신은 고객센터·품질 개선 컨설턴트입니다. 아래 데이터를 바탕으로 구체적인 개선 대안을 제안해주세요.\n\n형식:\n1. 단기 개선안 (1개월 내, 3가지)\n2. 중기 개선안 (3개월 내, 2가지)\n3. 예상 효과\n\n데이터:\n${ds}`,
@@ -1673,18 +1676,62 @@ async function runAI(type){
   };
 
   try {
-    // Apps Script 경유 Gemini 호출 (CORS 우회)
     const resp = await fetch(SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify({ action: 'ai', prompt: prompts[type] || prompts.summary })
     });
     const data = await resp.json();
+    if (!data.ok) throw new Error(data.msg);
+
     output.className='ai-output';
-    output.innerHTML = data.ok ? renderMarkdown(data.text) : ('⚠ 오류: ' + data.msg);
+    output.innerHTML = renderMarkdown(data.text);
+
+    // 구글시트에 저장 (period + type 키 조합으로 upsert)
+    const saveKey = `${DATA.period}__${type}`;
+    const now = new Date().toLocaleString('ko-KR');
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'saveInsight',
+        period: saveKey,
+        insights: { _aiReport: data.text, _type: type, _period: DATA.period }
+      })
+    }).catch(e => console.warn('AI종합 저장 실패:', e));
+
+    if(savedAt) savedAt.textContent = `저장: ${now}`;
+
   } catch(e){
     output.className='ai-output';
     output.textContent='⚠ 연결 오류: ' + e.message;
   }
+}
+
+// 저장된 결과 있으면 불러오고, 없으면 새 분석 실행
+async function runAIWithCache(type) {
+  const output  = document.getElementById('aiOutput');
+  const savedAt = document.getElementById('aiOutputSavedAt');
+  output.className='ai-output loading'; output.textContent='불러오는 중...';
+  if(savedAt) savedAt.textContent='';
+  const loaded = await loadAIReportFromSheet(type);
+  if (!loaded) await runAI(type);
+}
+
+// AI종합분석 저장된 결과 불러오기
+async function loadAIReportFromSheet(type) {
+  const saveKey = `${DATA.period}__${type}`;
+  try {
+    const res  = await fetch(`${SCRIPT_URL}?type=insight&period=${encodeURIComponent(saveKey)}&t=${Date.now()}`);
+    const data = await res.json();
+    if (data.ok && data.insights && data.insights._aiReport) {
+      const output  = document.getElementById('aiOutput');
+      const savedAt = document.getElementById('aiOutputSavedAt');
+      output.className = 'ai-output';
+      output.innerHTML = renderMarkdown(data.insights._aiReport);
+      if(savedAt && data.savedAt) savedAt.textContent = `저장: ${data.savedAt}`;
+      return true;
+    }
+  } catch(e) { console.warn('AI종합 불러오기 실패:', e); }
+  return false;
 }
 
 // ══════════════════════════════════════════════════════════════

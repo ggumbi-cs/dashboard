@@ -387,6 +387,10 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
 //  }
 // ═══════════════════════════════════════════════════
 
+// ── 중앙 관리 SCRIPT_URL ───────────────────────────
+// 앱스크립트 배포 URL이 바뀌면 여기만 수정
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec';
+
 const TAB_MAP = {
   '주요kpi':  'report/kpi.html',
   '상담실적': 'report/상담실적.html',
@@ -779,7 +783,15 @@ function updateFrame() {
   if (!base) return;
   const periodParam = toPeriodParam(state.type, state.period);
   const url = `${base}?type=${encodeURIComponent(state.type)}&period=${encodeURIComponent(periodParam)}`;
-  document.getElementById('mainFrame').src = url;
+  const frame = document.getElementById('mainFrame');
+  // onload 먼저 등록 후 src 설정 (이벤트 누락 방지)
+  frame.onload = () => {
+    try {
+      frame.contentWindow.postMessage({ type: 'SCRIPT_URL', url: SCRIPT_URL }, '*');
+    } catch(e) {}
+    if (typeof pushCSVToFrame === 'function') pushCSVToFrame();
+  };
+  frame.src = url;
 }
 
 // ── 헤더 날짜 ─────────────────────────────────────
@@ -806,14 +818,32 @@ function updateHeader() {
 // ── 초기화 ─────────────────────────────────────────
 function init() {
   const def    = defaultMonth();
+  state.period = `${def.year}-${pad(def.month)}`;  // 전월 기준 기본
 
-  // 기본 탭: AI보고 (월간)
-  state.tab    = 'AI보고';
-  state.type   = 'monthly';
-  state.period = `${def.year}-${pad(def.month)}`;
+  // 기본 탭: AI보고 (최신 주간)
+  state.tab  = 'AI보고';
+  state.type = 'weekly';
+  const fri  = thisWeekFriday();
+  const yy   = String(fri.getFullYear()).slice(2);
+  const mm   = pad(fri.getMonth()+1);
+  const dd   = pad(fri.getDate());
+  state.period = `${yy}${mm}${dd}`;
 
   renderMonthly();
   renderWeekly();
+
+  // 주요KPI 사이드바 상태 적용
+  const monthly = document.getElementById('monthlyList');
+  const weekly  = document.getElementById('weeklyList');
+  const calWrap = document.querySelector('.date-pick-wrap');
+  if (monthly) monthly.style.display = 'none';
+  if (weekly)  weekly.style.display  = 'none';
+  if (calWrap) calWrap.style.display = 'none';
+  document.querySelectorAll('#dashSidebar .sb-label').forEach(lb => {
+    if (lb.textContent.trim() !== '연간현황') lb.style.display = 'none';
+  });
+  document.querySelectorAll('#dashSidebar .sb-divider').forEach(d => d.style.display = 'none');
+
   updateHeader();
   updateFrame();
 }

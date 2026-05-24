@@ -40,7 +40,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .spinner { display:inline-block; width:11px; height:11px; border:2px solid rgba(255,255,255,.3); border-top-color:#fdcb6e; border-radius:50%; animation:spin .7s linear infinite; }
 
 /* 네비 */
-.section-nav { display:flex; padding:0 28px; background:#fff; border-bottom:2px solid var(--border); overflow-x:auto; }
+.section-nav { display:flex; padding:0 28px; background:#fff; border-bottom:2px solid var(--border); overflow-x:auto; align-items:center; justify-content:space-between; }
 .snav-item { padding:10px 18px; font-size:12.5px; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; white-space:nowrap; font-weight:600; }
 .snav-item:hover { color:var(--navy); }
 .snav-item.active { color:var(--navy-mid); border-bottom-color:var(--navy-mid); }
@@ -150,6 +150,26 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .action-table th { background:var(--teal); color:#fff; padding:8px 10px; text-align:center; font-size:11px; font-weight:600; }
 .action-table td { padding:8px 10px; border-bottom:1px solid #eef0f5; vertical-align:middle; }
 .action-table tr:hover td { background:#f0faf8; }
+
+/* 액션 카드 */
+.action-card { background:#fff; border-radius:10px; border:1.5px solid #e8edf5; padding:14px 14px 10px; display:flex; flex-direction:column; gap:7px; transition:box-shadow .2s; }
+.action-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.08); }
+.action-card.is-done { opacity:.4; }
+.action-card.is-ai   { border-color:#f59e0b; background:#fffdf5; }
+.action-card.is-issue { border-color:#dc2626; background:#fff8f8; }
+.action-card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:6px; }
+.action-card-title { font-size:12.5px; font-weight:700; color:var(--navy); flex:1; line-height:1.45; }
+.action-card-badge { font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; white-space:nowrap; flex-shrink:0; }
+.badge-ai     { background:#f59e0b; color:#fff; }
+.badge-issue  { background:#dc2626; color:#fff; }
+.badge-core   { background:#fef3c7; color:#92400e; }
+.badge-normal { background:#e2e8f0; color:#475569; }
+.action-card-bar-wrap { background:#eef0f5; border-radius:4px; height:5px; width:100%; }
+.action-card-bar { height:100%; border-radius:4px; transition:width .6s ease; }
+.action-card-note { font-size:11px; color:#64748b; min-height:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.action-card-bottom { display:flex; align-items:center; justify-content:space-between; }
+.action-card-meta { font-size:10.5px; color:#94a3b8; }
+.action-card-actions { display:flex; gap:2px; }
 .progress-wrap { background:#e8eef5; border-radius:10px; height:8px; overflow:hidden; }
 .progress-bar  { height:100%; border-radius:10px; background:linear-gradient(90deg,var(--teal-mid),var(--teal)); transition:width .8s ease; }
 .progress-bar.warn { background:linear-gradient(90deg,#f39c12,#e8834a); }
@@ -227,11 +247,14 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 
 <!-- 섹션 네비 -->
 <div class="section-nav">
-  <div class="snav-item active" onclick="showSection('summary',this)">① 핵심 Summary</div>
-  <div class="snav-item" onclick="showSection('report',this)">② 목표·실적·원인·대안</div>
-  <div class="snav-item" onclick="showSection('voc',this)">③ VOC·클레임 분석</div>
-  <div class="snav-item" onclick="showSection('action',this)">④ 액션 현황판</div>
-  <div class="snav-item" onclick="showSection('ai',this)">⑤ AI 종합 분석</div>
+  <div style="display:flex;">
+    <div class="snav-item active" onclick="showSection('summary',this)">① 핵심 Summary</div>
+    <div class="snav-item" onclick="showSection('voc',this)">② VOC·클레임 분석</div>
+    <div class="snav-item" onclick="showSection('action',this)">③ 액션 현황판</div>
+    <div class="snav-item" onclick="showSection('ai',this)">④ AI 종합 분석</div>
+  </div>
+  <button onclick="toggleReport(this)" style="flex-shrink:0;margin-left:12px;padding:5px 12px;border:1.5px solid #cbd5e1;border-radius:6px;background:#f8fafc;color:#64748b;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font);" title="품질 개선 요청 참고자료">📋 품질현황</button>
+  <button onclick="togglePrompt(this)" style="flex-shrink:0;margin-left:6px;padding:5px 12px;border:1.5px solid #cbd5e1;border-radius:6px;background:#f8fafc;color:#64748b;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font);" title="AI 프롬프트 관리">⚙️ 프롬프트</button>
 </div>
 
 <div class="content">
@@ -401,11 +424,13 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
   <!-- ④ 액션 현황판 -->
   <div class="section" id="sec-action">
     <div class="sec-title">액션 현황판</div>
-    <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;justify-content:space-between;">
-      <div style="display:flex;gap:6px;align-items:center;">
+    <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;">
+      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
         <span id="saveStatus" class="save-status" style="display:none;"></span>
       </div>
-      <div style="display:flex;gap:8px;">
+      <div id="actionInsightBox" style="flex:1;background:#f0f4ff;border:1.5px solid #c7d7f5;border-radius:8px;padding:7px 14px;font-size:11.5px;line-height:1.7;color:#1e3a6e;display:none;min-width:0;"></div>
+      <div style="display:flex;gap:8px;flex-shrink:0;margin-left:auto;">
+        <button onclick="addIssue()" style="background:#dc2626;border:none;color:#fff;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);font-weight:600;">+ Issue 추가</button>
         <button onclick="addAction()" style="background:var(--teal);border:none;color:#fff;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">+ 과제 추가</button>
         <button onclick="loadFromSheet()" style="background:#eee;border:none;color:#555;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">☁ 불러오기</button>
         <button onclick="clearDone()" style="background:#f5f5f5;border:none;color:#999;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">완료 정리</button>
@@ -421,22 +446,22 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
       <button id="filter-완료"   onclick="setActionFilter('완료')"   style="padding:4px 12px;border-radius:20px;border:1.5px solid #b2dfce;background:#eaf6f0;color:#1a7a50;font-size:11.5px;cursor:pointer;font-family:var(--font);">완료</button>
       <span id="filter-count" style="font-size:11px;color:#aaa;margin-left:4px;"></span>
     </div>
-    <div class="card">
-      <table class="action-table">
-        <thead><tr>
-          <th style="width:7%">구분</th>
-          <th style="width:22%">과제명</th>
-          <th style="width:14%">완료 기준</th>
-          <th style="width:9%">완료기한</th>
-          <th style="width:14%">진행률</th>
-          <th style="width:8%">상태</th>
-          <th style="width:13%">지연 사유</th>
-          <th style="width:13%">보완계획</th>
-          <th style="width:4%">삭제</th>
-        </tr></thead>
-        <tbody id="actionBody"></tbody>
-      </table>
+    <div id="actionCardGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;"></div>
+  </div>
+
+  <!-- 프롬프트 관리 (숨김 섹션) -->
+  <div class="section" id="sec-prompt">
+    <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>⚙️ 프롬프트 관리</span>
+      <div style="display:flex;gap:8px;">
+        <button onclick="savePrompts()" style="background:var(--navy-mid);border:none;color:#fff;padding:6px 16px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">💾 구글시트 저장</button>
+        <button onclick="resetPrompts()" style="background:#f5f5f5;border:none;color:#999;padding:6px 16px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">↺ 기본값 복원</button>
+      </div>
     </div>
+    <div style="font-size:11.5px;color:#64748b;margin-bottom:14px;background:#f8fafc;border-radius:6px;padding:8px 14px;">
+      💡 수정 후 <b>구글시트 저장</b> 클릭 → 다음 인사이트 분석부터 자동 반영됩니다. <code>{periodType}</code>, <code>{today}</code> 변수는 실행 시 자동 치환됩니다.
+    </div>
+    <div id="promptCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(480px,1fr));gap:14px;"></div>
   </div>
 
   <!-- ⑤ AI -->
@@ -482,6 +507,92 @@ const COLORS = ['#2356a8','#4a9fd4','#2a7a6f','#e8834a','#9b59b6','#e74c3c','#f1
 // 전역 상태
 // ══════════════════════════════════════════════════════════════
 let DATA = { report: null, issue: null, type: 'monthly', period: '26.05월', tabSummaries: null };
+
+// ── 프롬프트 전역 관리 객체 (절대규칙 #7)
+// 구글시트 '프롬프트' 시트에서 불러오면 덮어쓰기, 없으면 기본값 사용
+const PROMPTS_DEFAULT = {
+  // ── 핵심서머리 KPI 인사이트 (1회 호출)
+  insight_system: `당신은 품질·고객센터 데이터 분석가입니다.
+아래 실제 데이터를 보고 각 지표별 핵심 인사이트를 작성해주세요.
+현재 분석 기간 유형: {periodType}
+
+작성 규칙:
+- PPT 보고서 스타일 (문장 서술형 절대 금지)
+- 명사/단어 중심, 조사 최소화
+- 실제 수치 반드시 포함
+- 마크다운 기호 없이 순수 텍스트
+- 각 항목 2줄 이내
+- 절대 금지 문구: "시급", "경고", "심각", "문제 발생", "개선 필요", "파악 불가", "데이터 부재"
+- 부정적 표현 대신 현황·수치·연관관계 중심으로 서술
+- 긍정/중립 톤 유지 (보고자가 불리해지는 표현 금지)`,
+
+  insight_guide: `항목별 작성 가이드:
+- total: 이번 {periodType} 총인입 수치 + 전회차 대비 증감건수
+- channel: 채널별 수치 나열 + 전회차 대비 증감 + 특이 채널 변화
+- return: 반품교환율 + 전회차비교 · 상승요인(사유별 건수·비중) · 감소요인 · 가전/가전외 비중 변화
+- returnchart: 사유TOP3 건수+비중+전회차대비증감 · 반품/교환 구분 · 품질개선 연계 가능성
+- alf: ALF 해결율 수치 + 기준월 명시
+- satisfaction: 만족도 점수 + 참여율
+- as: AS처리 건수 + 전회차 대비
+- quality: 품질개선요청 건수 + 진행단계별 현황
+- issue: 미입고 건수 + 주요 품목
+- answer: 수신응답률 수치 + 전회차 대비
+- vocReturn: 반품사유 TOP3 건수·비중·전회차증감 1줄
+- vocAS: AS불량유형 TOP3 건수·전회차증감 1줄
+- vocProduct: 반품제품 TOP3 건수·전회차증감 1줄`,
+
+  insight_example: `나쁜 예: "반품/교환율 4.34% · 전회차 3.30% 대비 1.04%p 상승 · 반품/교환 추이 상승"
+좋은 예: "반품교환율 4.34%(전회차+1.04%p) · 작동불량 172건(39%)↑ 단순변심 129건(29%) 주도 · 가전외 232건>가전 208건 비중 확대"`,
+
+  // ── AI 추천 과제
+  task_recommend: `당신은 품질·고객센터 운영 전문가입니다.
+아래 이번 {periodType} 데이터 분석 결과를 보고, 이번 주 가장 우선순위가 높은 액션 과제 1건만 추천해주세요.
+
+조건:
+- 과제명: 15자 이내, 구체적 행동 중심 (예: "작동불량 TOP3 제품 원인분석 착수")
+- 담당부서: 품질/CS 중 해당 부서
+- 완료기준: 20자 이내
+- 완료기한: 오늘부터 2주 이내 ({today} 기준)
+- 반드시 아래 JSON 형식으로만 응답:
+{"과제명":"...","담당부서":"품질/CS","완료기준":"...","완료기한":"YYYY-MM-DD"}`,
+
+  // ── AI 종합 분석 4종
+  report_summary: `당신은 품질·고객센터 월간 보고 분석 전문가입니다. 아래 데이터를 바탕으로 월피미 보고용 핵심 요약을 작성해주세요.
+
+형식:
+1. 이번 달 핵심 현황 (3줄)
+2. 주요 성과 (2가지)
+3. 개선 필요 항목 (2가지)
+4. 다음 달 중점 과제 (2가지)
+
+임원 보고에 적합한 간결한 언어로 작성해주세요.`,
+
+  report_voc: `당신은 VOC 분석 전문가입니다. 아래 반품/AS/이슈 데이터에서 반복 패턴과 리스크를 파악해주세요.
+
+형식:
+1. 반복 발생 주요 이슈 TOP 3 (원인 포함)
+2. 제품별 리스크 우선순위
+3. 즉시 조치 필요 항목
+4. 예방 가능한 개선 제안`,
+
+  report_action: `당신은 고객센터·품질 개선 컨설턴트입니다. 아래 데이터를 바탕으로 구체적인 개선 대안을 제안해주세요.
+
+형식:
+1. 단기 개선안 (1개월 내, 3가지)
+2. 중기 개선안 (3개월 내, 2가지)
+3. 예상 효과`,
+
+  report_report: `당신은 월간 보고서 작성 전문가입니다. 아래 데이터를 바탕으로 회의용 보고 문구를 작성해주세요.
+
+[이번 달 현황]
+[주요 성과]
+[미달성 항목 및 원인]
+[개선 대안 및 실행 계획]
+[다음 달 중점 추진 사항]`,
+};
+
+// 런타임 프롬프트 (구글시트 불러오기 시 덮어씌워짐)
+let PROMPTS = { ...PROMPTS_DEFAULT };
 // 전회차 비교용
 let PREV = { total:null, alf:null, returnRate:null, quality:null, as:null, issue:null, satisfaction:null, answer:null };
 let CUR  = { total:null, alf:null, returnRate:null, quality:null, as:null, issue:null, satisfaction:null, answer:null };
@@ -489,28 +600,150 @@ let CUR  = { total:null, alf:null, returnRate:null, quality:null, as:null, issue
 let actionItems = [];
 
 // ══════════════════════════════════════════════════════════════
+// ── 프롬프트 관리 탭 토글
+function togglePrompt(btn) {
+  const sec = document.getElementById('sec-prompt');
+  const isOpen = sec.classList.contains('active');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.snav-item').forEach(s=>s.classList.remove('active'));
+  const reportBtn = document.querySelector('button[onclick*="toggleReport"]');
+  const promptBtn = document.querySelector('button[onclick*="togglePrompt"]');
+  if (reportBtn) { reportBtn.style.background=''; reportBtn.style.borderColor=''; reportBtn.style.color=''; }
+  if (!isOpen) {
+    sec.classList.add('active');
+    if(promptBtn){ promptBtn.style.background='#eef2ff'; promptBtn.style.borderColor='#6366f1'; promptBtn.style.color='#4338ca'; }
+    renderPromptCards();
+    sessionStorage.setItem('walpimiSection','prompt');
+  } else {
+    document.getElementById('sec-summary').classList.add('active');
+    document.querySelector('.snav-item').classList.add('active');
+    if(promptBtn){ promptBtn.style.background=''; promptBtn.style.borderColor=''; promptBtn.style.color=''; }
+    sessionStorage.setItem('walpimiSection','summary');
+  }
+}
+
+const PROMPT_LABELS = {
+  insight_system:  '① 인사이트 분석 — 시스템 역할/규칙',
+  insight_guide:   '② 인사이트 분석 — 항목별 작성 가이드',
+  insight_example: '③ 인사이트 분석 — 예시 (나쁜예/좋은예)',
+  task_recommend:  '④ AI 추천 과제 — 액션현황판 자동 생성',
+  report_summary:  '⑤ AI 종합 — 핵심 요약',
+  report_voc:      '⑥ AI 종합 — VOC 패턴 분석',
+  report_action:   '⑦ AI 종합 — 개선 대안 제안',
+  report_report:   '⑧ AI 종합 — 보고서 문구 생성',
+};
+
+function renderPromptCards() {
+  const container = document.getElementById('promptCards');
+  if (!container) return;
+  container.innerHTML = Object.keys(PROMPTS_DEFAULT).map(key => `
+    <div class="card" style="display:flex;flex-direction:column;gap:8px;">
+      <div style="font-size:12px;font-weight:700;color:var(--navy);">${PROMPT_LABELS[key]||key}</div>
+      <textarea id="prompt-${key}" rows="7"
+        style="width:100%;border:1px solid #e2e8f0;border-radius:6px;font-size:11.5px;font-family:var(--font);padding:8px;resize:vertical;line-height:1.6;color:#1e293b;"
+        oninput="PROMPTS['${key}']=this.value"
+      >${esc(PROMPTS[key])}</textarea>
+      <button onclick="resetOnePrompt('${key}')"
+        style="align-self:flex-end;background:none;border:1px solid #e2e8f0;color:#94a3b8;font-size:11px;padding:3px 10px;border-radius:4px;cursor:pointer;font-family:var(--font);">
+        이 항목만 기본값
+      </button>
+    </div>`).join('');
+}
+
+function resetOnePrompt(key) {
+  PROMPTS[key] = PROMPTS_DEFAULT[key];
+  const ta = document.getElementById('prompt-'+key);
+  if (ta) ta.value = PROMPTS_DEFAULT[key];
+}
+
+async function savePrompts() {
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '저장 중...';
+  try {
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'savePrompts', prompts: PROMPTS })
+    });
+    const data = await resp.json();
+    btn.textContent = data.ok ? '✓ 저장 완료' : '⚠ 저장 실패';
+    setTimeout(() => { btn.disabled=false; btn.textContent='💾 구글시트 저장'; }, 2000);
+  } catch(e) {
+    btn.textContent = '⚠ 오류'; setTimeout(()=>{ btn.disabled=false; btn.textContent='💾 구글시트 저장'; }, 2000);
+  }
+}
+
+async function loadPrompts() {
+  try {
+    const res  = await fetch(`${SCRIPT_URL}?type=prompts&t=${Date.now()}`);
+    const data = await res.json();
+    if (data.ok && data.prompts) {
+      Object.keys(data.prompts).forEach(k => {
+        if (data.prompts[k] && PROMPTS_DEFAULT[k] !== undefined) PROMPTS[k] = data.prompts[k];
+      });
+    }
+  } catch(e) { console.warn('프롬프트 불러오기 실패:', e); }
+}
+
+function resetPrompts() {
+  if (!confirm('모든 프롬프트를 기본값으로 복원할까요?')) return;
+  Object.keys(PROMPTS_DEFAULT).forEach(k => { PROMPTS[k] = PROMPTS_DEFAULT[k]; });
+  renderPromptCards();
+}
+
 // UI 헬퍼
 // ══════════════════════════════════════════════════════════════
 function showSection(id, el) {
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.snav-item').forEach(s=>s.classList.remove('active'));
+  // report 섹션 숨기기 (토글 버튼으로만 제어)
+  document.getElementById('sec-report').classList.remove('active');
   document.getElementById('sec-'+id).classList.add('active');
   el.classList.add('active');
-  // 현재 섹션 기억 (페이지 리로드 시 복원용)
   sessionStorage.setItem('walpimiSection', id);
+}
+
+function toggleReport(btn) {
+  const sec = document.getElementById('sec-report');
+  const isOpen = sec.classList.contains('active');
+  // 다른 섹션 모두 숨기고 report 토글
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.snav-item').forEach(s=>s.classList.remove('active'));
+  if (!isOpen) {
+    sec.classList.add('active');
+    btn.style.background = '#e8f0fe';
+    btn.style.borderColor = '#4a7fd4';
+    btn.style.color = '#1a4a9a';
+    sessionStorage.setItem('walpimiSection', 'report');
+  } else {
+    // 닫으면 summary로 복귀
+    document.getElementById('sec-summary').classList.add('active');
+    document.querySelector('.snav-item').classList.add('active');
+    btn.style.background = '';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+    sessionStorage.setItem('walpimiSection', 'summary');
+  }
 }
 
 function restoreSection() {
   const saved = sessionStorage.getItem('walpimiSection');
   if (!saved) return;
   const secEl = document.getElementById('sec-'+saved);
-  const navEls = document.querySelectorAll('.snav-item');
-  const navMap = { summary:0, report:1, voc:2, action:3, ai:4 };
-  if (secEl && navMap[saved] !== undefined) {
-    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-    document.querySelectorAll('.snav-item').forEach(s=>s.classList.remove('active'));
-    secEl.classList.add('active');
-    navEls[navMap[saved]].classList.add('active');
+  const navMap = { summary:0, voc:1, action:2, ai:3 };
+  if (!secEl) return;
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.snav-item').forEach(s=>s.classList.remove('active'));
+  secEl.classList.add('active');
+  if (saved === 'report') {
+    // 품질현황 버튼 활성화
+    const btn = document.querySelector('button[onclick*="toggleReport"]');
+    if (btn) { btn.style.background='#e8f0fe'; btn.style.borderColor='#4a7fd4'; btn.style.color='#1a4a9a'; }
+  } else if (saved === 'prompt') {
+    const btn = document.querySelector('button[onclick*="togglePrompt"]');
+    if (btn) { btn.style.background='#eef2ff'; btn.style.borderColor='#6366f1'; btn.style.color='#4338ca'; }
+    setTimeout(renderPromptCards, 100);
+  } else if (navMap[saved] !== undefined) {
+    document.querySelectorAll('.snav-item')[navMap[saved]].classList.add('active');
   }
 }
 function setStatus(cls, msg, spin) {
@@ -613,6 +846,8 @@ async function loadAllData() {
   let ok = 0;
   try { DATA.report = await fetchXlsx(REPORT_URL); ok++; } catch(e) { console.warn(e); }
   try { DATA.issue  = await fetchXlsx(ISSUE_URL);  ok++; } catch(e) { console.warn(e); }
+  // 프롬프트 구글시트에서 불러오기 (없으면 기본값 유지)
+  loadPrompts();
   // 분析용요약 시트에서 현재 기간 탭별 요약 불러오기
   try {
     const res = await fetch(`${SCRIPT_URL}?type=summary&period=${encodeURIComponent(DATA.period)}&t=${Date.now()}`);
@@ -1258,8 +1493,8 @@ function toggleQualityFav(idx, key) {
         완료기한: '',
         진행률:   0,
         상태:     '진행중',
-        지연사유: '',
-        보완계획: ''
+        특이사항: '',
+        링크:     ''
       };
       actionItems.push(newItem);
       renderActionTable();
@@ -1487,84 +1722,220 @@ function setActionFilter(val) {
 }
 
 function renderActionTable() {
-  const tbody=document.getElementById('actionBody');
+  const grid = document.getElementById('actionCardGrid');
+  if (!grid) return;
+
+  // 상태 자동 계산
+  actionItems.forEach(it => { it.상태 = calcStatus(it); });
+
+  // ── 인사이트 박스 자동 계산 (Gemini 호출 없음)
+  const insightBox = document.getElementById('actionInsightBox');
+  if (insightBox && actionItems.length > 0) {
+    const total    = actionItems.filter(it => !it._isAiTask).length;
+    const 미착수건  = actionItems.filter(it => !it._isAiTask && it.상태 === '미착수').length;
+    const 진행중건  = actionItems.filter(it => !it._isAiTask && it.상태 === '진행중').length;
+    const 지연건    = actionItems.filter(it => !it._isAiTask && it.상태 === '지연').length;
+    const 완료건    = actionItems.filter(it => !it._isAiTask && it.상태 === '완료').length;
+    const avgPct   = total > 0
+      ? Math.round(actionItems.filter(it=>!it._isAiTask).reduce((s,it)=>s+(Number(it.진행률)||0),0) / total)
+      : 0;
+
+    // 진행률 30% 이하 + 미착수/진행중인 항목 (지연 포함)
+    const lowItems = actionItems
+      .filter(it => !it._isAiTask && (it.상태==='미착수'||it.상태==='진행중'||it.상태==='지연') && (Number(it.진행률)||0) <= 30)
+      .slice(0, 3);
+
+    // 지연 항목
+    const delayItems = actionItems.filter(it => !it._isAiTask && it.상태 === '지연').slice(0, 3);
+
+    // 구분별 미완료 현황
+    const issueCount = actionItems.filter(it => it._type==='issue' && it.상태!=='완료').length;
+    const coreCount  = actionItems.filter(it => it._type!=='issue' && !it._isAiTask && it.상태!=='완료').length;
+
+    let lines = [];
+    lines.push(`<span style="font-weight:700;">진행 현황</span> &nbsp; 미착수 <b>${미착수건}</b>건 · 진행중 <b>${진행중건}</b>건 · 지연 <b style="color:#dc2626;">${지연건}</b>건 · 완료 <b style="color:#16a34a;">${완료건}</b>건 &nbsp;|&nbsp; 전체 평균 <b>${avgPct}%</b>`);
+
+    if (issueCount > 0)
+      lines.push(`🔴 Issue ${issueCount}건 미완료`);
+
+    if (delayItems.length > 0)
+      lines.push(`⚠️ 지연: ${delayItems.map(it=>it.과제명||'(미입력)').join(' · ')}`);
+
+    if (lowItems.length > 0)
+      lines.push(`📌 진행 저조(30%↓): ${lowItems.map(it=>`${it.과제명||'(미입력)'} ${Number(it.진행률)||0}%`).join(' · ')}`);
+
+    insightBox.innerHTML = lines.join('<br>');
+    insightBox.style.display = 'block';
+  } else if (insightBox) {
+    insightBox.style.display = 'none';
+  }
+
   const filtered = actionFilter === 'all'
     ? actionItems
     : actionItems.filter(it => it.상태 === actionFilter);
 
-  // 필터 카운트 표시
+  // 필터 카운트
   const countEl = document.getElementById('filter-count');
   if (countEl) {
-    if (actionFilter === 'all') {
-      countEl.textContent = actionItems.length ? `전체 ${actionItems.length}건` : '';
-    } else {
-      countEl.textContent = `${filtered.length} / ${actionItems.length}건`;
-    }
+    countEl.textContent = actionFilter === 'all'
+      ? (actionItems.length ? `전체 ${actionItems.length}건` : '')
+      : `${filtered.length} / ${actionItems.length}건`;
   }
 
-  if(!filtered.length){
-    tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;color:#aaa;padding:30px;">
+  if (!filtered.length) {
+    grid.innerHTML = `<div style="color:#aaa;font-size:13px;padding:30px;text-align:center;grid-column:1/-1;">
       ${actionFilter === 'all'
-        ? '+ 과제 추가 버튼으로 액션 아이템을 등록하세요<br><small style="font-size:11px;margin-top:4px;display:block;">구글시트에서 직접 추가해도 ☁ 불러오기로 반영돼요</small>'
-        : `<b>${actionFilter}</b> 상태의 항목이 없습니다`
-      }
-    </td></tr>`;
+        ? '+ 과제 추가 버튼으로 액션 아이템을 등록하세요'
+        : `<b>${actionFilter}</b> 상태의 항목이 없습니다`}
+    </div>`;
     return;
   }
-  // 일반 과제(AI 과제 제외) 순번 계산용
-  let normalSeq = 0;
 
-  tbody.innerHTML=filtered.map((it,i)=>{
-    // 원본 인덱스 (삭제/수정에 필요)
+  grid.innerHTML = filtered.map(it => {
     const origIdx = actionItems.indexOf(it);
-    // # 열: AI 과제는 아이콘, 일반 과제는 1부터 순번
-    const seqCell = it._isAiTask
-      ? `<td class="center" style="padding:4px 2px;">
-           <span style="display:inline-block;background:#f59e0b;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;letter-spacing:0.3px;white-space:nowrap;">🤖 AI추천</span>
-         </td>`
-      : (() => {
-          normalSeq++;
-          return `<td class="center" style="padding:4px 2px;">
-            <span style="display:inline-block;background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;white-space:nowrap;">핵심과제</span>
-          </td>`;
-        })();
-    const pct=Number(it.진행률)||0;
-    const barCls=pct>=80?'':pct>=40?'warn':'bad';
-    const rowStyle = it._isAiTask ? 'background:#fffbeb;' : '';
-    return`<tr style="${rowStyle}">
-      ${seqCell}
-      <td><input value="${esc(it.과제명)}" onchange="updateAction(${origIdx},'과제명',this.value)" style="width:100%;border:none;font-size:12px;background:transparent;font-family:var(--font);${it._isAiTask?'font-weight:600;color:#b45309;':''}"></td>
-      <td><input value="${esc(it.완료기준)}" onchange="updateAction(${origIdx},'완료기준',this.value)" style="width:100%;border:none;font-size:11px;background:transparent;font-family:var(--font);"></td>
-      <td class="center"><input type="date" value="${formatDate(it.완료기한)}" onchange="updateAction(${origIdx},'완료기한',this.value)" style="border:none;font-size:11px;background:transparent;font-family:var(--font);"></td>
-      <td>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <div class="progress-wrap" style="flex:1;"><div class="progress-bar ${barCls}" style="width:${pct}%;"></div></div>
-          <input type="number" min="0" max="100" value="${pct}" onchange="updateAction(${origIdx},'진행률',+this.value)" style="width:36px;border:1px solid #eee;border-radius:3px;font-size:11px;padding:1px 3px;text-align:center;">%
+    const pct = Number(it.진행률) || 0;
+
+    // 뱃지
+    const badge = it._isAiTask
+      ? `<span class="action-card-badge badge-ai">🤖 AI추천</span>`
+      : it._type === 'issue'
+      ? `<span class="action-card-badge badge-issue">Issue</span>`
+      : it._type === 'normal'
+      ? `<span class="action-card-badge badge-normal">일반과제</span>`
+      : `<span class="action-card-badge badge-core">핵심과제</span>`;
+
+    // 진행바 색상
+    const barColor = pct >= 100 ? '#22c55e' : pct >= 60 ? '#0f766e' : pct >= 30 ? '#f59e0b' : '#e74c3c';
+
+    // 상태 표시
+    const statusColor = { 완료:'#22c55e', 진행중:'#3b82f6', 지연:'#ef4444', 미착수:'#94a3b8' };
+    const sc = statusColor[it.상태] || '#94a3b8';
+
+    // 완료기한
+    const dueStr = it.완료기한 ? `📅 ${String(it.완료기한).slice(0,10)}` : '';
+
+    // 카드 클래스
+    const cardCls = [
+      'action-card',
+      it.상태 === '완료' ? 'is-done' : '',
+      it._isAiTask ? 'is-ai' : '',
+      it._type === 'issue' ? 'is-issue' : ''
+    ].filter(Boolean).join(' ');
+
+    return `<div class="${cardCls}">
+      <div class="action-card-top">
+        <div class="action-card-title">
+          <input value="${esc(it.과제명)}" onchange="updateAction(${origIdx},'과제명',this.value)"
+            placeholder="과제명 입력"
+            style="width:100%;border:none;background:transparent;font-size:12.5px;font-weight:700;color:var(--navy);font-family:var(--font);padding:0;">
         </div>
-      </td>
-      <td class="center">
-        <select onchange="updateAction(${origIdx},'상태',this.value)" style="border:1px solid #eee;border-radius:4px;font-size:11px;padding:2px;font-family:var(--font);">
-          ${['진행중','완료','지연','미착수'].map(s=>`<option ${it.상태===s?'selected':''}>${s}</option>`).join('')}
-        </select>
-      </td>
-      <td><input value="${esc(it.지연사유)}" onchange="updateAction(${origIdx},'지연사유',this.value)" style="width:100%;border:none;font-size:11px;background:transparent;font-family:var(--font);" placeholder="-"></td>
-      <td><input value="${esc(it.보완계획)}" onchange="updateAction(${origIdx},'보완계획',this.value)" style="width:100%;border:none;font-size:11px;background:transparent;font-family:var(--font);" placeholder="-"></td>
-      <td class="center"><button onclick="deleteAction(${origIdx})" style="background:none;border:none;color:#ddd;cursor:pointer;font-size:14px;" title="삭제">✕</button></td>
-    </tr>`;
+        ${badge}
+      </div>
+      <div style="font-size:10.5px;color:#94a3b8;">
+        <input value="${esc(it.완료기준)}" onchange="updateAction(${origIdx},'완료기준',this.value)"
+          placeholder="완료 기준"
+          style="width:100%;border:none;background:transparent;font-size:10.5px;color:#94a3b8;font-family:var(--font);padding:0;">
+      </div>
+      <div class="action-card-bar-wrap">
+        <div class="action-card-bar" style="width:${pct}%;background:${barColor};"></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input type="number" min="0" max="100" value="${pct}"
+            onchange="updateAction(${origIdx},'진행률',+this.value)"
+            style="width:38px;border:1px solid #e2e8f0;border-radius:4px;font-size:11px;padding:1px 4px;text-align:center;font-family:var(--font);">
+          <span style="font-size:11px;color:#64748b;">%</span>
+          <span style="font-size:10.5px;font-weight:600;color:${sc};">● ${it.상태}</span>
+        </div>
+        <div style="font-size:10.5px;color:#94a3b8;">
+          <input type="date" value="${formatDate(it.완료기한)}"
+            onchange="updateAction(${origIdx},'완료기한',this.value)"
+            style="border:none;background:transparent;font-size:10.5px;color:#94a3b8;font-family:var(--font);padding:0;">
+        </div>
+      </div>
+      <div>
+        <input value="${esc(it.특이사항||'')}" onchange="updateAction(${origIdx},'특이사항',this.value)"
+          placeholder="특이사항"
+          style="width:100%;border:none;border-top:1px solid #f1f5f9;background:transparent;font-size:11px;color:#64748b;font-family:var(--font);padding:4px 0 0;">
+      </div>
+      <div class="action-card-bottom">
+        <div class="action-card-meta">${dueStr}</div>
+        <div class="action-card-actions">
+          <button onclick="editLink(${origIdx})" title="링크 입력"
+            style="background:none;border:none;cursor:pointer;font-size:15px;padding:2px;opacity:.55;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.55">✏️</button>
+          <button onclick="openLink(${origIdx})" title="링크 열기"
+            style="background:none;border:none;cursor:pointer;font-size:15px;padding:2px;opacity:${it.링크?'.9':'.25'};" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity='${it.링크?'.9':'.25'}'">▶️</button>
+          <button onclick="deleteAction(${origIdx})" title="삭제"
+            style="background:none;border:none;cursor:pointer;font-size:15px;padding:2px;opacity:.45;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.45">🗑️</button>
+        </div>
+      </div>
+    </div>`;
   }).join('');
 }
 
-function addAction(){
-  actionItems.push({과제명:'',담당부서:'품질/CS',완료기준:'',완료기한:'',진행률:0,상태:'미착수',지연사유:'',보완계획:''});
+function editLink(i) {
+  const cur = actionItems[i]?.링크 || '';
+  const url = prompt('링크 URL을 입력하세요:', cur);
+  if (url === null) return; // 취소
+  actionItems[i].링크 = url.trim();
   renderActionTable();
   triggerAutoSave();
-  setTimeout(()=>{
-    const inputs=document.querySelectorAll('#actionBody input');
-    if(inputs.length) inputs[inputs.length-7].focus();
-  },50);
 }
-function updateAction(i,key,val){
-  if(actionItems[i]){ actionItems[i][key]=val; triggerAutoSave(); }
+
+function openLink(i) {
+  const url = actionItems[i]?.링크;
+  if (!url) { alert('입력된 링크가 없습니다.'); return; }
+  window.open(url, '_blank');
+}
+
+// 정렬 순서: AI추천 → Issue → 핵심과제(수동) → 일반과제
+function sortActionItems() {
+  const order = it => it._isAiTask ? 0 : it._type === 'issue' ? 1 : it._type === 'core' ? 2 : 3;
+  actionItems.sort((a, b) => order(a) - order(b));
+}
+
+function addAction(){
+  const item = { _type:'normal', 과제명:'', 완료기준:'', 완료기한:'', 진행률:0, 상태:'미착수', 특이사항:'', 링크:'' };
+  item.상태 = calcStatus(item);
+  actionItems.push(item);
+  sortActionItems();
+  renderActionTable();
+  triggerAutoSave();
+  setTimeout(()=>{ const inputs=document.querySelectorAll('#actionCardGrid input'); if(inputs.length) inputs[inputs.length-5].focus(); }, 50);
+}
+
+function addIssue(){
+  const item = { _type:'issue', 과제명:'', 완료기준:'', 완료기한:'', 진행률:0, 상태:'미착수', 특이사항:'', 링크:'' };
+  item.상태 = calcStatus(item);
+  actionItems.push(item);
+  sortActionItems();
+  renderActionTable();
+  triggerAutoSave();
+  setTimeout(()=>{ const inputs=document.querySelectorAll('#actionCardGrid input'); if(inputs.length) inputs[inputs.length-5].focus(); }, 50);
+}
+// 상태 자동 계산 (진행률 + 완료기한 기준)
+function calcStatus(it) {
+  const pct = Number(it.진행률) || 0;
+  if (pct >= 100) return '완료';
+  if (pct === 0)  return '미착수';
+  // 기한 초과 체크
+  if (it.완료기한) {
+    const due = new Date(it.완료기한);
+    const today = new Date(); today.setHours(0,0,0,0);
+    if (!isNaN(due) && due < today) return '지연';
+  }
+  return '진행중';
+}
+
+function updateAction(i, key, val){
+  if (!actionItems[i]) return;
+  actionItems[i][key] = val;
+  // 진행률/완료기한 변경 시 상태 자동 갱신 + 카드 즉시 재렌더
+  if (key === '진행률' || key === '완료기한') {
+    actionItems[i].상태 = calcStatus(actionItems[i]);
+    renderActionTable();  // 카드 전체 재렌더 (상태·바 즉시 반영)
+  }
+  triggerAutoSave();
 }
 function deleteAction(i){
   const name=actionItems[i]?.과제명||'이 항목';
@@ -1638,14 +2009,14 @@ async function loadFromSheet(){
       // 기존 AI 추천 과제 보존 (구글시트에는 _isAiTask 저장 안 됨)
       const existingAiTask = actionItems.find(it => it._isAiTask) || null;
       actionItems=json.rows.map(r=>({
+        _type:    r['_type'] || 'normal',
         과제명:   r['과제명']||'',
-        담당부서: r['담당부서']||'',
         완료기준: r['완료기준']||'',
         완료기한: r['완료기한']||'',
         진행률:   Number(r['진행률'])||0,
         상태:     r['상태']||'미착수',
-        지연사유: r['지연사유']||'',
-        보완계획: r['보완계획']||'',
+        특이사항: r['특이사항']||r['지연사유']||'',
+        링크:     r['링크']||'',
       }));
       // AI 추천 과제 맨 앞에 복원
       if (existingAiTask) actionItems.unshift(existingAiTask);
@@ -1662,7 +2033,7 @@ async function runAI(type){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.snav-item').forEach(s=>s.classList.remove('active'));
   document.getElementById('sec-ai').classList.add('active');
-  document.querySelectorAll('.snav-item')[4].classList.add('active');
+  document.querySelectorAll('.snav-item')[3].classList.add('active');
   sessionStorage.setItem('walpimiSection','ai');
 
   const output = document.getElementById('aiOutput');
@@ -1672,10 +2043,10 @@ async function runAI(type){
 
   const ds = buildDataSummary();
   const prompts = {
-    summary:`당신은 품질·고객센터 월간 보고 분석 전문가입니다. 아래 데이터를 바탕으로 월피미 보고용 핵심 요약을 작성해주세요.\n\n형식:\n1. 이번 달 핵심 현황 (3줄)\n2. 주요 성과 (2가지)\n3. 개선 필요 항목 (2가지)\n4. 다음 달 중점 과제 (2가지)\n\n임원 보고에 적합한 간결한 언어로 작성해주세요.\n\n데이터:\n${ds}`,
-    voc:`당신은 VOC 분석 전문가입니다. 아래 반품/AS/이슈 데이터에서 반복 패턴과 리스크를 파악해주세요.\n\n형식:\n1. 반복 발생 주요 이슈 TOP 3 (원인 포함)\n2. 제품별 리스크 우선순위\n3. 즉시 조치 필요 항목\n4. 예방 가능한 개선 제안\n\n데이터:\n${ds}`,
-    action:`당신은 고객센터·품질 개선 컨설턴트입니다. 아래 데이터를 바탕으로 구체적인 개선 대안을 제안해주세요.\n\n형식:\n1. 단기 개선안 (1개월 내, 3가지)\n2. 중기 개선안 (3개월 내, 2가지)\n3. 예상 효과\n\n데이터:\n${ds}`,
-    report:`당신은 월간 보고서 작성 전문가입니다. 아래 데이터를 바탕으로 회의용 보고 문구를 작성해주세요.\n\n[이번 달 현황]\n[주요 성과]\n[미달성 항목 및 원인]\n[개선 대안 및 실행 계획]\n[다음 달 중점 추진 사항]\n\n데이터:\n${ds}`,
+    summary: PROMPTS.report_summary + `\n\n데이터:\n${ds}`,
+    voc:     PROMPTS.report_voc     + `\n\n데이터:\n${ds}`,
+    action:  PROMPTS.report_action  + `\n\n데이터:\n${ds}`,
+    report:  PROMPTS.report_report  + `\n\n데이터:\n${ds}`,
   };
 
   try {
@@ -1809,54 +2180,31 @@ async function runAutoInsight() {
 
   const ds = buildDataSummary();
   const periodType = DATA.type==='weekly'||DATA.type==='direct' ? '주간' : '월간';
-  const prompt = `당신은 품질·고객센터 데이터 분석가입니다.
-아래 실제 데이터를 보고 각 지표별 핵심 인사이트를 작성해주세요.
-현재 분석 기간 유형: ${periodType}
 
-작성 규칙:
-- PPT 보고서 스타일 (문장 서술형 절대 금지)
-- 명사/단어 중심, 조사 최소화
-- 실제 수치 반드시 포함
-- 마크다운 기호 없이 순수 텍스트
-- 각 항목 2줄 이내
-- 절대 금지 문구: "시급", "경고", "심각", "문제 발생", "개선 필요", "파악 불가", "데이터 부재"
-- 부정적 표현 대신 현황·수치·연관관계 중심으로 서술
-- 긍정/중립 톤 유지 (보고자가 불리해지는 표현 금지)
-
-항목별 작성 가이드:
-- total: 이번 ${periodType} 총인입 수치 + 전회차 대비 증감건수
-- channel: 채널별 수치 나열 + 전회차 대비 증감 + 특이 채널 변화
-- return: 반품교환율 + 전회차비교 · 상승요인(사유별 건수·비중) · 감소요인 · 가전/가전외 비중 변화 (데이터에 있는 수치 최대한 활용)
-- returnchart: 사유TOP3 건수+비중+전회차대비증감 · 반품/교환 구분 · 품질개선 연계 가능성
-- alf: ALF 해결율 수치 + 기준월 명시
-- satisfaction: 만족도 점수 + 참여율
-- as: AS처리 건수 + 전회차 대비
-- quality: 품질개선요청 건수 + 진행단계별 현황
-- issue: 미입고 건수 + 주요 품목
-- answer: 수신응답률 수치 + 전회차 대비
-
-나쁜 예: "반품/교환율 4.34% · 전회차 3.30% 대비 1.04%p 상승 · 반품/교환 추이 상승"
-좋은 예: "반품교환율 4.34%(전회차+1.04%p) · 작동불량 172건(39%)↑ 단순변심 129건(29%) 주도 · 가전외 232건>가전 208건 비중 확대"
-
-반드시 아래 JSON 형식으로만 응답 (다른 텍스트 없이):
+  // PROMPTS 객체에서 조합 (구글시트 수정본 있으면 자동 반영)
+  const prompt = [
+    PROMPTS.insight_system.replace(/{periodType}/g, periodType),
+    '\n',
+    PROMPTS.insight_guide.replace(/{periodType}/g, periodType),
+    '\n',
+    PROMPTS.insight_example,
+    `\n\n반드시 아래 JSON 형식으로만 응답 (다른 텍스트 없이):
 {
-  "total": "총 상담 인입 인사이트",
   "alf": "ALF 해결율 인사이트",
-  "return": "반품/교환율 + 상승/감소 요인 수치 포함",
-  "quality": "품질 개선요청 인사이트",
-  "as": "AS 처리 인사이트",
-  "issue": "자재 미입고 인사이트",
   "satisfaction": "고객 만족도 인사이트",
   "answer": "수신 응답율 인사이트",
+  "issue": "자재 미입고 인사이트",
+  "as": "AS 처리 인사이트",
+  "quality": "품질 개선요청 인사이트",
+  "total": "총 상담 인입 인사이트",
   "channel": "채널별 수치+전회차 증감 포함 2줄",
-  "returnchart": "사유TOP3 건수+비중+증감+교환반품구분 2줄",
-  "vocReturn": "반품사유 TOP3 건수·비중·전회차증감 1줄",
   "vocAS": "AS불량유형 TOP3 건수·전회차증감 1줄",
-  "vocProduct": "반품제품 TOP3 건수·전회차증감 1줄"
-}
-
-데이터:
-${ds}`;
+  "vocProduct": "반품제품 TOP3 건수·전회차증감 1줄",
+  "vocReturn": "반품사유 TOP3 건수·비중·전회차증감 1줄",
+  "returnchart": "사유TOP3 건수+비중+증감+교환반품구분 2줄",
+  "return": "반품/교환율 + 상승/감소 요인 수치 포함"
+}\n\n데이터:\n${ds}`,
+  ].join('\n');
 
   try {
     const resp = await fetch(SCRIPT_URL, {
@@ -1884,22 +2232,10 @@ ${ds}`;
     // 버튼 상태 업데이트
     btn.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;"></span>과제 추천 중...';
 
-    const taskPrompt = `당신은 품질·고객센터 운영 전문가입니다.
-아래 이번 ${periodType} 데이터 분석 결과를 보고, 이번 주 가장 우선순위가 높은 액션 과제 1건만 추천해주세요.
-
-조건:
-- 과제명: 15자 이내, 구체적 행동 중심 (예: "작동불량 TOP3 제품 원인분석 착수")
-- 담당부서: 품질/CS 중 해당 부서
-- 완료기준: 20자 이내
-- 완료기한: 오늘부터 2주 이내 (${new Date().toISOString().slice(0,10)} 기준)
-- 반드시 아래 JSON 형식으로만 응답 (다른 텍스트 없이):
-{"과제명":"...","담당부서":"품질/CS","완료기준":"...","완료기한":"YYYY-MM-DD"}
-
-분석 데이터 요약:
-${insights.return||''}
-${insights.quality||''}
-${insights.as||''}
-${insights.total||''}`;
+    const taskPrompt = PROMPTS.task_recommend
+      .replace(/{periodType}/g, periodType)
+      .replace(/{today}/g, new Date().toISOString().slice(0,10))
+      + `\n\n분석 데이터 요약:\n${insights.return||''}\n${insights.quality||''}\n${insights.as||''}\n${insights.total||''}`;
 
     let aiTask = null;
     try {
@@ -1919,8 +2255,8 @@ ${insights.total||''}`;
             완료기한: task.완료기한 || '',
             진행률:   0,
             상태:     '미착수',
-            지연사유: '',
-            보완계획: ''
+            특이사항: '',
+            링크:     ''
           };
           actionItems = actionItems.filter(it => !it._isAiTask);
           actionItems.unshift({ ...aiTask, _isAiTask: true });

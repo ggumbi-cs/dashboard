@@ -266,8 +266,8 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
 </div>
 
 <div class="tabs">
-  <div class="tab" data-tab="AI보고" onclick="switchTab(this)">AI보고 <span style="font-size:10px;color:#4fc3f7;margin-left:2px;">★</span></div>
-  <div class="tab active" data-tab="주요kpi"  onclick="switchTab(this)">주요KPI</div>
+  <div class="tab active" data-tab="AI보고" onclick="switchTab(this)">AI보고 <span style="font-size:10px;color:#4fc3f7;margin-left:2px;">★</span></div>
+  <div class="tab" data-tab="주요kpi"  onclick="switchTab(this)">주요KPI</div>
   <div class="tab" data-tab="상담실적" onclick="switchTab(this)">상담실적</div>
   <div class="tab" data-tab="반품현황" onclick="switchTab(this)">반품현황</div>
   <div class="tab" data-tab="처리현황" onclick="switchTab(this)">처리현황</div>
@@ -806,28 +806,14 @@ function updateHeader() {
 // ── 초기화 ─────────────────────────────────────────
 function init() {
   const def    = defaultMonth();
-  state.period = `${def.year}-${pad(def.month)}`;  // 전월 기준 기본
 
-  // 기본 탭: 주요KPI (yearly)
-  state.tab    = '주요kpi';
-  state.type   = 'yearly';
-  state.period = String(new Date().getFullYear());
+  // 기본 탭: AI보고 (월간)
+  state.tab    = 'AI보고';
+  state.type   = 'monthly';
+  state.period = `${def.year}-${pad(def.month)}`;
 
   renderMonthly();
   renderWeekly();
-
-  // 주요KPI 사이드바 상태 적용
-  const monthly = document.getElementById('monthlyList');
-  const weekly  = document.getElementById('weeklyList');
-  const calWrap = document.querySelector('.date-pick-wrap');
-  if (monthly) monthly.style.display = 'none';
-  if (weekly)  weekly.style.display  = 'none';
-  if (calWrap) calWrap.style.display = 'none';
-  document.querySelectorAll('#dashSidebar .sb-label').forEach(lb => {
-    if (lb.textContent.trim() !== '연간현황') lb.style.display = 'none';
-  });
-  document.querySelectorAll('#dashSidebar .sb-divider').forEach(d => d.style.display = 'none');
-
   updateHeader();
   updateFrame();
 }

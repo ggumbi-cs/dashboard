@@ -463,7 +463,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
     <div style="font-size:11.5px;color:#64748b;margin-bottom:14px;background:#f8fafc;border-radius:6px;padding:8px 14px;">
       💡 수정 후 <b>구글시트 저장</b> 클릭 → 다음 인사이트 분석부터 자동 반영됩니다. <code>{periodType}</code>, <code>{today}</code> 변수는 실행 시 자동 치환됩니다.
     </div>
-    <div id="promptCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(480px,1fr));gap:14px;"></div>
+    <div id="promptCards"></div>
   </div>
 
   <!-- ⑤ AI -->
@@ -513,52 +513,118 @@ let DATA = { report: null, issue: null, type: 'monthly', period: '26.05월', tab
 // ── 프롬프트 전역 관리 객체 (절대규칙 #7)
 // 구글시트 '프롬프트' 시트에서 불러오면 덮어쓰기, 없으면 기본값 사용
 const PROMPTS_DEFAULT = {
-  // ── 핵심서머리 KPI 인사이트 (1회 호출)
-  insight_system: `당신은 품질·고객센터 데이터 분석가입니다.
-아래 실제 데이터를 보고 각 지표별 핵심 인사이트를 작성해주세요.
-현재 분석 기간 유형: {periodType}
+  // ═══════════════════════════════════════
+  // 📁 공통 규칙
+  // ═══════════════════════════════════════
+  common_role: `당신은 품질·고객센터 데이터 분석 전문가입니다.
+실제 운영 데이터를 바탕으로 경영진에게 보고하는 핵심 인사이트를 작성합니다.
+현재 분석 기간: {periodType}`,
 
-작성 규칙:
+  common_format: `작성 형식 규칙:
 - PPT 보고서 스타일 (문장 서술형 절대 금지)
 - 명사/단어 중심, 조사 최소화
 - 실제 수치 반드시 포함
 - 마크다운 기호 없이 순수 텍스트
 - 각 항목 2줄 이내
-- 절대 금지 문구: "시급", "경고", "심각", "문제 발생", "개선 필요", "파악 불가", "데이터 부재"
-- 부정적 표현 대신 현황·수치·연관관계 중심으로 서술
 - 긍정/중립 톤 유지 (보고자가 불리해지는 표현 금지)`,
 
-  insight_guide: `항목별 작성 가이드:
-- total: 이번 {periodType} 총인입 수치 + 전회차 대비 증감건수
-- channel: 채널별 수치 나열 + 전회차 대비 증감 + 특이 채널 변화
-- return: 반품교환율 + 전회차비교 · 상승요인(사유별 건수·비중) · 감소요인 · 가전/가전외 비중 변화
-- returnchart: 사유TOP3 건수+비중+전회차대비증감 · 반품/교환 구분 · 품질개선 연계 가능성
-- alf: ALF 해결율 수치 + 기준월 명시
-- satisfaction: 만족도 점수 + 참여율
-- as: AS처리 건수 + 전회차 대비
-- quality: 품질개선요청 건수 + 진행단계별 현황
-- issue: 미입고 건수 + 주요 품목
-- answer: 수신응답률 수치 + 전회차 대비
-- vocReturn: 반품사유 TOP3 건수·비중·전회차증감 1줄
-- vocAS: AS불량유형 TOP3 건수·전회차증감 1줄
-- vocProduct: 반품제품 TOP3 건수·전회차증감 1줄`,
+  common_forbidden: `절대 금지 표현: "시급", "경고", "심각", "문제 발생", "개선 필요", "파악 불가", "데이터 부재"
+부정적 표현 대신 현황·수치·연관관계 중심으로 서술할 것
 
-  insight_example: `나쁜 예: "반품/교환율 4.34% · 전회차 3.30% 대비 1.04%p 상승 · 반품/교환 추이 상승"
+나쁜 예: "반품/교환율 4.34% · 전회차 3.30% 대비 1.04%p 상승 · 반품/교환 추이 상승"
 좋은 예: "반품교환율 4.34%(전회차+1.04%p) · 작동불량 172건(39%)↑ 단순변심 129건(29%) 주도 · 가전외 232건>가전 208건 비중 확대"`,
 
-  // ── AI 추천 과제
-  task_recommend: `당신은 품질·고객센터 운영 전문가입니다.
-아래 이번 {periodType} 데이터 분석 결과를 보고, 이번 주 가장 우선순위가 높은 액션 과제 1건만 추천해주세요.
+  // ═══════════════════════════════════════
+  // 📁 차트별 규칙
+  // ═══════════════════════════════════════
+  chart_total: `총 상담 인입 (total) 작성 규칙:
+- 이번 {periodType} 총인입 수치 명시
+- 전회차 대비 증감 건수 포함
+- 예: "총인입 1,601건(전회차+219건) · 채널톡 640건 주도"`,
 
-조건:
-- 과제명: 15자 이내, 구체적 행동 중심 (예: "작동불량 TOP3 제품 원인분석 착수")
-- 담당부서: 품질/CS 중 해당 부서
-- 완료기준: 20자 이내
-- 완료기한: 오늘부터 2주 이내 ({today} 기준)
-- 반드시 아래 JSON 형식으로만 응답:
+  chart_alf: `ALF 해결율 (alf) 작성 규칙:
+- ALF 해결율 수치 + 기준월 반드시 명시
+- 전회차 대비 변동 여부 포함
+- 예: "ALF 해결율 23.9%(26.04월 기준) · 전회차 동일 수준 유지"`,
+
+  chart_return: `반품/교환율 꿈비 (return) 작성 규칙:
+- 반품교환율 수치 + 전회차 대비 %p 변동
+- 상승요인: 사유별 건수·비중 명시
+- 감소요인: 있을 경우 명시
+- 가전 vs 가전외 비중 변화 포함
+- 예: "반품교환율 4.34%(전회차+1.04%p) · 작동불량 172건(39%)↑ · 가전외 232건>가전 208건"`,
+
+  chart_quality: `품질검사 (quality) 작성 규칙:
+- 품질개선요청 총 건수 명시
+- 진행단계별 현황 (진행중/완료 건수)
+- 주요 요청 품목 언급
+- 예: "품질개선요청 3건 · 분유쉐이커·젖병살균세척기 사안 진행중"`,
+
+  chart_as: `가전 AS 처리 (as) 작성 규칙:
+- AS 처리 건수 + 유무상 구분
+- 전회차 대비 증감
+- 예: "AS 처리 255건(유무상 합계) · 전회차 대비 +1건 소폭 증가"`,
+
+  chart_issue: `자재 미입고 건 (issue) 작성 규칙:
+- 미입고 건수 + 전회차 대비 증감
+- 주요 미입고 품목 1~2개 언급
+- 예: "미입고 6건(전회차+4건) · 뚜껑세트·젖병살균세척기 주요"`,
+
+  chart_satisfaction: `고객 만족도 (satisfaction) 작성 규칙:
+- 만족도 점수 + 기준월 명시
+- 참여율 포함
+- 예: "만족도 4.74점(26.04월 기준) · 참여율 76.1%"`,
+
+  chart_answer: `수신 응답율 (answer) 작성 규칙:
+- 수신응답률 수치 명시
+- 전회차 대비 %p 변동
+- 예: "수신응답률 80.4% · 전회차 대비 +4.3%p 상승"`,
+
+  chart_channel: `채널별 인입 현황 (channel) 작성 규칙:
+- 채널별 수치 나열 (채널톡/전화/네이버/카카오)
+- 전회차 대비 채널별 증감
+- 특이 채널 변화 언급
+- 예: "채널톡 640건(+X) · 전화 365건(+X) · 네이버 310건 · 카카오 286건"`,
+
+  chart_returnchart: `반품 사유 TOP5 꿈비 (returnchart) 작성 규칙:
+- 사유TOP3 건수+비중+전회차 대비 증감
+- 반품/교환 구분 명시
+- 품질개선 연계 가능성 언급
+- 예: "반품/교환 440건(교환241·반품199) · 작동불량 172건(39%)↓ 단순변심 129건(29%)↑"`,
+
+  chart_vocReturn: `반품 사유별 건수 꿈비 (vocReturn) 작성 규칙:
+- 반품사유 TOP3 건수·비중·전회차 증감 1줄
+- 예: "작동불량 172건(39%,-11건) · 단순변심 129건(29%,+41건) · 기타미사유 34건(7%,+27건)"`,
+
+  chart_vocAS: `AS 접수불량 유형 TOP10 (vocAS) 작성 규칙:
+- AS불량유형 TOP3 건수·전회차 증감 1줄
+- 예: "회전불량 97건(▼77) · 충전불량 69건(▼70) · 전원불량 56건(▼22)"`,
+
+  chart_vocProduct: `반품 제품별 집계 (vocProduct) 작성 규칙:
+- 반품 제품 TOP3 건수·전회차 증감 1줄
+- 예: "가전외 232건(+93) > 가전 208건(-5) · 가전외 비중 확대 추세"`,
+
+  // ═══════════════════════════════════════
+  // 📁 액션현황판 규칙
+  // ═══════════════════════════════════════
+  task_criteria: `추천 과제 선정 기준:
+- 이번 {periodType} 데이터에서 가장 임팩트가 큰 이슈 1건
+- 우선순위: 반복성 > 수치 급변 > 고객영향도
+- CS/품질 실무에서 2주 내 실행 가능한 과제
+- Issue 항목 있을 경우 우선 고려
+- 이미 진행중인 과제와 중복 금지`,
+
+  task_format: `과제 작성 형식:
+- 과제명: 15자 이내, 구체적 행동 동사로 시작 (예: "작동불량 TOP3 원인분석 착수")
+- 담당부서: 품질 또는 CS 중 해당 부서
+- 완료기준: 20자 이내, 측정 가능한 결과물
+- 완료기한: 오늘({today})부터 2주 이내
+- 반드시 JSON 형식으로만 응답:
 {"과제명":"...","담당부서":"품질/CS","완료기준":"...","완료기한":"YYYY-MM-DD"}`,
 
-  // ── AI 종합 분석 4종
+  // ═══════════════════════════════════════
+  // 📁 AI 종합 분석
+  // ═══════════════════════════════════════
   report_summary: `당신은 품질·고객센터 월간 보고 분석 전문가입니다. 아래 데이터를 바탕으로 월피미 보고용 핵심 요약을 작성해주세요.
 
 형식:
@@ -591,8 +657,7 @@ const PROMPTS_DEFAULT = {
 [미달성 항목 및 원인]
 [개선 대안 및 실행 계획]
 [다음 달 중점 추진 사항]`,
-};
-
+}
 // 런타임 프롬프트 (구글시트 불러오기 시 덮어씌워짐)
 let PROMPTS = { ...PROMPTS_DEFAULT };
 // 전회차 비교용
@@ -603,9 +668,28 @@ let actionItems = [];
 
 // ══════════════════════════════════════════════════════════════
 // ── 프롬프트 관리 탭 토글
+let _promptDirty = false; // 프롬프트 수정 여부 추적
+
+// 페이지/탭 닫을 때 경고
+window.addEventListener('beforeunload', (e) => {
+  if (_promptDirty) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
 function togglePrompt(btn) {
   const sec = document.getElementById('sec-prompt');
   const isOpen = sec.classList.contains('active');
+  // 프롬프트 탭 열려있고 수정사항 있으면 저장 확인
+  if (isOpen && _promptDirty) {
+    if (confirm('프롬프트 수정 내용이 있습니다.\n구글시트에 저장하시겠습니까?')) {
+      savePrompts();
+    } else {
+      // 저장 안 해도 이동은 가능 — dirty 초기화
+      _promptDirty = false;
+    }
+  }
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.snav-item').forEach(s=>s.classList.remove('active'));
   const reportBtn = document.querySelector('button[onclick*="toggleReport"]');
@@ -624,38 +708,86 @@ function togglePrompt(btn) {
   }
 }
 
-const PROMPT_LABELS = {
-  insight_system:  '① 인사이트 분석 — 시스템 역할/규칙',
-  insight_guide:   '② 인사이트 분석 — 항목별 작성 가이드',
-  insight_example: '③ 인사이트 분석 — 예시 (나쁜예/좋은예)',
-  task_recommend:  '④ AI 추천 과제 — 액션현황판 자동 생성',
-  report_summary:  '⑤ AI 종합 — 핵심 요약',
-  report_voc:      '⑥ AI 종합 — VOC 패턴 분석',
-  report_action:   '⑦ AI 종합 — 개선 대안 제안',
-  report_report:   '⑧ AI 종합 — 보고서 문구 생성',
-};
+// 프롬프트 그룹 구조 정의
+const PROMPT_GROUPS = [
+  {
+    id: 'common', label: '📁 공통 규칙', color: '#1e40af', bg: '#eff6ff',
+    cards: [
+      { key: 'common_role',      title: 'AI 역할 정의',       desc: '시스템 역할, 분석가 페르소나' },
+      { key: 'common_format',    title: '작성 형식 규칙',     desc: 'PPT스타일, 명사중심, 수치포함 등' },
+      { key: 'common_forbidden', title: '금지/허용 표현 + 예시', desc: '금지문구, 톤앤매너, 나쁜예/좋은예' },
+    ]
+  },
+  {
+    id: 'chart', label: '📁 차트별 규칙', color: '#0f766e', bg: '#f0fdf4',
+    cards: [
+      { key: 'chart_total',       title: '총 상담 인입',            desc: 'total' },
+      { key: 'chart_alf',         title: 'ALF 해결율',              desc: 'alf' },
+      { key: 'chart_return',      title: '반품/교환율 (꿈비)',       desc: 'return' },
+      { key: 'chart_quality',     title: '품질검사',                desc: 'quality' },
+      { key: 'chart_as',          title: '가전 AS 처리',            desc: 'as' },
+      { key: 'chart_issue',       title: '자재 미입고 건',          desc: 'issue' },
+      { key: 'chart_satisfaction',title: '고객 만족도',             desc: 'satisfaction' },
+      { key: 'chart_answer',      title: '수신 응답율',             desc: 'answer' },
+      { key: 'chart_channel',     title: '채널별 인입 현황',        desc: 'channel' },
+      { key: 'chart_returnchart', title: '반품 사유 TOP 5 (꿈비)',  desc: 'returnchart' },
+      { key: 'chart_vocReturn',   title: '반품 사유별 건수 (꿈비)', desc: 'vocReturn' },
+      { key: 'chart_vocAS',       title: 'AS 접수불량 유형 TOP10',  desc: 'vocAS' },
+      { key: 'chart_vocProduct',  title: '반품 제품별 집계',        desc: 'vocProduct' },
+    ]
+  },
+  {
+    id: 'action', label: '📁 액션현황판 규칙', color: '#b45309', bg: '#fffbeb',
+    cards: [
+      { key: 'task_criteria', title: '추천 과제 선정 기준', desc: '우선순위 판단, 과제 성격' },
+      { key: 'task_format',   title: '과제 작성 형식',     desc: '과제명 15자, 완료기준, 기한' },
+    ]
+  },
+  {
+    id: 'report', label: '📁 AI 종합 분석', color: '#6d28d9', bg: '#f5f3ff',
+    cards: [
+      { key: 'report_summary', title: '핵심 요약',       desc: 'summary' },
+      { key: 'report_voc',     title: 'VOC 패턴 분석',   desc: 'voc' },
+      { key: 'report_action',  title: '개선 대안 제안',  desc: 'action' },
+      { key: 'report_report',  title: '보고서 문구 생성', desc: 'report' },
+    ]
+  },
+];
 
 function renderPromptCards() {
   const container = document.getElementById('promptCards');
   if (!container) return;
-  container.innerHTML = Object.keys(PROMPTS_DEFAULT).map(key => `
-    <div class="card" style="display:flex;flex-direction:column;gap:8px;">
-      <div style="font-size:12px;font-weight:700;color:var(--navy);">${PROMPT_LABELS[key]||key}</div>
-      <textarea id="prompt-${key}" rows="7"
-        style="width:100%;border:1px solid #e2e8f0;border-radius:6px;font-size:11.5px;font-family:var(--font);padding:8px;resize:vertical;line-height:1.6;color:#1e293b;"
-        oninput="PROMPTS['${key}']=this.value"
-      >${esc(PROMPTS[key])}</textarea>
-      <button onclick="resetOnePrompt('${key}')"
-        style="align-self:flex-end;background:none;border:1px solid #e2e8f0;color:#94a3b8;font-size:11px;padding:3px 10px;border-radius:4px;cursor:pointer;font-family:var(--font);">
-        이 항목만 기본값
-      </button>
+
+  container.innerHTML = PROMPT_GROUPS.map(group => `
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:8px 14px;background:${group.bg};border-left:4px solid ${group.color};border-radius:0 6px 6px 0;">
+        <span style="font-size:13px;font-weight:800;color:${group.color};">${group.label}</span>
+        <span style="font-size:11px;color:${group.color};opacity:.7;">${group.cards.length}개 항목</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:10px;">
+        ${group.cards.map(card => `
+          <div class="card" style="display:flex;flex-direction:column;gap:6px;border-top:2px solid ${group.color}20;">
+            <div style="display:flex;align-items:baseline;gap:8px;">
+              <span style="font-size:12px;font-weight:700;color:${group.color};">${card.title}</span>
+              <span style="font-size:10.5px;color:#94a3b8;">${card.desc}</span>
+            </div>
+            <textarea id="prompt-${card.key}" rows="5"
+              style="width:100%;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;font-family:var(--font);padding:8px;resize:vertical;line-height:1.6;color:#1e293b;"
+              oninput="PROMPTS['${card.key}']=this.value; _promptDirty=true;"
+            >${esc(PROMPTS[card.key]||'')}</textarea>
+            <button onclick="resetOnePrompt('${card.key}')"
+              style="align-self:flex-end;background:none;border:1px solid #e2e8f0;color:#94a3b8;font-size:10.5px;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:var(--font);">
+              ↺ 기본값
+            </button>
+          </div>`).join('')}
+      </div>
     </div>`).join('');
 }
 
 function resetOnePrompt(key) {
   PROMPTS[key] = PROMPTS_DEFAULT[key];
   const ta = document.getElementById('prompt-'+key);
-  if (ta) ta.value = PROMPTS_DEFAULT[key];
+  if (ta) ta.value = PROMPTS_DEFAULT[key] || '';
 }
 
 async function savePrompts() {
@@ -667,6 +799,7 @@ async function savePrompts() {
       body: JSON.stringify({ action: 'savePrompts', prompts: PROMPTS })
     });
     const data = await resp.json();
+    _promptDirty = false;
     btn.textContent = data.ok ? '✓ 저장 완료' : '⚠ 저장 실패';
     setTimeout(() => { btn.disabled=false; btn.textContent='💾 구글시트 저장'; }, 2000);
   } catch(e) {
@@ -696,9 +829,19 @@ function resetPrompts() {
 // UI 헬퍼
 // ══════════════════════════════════════════════════════════════
 function showSection(id, el) {
+  // 프롬프트 탭에서 이탈 시 저장 확인
+  const promptSec = document.getElementById('sec-prompt');
+  if (promptSec && promptSec.classList.contains('active') && _promptDirty) {
+    if (confirm('프롬프트 수정 내용이 있습니다.\n구글시트에 저장하시겠습니까?')) {
+      savePrompts();
+    } else {
+      _promptDirty = false;
+    }
+    const promptBtn = document.querySelector('button[onclick*="togglePrompt"]');
+    if (promptBtn) { promptBtn.style.background=''; promptBtn.style.borderColor=''; promptBtn.style.color=''; }
+  }
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.snav-item').forEach(s=>s.classList.remove('active'));
-  // report 섹션 숨기기 (토글 버튼으로만 제어)
   document.getElementById('sec-report').classList.remove('active');
   document.getElementById('sec-'+id).classList.add('active');
   el.classList.add('active');
@@ -2189,11 +2332,25 @@ async function runAutoInsight() {
 
   // PROMPTS 객체에서 조합 (구글시트 수정본 있으면 자동 반영)
   const prompt = [
-    PROMPTS.insight_system.replace(/{periodType}/g, periodType),
+    PROMPTS.common_role.replace(/{periodType}/g, periodType),
     '\n',
-    PROMPTS.insight_guide.replace(/{periodType}/g, periodType),
+    PROMPTS.common_format,
     '\n',
-    PROMPTS.insight_example,
+    PROMPTS.common_forbidden,
+    '\n\n── 차트별 세부 규칙 ──',
+    `\ntotal: ${PROMPTS.chart_total.replace(/{periodType}/g, periodType)}`,
+    `\nalf: ${PROMPTS.chart_alf}`,
+    `\nreturn: ${PROMPTS.chart_return}`,
+    `\nquality: ${PROMPTS.chart_quality}`,
+    `\nas: ${PROMPTS.chart_as}`,
+    `\nissue: ${PROMPTS.chart_issue}`,
+    `\nsatisfaction: ${PROMPTS.chart_satisfaction}`,
+    `\nanswer: ${PROMPTS.chart_answer}`,
+    `\nchannel: ${PROMPTS.chart_channel}`,
+    `\nreturnchart: ${PROMPTS.chart_returnchart}`,
+    `\nvocReturn: ${PROMPTS.chart_vocReturn}`,
+    `\nvocAS: ${PROMPTS.chart_vocAS}`,
+    `\nvocProduct: ${PROMPTS.chart_vocProduct}`,
     `\n\n반드시 아래 JSON 형식으로만 응답 (다른 텍스트 없이):
 {
   "alf": "ALF 해결율 인사이트",
@@ -2201,13 +2358,13 @@ async function runAutoInsight() {
   "answer": "수신 응답율 인사이트",
   "issue": "자재 미입고 인사이트",
   "as": "AS 처리 인사이트",
-  "quality": "품질 개선요청 인사이트",
+  "quality": "품질검사 인사이트",
   "total": "총 상담 인입 인사이트",
-  "channel": "채널별 수치+전회차 증감 포함 2줄",
+  "channel": "채널별 수치+전회차 증감 2줄",
   "vocAS": "AS불량유형 TOP3 건수·전회차증감 1줄",
   "vocProduct": "반품제품 TOP3 건수·전회차증감 1줄",
   "vocReturn": "반품사유 TOP3 건수·비중·전회차증감 1줄",
-  "returnchart": "사유TOP3 건수+비중+증감+교환반품구분 2줄",
+  "returnchart": "반품사유TOP5 건수+비중+증감+교환반품구분 2줄",
   "return": "반품/교환율 + 상승/감소 요인 수치 포함"
 }\n\n데이터:\n${ds}`,
   ].join('\n');
@@ -2238,10 +2395,11 @@ async function runAutoInsight() {
     // 버튼 상태 업데이트
     btn.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;"></span>과제 추천 중...';
 
-    const taskPrompt = PROMPTS.task_recommend
-      .replace(/{periodType}/g, periodType)
-      .replace(/{today}/g, new Date().toISOString().slice(0,10))
-      + `\n\n분석 데이터 요약:\n${insights.return||''}\n${insights.quality||''}\n${insights.as||''}\n${insights.total||''}`;
+    const taskPrompt = [
+      PROMPTS.task_criteria.replace(/{periodType}/g, periodType),
+      PROMPTS.task_format.replace(/{today}/g, new Date().toISOString().slice(0,10)),
+      `\n\n분析 데이터 요약:\n${insights.return||''}\n${insights.quality||''}\n${insights.as||''}\n${insights.total||''}`,
+    ].join('\n');
 
     let aiTask = null;
     try {

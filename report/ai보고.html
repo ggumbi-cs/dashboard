@@ -2014,7 +2014,7 @@ async function loadFromSheet(){
       // 기존 AI 추천 과제 보존 (구글시트에는 _isAiTask 저장 안 됨)
       const existingAiTask = actionItems.find(it => it._isAiTask) || null;
       actionItems=json.rows.map(r=>({
-        _type:    r['_type'] || 'normal',
+        _type:    r['_type'] || r['구분'] || 'normal',
         과제명:   r['과제명']||'',
         완료기준: r['완료기준']||'',
         완료기한: r['완료기한']||'',

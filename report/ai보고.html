@@ -456,7 +456,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
     <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;">
       <span>⚙️ 프롬프트 관리</span>
       <div style="display:flex;gap:8px;">
-        <button onclick="savePrompts()" style="background:var(--navy-mid);border:none;color:#fff;padding:6px 16px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">💾 구글시트 저장</button>
+        <button id="btn-save-prompts" onclick="savePrompts()" style="background:var(--navy-mid);border:none;color:#fff;padding:6px 16px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">💾 구글시트 저장</button>
         <button onclick="resetPrompts()" style="background:#f5f5f5;border:none;color:#999;padding:6px 16px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">↺ 기본값 복원</button>
       </div>
     </div>
@@ -791,8 +791,8 @@ function resetOnePrompt(key) {
 }
 
 async function savePrompts() {
-  const btn = event.target;
-  btn.disabled = true; btn.textContent = '저장 중...';
+  const btn = document.getElementById('btn-save-prompts');
+  if (btn) { btn.disabled = true; btn.textContent = '저장 중...'; }
   try {
     const resp = await fetch(SCRIPT_URL, {
       method: 'POST',
@@ -800,10 +800,11 @@ async function savePrompts() {
     });
     const data = await resp.json();
     _promptDirty = false;
-    btn.textContent = data.ok ? '✓ 저장 완료' : '⚠ 저장 실패';
-    setTimeout(() => { btn.disabled=false; btn.textContent='💾 구글시트 저장'; }, 2000);
+    if (btn) btn.textContent = data.ok ? '✓ 저장 완료' : '⚠ 저장 실패';
+    setTimeout(() => { if(btn){ btn.disabled=false; btn.textContent='💾 구글시트 저장'; } }, 2000);
   } catch(e) {
-    btn.textContent = '⚠ 오류'; setTimeout(()=>{ btn.disabled=false; btn.textContent='💾 구글시트 저장'; }, 2000);
+    if (btn) btn.textContent = '⚠ 오류';
+    setTimeout(()=>{ if(btn){ btn.disabled=false; btn.textContent='💾 구글시트 저장'; } }, 2000);
   }
 }
 

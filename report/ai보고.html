@@ -2385,7 +2385,7 @@ async function loadAIReportFromSheet(type) {
     if (data.ok && data.insights && data.insights._aiReport) {
       const output  = document.getElementById('aiOutput-'+type);
       const savedAt = document.getElementById('aiSavedAt-'+type);
-      if (output) { output.className='ai-output'; output.innerHTML = renderMarkdown(data.insights._aiReport); openAIPanel(type); }
+      if (output) { output.className='ai-output'; output.innerHTML = renderMarkdown(data.insights._aiReport); }
       if (savedAt && data.savedAt) savedAt.textContent = data.savedAt;
       return true;
     }
@@ -2609,7 +2609,9 @@ function renderMarkdown(text) {
 
 function buildDataSummary(){
   const P = parsePeriod();
-  const lines=[`분석 기간: ${DATA.period}`];
+  const isWeekly = DATA.type === 'weekly' || DATA.type === 'direct';
+  const periodType = isWeekly ? '주간' : (DATA.type === 'yearly' ? '연간' : '월간');
+  const lines=[`분析 기간: ${DATA.period} (${periodType})`];
 
   // KPI 수치 (전회차 포함)
   if(CUR.total!==null)        lines.push(`총 상담 인입: ${CUR.total.toLocaleString()}건 (전회차: ${PREV.total?PREV.total.toLocaleString()+'건':'-'})`);

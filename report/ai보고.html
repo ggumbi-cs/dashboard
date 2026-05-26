@@ -199,6 +199,25 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .ai-output ul li { margin:4px 0; color:#e0d9ff; }
 .ai-output p { margin:6px 0; }
 
+/* AI 종합 분석 — 멀티 패널 */
+.ai-panels-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media(max-width:900px){ .ai-panels-grid { grid-template-columns:1fr; } }
+.ai-panel-item { background:linear-gradient(135deg,#1a1a3e 0%,#2d1b6e 100%); border-radius:10px; padding:18px 22px; color:#fff; position:relative; overflow:hidden; }
+.ai-panel-item::before { content:'✦'; position:absolute; right:16px; top:14px; font-size:32px; opacity:.07; color:#a78bfa; }
+.ai-panel-item-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.ai-panel-item-title { font-size:12px; font-weight:700; color:#c4b5fd; display:flex; align-items:center; gap:6px; }
+.ai-panel-item-meta { font-size:10px; color:#7c6db5; }
+.ai-panel-item-rerun { background:rgba(167,139,250,.15); border:1px solid rgba(167,139,250,.3); color:#c4b5fd; font-size:11px; padding:3px 10px; border-radius:20px; cursor:pointer; font-family:var(--font); transition:background .15s; white-space:nowrap; }
+.ai-panel-item-rerun:hover { background:rgba(167,139,250,.3); }
+.ai-panel-item-rerun:disabled { opacity:.4; cursor:not-allowed; }
+.ai-panel-item .ai-output { min-height:60px; }
+.run-all-btn { background:linear-gradient(135deg,#7c3aed,#4f46e5); border:none; color:#fff; padding:9px 22px; font-size:13px; font-weight:700; border-radius:8px; cursor:pointer; font-family:var(--font); display:flex; align-items:center; gap:8px; transition:opacity .15s; box-shadow:0 2px 10px rgba(124,58,237,.4); }
+.run-all-btn:hover { opacity:.88; }
+.run-all-btn:disabled { opacity:.45; cursor:not-allowed; }
+.ai-progress-bar { height:3px; background:rgba(167,139,250,.2); border-radius:2px; overflow:hidden; margin-top:10px; display:none; }
+.ai-progress-bar.visible { display:block; }
+.ai-progress-fill { height:100%; background:linear-gradient(90deg,#7c3aed,#a78bfa); border-radius:2px; transition:width .4s ease; width:0%; }
+
 /* VOC 바 */
 .voc-bar-wrap { display:flex; flex-direction:column; gap:8px; }
 .voc-row  { display:flex; align-items:center; gap:8px; }
@@ -469,16 +488,58 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
   <!-- ⑤ AI -->
   <div class="section" id="sec-ai">
     <div class="sec-title">AI 종합 분석</div>
-    <div style="margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-      <button class="ai-btn" onclick="runAIWithCache('summary')">✦ 핵심 요약</button>
-      <button class="ai-btn" onclick="runAIWithCache('voc')">✦ VOC 패턴 분석</button>
-      <button class="ai-btn" onclick="runAIWithCache('action')">✦ 개선 대안 제안</button>
-      <button class="ai-btn" onclick="runAIWithCache('report')">✦ 보고서 문구 생성</button>
-      <span id="aiOutputSavedAt" style="font-size:11px;color:#aaa;margin-left:4px;"></span>
+    <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <button class="run-all-btn" id="runAllBtn" onclick="runAllAI()">✦ 분석실행</button>
+      <div id="aiAllProgress" style="display:none;align-items:center;gap:8px;font-size:11px;color:#8888aa;">
+        <span id="aiAllProgressText">준비 중...</span>
+        <div class="ai-progress-bar visible" style="width:160px;"><div class="ai-progress-fill" id="aiProgressFill"></div></div>
+      </div>
     </div>
-    <div class="ai-panel">
-      <div class="ai-panel-title">✦ AI 분석 결과</div>
-      <div class="ai-output" id="aiOutput">데이터 로드 후 분석 버튼을 눌러주세요.</div>
+    <div class="ai-panels-grid">
+      <!-- 핵심 요약 -->
+      <div class="ai-panel-item">
+        <div class="ai-panel-item-header">
+          <div class="ai-panel-item-title">① 핵심 Summary</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="ai-panel-item-meta" id="aiSavedAt-summary"></span>
+            <button class="ai-panel-item-rerun" id="rerunBtn-summary" onclick="runAISingle('summary')">↺ 재분석</button>
+          </div>
+        </div>
+        <div class="ai-output" id="aiOutput-summary">분석실행 버튼을 눌러주세요.</div>
+      </div>
+      <!-- VOC 패턴 분석 -->
+      <div class="ai-panel-item">
+        <div class="ai-panel-item-header">
+          <div class="ai-panel-item-title">② VOC·클레임 패턴</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="ai-panel-item-meta" id="aiSavedAt-voc"></span>
+            <button class="ai-panel-item-rerun" id="rerunBtn-voc" onclick="runAISingle('voc')">↺ 재분석</button>
+          </div>
+        </div>
+        <div class="ai-output" id="aiOutput-voc">분석실행 버튼을 눌러주세요.</div>
+      </div>
+      <!-- 개선 대안 제안 -->
+      <div class="ai-panel-item">
+        <div class="ai-panel-item-header">
+          <div class="ai-panel-item-title">③ 개선 대안 제안</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="ai-panel-item-meta" id="aiSavedAt-action"></span>
+            <button class="ai-panel-item-rerun" id="rerunBtn-action" onclick="runAISingle('action')">↺ 재분석</button>
+          </div>
+        </div>
+        <div class="ai-output" id="aiOutput-action">분석실행 버튼을 눌러주세요.</div>
+      </div>
+      <!-- 보고서 문구 생성 -->
+      <div class="ai-panel-item">
+        <div class="ai-panel-item-header">
+          <div class="ai-panel-item-title">④ 보고서 문구</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="ai-panel-item-meta" id="aiSavedAt-report"></span>
+            <button class="ai-panel-item-rerun" id="rerunBtn-report" onclick="runAISingle('report')">↺ 재분석</button>
+          </div>
+        </div>
+        <div class="ai-output" id="aiOutput-report">분석실행 버튼을 눌러주세요.</div>
+      </div>
     </div>
   </div>
 
@@ -1011,6 +1072,7 @@ async function loadAllData() {
     document.getElementById('aiBtn').disabled=false;
     renderAll();
     loadInsightFromSheet();
+    loadInsightAIReports();  // AI 종합 분석 패널 자동 복원
     loadFavFromSheet();
   }
   loadFromSheet();
@@ -2178,17 +2240,67 @@ async function loadFromSheet(){
 // ══════════════════════════════════════════════════════════════
 // ⑤ AI 분석
 // ══════════════════════════════════════════════════════════════
-async function runAI(type){
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.snav-item').forEach(s=>s.classList.remove('active'));
-  document.getElementById('sec-ai').classList.add('active');
-  document.querySelectorAll('.snav-item')[3].classList.add('active');
-  sessionStorage.setItem('walpimiSection','ai');
+// AI 종합 분석 — 멀티 패널
+// ══════════════════════════════════════════════════════════════
 
-  const output = document.getElementById('aiOutput');
-  const savedAt = document.getElementById('aiOutputSavedAt');
-  output.className='ai-output loading'; output.textContent='✦ AI 분석 중입니다...';
-  if(savedAt) savedAt.textContent='';
+const AI_TYPES = ['summary','voc','action','report'];
+const AI_LABELS = { summary:'① 핵심 Summary', voc:'② VOC·클레임 패턴', action:'③ 개선 대안 제안', report:'④ 보고서 문구' };
+
+// 분석실행: 4개 순차 실행 (캐시 우선)
+async function runAllAI() {
+  const btn = document.getElementById('runAllBtn');
+  const progressWrap = document.getElementById('aiAllProgress');
+  const progressText = document.getElementById('aiAllProgressText');
+  const progressFill = document.getElementById('aiProgressFill');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;"></span>분석 중...';
+  progressWrap.style.display = 'flex';
+
+  // 재분석 버튼 비활성
+  AI_TYPES.forEach(t => {
+    const b = document.getElementById('rerunBtn-'+t);
+    if (b) b.disabled = true;
+    const el = document.getElementById('aiOutput-'+t);
+    if (el) { el.className='ai-output loading'; el.textContent='대기 중...'; }
+  });
+
+  for (let i = 0; i < AI_TYPES.length; i++) {
+    const type = AI_TYPES[i];
+    progressText.textContent = `${AI_LABELS[type]} 분석 중... (${i+1}/4)`;
+    progressFill.style.width = `${(i / 4) * 100}%`;
+    const el = document.getElementById('aiOutput-'+type);
+    if (el) { el.className='ai-output loading'; el.textContent='✦ 분석 중...'; }
+    const loaded = await loadAIReportFromSheet(type);
+    if (!loaded) await runAICore(type);
+  }
+
+  progressFill.style.width = '100%';
+  progressText.textContent = '완료';
+  setTimeout(() => { progressWrap.style.display='none'; }, 1800);
+
+  btn.disabled = false;
+  btn.innerHTML = '✦ 분석실행';
+  AI_TYPES.forEach(t => { const b = document.getElementById('rerunBtn-'+t); if(b) b.disabled=false; });
+}
+
+// 재분석: 개별 타입 강제 재실행 (캐시 무시)
+async function runAISingle(type) {
+  const btn = document.getElementById('rerunBtn-'+type);
+  const runAll = document.getElementById('runAllBtn');
+  if (btn) btn.disabled = true;
+  if (runAll) runAll.disabled = true;
+  const el = document.getElementById('aiOutput-'+type);
+  if (el) { el.className='ai-output loading'; el.textContent='✦ 분석 중...'; }
+  await runAICore(type);
+  if (btn) btn.disabled = false;
+  if (runAll) runAll.disabled = false;
+}
+
+// 핵심 실행 + 저장
+async function runAICore(type) {
+  const output  = document.getElementById('aiOutput-'+type);
+  const savedAt = document.getElementById('aiSavedAt-'+type);
 
   const ds = buildDataSummary();
   const prompts = {
@@ -2199,6 +2311,7 @@ async function runAI(type){
   };
 
   try {
+    if (!SCRIPT_URL) { if(output) { output.className='ai-output'; output.textContent='⚠ SCRIPT_URL 없음'; } return; }
     const resp = await fetch(SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify({ action: 'ai', prompt: prompts[type] || prompts.summary })
@@ -2206,10 +2319,9 @@ async function runAI(type){
     const data = await resp.json();
     if (!data.ok) throw new Error(data.msg);
 
-    output.className='ai-output';
-    output.innerHTML = renderMarkdown(data.text);
+    if (output) { output.className='ai-output'; output.innerHTML = renderMarkdown(data.text); }
 
-    // 구글시트에 저장 (period + type 키 조합으로 upsert)
+    // 구글시트 저장 (period__type 키)
     const saveKey = `${DATA.period}__${type}`;
     const now = new Date().toLocaleString('ko-KR');
     fetch(SCRIPT_URL, {
@@ -2221,41 +2333,41 @@ async function runAI(type){
       })
     }).catch(e => console.warn('AI종합 저장 실패:', e));
 
-    if(savedAt) savedAt.textContent = `저장: ${now}`;
+    if (savedAt) savedAt.textContent = now;
 
-  } catch(e){
-    output.className='ai-output';
-    output.textContent='⚠ 연결 오류: ' + e.message;
+  } catch(e) {
+    if (output) { output.className='ai-output'; output.textContent='⚠ 오류: ' + e.message; }
   }
 }
 
-// 저장된 결과 있으면 불러오고, 없으면 새 분석 실행
-async function runAIWithCache(type) {
-  const output  = document.getElementById('aiOutput');
-  const savedAt = document.getElementById('aiOutputSavedAt');
-  output.className='ai-output loading'; output.textContent='불러오는 중...';
-  if(savedAt) savedAt.textContent='';
-  const loaded = await loadAIReportFromSheet(type);
-  if (!loaded) await runAI(type);
-}
-
-// AI종합분석 저장된 결과 불러오기
+// 저장된 결과 불러오기 (성공 시 true)
 async function loadAIReportFromSheet(type) {
   const saveKey = `${DATA.period}__${type}`;
   try {
+    if (!SCRIPT_URL) return false;
     const res  = await fetch(`${SCRIPT_URL}?type=insight&period=${encodeURIComponent(saveKey)}&t=${Date.now()}`);
     const data = await res.json();
     if (data.ok && data.insights && data.insights._aiReport) {
-      const output  = document.getElementById('aiOutput');
-      const savedAt = document.getElementById('aiOutputSavedAt');
-      output.className = 'ai-output';
-      output.innerHTML = renderMarkdown(data.insights._aiReport);
-      if(savedAt && data.savedAt) savedAt.textContent = `저장: ${data.savedAt}`;
+      const output  = document.getElementById('aiOutput-'+type);
+      const savedAt = document.getElementById('aiSavedAt-'+type);
+      if (output) { output.className='ai-output'; output.innerHTML = renderMarkdown(data.insights._aiReport); }
+      if (savedAt && data.savedAt) savedAt.textContent = data.savedAt;
       return true;
     }
   } catch(e) { console.warn('AI종합 불러오기 실패:', e); }
   return false;
 }
+
+// 페이지 로드 시 저장된 결과 자동 복원
+async function loadInsightAIReports() {
+  for (const type of AI_TYPES) {
+    await loadAIReportFromSheet(type);
+  }
+}
+
+// 기존 runAI / runAIWithCache — 하위호환 유지 (프롬프트 탭 등에서 참조 시)
+async function runAI(type){ await runAICore(type); }
+async function runAIWithCache(type){ const loaded = await loadAIReportFromSheet(type); if(!loaded) await runAICore(type); }
 
 // ══════════════════════════════════════════════════════════════
 // AI 인사이트 — 버튼 클릭 시 실행, 구글시트에 저장/불러오기

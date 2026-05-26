@@ -81,7 +81,9 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', '맑은 고딕', sans-
 async function loadExcel() {
   try {
     document.getElementById('loading').textContent = '📊 report.xlsx 불러오는 중...';
-    const res = await fetch('https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/report.xlsx');
+    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    const XLSX_URL = isLocal ? 'report.xlsx' : 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/report.xlsx';
+    const res = await fetch(XLSX_URL);
     if (!res.ok) throw new Error('fetch 실패: ' + res.status);
     const buf = await res.arrayBuffer();
     const wb  = XLSX.read(buf, { type:'array' });
@@ -618,15 +620,77 @@ async function saveSummaryToSheet() {
         ? `${String(pi.friday.getFullYear()).slice(2)}${String(pi.friday.getMonth()+1).padStart(2,'0')}${String(pi.friday.getDate()).padStart(2,'0')}`
         : String(pi.year);
 
+    // ── TOP5 제품별 집계 ──
+    const prodMap = {};
+    filtered.forEach(r => { if(r.p) prodMap[r.p]=(prodMap[r.p]||0)+1; });
+    const top5 = Object.entries(prodMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const total = filtered.length;
+
+    // ── TOP5 각 제품별 접수불량 항목 집계 ──
+    const top5FaultDetail = {};
+    top5.forEach(([prodName, cnt]) => {
+      const faultMap = {};
+      filtered.filter(r => r.p===prodName && r.f && typeof r.f==='string').forEach(r => {
+        r.f.split(',').forEach(f => {
+          const ft = f.trim();
+          if (ft && ft!=='888') faultMap[ft]=(faultMap[ft]||0)+1;
+        });
+      });
+      top5FaultDetail[prodName] = {
+        총건수: cnt,
+        비율: total ? ((cnt/total)*100).toFixed(1)+'%' : '0%',
+        접수불량항목: Object.entries(faultMap).sort((a,b)=>b[1]-a[1])
+          .reduce((obj,[k,v])=>{ obj[k]=v; return obj; }, {})
+      };
+    });
+
+    // ── 불량 추이 집계 ──
+    const recentP = getRecentPeriods(pi);
+    const trendDetail = recentP.map(p => {
+      const pr = raw.filter(r => r.d && p.match(r.d));
+      return {
+        기간: p.display,
+        총계: pr.length,
+        교환환불: pr.filter(r=>r.g==='교환/환불').length,
+        자재출고: pr.filter(r=>r.g==='자재출고').length,
+        수리출고: pr.filter(r=>r.g==='수리출고').length,
+      };
+    });
+
+    // ── 구분별 집계 ──
+    const gubunMap = {};
+    impFiltered.forEach(r => { if(r.gubun) gubunMap[r.gubun]=(gubunMap[r.gubun]||0)+1; });
+
+    // ── 개선항목 상세 목록 ──
+    const improveList = impFiltered.map(r => ({
+      구분: r.gubun,
+      진행단계: r.stage,
+      제품명: r.prod,
+      핵심키워드: r.kw,
+      주제: r.subject,
+      등록일: r.reg,
+      완료일: r.comp,
+    }));
+
     const summaryData = {
       period:     pi.type,
       round:      periodLabel,
-      접수총계:   filtered.length,
-      접수불량별: symTop5,
-      개선요청총계: impFiltered.length,
-      단계별:       stageMap,
-      진행중:       impFiltered.filter(r=>r.stage&&r.stage.includes('진행')).length,
-      완료:         impFiltered.filter(r=>r.stage&&r.stage.includes('완료')).length,
+
+      // 불량 TOP5
+      접수총계: total,
+      TOP5제품별: top5FaultDetail,
+
+      // 불량 추이
+      불량추이: trendDetail,
+
+      // 구분별 접수
+      구분별접수: symMap,
+
+      // 품질 개선 현황
+      개선총계: impFiltered.length,
+      개선구분별: gubunMap,
+      개선단계별: stageMap,
+      개선항목목록: improveList,
     };
 
     const resp = await fetch(SCRIPT_URL, {

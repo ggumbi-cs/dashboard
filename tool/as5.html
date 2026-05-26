@@ -364,11 +364,22 @@ async function gistLoad() {
     const res = await fetch(`${SCRIPT_URL}?action=getAS5&sheet=${encodeURIComponent(SHEET_NAME)}&t=${Date.now()}`);
     const data = await res.json();
     if (!data.ok) throw new Error(data.msg || '불러오기 실패');
-    if (Array.isArray(data.types)    && data.types.length)    filterTypes    = data.types;
-    if (Array.isArray(data.products) && data.products.length) filterProducts = data.products;
-    buildFilters();
-    setGistStatus('ok', '구글시트 연결됨 ✓');
-    setStatus('✅ 구글시트에서 필터 불러오기 완료');
+
+    if (Array.isArray(data.types) && data.types.length) {
+      // 구글시트에 데이터 있음 → 그대로 사용
+      filterTypes    = data.types;
+      filterProducts = data.products || [];
+      buildFilters();
+      setGistStatus('ok', '구글시트 연결됨 ✓');
+      setStatus('✅ 구글시트에서 필터 불러오기 완료');
+    } else {
+      // 구글시트 비어있음 → 기본값을 구글시트에 저장
+      setStatus('📝 구글시트 초기 데이터 저장 중...');
+      await gistSave();
+      buildFilters();
+      setGistStatus('ok', '구글시트 초기화 완료 ✓');
+      setStatus('✅ 기본 필터 목록을 구글시트에 저장했습니다');
+    }
   } catch(e) {
     setGistStatus('err', '연결 오류');
     setStatus('⚠ 불러오기 실패: ' + e.message + ' (기본값 사용)');

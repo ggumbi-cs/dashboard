@@ -1660,13 +1660,13 @@ function renderReport() {
     const s    = r[1]||'';
     const prod = (r[4]||'').replace(/\[(꿈비|리코코)\] /g,'');
     const kw   = r[5]||'';
-    const key  = `${prod}__${kw}`; // 즐겨찾기 식별키
+    const key  = `${r[0]||''}__${prod}__${kw}`; // 즐겨찾기 식별키 (구분+제품+키워드)
     const isFav = qualityFavs.has(key);
     const cls  = s.includes('완료')?'pill-done':s.includes('요청')?'pill-ing':'pill-pending';
     const rowCls = isFav ? 'fav-row' : '';
     return `<tr class="${rowCls}" id="qrow-${idx}">
       <td class="center">
-        <button class="fav-btn ${isFav?'active':''}" onclick="toggleQualityFav(${idx},'${key.replace(/'/g,"\\'")}')" title="${isFav?'집중관리 해제':'집중관리 등록'}">
+        <button class="fav-btn ${isFav?'active':''}" onclick="toggleQualityFav('${key.replace(/'/g,"\\'")}','${prod.replace(/'/g,"\\'")}','${kw.replace(/'/g,"\\'")}','${String(r[0]||'').replace(/'/g,"\\'")}','${String(r[1]||'').replace(/'/g,"\\'")}','${String(r[7]||'').replace(/'/g,"\\'")}','${String(r[8]||'').replace(/'/g,"\\'")}','${String(r[2]||'').replace(/'/g,"\\'")}','${String(r[3]||'').replace(/'/g,"\\'")}','${String(r[6]||'').replace(/'/g,"\\'")}'" title="${isFav?'집중관리 해제':'집중관리 등록'}">
           ${isFav?'⭐':'☆'}
         </button>
       </td>
@@ -1683,15 +1683,7 @@ function renderReport() {
   sortQualityTable();
 }
 
-function toggleQualityFav(idx, key) {
-  const wsQ = DATA.report?.Sheets['품질관리'];
-  if(!wsQ) return;
-  const qrows = XLSX.utils.sheet_to_json(wsQ, {header:1, defval:null}).slice(2).filter(r=>r&&r[1]);
-  const r = qrows[idx];
-  if(!r) return;
-
-  const prod = (r[4]||'').replace(/\[(꿈비|리코코)\] /g,'');
-  const kw   = r[5]||'';
+function toggleQualityFav(key, prod, kw, gubn, status, detail, manager, col2, col3, col6) {
   const taskName = `[집중관리] ${prod}${kw?' — '+kw:''}`;
 
   if(qualityFavs.has(key)) {
@@ -1699,7 +1691,6 @@ function toggleQualityFav(idx, key) {
     qualityFavs.delete(key);
     saveFavToSheet([...qualityFavs]);
     renderReport();
-    // 액션현황판에서도 제거 여부 확인
     const actionIdx = actionItems.findIndex(a=>a.과제명===taskName);
     if(actionIdx>=0){
       if(confirm(`액션현황판의 "${taskName}"도 함께 제거할까요?`)){
@@ -1714,7 +1705,6 @@ function toggleQualityFav(idx, key) {
     saveFavToSheet([...qualityFavs]);
     renderReport();
 
-    // 액션현황판 중복 체크 후 추가
     const exists = actionItems.some(a=>a.과제명===taskName);
     if(!exists){
       const newItem = {

@@ -1875,7 +1875,7 @@ function renderVOC() {
       return (da||0) - (db||0);
     });
 
-    const header = `<div style="display:grid;grid-template-columns:60px 56px 52px 90px 1fr;gap:6px;padding:4px 4px 6px;border-bottom:2px solid #dde3ee;margin-bottom:2px;">
+    const header = `<div style="display:grid;grid-template-columns:60px 56px 52px 200px 1fr;gap:6px;padding:4px 4px 6px;border-bottom:2px solid #dde3ee;margin-bottom:2px;">
       <span style="font-size:10px;font-weight:700;color:#888;text-align:center;">상태</span>
       <span style="font-size:10px;font-weight:700;color:#888;text-align:center;">요청일</span>
       <span style="font-size:10px;font-weight:700;color:#888;text-align:center;">경과일</span>
@@ -1899,7 +1899,7 @@ function renderVOC() {
       const prod = (r[3]||'').replace(/\[(꿈비|리코코)\] /g,'');
       const req  = (r[4]||'').replace(/\[(꿈비|리코코)\] /g,'');
       const statusCls = r[2]==='미입고'?'pill-delay':'pill-ing';
-      return `<div style="display:grid;grid-template-columns:60px 56px 52px 90px 1fr;align-items:center;gap:6px;padding:5px 4px;border-bottom:1px solid #eef0f5;">
+      return `<div style="display:grid;grid-template-columns:60px 56px 52px 200px 1fr;align-items:center;gap:6px;padding:5px 4px;border-bottom:1px solid #eef0f5;">
         <span class="status-pill ${statusCls}" style="white-space:nowrap;text-align:center;">${r[2]||''}</span>
         <span style="font-size:11px;color:#555;text-align:center;">${dateStr}</span>
         <span style="font-size:11px;font-weight:700;color:${elapsedColor};text-align:center;">${elapsedStr}</span>

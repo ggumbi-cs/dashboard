@@ -1666,7 +1666,7 @@ function renderReport() {
     const rowCls = isFav ? 'fav-row' : '';
     return `<tr class="${rowCls}" id="qrow-${idx}">
       <td class="center">
-        <button class="fav-btn ${isFav?'active':''}" onclick="toggleQualityFav('${key.replace(/'/g,"\\'")}','${prod.replace(/'/g,"\\'")}','${kw.replace(/'/g,"\\'")}','${String(r[0]||'').replace(/'/g,"\\'")}','${String(r[1]||'').replace(/'/g,"\\'")}','${String(r[7]||'').replace(/'/g,"\\'")}','${String(r[8]||'').replace(/'/g,"\\'")}','${String(r[2]||'').replace(/'/g,"\\'")}','${String(r[3]||'').replace(/'/g,"\\'")}','${String(r[6]||'').replace(/'/g,"\\'")}'" title="${isFav?'집중관리 해제':'집중관리 등록'}">
+        <button class="fav-btn ${isFav?'active':''}" onclick="toggleQualityFav(this)" data-key="${esc(key)}" data-prod="${esc(prod)}" data-kw="${esc(kw)}" title="${isFav?'집중관리 해제':'집중관리 등록'}">
           ${isFav?'⭐':'☆'}
         </button>
       </td>
@@ -1683,7 +1683,10 @@ function renderReport() {
   sortQualityTable();
 }
 
-function toggleQualityFav(key, prod, kw, gubn, status, detail, manager, col2, col3, col6) {
+function toggleQualityFav(btn) {
+  const key  = btn.dataset.key;
+  const prod = btn.dataset.prod;
+  const kw   = btn.dataset.kw;
   const taskName = `[집중관리] ${prod}${kw?' — '+kw:''}`;
 
   if(qualityFavs.has(key)) {

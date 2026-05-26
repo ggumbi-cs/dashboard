@@ -2415,14 +2415,18 @@ async function loadInsightFromSheet() {
       applyInsights(data.insights);
       const el = document.getElementById('i-total');
       if (el && data.savedAt) el.title = '저장: ' + data.savedAt;
-      // AI 추천 과제 복원
+      // AI 추천 과제 복원 — 없거나 완료 상태일 때만 추가
       if (data.insights._aiTask) {
-        actionItems = actionItems.filter(it => !it._isAiTask);
-        actionItems.unshift({ ...data.insights._aiTask, _isAiTask: true });
-        renderActionTable();
+        const existing = actionItems.find(it => it._isAiTask);
+        const isDone   = existing && (Number(existing.진행률)||0) >= 100;
+        if (!existing || isDone) {
+          actionItems = actionItems.filter(it => !it._isAiTask);
+          actionItems.unshift({ ...data.insights._aiTask, _isAiTask: true });
+          renderActionTable();
+        }
       }
     } else {
-      setInsightPlaceholder('AI 분석 버튼을 눌러 인사이트를 생성하세요', '');
+      setInsightPlaceholder('AI 분析 버튼을 눌러 인사이트를 생성하세요', '');
     }
   } catch(e) {
     setInsightPlaceholder('', '');
@@ -2567,9 +2571,14 @@ async function runAutoInsight() {
             특이사항: '',
             링크:     ''
           };
-          actionItems = actionItems.filter(it => !it._isAiTask);
-          actionItems.unshift({ ...aiTask, _isAiTask: true });
-          renderActionTable();
+          // 기존 AI추천이 없거나 완료 상태일 때만 교체
+          const existingAi = actionItems.find(it => it._isAiTask);
+          const aiDone     = existingAi && (Number(existingAi.진행률)||0) >= 100;
+          if (!existingAi || aiDone) {
+            actionItems = actionItems.filter(it => !it._isAiTask);
+            actionItems.unshift({ ...aiTask, _isAiTask: true });
+            renderActionTable();
+          }
         }
       }
     } catch(e) { console.warn('AI 추천 과제 생성 실패:', e); }

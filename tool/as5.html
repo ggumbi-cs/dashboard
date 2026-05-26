@@ -35,12 +35,7 @@ body {
 .gist-status.ok  { background: #1f5c53; color: #7ee8d8; }
 .gist-status.err { background: #5c1f1f; color: #e87e7e; }
 .gist-status.ing { background: #2e3a50; color: #7aabcc; }
-.btn-token {
-  background: #243d6a; border: 1px solid #2e5080; color: #a8c4df;
-  padding: 3px 9px; border-radius: 3px; font-size: 11px;
-  cursor: pointer; font-family: inherit;
-}
-.btn-token:hover { background: #2e5080; }
+
 
 /* ── 레이아웃 ── */
 .main {
@@ -211,37 +206,15 @@ tbody td { padding: 5px 8px; color: #333; max-width: 200px; overflow: hidden; te
 </head>
 <body>
 
-<!-- ── Token 입력 모달 ── -->
-<div class="modal-overlay" id="tokenModal">
-  <div class="modal">
-    <h3>🔑 GitHub Token 설정</h3>
-    <p>
-      Gist 연동을 위해 GitHub Personal Access Token이 필요합니다.<br>
-      입력한 Token은 이 브라우저의 <b>localStorage</b>에만 저장되며<br>
-      외부로 전송되지 않습니다.
-    </p>
-    <div class="form-group">
-      <span class="form-label">Personal Access Token</span>
-      <input class="form-input" type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-    </div>
-    <div class="form-group">
-      <span class="form-label">Gist ID</span>
-      <input class="form-input" type="text" id="gistIdInput" placeholder="85f95642bd8bbc2635c6f7059a11dd3a">
-    </div>
-    <div class="modal-btns">
-      <button class="btn btn-secondary" onclick="closeTokenModal()">취소</button>
-      <button class="btn btn-primary" onclick="saveToken()">저장 및 연결</button>
-    </div>
-  </div>
-</div>
+<!-- 구글시트 저장 방식으로 전환 — Token 모달 불필요 -->
 
 <!-- ── 상단 바 ── -->
 <div class="top-bar">
   <span class="title">📋 일일루틴 자동화 툴</span>
   <div class="right-area">
-    <span class="gist-status ing" id="gistStatus">Gist 연결 중...</span>
+    <span class="gist-status ing" id="gistStatus">구글시트 연결 중...</span>
     <span class="status-msg" id="statusMsg">초기화 중...</span>
-    <button class="btn-token" onclick="openTokenModal()">🔑 Token 설정</button>
+
   </div>
 </div>
 
@@ -335,10 +308,8 @@ tbody td { padding: 5px 8px; color: #333; max-width: 200px; overflow: hidden; te
 // ════════════════════════════════
 // 설정
 // ════════════════════════════════
-const GIST_ID_FIXED = '85f95642bd8bbc2635c6f7059a11dd3a';
-
-function getToken()  { return localStorage.getItem('gh_token') || ''; }
-function getGistId() { return localStorage.getItem('gh_gist_id') || GIST_ID_FIXED; }
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec';
+const SHEET_NAME  = 'as5_어드민자동화';
 
 const DEFAULT_TYPES = [
   "교환 : 작동불량","교환 : 기타(제품불량)","교환 : 파손/스크래치","교환 : 오염/이염",
@@ -379,7 +350,7 @@ let loadedData = null;
 let resultData = null;
 
 // ════════════════════════════════
-// Gist API
+// 구글시트 API
 // ════════════════════════════════
 function setGistStatus(state, msg) {
   const el = document.getElementById('gistStatus');
@@ -388,75 +359,45 @@ function setGistStatus(state, msg) {
 }
 
 async function gistLoad() {
-  const token = getToken();
-  if (!token) { setGistStatus('err', 'Token 없음'); buildFilters(); return; }
   setGistStatus('ing', '불러오는 중...');
   try {
-    const res = await fetch(`https://api.github.com/gists/${getGistId()}`, {
-      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const res = await fetch(`${SCRIPT_URL}?action=getAS5&sheet=${encodeURIComponent(SHEET_NAME)}&t=${Date.now()}`);
     const data = await res.json();
-    const content = data.files['config.json']?.content;
-    if (!content) throw new Error('config.json 없음');
-    const cfg = JSON.parse(content);
-    if (Array.isArray(cfg.types)    && cfg.types.length)    filterTypes    = cfg.types;
-    if (Array.isArray(cfg.products) && cfg.products.length) filterProducts = cfg.products;
+    if (!data.ok) throw new Error(data.msg || '불러오기 실패');
+    if (Array.isArray(data.types)    && data.types.length)    filterTypes    = data.types;
+    if (Array.isArray(data.products) && data.products.length) filterProducts = data.products;
     buildFilters();
-    setGistStatus('ok', 'Gist 연결됨 ✓');
-    setStatus('✅ Gist에서 필터 불러오기 완료');
+    setGistStatus('ok', '구글시트 연결됨 ✓');
+    setStatus('✅ 구글시트에서 필터 불러오기 완료');
   } catch(e) {
-    setGistStatus('err', 'Gist 오류');
-    setStatus('⚠ Gist 불러오기 실패: ' + e.message + ' (기본값 사용)');
+    setGistStatus('err', '연결 오류');
+    setStatus('⚠ 불러오기 실패: ' + e.message + ' (기본값 사용)');
     buildFilters();
   }
 }
 
 async function gistSave() {
-  const token = getToken();
-  if (!token) { setStatus('⚠ Token 없음 — Gist 저장 생략'); return; }
   setGistStatus('ing', '저장 중...');
   try {
-    const res = await fetch(`https://api.github.com/gists/${getGistId()}`, {
-      method: 'PATCH',
-      headers: {
-        Authorization: `token ${token}`,
-        Accept: 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json'
-      },
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
       body: JSON.stringify({
-        files: { 'config.json': { content: JSON.stringify({ types: filterTypes, products: filterProducts }, null, 2) } }
+        action: 'saveAS5',
+        sheet: SHEET_NAME,
+        types: filterTypes,
+        products: filterProducts
       })
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    setGistStatus('ok', 'Gist 저장됨 ✓');
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.msg || '저장 실패');
+    setGistStatus('ok', '구글시트 저장됨 ✓');
   } catch(e) {
-    setGistStatus('err', 'Gist 저장 실패');
-    setStatus('⚠ Gist 저장 실패: ' + e.message);
+    setGistStatus('err', '저장 실패');
+    setStatus('⚠ 저장 실패: ' + e.message);
   }
 }
 
-// ════════════════════════════════
-// Token 모달
-// ════════════════════════════════
-function openTokenModal() {
-  document.getElementById('tokenInput').value  = getToken();
-  document.getElementById('gistIdInput').value = getGistId();
-  document.getElementById('tokenModal').classList.remove('hidden');
-}
-function closeTokenModal() {
-  document.getElementById('tokenModal').classList.add('hidden');
-}
-async function saveToken() {
-  const t = document.getElementById('tokenInput').value.trim();
-  const g = document.getElementById('gistIdInput').value.trim();
-  if (!t) { alert('Token을 입력해주세요.'); return; }
-  if (!g) { alert('Gist ID를 입력해주세요.'); return; }
-  localStorage.setItem('gh_token', t);
-  localStorage.setItem('gh_gist_id', g);
-  closeTokenModal();
-  await gistLoad();
-}
+
 
 // ════════════════════════════════
 // 필터 UI
@@ -654,14 +595,7 @@ function setStatus(msg) { document.getElementById('statusMsg').textContent = msg
 
 // ── 시작 ──
 (async () => {
-  if (!getToken()) {
-    openTokenModal();
-    buildFilters();
-    setStatus('Token을 설정해주세요');
-    setGistStatus('err', 'Token 없음');
-  } else {
-    await gistLoad();
-  }
+  await gistLoad();
 })();
 </script>
 </body>

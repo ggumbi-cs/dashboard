@@ -1653,7 +1653,10 @@ function renderReport() {
   const tbody = document.getElementById('qualityBody');
   if(!qrows.length){ tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#aaa;padding:30px;">데이터 없음</td></tr>'; return; }
 
-  tbody.innerHTML = qrows.slice(0,30).map((r,idx) => {
+  // 구분(r[0]) 기준 정렬 → 즐겨찾기는 sortQualityTable()에서 상단 고정
+  qrows.sort((a, b) => String(a[0]||'').localeCompare(String(b[0]||''), 'ko'));
+
+  tbody.innerHTML = qrows.map((r,idx) => {
     const s    = r[1]||'';
     const prod = (r[4]||'').replace(/\[(꿈비|리코코)\] /g,'');
     const kw   = r[5]||'';

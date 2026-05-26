@@ -1875,7 +1875,15 @@ function renderVOC() {
       return (da||0) - (db||0);
     });
 
-    el.innerHTML = ir.length ? ir.map(r => {
+    const header = `<div style="display:grid;grid-template-columns:60px 56px 52px 90px 1fr;gap:6px;padding:4px 4px 6px;border-bottom:2px solid #dde3ee;margin-bottom:2px;">
+      <span style="font-size:10px;font-weight:700;color:#888;text-align:center;">상태</span>
+      <span style="font-size:10px;font-weight:700;color:#888;text-align:center;">요청일</span>
+      <span style="font-size:10px;font-weight:700;color:#888;text-align:center;">경과일</span>
+      <span style="font-size:10px;font-weight:700;color:#888;">제품구분</span>
+      <span style="font-size:10px;font-weight:700;color:#888;">요청자재</span>
+    </div>`;
+
+    el.innerHTML = ir.length ? header + ir.map(r => {
       const reqDate = parseDate(r[5]);
       let dateStr = '', elapsed = 0, elapsedStr = '', elapsedColor = '#aaa';
       if(reqDate){
@@ -1891,16 +1899,12 @@ function renderVOC() {
       const prod = (r[3]||'').replace(/\[(꿈비|리코코)\] /g,'');
       const req  = (r[4]||'').replace(/\[(꿈비|리코코)\] /g,'');
       const statusCls = r[2]==='미입고'?'pill-delay':'pill-ing';
-      return `<div style="display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #eef0f5;">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:48px;">
-          <span style="font-size:10px;color:#888;">${dateStr}</span>
-          <span style="font-size:11px;font-weight:700;color:${elapsedColor};">${elapsedStr}</span>
-        </div>
-        <div>
-          <div style="font-size:10px;color:#888;margin-bottom:1px;">${prod}</div>
-          <div style="font-size:11px;color:#333;">${req}</div>
-        </div>
-        <span class="status-pill ${statusCls}" style="white-space:nowrap;">${r[2]||''}</span>
+      return `<div style="display:grid;grid-template-columns:60px 56px 52px 90px 1fr;align-items:center;gap:6px;padding:5px 4px;border-bottom:1px solid #eef0f5;">
+        <span class="status-pill ${statusCls}" style="white-space:nowrap;text-align:center;">${r[2]||''}</span>
+        <span style="font-size:11px;color:#555;text-align:center;">${dateStr}</span>
+        <span style="font-size:11px;font-weight:700;color:${elapsedColor};text-align:center;">${elapsedStr}</span>
+        <span style="font-size:11px;color:#555;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${prod}">${prod}</span>
+        <span style="font-size:11px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${req}">${req}</span>
       </div>`;
     }).join('') : '<div style="color:#aaa;font-size:12px;padding:10px;">해당 기간 미입고 없음</div>';
   }

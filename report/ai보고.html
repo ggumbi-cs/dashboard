@@ -1660,7 +1660,8 @@ function renderReport() {
     const s    = r[1]||'';
     const prod = (r[4]||'').replace(/\[(꿈비|리코코)\] /g,'');
     const kw   = r[5]||'';
-    const key  = `${r[0]||''}__${prod}__${kw}`; // 즐겨찾기 식별키 (구분+제품+키워드)
+    const keyDetail = String(r[7]||'').trim().substring(0,20);
+    const key  = `${r[0]||''}__${prod}__${kw}__${keyDetail}`; // 즐겨찾기 식별키
     const isFav = qualityFavs.has(key);
     const cls  = s.includes('완료')?'pill-done':s.includes('요청')?'pill-ing':'pill-pending';
     const rowCls = isFav ? 'fav-row' : '';

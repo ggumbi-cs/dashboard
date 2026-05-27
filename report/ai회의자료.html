@@ -10,41 +10,41 @@
 
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --navy:#0a1628;--navy2:#0f1f3d;--navy3:#162544;
-  --blue:#1d4ed8;--blue2:#3b82f6;--blue3:#93c5fd;
-  --teal:#0d9488;--teal2:#2dd4bf;
-  --amber:#d97706;--amber2:#fbbf24;
-  --red:#dc2626;--red2:#f87171;
-  --green:#16a34a;--green2:#4ade80;
-  --purple:#7c3aed;--purple2:#a78bfa;
-  --slate:#334155;--slateL:#64748b;--slateXL:#94a3b8;
-  --border:#1e3a5f;--bg:#070e1c;--card:#0e1d35;--card2:#111e33;
-  --text:#e2eaf5;--textD:#8aaacf;
+  --navy:#1e3a5f;--navy2:#1d4ed8;--navy3:#2563eb;
+  --blue:#1d4ed8;--blue2:#2563eb;--blue3:#3b82f6;
+  --teal:#0d9488;--teal2:#14b8a6;
+  --amber:#d97706;--amber2:#f59e0b;
+  --red:#dc2626;--red2:#ef4444;
+  --green:#16a34a;--green2:#22c55e;
+  --purple:#7c3aed;--purple2:#8b5cf6;
+  --slate:#475569;--slateL:#64748b;--slateXL:#94a3b8;
+  --border:#e2e8f0;--bg:#f1f5f9;--card:#ffffff;--card2:#f8fafc;
+  --text:#1e293b;--textD:#64748b;
   --ai-from:#4f46e5;--ai-to:#0d9488;
 }
 html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto Sans KR',sans-serif;color:var(--text);font-size:13px;}
 
 /* ── 상단 헤더 ── */
 .report-header{
-  background:linear-gradient(135deg,#0a1628 0%,#0f2040 50%,#091523 100%);
+  background:linear-gradient(135deg,#1e3a5f 0%,#1d4ed8 60%,#0d9488 100%);
   border-bottom:1px solid var(--border);
   padding:20px 32px 16px;
   position:relative;overflow:hidden;
 }
 .report-header::before{
   content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse 60% 80% at 80% 50%,rgba(29,78,216,0.15) 0%,transparent 70%);
+  background:radial-gradient(ellipse 60% 80% at 80% 50%,rgba(255,255,255,0.08) 0%,transparent 70%);
   pointer-events:none;
 }
 .hdr-top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;position:relative;z-index:1;}
 .hdr-left{}
 .hdr-badge{
   display:inline-flex;align-items:center;gap:6px;
-  background:rgba(29,78,216,0.25);border:1px solid rgba(59,130,246,0.4);
-  color:#93c5fd;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);
+  color:#fff;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
   padding:3px 10px;border-radius:20px;margin-bottom:8px;
 }
-.hdr-badge span{width:6px;height:6px;border-radius:50%;background:#3b82f6;animation:blink 2s ease-in-out infinite;}
+.hdr-badge span{width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 2s ease-in-out infinite;}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
 .hdr-title{font-size:22px;font-weight:900;color:#fff;letter-spacing:-0.5px;line-height:1.2;}
 .hdr-title span{color:#3b82f6;}
@@ -53,14 +53,14 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .meta-chip{
   display:flex;align-items:center;gap:5px;
   font-size:11px;color:var(--textD);
-  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+  background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);
   padding:4px 10px;border-radius:4px;
 }
 .meta-chip b{color:var(--text);font-weight:600;}
 
 .hdr-right{flex-shrink:0;text-align:right;position:relative;z-index:1;}
 .hdr-kpi-box{
-  background:rgba(29,78,216,0.12);border:1px solid rgba(59,130,246,0.3);
+  background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);
   border-radius:8px;padding:12px 20px;text-align:center;min-width:120px;
 }
 .hdr-kpi-num{font-size:32px;font-weight:900;color:#fff;font-family:'JetBrains Mono',monospace;line-height:1;}
@@ -70,8 +70,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 /* ── AI 분석 배너 ── */
 .ai-banner{
   margin:0;padding:14px 32px;
-  background:linear-gradient(90deg,rgba(79,70,229,0.15) 0%,rgba(13,148,136,0.10) 100%);
-  border-bottom:1px solid rgba(79,70,229,0.2);
+  background:linear-gradient(90deg,rgba(79,70,229,0.08) 0%,rgba(13,148,136,0.06) 100%);
+  border-bottom:1px solid rgba(79,70,229,0.15);
   display:flex;align-items:flex-start;gap:14px;
 }
 .ai-icon{
@@ -88,8 +88,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   margin-bottom:4px;
 }
-.ai-text{font-size:12.5px;color:#c8daf0;line-height:1.65;}
-.ai-text strong{color:#e2eaf5;font-weight:600;}
+.ai-text{font-size:12.5px;color:#334155;line-height:1.65;}
+.ai-text strong{color:#1e293b;font-weight:600;}
 .ai-text .highlight{color:#fbbf24;font-weight:700;}
 .ai-text .warn{color:#f87171;font-weight:600;}
 .ai-text .good{color:#4ade80;font-weight:600;}
@@ -103,16 +103,16 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
   margin-bottom:12px;
 }
 .sec-line{width:4px;height:18px;border-radius:2px;}
-.sec-title{font-size:13px;font-weight:700;color:#fff;letter-spacing:0.3px;}
+.sec-title{font-size:13px;font-weight:700;color:#1e293b;letter-spacing:0.3px;}
 .sec-period{font-size:10px;color:var(--textD);margin-left:auto;
-  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+  background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);
   padding:2px 8px;border-radius:3px;
 }
 
 /* ── 카드 ── */
 .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
 .card-sm{padding:10px 12px;}
-.card-title{font-size:10px;font-weight:700;color:var(--textD);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.card-title{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
 
 /* ── 그리드 레이아웃 ── */
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -122,7 +122,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .grid-23{display:grid;grid-template-columns:2fr 3fr;gap:12px;}
 
 /* ── KPI 숫자 카드 ── */
-.kpi-num{font-size:26px;font-weight:900;font-family:'JetBrains Mono',monospace;color:#fff;line-height:1;}
+.kpi-num{font-size:26px;font-weight:900;font-family:'JetBrains Mono',monospace;color:#1e293b;line-height:1;}
 .kpi-sub{font-size:10px;color:var(--textD);margin-top:3px;}
 .kpi-diff{font-size:11px;font-weight:600;margin-top:4px;}
 .diff-up{color:#4ade80;}
@@ -134,9 +134,9 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .mini-bar-wrap{margin-top:8px;}
 .mini-bar-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
 .mini-bar-lbl{font-size:10px;color:var(--textD);width:80px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.mini-bar-track{flex:1;height:7px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;}
+.mini-bar-track{flex:1;height:7px;background:rgba(0,0,0,0.07);border-radius:4px;overflow:hidden;}
 .mini-bar-fill{height:100%;border-radius:4px;transition:width 0.6s ease;}
-.mini-bar-val{font-size:10px;font-weight:600;color:var(--text);width:28px;text-align:right;flex-shrink:0;}
+.mini-bar-val{font-size:10px;font-weight:600;color:#1e293b;width:28px;text-align:right;flex-shrink:0;}
 
 /* ── 추이 차트 (SVG) ── */
 .trend-chart{width:100%;height:90px;display:block;overflow:visible;}
@@ -149,13 +149,13 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .donut-leg-row{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
 .donut-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .donut-leg-lbl{font-size:10px;color:var(--textD);flex:1;}
-.donut-leg-val{font-size:11px;font-weight:700;color:var(--text);}
+.donut-leg-val{font-size:11px;font-weight:700;color:#1e293b;}
 .donut-leg-pct{font-size:9px;color:var(--textD);margin-left:3px;}
 
 /* ── 테이블 ── */
 .mini-table{width:100%;border-collapse:collapse;}
-.mini-table th{font-size:9px;color:var(--textD);font-weight:600;text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);}
-.mini-table td{font-size:11px;color:var(--text);padding:5px 6px;border-bottom:1px solid rgba(255,255,255,0.04);}
+.mini-table th{font-size:9px;color:#94a3b8;font-weight:600;text-align:left;padding:4px 6px;border-bottom:1px solid #e2e8f0;}
+.mini-table td{font-size:11px;color:var(--text);padding:5px 6px;border-bottom:1px solid rgba(0,0,0,0.05);}
 .mini-table tr:last-child td{border-bottom:none;}
 .mini-table .num{text-align:right;font-family:'JetBrains Mono',monospace;font-weight:600;}
 .mini-table .badge{
@@ -175,8 +175,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .issue-row:last-child{border-bottom:none;}
 .issue-icon{font-size:14px;flex-shrink:0;margin-top:1px;}
 .issue-body{}
-.issue-title{font-size:12px;font-weight:600;color:var(--text);line-height:1.4;}
-.issue-desc{font-size:10.5px;color:var(--textD);margin-top:2px;line-height:1.5;}
+.issue-title{font-size:12px;font-weight:600;color:#1e293b;line-height:1.4;}
+.issue-desc{font-size:10.5px;color:#64748b;margin-top:2px;line-height:1.5;}
 .issue-tag{
   display:inline-flex;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;
   margin-top:4px;
@@ -185,7 +185,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 /* ── AI 인사이트 카드 ── */
 .ai-insight{
   border:1px solid rgba(79,70,229,0.3);
-  background:linear-gradient(135deg,rgba(79,70,229,0.08) 0%,rgba(13,148,136,0.05) 100%);
+  background:linear-gradient(135deg,rgba(79,70,229,0.05) 0%,rgba(13,148,136,0.03) 100%);
   border-radius:8px;padding:14px 16px;
 }
 .ai-insight-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
@@ -204,8 +204,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
   display:flex;align-items:center;justify-content:center;
   font-size:9px;font-weight:700;color:#fff;margin-top:1px;
 }
-.ai-point-text{font-size:12px;color:#c8daf0;line-height:1.6;}
-.ai-point-text b{color:#e2eaf5;}
+.ai-point-text{font-size:12px;color:#334155;line-height:1.6;}
+.ai-point-text b{color:#1e293b;}
 .ai-point-text .y{color:#fbbf24;}
 .ai-point-text .r{color:#f87171;}
 .ai-point-text .g{color:#4ade80;}
@@ -214,19 +214,19 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .progress-wrap{margin-top:10px;}
 .progress-row{margin-bottom:8px;}
 .progress-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;}
-.progress-lbl{font-size:11px;color:var(--text);}
-.progress-pct{font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#fff;}
-.progress-track{height:8px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;}
+.progress-lbl{font-size:11px;color:#334155;}
+.progress-pct{font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#1e293b;}
+.progress-track{height:8px;background:rgba(0,0,0,0.07);border-radius:4px;overflow:hidden;}
 .progress-fill{height:100%;border-radius:4px;}
 
 /* ── 판매현황 ── */
 .sale-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
 .sale-row:last-child{border-bottom:none;}
-.sale-name{flex:1;font-size:11.5px;color:var(--text);}
+.sale-name{flex:1;font-size:11.5px;color:#1e293b;}
 .sale-nums{display:flex;gap:16px;flex-shrink:0;}
 .sale-num{text-align:right;}
-.sale-num .n{font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#fff;}
-.sale-num .l{font-size:9px;color:var(--textD);display:block;}
+.sale-num .n{font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#1e293b;}
+.sale-num .l{font-size:9px;color:#94a3b8;display:block;}
 
 /* ── 반응형 ── */
 @media(max-width:900px){.grid2,.grid3,.grid4{grid-template-columns:1fr 1fr;}.grid4{grid-template-columns:1fr 1fr;}.grid-52,.grid-23{grid-template-columns:1fr;}}
@@ -235,7 +235,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 @media print{body{background:#fff;}:root{--bg:#fff;--card:#f8fafc;--navy:#000;--text:#000;--textD:#555;--border:#ddd;}}
 
 /* ── 푸터 ── */
-.footer{text-align:center;padding:20px;font-size:10px;color:var(--textD);border-top:1px solid var(--border);margin-top:8px;}
+.footer{text-align:center;padding:20px;font-size:10px;color:var(--textD);border-top:1px solid var(--border);margin-top:8px;background:#f8fafc;}
 
 /* ── 빠른 수치 요약 ── */
 .quick-bar{
@@ -244,11 +244,11 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .quick-item{
   flex:1;padding:12px 10px;text-align:center;
   border-right:1px solid var(--border);
-  background:var(--card2);
+  background:#fff;
 }
 .quick-item:last-child{border-right:none;}
-.quick-num{font-size:20px;font-weight:900;font-family:'JetBrains Mono',monospace;color:#fff;line-height:1;}
-.quick-lbl{font-size:9px;color:var(--textD);margin-top:3px;letter-spacing:0.5px;}
+.quick-num{font-size:20px;font-weight:900;font-family:'JetBrains Mono',monospace;color:#1e293b;line-height:1;}
+.quick-lbl{font-size:9px;color:#64748b;margin-top:3px;letter-spacing:0.5px;}
 .quick-diff{font-size:10px;font-weight:600;margin-top:2px;}
 
 </style>
@@ -274,8 +274,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
     <div class="hdr-right">
       <div class="hdr-kpi-box">
         <div class="hdr-kpi-num">1,786</div>
-        <div class="hdr-kpi-label">주간 총인입건수</div>
-        <div class="hdr-kpi-sub">▲ 125건 전주比</div>
+        <div class="hdr-kpi-label" style="color:rgba(255,255,255,0.8);">주간 총인입건수</div>
+        <div class="hdr-kpi-sub" style="color:#bbf7d0;">▲ 125건 전주比</div>
       </div>
     </div>
   </div>
@@ -293,7 +293,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       특히 <strong>교환/불량</strong> 태그가 <span class="warn">306건(+14.2%↑)</span>으로 역대 최고치에 근접하며 <strong class="warn">휴대용 분유포트 불량 이슈</strong>가 주요 원인입니다.
       긍정 지표로는 콜 수신응답률이 <span class="good">86.0%</span>로 <span class="good">최근 4주 최고치</span>를 기록했으며,
       자재수급 미입고 건은 배터리 분리형 포트·뚜껑 등 <span class="warn">3건 지속 지연</span> 중입니다.
-      <strong>04월 반품율(꿈비 4.34%, 소브 5.10%)</strong>은 전월 대비 <span class="warn">상승 추세</span>로 즉각적인 원인 분석이 필요합니다.
+      <strong>04월 꿈비 반품율 4.34%</strong>는 전월比 상승 추세이며, <strong>소브 5.10%</strong>는 반품·교환 건수가 <span class="good">104건→8건으로 급감</span>했음에도 <span class="warn">주문량 감소폭이 더 커서 율이 오른 케이스</span>로, 실질 반품 증가와는 구분해서 볼 필요가 있습니다.
     </div>
   </div>
 </div>
@@ -328,7 +328,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
     <div class="quick-item">
       <div class="quick-num">5.10%</div>
       <div class="quick-lbl">소브 반품율(04월)</div>
-      <div class="quick-diff diff-dn">▲ +2.66%p</div>
+      <div class="quick-diff" style="color:#d97706;font-size:9px;">건수↓ 주문량↓↓</div>
     </div>
     <div class="quick-item">
       <div class="quick-num">3건</div>
@@ -388,7 +388,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         <div style="margin-bottom:10px;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <span style="font-size:11px;color:var(--textD);">총유입 Call</span>
-            <span style="font-size:20px;font-weight:900;color:#fff;font-family:'JetBrains Mono',monospace;">186건</span>
+            <span style="font-size:20px;font-weight:900;color:#1e293b;font-family:'JetBrains Mono',monospace;">186건</span>
           </div>
         </div>
         <div class="mini-bar-wrap">
@@ -404,7 +404,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
           </div>
         </div>
         <div style="margin-top:10px;text-align:center;">
-          <div style="font-size:28px;font-weight:900;color:#4ade80;font-family:'JetBrains Mono',monospace;">86.0%</div>
+          <div style="font-size:28px;font-weight:900;color:#16a34a;font-family:'JetBrains Mono',monospace;">86.0%</div>
           <div style="font-size:10px;color:var(--textD);">수신응답률 (전주 80.4% → <span style="color:#4ade80;">+5.6%p ↑</span>)</div>
         </div>
       </div>
@@ -473,7 +473,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         <div class="ai-point">
           <div class="ai-num">2</div>
           <div class="ai-point-text">
-            <b>소브 04월 반품율 5.10%</b>는 <span class="r">전월比 +2.66%p 급등</span>으로 소브 제품군에서 특정 불량이 집중 발생했을 가능성이 높습니다. 제품별 불량 유형 교차 분석이 필요합니다.
+            <b>소브 04월 반품율 5.10%</b>는 실제 반품·교환 건수가 <span class="g">104건→8건으로 급감</span>했음에도 율이 오른 케이스입니다. <span class="y">분모인 주문량이 더 크게 줄어든 것</span>이 원인으로, 반품이 늘어난 것이 아니라 <b>판매량 자체가 위축된 신호</b>로 해석해야 합니다.
           </div>
         </div>
         <div class="ai-point">
@@ -579,37 +579,37 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
             <div style="font-size:9px;color:var(--textD);">총 출고</div>
           </div>
           <div style="text-align:center;flex:1;">
-            <div style="font-size:22px;font-weight:900;color:#3b82f6;font-family:'JetBrains Mono',monospace;">30,021</div>
-            <div style="font-size:9px;color:var(--textD);">총 배송</div>
+            <div style="font-size:22px;font-weight:900;color:#3b82f6;font-family:'JetBrains Mono',monospace;">26,375</div>
+            <div style="font-size:9px;color:var(--textD);">분유포트</div>
           </div>
           <div style="text-align:center;flex:1;">
-            <div style="font-size:22px;font-weight:900;color:#f87171;font-family:'JetBrains Mono',monospace;">3,604</div>
-            <div style="font-size:9px;color:var(--textD);">총 불량 (12.0%)</div>
+            <div style="font-size:22px;font-weight:900;color:#f87171;font-family:'JetBrains Mono',monospace;">59,657</div>
+            <div style="font-size:9px;color:var(--textD);">쉐이커 합계</div>
           </div>
         </div>
         <div class="sale-row">
           <div class="sale-name">휴대용 분유포트</div>
           <div class="sale-nums">
-            <div class="sale-num"><span class="l">출고</span><span class="n">18,886</span></div>
-            <div class="sale-num"><span class="l">불량율</span><span class="n" style="color:#f87171;">15.0%</span></div>
+            <div class="sale-num"><span class="l">배송</span><span class="n">26,375</span></div>
+            <div class="sale-num"><span class="l">불량율</span><span class="n" style="color:#f87171;">7.8%</span></div>
           </div>
         </div>
         <div class="sale-row">
           <div class="sale-name">분유쉐이커(뭉침없이)</div>
           <div class="sale-nums">
-            <div class="sale-num"><span class="l">배송</span><span class="n">8,370</span></div>
-            <div class="sale-num"><span class="l">불량율</span><span class="n" style="color:#fbbf24;">10.3%</span></div>
+            <div class="sale-num"><span class="l">배송</span><span class="n">15,843</span></div>
+            <div class="sale-num"><span class="l">불량율</span><span class="n" style="color:#fbbf24;">5.4%</span></div>
           </div>
         </div>
         <div class="sale-row">
           <div class="sale-name">분유쉐이커(일반)</div>
           <div class="sale-nums">
-            <div class="sale-num"><span class="l">배송</span><span class="n">7,362</span></div>
-            <div class="sale-num"><span class="l">불량율</span><span class="n" style="color:#4ade80;">4.9%</span></div>
+            <div class="sale-num"><span class="l">배송</span><span class="n">43,814</span></div>
+            <div class="sale-num"><span class="l">불량율</span><span class="n" style="color:#4ade80;">0.8%</span></div>
           </div>
         </div>
         <div style="margin-top:10px;padding:8px;background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.2);border-radius:6px;">
-          <div style="font-size:10px;color:#f87171;font-weight:700;">⚠ AI 분석: 휴대용 분유포트 불량율 15.0%는 심각 수준</div>
+          <div style="font-size:10px;color:#dc2626;font-weight:700;">⚠ AI 분석: 휴대용 분유포트 불량율 7.8%는 심각 수준</div>
           <div style="font-size:10px;color:var(--textD);margin-top:3px;">출고 18,886건 중 2,055건 불량. 배터리 조립·뚜껑 이슈와 직결. 긴급 품질 개선 없이 반품율 추가 상승 불가피.</div>
         </div>
       </div>
@@ -659,7 +659,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
           </div>
         </div>
         <div style="margin-top:12px;padding:8px;background:rgba(79,70,229,0.08);border:1px solid rgba(79,70,229,0.2);border-radius:6px;">
-          <div style="font-size:10px;color:#a78bfa;font-weight:700;">🤖 AI 인사이트: ⑥ 출시 전 품질검증이 36.7%로 최저</div>
+          <div style="font-size:10px;color:#6d28d9;font-weight:700;">🤖 AI 인사이트: ⑥ 출시 전 품질검증이 36.7%로 최저</div>
           <div style="font-size:10px;color:var(--textD);margin-top:3px;">현재 분유포트 불량 이슈는 출시 전 검증 체계 미흡과 직결. ⑥번 목표 가속화가 전체 품질지표 개선의 핵심 레버입니다.</div>
         </div>
       </div>
@@ -687,7 +687,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         <div class="ai-num" style="background:linear-gradient(135deg,#d97706,#b45309);">2</div>
         <div class="ai-point-text">
           <b>이번 주 내</b><br>
-          <span class="y">소브 반품율 5.10% 급등</span> — 소브 제품 불량 유형별 원인 분석 착수. 특정 제품/로트 집중 불량 여부 확인 필요.
+          <span class="y">소브 반품율 5.10%</span> — 건수는 104→8건으로 감소. <b>율 상승의 실질 원인은 주문량 위축</b>. 반품 자체보다 소브 판매량 회복 전략 검토가 우선입니다.
         </div>
       </div>
       <div class="ai-point" style="background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:6px;padding:10px;">
@@ -749,8 +749,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
     // 가이드 + y축 (0~1000, 200단위)
     [0,200,400,600,800,1000].forEach(v => {
       const y = padT + (1 - v/maxV) * plotH;
-      html += `<line x1="${padL}" x2="${W-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,0.07)" stroke-width="0.5"/>`;
-      if(v>0) html += `<text x="${padL-3}" y="${(y+3).toFixed(1)}" text-anchor="end" font-size="9" fill="#64748b">${v}</text>`;
+      html += `<line x1="${padL}" x2="${W-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>`;
+      if(v>0) html += `<text x="${padL-3}" y="${(y+3).toFixed(1)}" text-anchor="end" font-size="9" fill="#94a3b8">${v}</text>`;
     });
     weeks.forEach((w, wi) => {
       const groupX = padL + wi*cW + (cW - groupW)/2;
@@ -767,10 +767,10 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       const topBarH = (topVal/maxV)*plotH;
       const totY = padT + plotH - topBarH - 4;
       const totX = groupX + groupW/2;
-      html += `<text x="${totX.toFixed(1)}" y="${totY.toFixed(1)}" text-anchor="middle" font-size="9" fill="#c8daf0" font-weight="600">${tot}</text>`;
+      html += `<text x="${totX.toFixed(1)}" y="${totY.toFixed(1)}" text-anchor="middle" font-size="9" fill="#475569" font-weight="700">${tot}</text>`;
       // x축
       const lblX = padL + wi*cW + cW/2;
-      html += `<text x="${lblX.toFixed(1)}" y="${(H-3).toFixed(1)}" text-anchor="middle" font-size="9" fill="#64748b">${wlbl[wi]}</text>`;
+      html += `<text x="${lblX.toFixed(1)}" y="${(H-3).toFixed(1)}" text-anchor="middle" font-size="9" fill="#94a3b8">${wlbl[wi]}</text>`;
     });
     svg.innerHTML = html;
   }
@@ -794,8 +794,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
     let html='';
     [0,2,4,6].forEach(v=>{
       const y=padT+(1-v/maxV)*plotRH;
-      html+=`<line x1="${padL}" x2="${RW-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,0.07)" stroke-width="0.5"/>`;
-      html+=`<text x="${padL-3}" y="${(y+3).toFixed(1)}" text-anchor="end" font-size="9" fill="#64748b">${v}%</text>`;
+      html+=`<line x1="${padL}" x2="${RW-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>`;
+      html+=`<text x="${padL-3}" y="${(y+3).toFixed(1)}" text-anchor="end" font-size="9" fill="#94a3b8">${v}%</text>`;
     });
     function pts(arr){return arr.map((v,i)=>`${(padL+i*cW).toFixed(1)},${(padT+(1-v/maxV)*plotRH).toFixed(1)}`).join(' ');}
     html+=`<polyline points="${pts(ggumbi)}" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>`;

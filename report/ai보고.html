@@ -2873,8 +2873,41 @@ function buildDataSummary(){
       const d=qm.data;
       lines.push(`\n[품질관리 마감 (${qm.period} · ${qm.savedAt})]`);
       if(d.접수총계!=null) lines.push(`  AS접수 총계: ${d.접수총계}건`);
-      if(d.접수불량별&&Object.keys(d.접수불량별).length)
-        lines.push(`  접수불량 TOP: `+Object.entries(d.접수불량별).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`${k}(${v}건)`).join(', '));
+      if(d.구분별접수&&Object.keys(d.구분별접수).length)
+        lines.push(`  구분별: `+Object.entries(d.구분별접수).map(([k,v])=>`${k} ${v}건`).join(' / '));
+
+      // TOP5 제품별 접수 비중 + 주요 불량유형
+      if(d.TOP5제품별&&Object.keys(d.TOP5제품별).length){
+        lines.push(`\n[품질관리 제품별 접수 비중]`);
+        Object.entries(d.TOP5제품별).forEach(([prod, info])=>{
+          const name = prod.replace(/\[(꿈비|리코코|집계)\] /g,'').substring(0,20);
+          const top3 = Object.entries(info.접수불량항목||{})
+            .sort((a,b)=>b[1]-a[1]).slice(0,3)
+            .map(([k,v])=>`${k} ${v}건`).join(', ');
+          lines.push(`  ${name}: ${info.총건수}건(${info.비율}) · 주요불량: ${top3}`);
+        });
+      }
+
+      // 불량 추이 (교환환불 기준)
+      if(d.불량추이&&d.불량추이.length){
+        lines.push(`\n[불량 추이 (교환환불 기준)]`);
+        const trend = d.불량추이.map(t=>`${t.기간} ${t.교환환불}건`).join(' → ');
+        const first = d.불량추이[0].교환환불;
+        const last  = d.불량추이[d.불량추이.length-1].교환환불;
+        const dir   = last > first ? '↑' : last < first ? '↓' : '→';
+        lines.push(`  ${trend} ${dir}`);
+      }
+
+      // 개선 진행 항목
+      if(d.개선항목목록&&d.개선항목목록.length){
+        lines.push(`\n[개선 진행 중 (${d.개선총계||0}건)]`);
+        d.개선항목목록.forEach(item=>{
+          const prod = (item.제품명||'').replace(/\[(꿈비|리코코|임시|집계)\] /g,'').substring(0,20);
+          const done = item.완료일 ? '완료' : '진행중';
+          lines.push(`  ${prod} · ${item.핵심키워드||''} · ${item.진행단계||''} (${done})`);
+        });
+      }
+
       if(d.개선요청총계!=null)
         lines.push(`  품질개선요청: 총${d.개선요청총계}건 (진행중 ${d.진행중||0} / 완료 ${d.완료||0})`);
     }

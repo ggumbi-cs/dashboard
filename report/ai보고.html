@@ -2784,9 +2784,9 @@ function buildDataSummary(){
         symProd[sym][prod]=(symProd[sym][prod]||0)+1;
       });
       lines.push('\n[AS 접수불량별 주요 제품]');
-      Object.entries(symProd).sort((a,b)=>Object.values(b[1]).reduce((x,y)=>x+y,0)-Object.values(a[1]).reduce((x,y)=>x+y,0)).slice(0,5).forEach(([sym,prods])=>{
+      Object.entries(symProd).sort((a,b)=>Object.values(b[1]).reduce((x,y)=>x+y,0)-Object.values(a[1]).reduce((x,y)=>x+y,0)).slice(0,10).forEach(([sym,prods])=>{
         const total=Object.values(prods).reduce((a,b)=>a+b,0);
-        const top=Object.entries(prods).sort((a,b)=>b[1]-a[1]).slice(0,2).map(([p,c])=>`${p}(${c}건)`).join(', ');
+        const top=Object.entries(prods).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([p,c])=>`${p}(${c}건·${total>0?((c/total)*100).toFixed(1):'0'}%)`).join(', ');
         lines.push(`  [${sym}] 총${total}건 → ${top}`);
       });
     }

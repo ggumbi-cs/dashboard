@@ -281,7 +281,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
     <div class="snav-item" onclick="showSection('voc',this)">② VOC·클레임 분석</div>
     <div class="snav-item" onclick="showSection('action',this)">③ 액션 현황판</div>
     <div class="snav-item" onclick="showSection('ai',this)">④ AI 종합 분석</div>
-    <div class="snav-item" onclick="showSection('aireport',this)">⑤ AI 간이보고</div>
+    <div class="snav-item" onclick="showSection('meeting',this)">⑤ AI 간이보고</div>
   </div>
   <div style="display:flex;gap:6px;flex-shrink:0;margin-left:auto;">
     <button onclick="toggleReport(this)" style="padding:5px 12px;border:1.5px solid #cbd5e1;border-radius:6px;background:#f8fafc;color:#64748b;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font);" title="품질 개선 요청 참고자료">📋 품질현황</button>
@@ -487,17 +487,6 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
     <div id="actionCardGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;"></div>
   </div>
 
-  <!-- ⑤ AI 간이보고 -->
-  <div class="section" id="sec-aireport">
-    <div class="sec-title">AI 간이보고</div>
-    <iframe
-      id="aireportFrame"
-      src=""
-      style="width:100%;height:80vh;border:none;border-radius:10px;background:#fff;"
-      loading="lazy">
-    </iframe>
-  </div>
-
   <!-- 프롬프트 관리 (숨김 섹션) -->
   <div class="section" id="sec-prompt">
     <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;">
@@ -513,7 +502,17 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
     <div id="promptCards"></div>
   </div>
 
+  <!-- ⑤ AI 간이보고 (회의자료 iframe) -->
+  <div class="section" id="sec-meeting">
+    <div class="sec-title">AI 간이보고 · 주간 회의자료</div>
+    <iframe id="meetingFrame"
+      src=""
+      style="width:100%;height:calc(100vh - 180px);border:none;border-radius:8px;display:block;background:#070e1c;"
+    ></iframe>
+  </div>
+
   <!-- ⑤ AI -->
+  <!-- (원래 주석 복원용) -->
   <div class="section" id="sec-ai">
     <div class="sec-title">AI 종합 분석</div>
     <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
@@ -948,12 +947,12 @@ function showSection(id, el) {
   document.getElementById('sec-'+id).classList.add('active');
   el.classList.add('active');
   sessionStorage.setItem('walpimiSection', id);
-
-  // AI 간이보고 탭 — iframe 최초 1회 로드
-  if (id === 'aireport') {
-    const frame = document.getElementById('aireportFrame');
-    if (frame && !frame.src) {
-      frame.src = 'https://ggumbi-cs.github.io/dashboard/report/ai회의자료.html';
+  // meeting 탭: iframe 로드 (period 파라미터 전달)
+  if (id === 'meeting') {
+    const frame = document.getElementById('meetingFrame');
+    if (frame && !frame.src.includes('ai회의자료')) {
+      const period = (DATA && DATA.period) ? DATA.period : '';
+      frame.src = 'ai회의자료.html' + (period ? '?period=' + encodeURIComponent(period) : '');
     }
   }
 }

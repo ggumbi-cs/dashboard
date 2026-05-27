@@ -62,7 +62,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .kpi-card.red    { border-left-color:var(--red); }
 .kpi-card.green  { border-left-color:var(--green); }
 .kpi-card.yellow { border-left-color:var(--yellow); }
-.kpi-label { font-size:11px; color:var(--muted); margin-bottom:6px; }
+.kpi-label { font-size:11px; color:var(--muted); margin-bottom:6px; display:flex; align-items:center; justify-content:space-between; gap:6px; }
 .kpi-val   { font-size:26px; font-weight:800; color:var(--text); line-height:1; }
 .kpi-sub   { font-size:11px; color:var(--sub); margin-top:4px; }
 .kpi-delta { font-size:11px; font-weight:700; margin-top:5px; }
@@ -163,7 +163,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .action-card-title { font-size:12.5px; font-weight:700; color:var(--navy); flex:1; line-height:1.45; }
 .action-card-badge { font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; white-space:nowrap; flex-shrink:0; }
 .badge-ai     { background:#f59e0b; color:#fff; }
-.badge-insight { display:inline-flex; align-items:center; gap:3px; font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; background:#7c3aed; color:#fff; margin-bottom:4px; opacity:.85; }
+.badge-insight { display:inline-flex; align-items:center; gap:3px; font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; background:#7c3aed; color:#fff; opacity:.85; flex-shrink:0; }
 .badge-issue  { background:#dc2626; color:#fff; }
 .badge-core   { background:#fef3c7; color:#92400e; }
 .badge-normal { background:#e2e8f0; color:#475569; }
@@ -295,7 +295,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
     <div class="sec-title"><span id="summary-title">이번 달 핵심 지표</span></div>
     <div class="grid-4" style="margin-bottom:16px;">
       <div class="kpi-card blue">
-        <div class="kpi-label">총 상담 인입</div>
+        <div class="kpi-label">총 상담 인입<span class="badge-insight" id="b-total" style="display:none;">✦ AI분석</span></div>
         <div class="kpi-card-body">
           <div class="kpi-card-left">
             <div class="kpi-val" id="s-total">-</div>
@@ -306,7 +306,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
         </div>
       </div>
       <div class="kpi-card teal">
-        <div class="kpi-label">ALF 해결율</div>
+        <div class="kpi-label">ALF 해결율<span class="badge-insight" id="b-alf" style="display:none;">✦ AI분석</span></div>
         <div class="kpi-card-body">
           <div class="kpi-card-left">
             <div class="kpi-val" id="s-alf">-</div>
@@ -317,7 +317,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
         </div>
       </div>
       <div class="kpi-card orange">
-        <div class="kpi-label">반품/교환율 (꿈비)</div>
+        <div class="kpi-label">반품/교환율 (꿈비)<span class="badge-insight" id="b-return" style="display:none;">✦ AI분석</span></div>
         <div class="kpi-card-body">
           <div class="kpi-card-left">
             <div class="kpi-val" id="s-return">-</div>
@@ -328,7 +328,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
         </div>
       </div>
       <div class="kpi-card red">
-        <div class="kpi-label">품질검사</div>
+        <div class="kpi-label">품질검사<span class="badge-insight" id="b-quality" style="display:none;">✦ AI분석</span></div>
         <div class="kpi-card-body">
           <div class="kpi-card-left">
             <div class="kpi-val" id="s-quality">-</div>
@@ -339,7 +339,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
         </div>
       </div>
       <div class="kpi-card green">
-        <div class="kpi-label">가전 AS 처리</div>
+        <div class="kpi-label">가전 AS 처리<span class="badge-insight" id="b-as" style="display:none;">✦ AI분석</span></div>
         <div class="kpi-card-body">
           <div class="kpi-card-left">
             <div class="kpi-val" id="s-as">-</div>
@@ -350,7 +350,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
         </div>
       </div>
       <div class="kpi-card yellow">
-        <div class="kpi-label">자재 미입고 건</div>
+        <div class="kpi-label">자재 미입고 건<span class="badge-insight" id="b-issue" style="display:none;">✦ AI분석</span></div>
         <div class="kpi-card-body">
           <div class="kpi-card-left">
             <div class="kpi-val" id="s-issue">-</div>
@@ -361,7 +361,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
         </div>
       </div>
       <div class="kpi-card blue">
-        <div class="kpi-label">고객 만족도</div>
+        <div class="kpi-label">고객 만족도<span class="badge-insight" id="b-satisfaction" style="display:none;">✦ AI분석</span></div>
         <div class="kpi-card-body">
           <div class="kpi-card-left">
             <div class="kpi-val" id="s-satisfaction">-</div>
@@ -372,7 +372,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
         </div>
       </div>
       <div class="kpi-card teal">
-        <div class="kpi-label">수신 응답율</div>
+        <div class="kpi-label">수신 응답율<span class="badge-insight" id="b-answer" style="display:none;">✦ AI분석</span></div>
         <div class="kpi-card-body">
           <div class="kpi-card-left">
             <div class="kpi-val" id="s-answer">-</div>
@@ -2498,17 +2498,28 @@ function setInsightPlaceholder(msg, state) {
 
 function applyInsights(insights) {
   const ids = ['total','alf','return','quality','as','issue','satisfaction','answer','channel','returnchart','vocReturn','vocAS','vocProduct'];
+  const kpiIds = ['total','alf','return','quality','as','issue','satisfaction','answer'];
   const badge = `<span class="badge-insight">✦ AI분석</span>\n`;
+
   ids.forEach(id => {
     const el = document.getElementById('i-'+id);
     if (!el) return;
     const isCard = ['channel','returnchart','vocReturn','vocAS','vocProduct'].includes(id);
+    const isKpi  = kpiIds.includes(id);
+
     if (insights[id]) {
       el.className = isCard ? 'card-insight' : 'kpi-insight done';
-      // 뱃지 + 텍스트 (XSS 방지: 값은 textNode로)
-      el.innerHTML = badge;
-      const txt = document.createTextNode(insights[id]);
-      el.appendChild(txt);
+
+      if (isKpi) {
+        // KPI 8종: 라벨에 뱃지 표시, 인사이트 카드엔 텍스트만
+        const badgeEl = document.getElementById('b-'+id);
+        if (badgeEl) badgeEl.style.display = 'inline-flex';
+        el.textContent = insights[id];
+      } else {
+        // card-insight: 뱃지 + 텍스트
+        el.innerHTML = badge;
+        el.appendChild(document.createTextNode(insights[id]));
+      }
     }
   });
 }

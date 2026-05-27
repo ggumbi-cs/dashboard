@@ -423,26 +423,32 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
     <div class="sec-title">VOC · 클레임 분석</div>
     <div class="grid-2" style="margin-bottom:14px;">
       <div class="card">
-        <div class="card-title"><span class="dot" style="background:var(--orange)"></span>반품 사유별 건수 (꿈비)</div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px;">
+          <div class="card-title" style="margin-bottom:0;"><span class="dot" style="background:var(--orange)"></span>반품 사유별 건수 (꿈비)</div>
+          <div class="card-insight" id="i-vocReturn" style="width:38%;flex-shrink:0;margin-top:0;"></div>
+        </div>
         <div style="display:flex;gap:12px;align-items:flex-start;">
           <div style="flex:1;min-width:0;"><div class="voc-bar-wrap" id="vocReturn"></div></div>
-          <div class="card-insight" id="i-vocReturn" style="width:38%;flex-shrink:0;"></div>
         </div>
       </div>
       <div class="card">
-        <div class="card-title"><span class="dot" style="background:var(--red)"></span>AS 접수불량 유형 TOP 10</div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px;">
+          <div class="card-title" style="margin-bottom:0;"><span class="dot" style="background:var(--red)"></span>AS 접수불량 유형 TOP 10</div>
+          <div class="card-insight" id="i-vocAS" style="width:38%;flex-shrink:0;margin-top:0;"></div>
+        </div>
         <div style="display:flex;gap:12px;align-items:flex-start;">
           <div style="flex:1;min-width:0;"><div class="voc-bar-wrap" id="vocAS"></div></div>
-          <div class="card-insight" id="i-vocAS" style="width:38%;flex-shrink:0;"></div>
         </div>
       </div>
     </div>
     <div class="grid-2">
       <div class="card">
-        <div class="card-title"><span class="dot" style="background:var(--teal)"></span>반품 제품별 집계</div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px;">
+          <div class="card-title" style="margin-bottom:0;"><span class="dot" style="background:var(--teal)"></span>반품 제품별 집계</div>
+          <div class="card-insight" id="i-vocProduct" style="width:38%;flex-shrink:0;margin-top:0;"></div>
+        </div>
         <div style="display:flex;gap:12px;align-items:flex-start;">
           <div style="flex:1;min-width:0;"><div class="voc-bar-wrap" id="vocProduct"></div></div>
-          <div class="card-insight" id="i-vocProduct" style="width:38%;flex-shrink:0;"></div>
         </div>
       </div>
       <div class="card">

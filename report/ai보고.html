@@ -163,6 +163,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .action-card-title { font-size:12.5px; font-weight:700; color:var(--navy); flex:1; line-height:1.45; }
 .action-card-badge { font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; white-space:nowrap; flex-shrink:0; }
 .badge-ai     { background:#f59e0b; color:#fff; }
+.badge-insight { display:inline-flex; align-items:center; gap:3px; font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; background:#7c3aed; color:#fff; margin-bottom:4px; opacity:.85; }
 .badge-issue  { background:#dc2626; color:#fff; }
 .badge-core   { background:#fef3c7; color:#92400e; }
 .badge-normal { background:#e2e8f0; color:#475569; }
@@ -1256,7 +1257,7 @@ function renderSummary() {
       setText('s-total', curTotal ? curTotal.toLocaleString()+'건' : '-');
       if(P.mode!=='year') renderDelta('d-total', CUR.total, PREV.total, '건', false, 0);
       else document.getElementById('d-total').innerHTML='';
-      renderVocBars('channelChart', curChMap, COLORS);
+      renderVocBars('channelChart', curChMap, COLORS, prevChMap);
 
       // ALF: 월간 마감 우선 → 없으면 최신 마감 리미트 → 주간 합산 fallback
       const alfMonthMap={};  // key=월간마감문자열, val={heal,total}
@@ -1489,7 +1490,7 @@ function renderSummary() {
       // 반품 사유 차트
       // - 월간: 월간 마감 행 매칭
       // - 주간: 해당 주차 숫자 정확 매칭
-      const reasonMap={};
+      const reasonMap={}, prevReasonMap={};
       for (let i=2; i<rows.length; i++) {
         const r=rows[i]; if(!r||r[0]!=='반품현황 (반품/교환율만 제외)'||r[3]!=='꿈비'||!r[4]) continue;
         if(P.mode==='year') {
@@ -1498,14 +1499,32 @@ function renderSummary() {
           const wk = r[2];
           const monthMatch = (wk === P.monthStr);
           const weekMatch  = (typeof wk === 'number' && weekInMonth(wk, P.weekPrefix));
-          if (monthMatch || weekMatch) reasonMap[r[4]]=(reasonMap[r[4]]||0)+(r[7]||0);
+          const prevMonthMatch = (wk === P.prevMonthStr);
+          const prevWeekMatch  = (typeof wk === 'number' && weekInMonth(wk, P.prevWeekPrefix));
+          if (monthMatch || weekMatch)           reasonMap[r[4]]=(reasonMap[r[4]]||0)+(r[7]||0);
+          if (prevMonthMatch || prevWeekMatch) prevReasonMap[r[4]]=(prevReasonMap[r[4]]||0)+(r[7]||0);
         } else {
-          // 주간: 해당 주차 정확 매칭
           if(r[2]===P.weekKey) reasonMap[r[4]]=(reasonMap[r[4]]||0)+(r[7]||0);
         }
       }
+      // 주간 전회차 — 실제 데이터에 존재하는 직전 주차 탐색
+      if(P.mode==='week'){
+        const allReturnWks=[...new Set(
+          [...Array(rows.length).keys()].slice(2)
+            .map(i=>rows[i]).filter(r=>r&&r[0]==='반품현황 (반품/교환율만 제외)'&&r[3]==='꿈비'&&typeof r[2]==='number')
+            .map(r=>r[2])
+        )].sort((a,b)=>a-b);
+        const wkIdx=allReturnWks.indexOf(P.weekKey);
+        const prevReturnWk=wkIdx>0?allReturnWks[wkIdx-1]:null;
+        if(prevReturnWk){
+          for(let i=2;i<rows.length;i++){
+            const r=rows[i]; if(!r||r[0]!=='반품현황 (반품/교환율만 제외)'||r[3]!=='꿈비'||!r[4]) continue;
+            if(r[2]===prevReturnWk) prevReasonMap[r[4]]=(prevReasonMap[r[4]]||0)+(r[7]||0);
+          }
+        }
+      }
       const top5=Object.fromEntries(Object.entries(reasonMap).sort((a,b)=>b[1]-a[1]).slice(0,5));
-      renderVocBars('returnChart', top5, ['#e8834a','#f39c12','#e74c3c','#9b59b6','#3498db']);
+      renderVocBars('returnChart', top5, ['#e8834a','#f39c12','#e74c3c','#9b59b6','#3498db'], prevReasonMap);
     }
 
     // ── 품질 ──────────────────────────────────────────────────
@@ -2479,13 +2498,17 @@ function setInsightPlaceholder(msg, state) {
 
 function applyInsights(insights) {
   const ids = ['total','alf','return','quality','as','issue','satisfaction','answer','channel','returnchart','vocReturn','vocAS','vocProduct'];
+  const badge = `<span class="badge-insight">✦ AI분석</span>\n`;
   ids.forEach(id => {
     const el = document.getElementById('i-'+id);
     if (!el) return;
     const isCard = ['channel','returnchart','vocReturn','vocAS','vocProduct'].includes(id);
     if (insights[id]) {
       el.className = isCard ? 'card-insight' : 'kpi-insight done';
-      el.textContent = insights[id];
+      // 뱃지 + 텍스트 (XSS 방지: 값은 textNode로)
+      el.innerHTML = badge;
+      const txt = document.createTextNode(insights[id]);
+      el.appendChild(txt);
     }
   });
 }

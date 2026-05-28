@@ -951,8 +951,12 @@ function showSection(id, el) {
   // AI 간이보고 탭 — iframe 최초 1회 로드
   if (id === 'aireport') {
     const frame = document.getElementById('aireportFrame');
-    if (frame && !frame.src.includes('ai회의자료')) {
-      frame.src = 'https://ggumbi-cs.github.io/dashboard/report/ai회의자료.html';
+    if (frame) {
+      const target = 'https://ggumbi-cs.github.io/dashboard/report/ai회의자료.html'
+                   + (DATA.period ? '?period=' + encodeURIComponent(DATA.period) : '');
+      if (!frame.src.includes('ai회의자료')) {
+        frame.src = target;
+      }
     }
   }
 }
@@ -1062,6 +1066,15 @@ window.addEventListener('message', e => {
     DATA.type   = e.data.periodType   || DATA.type;
     DATA.period = e.data.periodValue  || DATA.period;
     renderAll();
+    // aireport 탭이 열려있으면 period 파라미터 포함해서 iframe 갱신
+    const aireportSec = document.getElementById('sec-aireport');
+    if (aireportSec && aireportSec.classList.contains('active')) {
+      const frame = document.getElementById('aireportFrame');
+      if (frame) {
+        frame.src = 'https://ggumbi-cs.github.io/dashboard/report/ai회의자료.html'
+                  + '?period=' + encodeURIComponent(DATA.period || '');
+      }
+    }
   }
 });
 

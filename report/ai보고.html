@@ -121,6 +121,12 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
   white-space:pre-wrap;
 }
 .card-insight:empty { display:none; }
+.insight-edit-btn { background:none; border:none; cursor:pointer; font-size:12px; color:#a78bfa; padding:0 2px; opacity:.7; transition:opacity .15s; flex-shrink:0; }
+.insight-edit-btn:hover { opacity:1; }
+.insight-edit-wrap { display:flex; align-items:flex-start; justify-content:space-between; gap:4px; }
+.insight-textarea { width:100%; font-size:12px; line-height:1.7; color:var(--sub); font-style:italic; background:rgba(124,58,237,.05); border:1.5px solid #a78bfa; border-radius:6px; padding:6px 8px; resize:vertical; font-family:var(--font); white-space:pre-wrap; min-height:80px; }
+.insight-save-btn { margin-top:6px; background:#7c3aed; color:#fff; border:none; border-radius:5px; padding:4px 12px; font-size:11px; font-weight:700; cursor:pointer; font-family:var(--font); }
+.insight-save-btn:hover { opacity:.85; }
 .card-insight.loading {
   color:var(--yellow);
   background:rgba(243,156,18,0.06);
@@ -2326,6 +2332,51 @@ async function loadFromSheet(){
 // AI 종합 분석 — 멀티 패널
 // ══════════════════════════════════════════════════════════════
 
+// ══════════════════════════════════════════════════════════════
+// 인사이트 직접 수정 (vocReturn, vocAS)
+// ══════════════════════════════════════════════════════════════
+function startInsightEdit(id) {
+  const el = document.getElementById('i-'+id);
+  if (!el) return;
+  let curText = '';
+  el.childNodes.forEach(node => {
+    if (node.nodeType === Node.TEXT_NODE) curText += node.textContent;
+  });
+  curText = curText.trim();
+  el.innerHTML = `
+    <div class="insight-edit-wrap" style="margin-bottom:6px;">
+      <span class="badge-insight">✦ AI분析</span>
+      <span style="font-size:10px;color:#a78bfa;">수정 중...</span>
+    </div>
+    <textarea class="insight-textarea" id="edit-${id}">${curText}</textarea>
+    <div style="display:flex;gap:6px;margin-top:6px;">
+      <button class="insight-save-btn" onclick="saveInsightEdit('${id}')">✓ 저장</button>
+      <button class="insight-save-btn" style="background:#94a3b8;" onclick="loadInsightFromSheet()">✕ 취소</button>
+    </div>`;
+  const ta = document.getElementById('edit-'+id);
+  if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+}
+
+async function saveInsightEdit(id) {
+  const ta = document.getElementById('edit-'+id);
+  if (!ta || !SCRIPT_URL) return;
+  const newText = ta.value;
+  try {
+    const res  = await fetch(`${SCRIPT_URL}?type=insight&period=${encodeURIComponent(DATA.period)}&t=${Date.now()}`);
+    const data = await res.json();
+    const insights = (data.ok && data.insights) ? data.insights : {};
+    insights[id] = newText;
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'saveInsight', period: DATA.period, insights })
+    });
+    applyInsights(insights);
+    showToast('✓ 저장 완료', 'save-ok');
+  } catch(e) {
+    showToast('저장 오류: ' + e.message, 'save-err');
+  }
+}
+
 const AI_TYPES = ['summary','voc','action','report'];
 const AI_LABELS = { summary:'① 핵심 Summary', voc:'② VOC·클레임 패턴', action:'③ 개선 대안 제안', report:'④ 보고서 문구' };
 
@@ -2519,24 +2570,32 @@ function setInsightPlaceholder(msg, state) {
 function applyInsights(insights) {
   const ids = ['total','alf','return','quality','as','issue','satisfaction','answer','channel','returnchart','vocReturn','vocAS','vocProduct'];
   const kpiIds = ['total','alf','return','quality','as','issue','satisfaction','answer'];
+  const editableIds = ['vocReturn','vocAS'];
   const badge = `<span class="badge-insight">✦ AI분석</span>\n`;
 
   ids.forEach(id => {
     const el = document.getElementById('i-'+id);
     if (!el) return;
-    const isCard = ['channel','returnchart','vocReturn','vocAS','vocProduct'].includes(id);
-    const isKpi  = kpiIds.includes(id);
+    const isCard     = ['channel','returnchart','vocReturn','vocAS','vocProduct'].includes(id);
+    const isKpi      = kpiIds.includes(id);
+    const isEditable = editableIds.includes(id);
 
     if (insights[id]) {
       el.className = isCard ? 'card-insight' : 'kpi-insight done';
 
       if (isKpi) {
-        // KPI 8종: 라벨에 뱃지 표시, 인사이트 카드엔 텍스트만
         const badgeEl = document.getElementById('b-'+id);
         if (badgeEl) badgeEl.style.display = 'inline-flex';
         el.textContent = insights[id];
+      } else if (isEditable) {
+        // 연필 버튼 + 텍스트
+        el.innerHTML = `<div class="insight-edit-wrap">
+          <span class="badge-insight">✦ AI분석</span>
+          <button class="insight-edit-btn" title="직접 수정" onclick="startInsightEdit('${id}')">✏️</button>
+        </div>`;
+        const txt = document.createTextNode(insights[id]);
+        el.appendChild(txt);
       } else {
-        // card-insight: 뱃지 + 텍스트
         el.innerHTML = badge;
         el.appendChild(document.createTextNode(insights[id]));
       }

@@ -6,7 +6,7 @@
 <title>주간 회의자료 · 260522</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Inter:wght@400;600;700;900&display=swap');
 
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -63,7 +63,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
   background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);
   border-radius:8px;padding:12px 20px;text-align:center;min-width:120px;
 }
-.hdr-kpi-num{font-size:32px;font-weight:900;color:#fff;font-family:'JetBrains Mono',monospace;line-height:1;}
+.hdr-kpi-num{font-size:32px;font-weight:900;color:#fff;font-family:'Inter',sans-serif;line-height:1;}
 .hdr-kpi-label{font-size:10px;color:var(--textD);margin-top:4px;letter-spacing:0.5px;}
 .hdr-kpi-sub{font-size:11px;color:#4ade80;margin-top:2px;font-weight:600;}
 
@@ -90,9 +90,9 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 }
 .ai-text{font-size:12.5px;color:#334155;line-height:1.65;}
 .ai-text strong{color:#1e293b;font-weight:600;}
-.ai-text .highlight{color:#fbbf24;font-weight:700;}
-.ai-text .warn{color:#f87171;font-weight:600;}
-.ai-text .good{color:#4ade80;font-weight:600;}
+.ai-text .highlight{color:#b45309;font-weight:700;}
+.ai-text .warn{color:#b91c1c;font-weight:600;}
+.ai-text .good{color:#15803d;font-weight:600;}
 
 /* ── 본문 그리드 ── */
 .body{padding:20px 24px;display:grid;gap:16px;}
@@ -122,11 +122,11 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .grid-23{display:grid;grid-template-columns:2fr 3fr;gap:12px;}
 
 /* ── KPI 숫자 카드 ── */
-.kpi-num{font-size:26px;font-weight:900;font-family:'JetBrains Mono',monospace;color:#1e293b;line-height:1;}
+.kpi-num{font-size:26px;font-weight:900;font-family:'Inter',sans-serif;color:#1e293b;line-height:1;}
 .kpi-sub{font-size:10px;color:var(--textD);margin-top:3px;}
 .kpi-diff{font-size:11px;font-weight:600;margin-top:4px;}
-.diff-up{color:#4ade80;}
-.diff-dn{color:#f87171;}
+.diff-up{color:#15803d;}
+.diff-dn{color:#b91c1c;}
 .diff-eq{color:var(--textD);}
 .diff-arrow{font-size:9px;margin-right:2px;}
 
@@ -157,15 +157,15 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .mini-table th{font-size:9px;color:#94a3b8;font-weight:600;text-align:left;padding:4px 6px;border-bottom:1px solid #e2e8f0;}
 .mini-table td{font-size:11px;color:var(--text);padding:5px 6px;border-bottom:1px solid rgba(0,0,0,0.05);}
 .mini-table tr:last-child td{border-bottom:none;}
-.mini-table .num{text-align:right;font-family:'JetBrains Mono',monospace;font-weight:600;}
+.mini-table .num{text-align:right;font-family:'Inter',sans-serif;font-weight:600;}
 .mini-table .badge{
   display:inline-flex;align-items:center;
   font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;
 }
-.bdg-red{background:rgba(220,38,38,0.2);color:#f87171;border:1px solid rgba(248,113,113,0.3);}
-.bdg-amber{background:rgba(217,119,6,0.2);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);}
-.bdg-green{background:rgba(22,163,74,0.2);color:#4ade80;border:1px solid rgba(74,222,128,0.3);}
-.bdg-blue{background:rgba(29,78,216,0.2);color:#93c5fd;border:1px solid rgba(147,197,253,0.3);}
+.bdg-red{background:rgba(220,38,38,0.1);color:#b91c1c;border:1px solid rgba(185,28,28,0.3);}
+.bdg-amber{background:rgba(217,119,6,0.1);color:#92400e;border:1px solid rgba(146,64,14,0.3);}
+.bdg-green{background:rgba(22,163,74,0.1);color:#15803d;border:1px solid rgba(21,128,61,0.3);}
+.bdg-blue{background:rgba(29,78,216,0.1);color:#1d4ed8;border:1px solid rgba(29,78,216,0.3);}
 
 /* ── 이슈 리스트 ── */
 .issue-row{
@@ -206,16 +206,16 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 }
 .ai-point-text{font-size:12px;color:#334155;line-height:1.6;}
 .ai-point-text b{color:#1e293b;}
-.ai-point-text .y{color:#fbbf24;}
-.ai-point-text .r{color:#f87171;}
-.ai-point-text .g{color:#4ade80;}
+.ai-point-text .y{color:#b45309;}
+.ai-point-text .r{color:#b91c1c;}
+.ai-point-text .g{color:#15803d;}
 
 /* ── 진행률 바 ── */
 .progress-wrap{margin-top:10px;}
 .progress-row{margin-bottom:8px;}
 .progress-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;}
 .progress-lbl{font-size:11px;color:#334155;}
-.progress-pct{font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#1e293b;}
+.progress-pct{font-size:11px;font-weight:700;font-family:'Inter',sans-serif;color:#1e293b;}
 .progress-track{height:8px;background:rgba(0,0,0,0.07);border-radius:4px;overflow:hidden;}
 .progress-fill{height:100%;border-radius:4px;}
 
@@ -225,7 +225,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .sale-name{flex:1;font-size:11.5px;color:#1e293b;}
 .sale-nums{display:flex;gap:16px;flex-shrink:0;}
 .sale-num{text-align:right;}
-.sale-num .n{font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#1e293b;}
+.sale-num .n{font-size:13px;font-weight:700;font-family:'Inter',sans-serif;color:#1e293b;}
 .sale-num .l{font-size:9px;color:#94a3b8;display:block;}
 
 /* ── 반응형 ── */
@@ -247,7 +247,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
   background:#fff;
 }
 .quick-item:last-child{border-right:none;}
-.quick-num{font-size:20px;font-weight:900;font-family:'JetBrains Mono',monospace;color:#1e293b;line-height:1;}
+.quick-num{font-size:20px;font-weight:900;font-family:'Inter',sans-serif;color:#1e293b;line-height:1;}
 .quick-lbl{font-size:9px;color:#64748b;margin-top:3px;letter-spacing:0.5px;}
 .quick-diff{font-size:10px;font-weight:600;margin-top:2px;}
 
@@ -328,7 +328,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
     <div class="quick-item">
       <div class="quick-num">5.10%</div>
       <div class="quick-lbl">소브 반품율(04월)</div>
-      <div class="quick-diff" style="color:#d97706;font-size:9px;">건수↓ 주문량↓↓</div>
+      <div class="quick-diff" style="color:#92400e;font-size:9px;">건수↓ 주문량↓↓</div>
     </div>
     <div class="quick-item">
       <div class="quick-num">3건</div>
@@ -388,7 +388,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         <div style="margin-bottom:10px;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <span style="font-size:11px;color:var(--textD);">총유입 Call</span>
-            <span style="font-size:20px;font-weight:900;color:#1e293b;font-family:'JetBrains Mono',monospace;">186건</span>
+            <span style="font-size:20px;font-weight:900;color:#1e293b;font-family:'Inter',sans-serif;color:#1e293b;">186건</span>
           </div>
         </div>
         <div class="mini-bar-wrap">
@@ -404,8 +404,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
           </div>
         </div>
         <div style="margin-top:10px;text-align:center;">
-          <div style="font-size:28px;font-weight:900;color:#16a34a;font-family:'JetBrains Mono',monospace;">86.0%</div>
-          <div style="font-size:10px;color:var(--textD);">수신응답률 (전주 80.4% → <span style="color:#4ade80;">+5.6%p ↑</span>)</div>
+          <div style="font-size:28px;font-weight:900;color:#15803d;font-family:'Inter',sans-serif;">86.0%</div>
+          <div style="font-size:10px;color:var(--textD);">수신응답률 (전주 80.4% → <span style="color:#15803d;">+5.6%p ↑</span>)</div>
         </div>
       </div>
 
@@ -438,13 +438,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       <!-- 반품/교환율 추이 -->
       <div class="card">
         <div class="card-title">반품/교환율 추이 (꿈비 vs 소브)</div>
-        <svg id="return-chart" width="100%" height="110" style="display:block;"></svg>
-        <div class="trend-label-row" style="padding:0 8px;">
-          <span class="trend-label">01월</span>
-          <span class="trend-label">02월</span>
-          <span class="trend-label">03월</span>
-          <span class="trend-label">04월</span>
-        </div>
+        <svg id="return-chart" width="100%" height="125" style="display:block;"></svg>
+
         <div style="display:flex;gap:14px;margin-top:8px;justify-content:center;">
           <span style="font-size:9px;color:var(--textD);"><span style="display:inline-block;width:12px;height:2px;background:#3b82f6;margin-right:3px;vertical-align:middle;border-radius:2px;"></span>꿈비</span>
           <span style="font-size:9px;color:var(--textD);"><span style="display:inline-block;width:12px;height:2px;border-top:2px dashed #f87171;margin-right:3px;vertical-align:middle;"></span>소브</span>
@@ -452,8 +447,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         <table class="mini-table" style="margin-top:10px;">
           <thead><tr><th>브랜드</th><th class="num">01월</th><th class="num">02월</th><th class="num">03월</th><th class="num">04월</th></tr></thead>
           <tbody>
-            <tr><td>꿈비</td><td class="num">5.46%</td><td class="num">2.99%</td><td class="num">3.30%</td><td class="num diff-dn"><b>4.34%↑</b></td></tr>
-            <tr><td>소브</td><td class="num">1.70%</td><td class="num">1.48%</td><td class="num">2.44%</td><td class="num diff-dn"><b>5.10%↑</b></td></tr>
+            <tr><td>꿈비</td><td class="num">5.46%</td><td class="num">2.99%</td><td class="num">3.30%</td><td class="num" style="color:#b91c1c;font-weight:700;"><b>4.34%↑</b></td></tr>
+            <tr><td>소브</td><td class="num">1.70%</td><td class="num">1.48%</td><td class="num">2.44%</td><td class="num" style="color:#b91c1c;font-weight:700;"><b>5.10%↑</b></td></tr>
           </tbody>
         </table>
       </div>
@@ -473,7 +468,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         <div class="ai-point">
           <div class="ai-num">2</div>
           <div class="ai-point-text">
-            <b>소브 04월 반품율 5.10%</b>는 실제 반품·교환 건수가 <span class="g">104건→8건으로 급감</span>했음에도 율이 오른 케이스입니다. <span class="y">분모인 주문량이 더 크게 줄어든 것</span>이 원인으로, 반품이 늘어난 것이 아니라 <b>판매량 자체가 위축된 신호</b>로 해석해야 합니다.
+            <b>소브 04월 반품율 5.10%</b>는 실제 반품·교환 건수가 <span class="g">104건→8건으로 급감</span>했음에도 반품율이 오른 케이스입니다. <span class="y">분모인 주문량이 더 크게 줄어든 것</span>이 원인으로, 반품이 늘어난 것이 아니라 <b>판매량 자체가 위축된 신호</b>로 해석해야 합니다.
           </div>
         </div>
         <div class="ai-point">
@@ -515,7 +510,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         <div class="issue-row">
           <div class="issue-icon">🟠</div>
           <div class="issue-body">
-            <div class="issue-title">휴대용 분유포트 — 배터리 조립 단차·하부캡 덜닫힘</div>
+            <div class="issue-title">배터리 분리형 휴대용 분유포트 — 배터리 조립 단차·하부캡 덜닫힘</div>
             <div class="issue-desc">출고검사 강화(전수검사) 적용 중. 배터리 결합·파편소리 검사 진행.</div>
             <span class="issue-tag bdg-amber">대응중</span>
           </div>
@@ -533,15 +528,40 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       <!-- 자재수급 현황 + AI -->
       <div style="display:flex;flex-direction:column;gap:12px;">
         <div class="card">
-          <div class="card-title">🚚 자재수급 현황 (04월 기준)</div>
+          <div class="card-title">🚚 자재수급 현황 (05/28 기준)</div>
           <table class="mini-table">
-            <thead><tr><th>제품</th><th>내용</th><th>상태</th></tr></thead>
+            <thead><tr><th>요청일</th><th>상태</th><th style="text-align:center;">경과일</th><th>제품</th><th>요청자재</th></tr></thead>
             <tbody>
-              <tr><td>배터리 분리형 분유포트</td><td>뚜껑세트·실리콘 2종</td><td><span class="badge bdg-red">미입고</span></td></tr>
-              <tr><td>휴대용 분유포트</td><td>하부커버 무상자재</td><td><span class="badge bdg-amber">결재대기</span></td></tr>
-              <tr><td>휴대용 분유포트</td><td>뚜껑 무상자재</td><td><span class="badge bdg-amber">결재대기</span></td></tr>
-              <tr><td>듀얼팬 아이스 쿨시트</td><td>케이블 발주</td><td><span class="badge bdg-amber">결재대기</span></td></tr>
-              <tr><td>젖병살균세척기</td><td>26.03월 정기발주</td><td><span class="badge bdg-red">미입고</span></td></tr>
+              <tr>
+                <td>05/20</td><td><span class="badge bdg-red">미입고</span></td>
+                <td style="text-align:center;font-weight:700;color:#b91c1c;">8일</td>
+                <td>배터리 분리형 분유포트</td><td>뚜껑세트·실리콘 2종</td>
+              </tr>
+              <tr>
+                <td>05/13</td><td><span class="badge bdg-amber">결재대기</span></td>
+                <td style="text-align:center;font-weight:700;color:#92400e;">15일</td>
+                <td>휴대용 분유포트</td><td>하부커버 무상자재</td>
+              </tr>
+              <tr>
+                <td>05/12</td><td><span class="badge bdg-red">미입고</span></td>
+                <td style="text-align:center;font-weight:700;color:#b91c1c;">16일</td>
+                <td>휴대용 분유포트</td><td>뚜껑 무상자재</td>
+              </tr>
+              <tr>
+                <td>05/11</td><td><span class="badge bdg-amber">결재대기</span></td>
+                <td style="text-align:center;font-weight:700;color:#92400e;">17일</td>
+                <td>듀얼팬 아이스 쿨시트</td><td>케이블 발주</td>
+              </tr>
+              <tr>
+                <td>03/30</td><td><span class="badge bdg-red">미입고</span></td>
+                <td style="text-align:center;font-weight:700;color:#b91c1c;">59일</td>
+                <td>젖병살균세척기</td><td>03월 정기발주</td>
+              </tr>
+              <tr>
+                <td>01/27</td><td><span class="badge bdg-red">미입고</span></td>
+                <td style="text-align:center;font-weight:700;color:#b91c1c;">121일</td>
+                <td>유모차 웜라이너</td><td>웜라이너 패드</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -553,7 +573,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
           <div class="ai-point">
             <div class="ai-num">!</div>
             <div class="ai-point-text">
-              자재 미입고 2건·결재대기 3건 모두 <b>휴대용 분유포트 계열</b>에 집중. 자재 지연이 <span class="r">교환/불량 건수 증가의 병목</span>이 되고 있습니다. 공급망 우선순위 재조정이 필요합니다.
+              총 6건 미결. <b>미입고 4건·결재대기 2건</b>이며 유모차 웜라이너(121일)·젖병살균세척기(59일)는 <span style="color:#b91c1c;font-weight:600;">장기 지연 심각</span>. 분유포트 뚜껑·하부커버는 불량 VOC와 직결되어 즉시 결재 처리가 필요합니다.
             </div>
           </div>
         </div>
@@ -575,37 +595,40 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         <!-- 총계 -->
         <div style="display:flex;gap:16px;padding:8px 0 12px;border-bottom:1px solid var(--border);margin-bottom:10px;">
           <div style="text-align:center;flex:1;">
-            <div style="font-size:22px;font-weight:900;color:#fff;font-family:'JetBrains Mono',monospace;">27,388</div>
-            <div style="font-size:9px;color:var(--textD);">총 출고</div>
+            <div style="font-size:22px;font-weight:900;color:#1e293b;font-family:'Inter',sans-serif;">86,032</div>
+            <div style="font-size:9px;color:var(--textD);">총 배송</div>
           </div>
           <div style="text-align:center;flex:1;">
-            <div style="font-size:22px;font-weight:900;color:#3b82f6;font-family:'JetBrains Mono',monospace;">26,375</div>
-            <div style="font-size:9px;color:var(--textD);">분유포트</div>
+            <div style="font-size:22px;font-weight:900;color:#1d4ed8;font-family:'Inter',sans-serif;">3,498</div>
+            <div style="font-size:9px;color:var(--textD);">총 불량</div>
           </div>
           <div style="text-align:center;flex:1;">
-            <div style="font-size:22px;font-weight:900;color:#f87171;font-family:'JetBrains Mono',monospace;">59,657</div>
-            <div style="font-size:9px;color:var(--textD);">쉐이커 합계</div>
+            <div style="font-size:22px;font-weight:900;color:#b91c1c;font-family:'Inter',sans-serif;">4.1%</div>
+            <div style="font-size:9px;color:var(--textD);">전체 불량율</div>
           </div>
         </div>
         <div class="sale-row">
           <div class="sale-name">휴대용 분유포트</div>
           <div class="sale-nums">
             <div class="sale-num"><span class="l">배송</span><span class="n">26,375</span></div>
-            <div class="sale-num"><span class="l">불량율</span><span class="n" style="color:#f87171;">7.8%</span></div>
+            <div class="sale-num"><span class="l">불량</span><span class="n" style="color:#b91c1c;">2,188</span></div>
+            <div class="sale-num"><span class="l">불량율</span><span class="n" style="color:#b91c1c;">8.3%</span></div>
           </div>
         </div>
         <div class="sale-row">
           <div class="sale-name">분유쉐이커(뭉침없이)</div>
           <div class="sale-nums">
             <div class="sale-num"><span class="l">배송</span><span class="n">15,843</span></div>
-            <div class="sale-num"><span class="l">불량율</span><span class="n" style="color:#fbbf24;">5.4%</span></div>
+            <div class="sale-num"><span class="l">불량</span><span class="n" style="color:#92400e;">380</span></div>
+            <div class="sale-num"><span class="l">불량율</span><span class="n" style="color:#92400e;">2.4%</span></div>
           </div>
         </div>
         <div class="sale-row">
           <div class="sale-name">분유쉐이커(일반)</div>
           <div class="sale-nums">
             <div class="sale-num"><span class="l">배송</span><span class="n">43,814</span></div>
-            <div class="sale-num"><span class="l">불량율</span><span class="n" style="color:#4ade80;">0.8%</span></div>
+            <div class="sale-num"><span class="l">불량</span><span class="n" style="color:#15803d;">930</span></div>
+            <div class="sale-num"><span class="l">불량율</span><span class="n" style="color:#15803d;">2.1%</span></div>
           </div>
         </div>
         <div style="margin-top:10px;padding:8px;background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.2);border-radius:6px;">
@@ -680,14 +703,14 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         <div class="ai-num" style="background:linear-gradient(135deg,#dc2626,#b91c1c);">!</div>
         <div class="ai-point-text">
           <b>즉시 대응</b><br>
-          <span class="r">분유포트 불량율 15%</span> — 뚜껑 기구개선 자재 미입고 2건을 최우선 결재 처리. 기간 내 미해결 시 05월 반품율 5% 돌파 가능성 높음.
+          <span style="color:#b91c1c;font-weight:600;">분유포트 불량율 8.3%</span> — 뚜껑·하부커버 자재 미결 4건(미입고 2건·결재대기 2건) 신속 처리 필요. 자재 지연이 지속될 경우 06월 반품율 재상승 가능성 높음.
         </div>
       </div>
       <div class="ai-point" style="background:rgba(217,119,6,0.06);border:1px solid rgba(217,119,6,0.15);border-radius:6px;padding:10px;">
         <div class="ai-num" style="background:linear-gradient(135deg,#d97706,#b45309);">2</div>
         <div class="ai-point-text">
           <b>이번 주 내</b><br>
-          <span class="y">소브 반품율 5.10%</span> — 건수는 104→8건으로 감소. <b>율 상승의 실질 원인은 주문량 위축</b>. 반품 자체보다 소브 판매량 회복 전략 검토가 우선입니다.
+          <span class="y">소브 반품율 5.10%</span> — 건수는 104→8건으로 감소. <b>반품율 상승의 실질 원인은 주문량 위축</b>. 반품 자체보다 소브 판매량 회복 전략 검토가 우선입니다.
         </div>
       </div>
       <div class="ai-point" style="background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:6px;padding:10px;">
@@ -719,13 +742,13 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 <script>
 // ─── 채널별 인입 주간 추이 차트 ───
 (function() {
-  const weeks = ['260501','260508','260515','260522'];
-  const wlbl  = ['05/01','05/08','05/15','05/22'];
+  const weeks = ['260403','260410','260417','260424','260501','260508','260515','260522'];
+  const wlbl  = ['04/03','04/10','04/17','04/24','05/01','05/08','05/15','05/22'];
   const channels = {
-    '채널톡': { data:[476,636,640,776], color:'#3b82f6' },
-    '전화':   { data:[285,271,365,352], color:'#0d9488' },
-    '네이버': { data:[193,221,310,339], color:'#7c3aed' },
-    '카카오': { data:[183,254,286,319], color:'#d97706' },
+    '채널톡': { data:[626,570,551,615,476,636,640,776], color:'#3b82f6' },
+    '전화':   { data:[140,253,252,289,285,271,365,352], color:'#0d9488' },
+    '네이버': { data:[157,165,206,237,193,221,310,339], color:'#7c3aed' },
+    '카카오': { data:[229,215,198,286,183,254,286,319], color:'#d97706' },
   };
   const svg = document.getElementById('channel-chart');
   // SVG height=140px 고정. viewBox도 동일 픽셀로 맞춰 font-size=실제px
@@ -767,7 +790,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       const topBarH = (topVal/maxV)*plotH;
       const totY = padT + plotH - topBarH - 4;
       const totX = groupX + groupW/2;
-      html += `<text x="${totX.toFixed(1)}" y="${totY.toFixed(1)}" text-anchor="middle" font-size="9" fill="#475569" font-weight="700">${tot}</text>`;
+      html += `<text x="${totX.toFixed(1)}" y="${totY.toFixed(1)}" text-anchor="middle" font-size="9" fill="#334155" font-weight="700">${tot}</text>`;
       // x축
       const lblX = padL + wi*cW + cW/2;
       html += `<text x="${lblX.toFixed(1)}" y="${(H-3).toFixed(1)}" text-anchor="middle" font-size="9" fill="#94a3b8">${wlbl[wi]}</text>`;
@@ -784,31 +807,40 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
   const ggumbi=[5.46,2.99,3.30,4.34];
   const sorb=[1.70,1.48,2.44,5.10];
   const retSvg=document.getElementById('return-chart');
-  const RH=110, padL=28,padR=10,padT=14,padB=14;
+  const RH=125, padL=28,padR=10,padT=14,padB=28;
   const plotRH=RH-padT-padB;
   const maxV=7;
   function drawRet(){
     const RW = retSvg.getBoundingClientRect().width || 400;
     retSvg.setAttribute('viewBox',`0 0 ${RW} ${RH}`);
-    const cW=(RW-padL-padR)/(months.length-1);
+    // X축 간격을 75%로 줄여 첫값이 Y축 침범하지 않도록
+    const plotW = (RW - padL - padR) * 0.75;
+    const plotOffX = (RW - padL - padR - plotW) / 2;
+    const cW = plotW / (months.length - 1);
+    const xStart = padL + plotOffX;
     let html='';
     [0,2,4,6].forEach(v=>{
       const y=padT+(1-v/maxV)*plotRH;
-      html+=`<line x1="${padL}" x2="${RW-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>`;
+      html+=`<line x1="${padL}" x2="${RW-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(0,0,0,0.08)" stroke-width="0.5"/>`;
       html+=`<text x="${padL-3}" y="${(y+3).toFixed(1)}" text-anchor="end" font-size="9" fill="#94a3b8">${v}%</text>`;
     });
-    function pts(arr){return arr.map((v,i)=>`${(padL+i*cW).toFixed(1)},${(padT+(1-v/maxV)*plotRH).toFixed(1)}`).join(' ');}
+    function pts(arr){return arr.map((v,i)=>`${(xStart+i*cW).toFixed(1)},${(padT+(1-v/maxV)*plotRH).toFixed(1)}`).join(' ');}
     html+=`<polyline points="${pts(ggumbi)}" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>`;
     html+=`<polyline points="${pts(sorb)}" fill="none" stroke="#f87171" stroke-width="1.5" stroke-dasharray="5,3" stroke-linejoin="round" stroke-linecap="round"/>`;
     ggumbi.forEach((v,i)=>{
-      const x=padL+i*cW, y=padT+(1-v/maxV)*plotRH;
-      html+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="#3b82f6" stroke="#0e1d35" stroke-width="1.5"/>`;
-      html+=`<text x="${x.toFixed(1)}" y="${(y-6).toFixed(1)}" text-anchor="middle" font-size="9" fill="#93c5fd" font-weight="600">${v}%</text>`;
+      const x=xStart+i*cW, y=padT+(1-v/maxV)*plotRH;
+      html+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="#3b82f6" stroke="#fff" stroke-width="1.5"/>`;
+      html+=`<text x="${x.toFixed(1)}" y="${(y-6).toFixed(1)}" text-anchor="middle" font-size="9" fill="#1d4ed8" font-weight="600">${v}%</text>`;
     });
     sorb.forEach((v,i)=>{
-      const x=padL+i*cW, y=padT+(1-v/maxV)*plotRH;
-      html+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="#f87171" stroke="#0e1d35" stroke-width="1.5"/>`;
-      html+=`<text x="${x.toFixed(1)}" y="${(y+13).toFixed(1)}" text-anchor="middle" font-size="9" fill="#f87171" font-weight="600">${v}%</text>`;
+      const x=xStart+i*cW, y=padT+(1-v/maxV)*plotRH;
+      html+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="#ef4444" stroke="#fff" stroke-width="1.5"/>`;
+      html+=`<text x="${x.toFixed(1)}" y="${(y+13).toFixed(1)}" text-anchor="middle" font-size="9" fill="#b91c1c" font-weight="600">${v}%</text>`;
+    });
+    // X축 레이블을 SVG 안에 그려서 데이터 점과 정렬 일치
+    months.forEach((m,i)=>{
+      const x=xStart+i*cW;
+      html+=`<text x="${x.toFixed(1)}" y="${(RH-2).toFixed(1)}" text-anchor="middle" font-size="9" fill="#94a3b8">${m}</text>`;
     });
     retSvg.innerHTML=html;
   }

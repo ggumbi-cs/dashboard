@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IMG → PDF 변환기</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f11;
+    --surface: #1a1a1e;
+    --surface2: #222228;
+    --surface3: #2a2a32;
+    --border: rgba(255,255,255,0.08);
+    --border-hover: rgba(255,255,255,0.16);
+    --accent: #4f8ef7;
+    --accent-dim: rgba(79,142,247,0.15);
+    --accent-glow: rgba(79,142,247,0.3);
+    --success: #3ecf8e;
+    --success-dim: rgba(62,207,142,0.12);
+    --danger: #f55b5b;
+    --danger-dim: rgba(245,91,91,0.12);
+    --warn: #f5a623;
+    --warn-dim: rgba(245,166,35,0.12);
+    --purple: #a78bfa;
+    --purple-dim: rgba(167,139,250,0.13);
+    --text: #e8e8ed;
+    --text-muted: #888896;
+    --text-dim: #555560;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+
+  /* ── Header ── */
+  header { background:var(--surface); border-bottom:1px solid var(--border); padding:0 20px; height:52px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
+  .logo { display:flex; align-items:center; gap:8px; }
+  .logo-icon { width:28px; height:28px; background:var(--accent); border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:14px; box-shadow:0 0 12px var(--accent-glow); }
+  header h1 { font-size:15px; font-weight:700; letter-spacing:-0.3px; }
+  header .tagline { font-size:12px; color:var(--text-muted); font-weight:300; margin-left:4px; }
+  .header-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
+  .badge { font-size:11px; padding:3px 8px; border-radius:20px; font-weight:500; font-family:'JetBrains Mono',monospace; }
+  .badge-blue { background:var(--accent-dim); color:var(--accent); border:1px solid rgba(79,142,247,0.2); }
+  .badge-green { background:var(--success-dim); color:var(--success); border:1px solid rgba(62,207,142,0.2); }
+  .badge-purple { background:var(--purple-dim); color:var(--purple); border:1px solid rgba(167,139,250,0.2); }
+
+  /* ── Layout ── */
+  .main { display:grid; grid-template-columns:50% 20% 30%; flex:1; overflow:hidden; }
+  .panel { border-right:1px solid var(--border); overflow:hidden; display:flex; flex-direction:column; }
+  .panel:last-child { border-right:none; }
+  .panel-header { padding:12px 16px 10px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .ph-icon { width:22px; height:22px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:12px; }
+  .panel-title { font-size:11px; font-weight:500; letter-spacing:0.5px; text-transform:uppercase; color:var(--text-muted); }
+  .panel-count { margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim); }
+
+  /* ── Preview ── */
+  .preview-body { flex:1; display:flex; align-items:center; justify-content:center; background:var(--bg); overflow:hidden; position:relative; }
+  .preview-empty { display:flex; flex-direction:column; align-items:center; gap:12px; color:var(--text-dim); text-align:center; }
+  .preview-empty .empty-icon { font-size:48px; opacity:0.2; }
+  .preview-empty p { font-size:13px; font-weight:300; }
+  .preview-img { max-width:100%; max-height:100%; object-fit:contain; display:none; border-radius:4px; }
+  .preview-meta { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,0.6)); padding:24px 16px 12px; display:none; flex-direction:column; gap:2px; }
+  .preview-meta.show { display:flex; }
+  .pm-name { font-size:13px; font-weight:500; color:#fff; }
+  .pm-info { font-size:11px; color:rgba(255,255,255,0.6); font-family:'JetBrains Mono',monospace; }
+  .preview-nav { position:absolute; top:50%; transform:translateY(-50%); width:32px; height:32px; background:rgba(255,255,255,0.08); border:1px solid var(--border-hover); border-radius:50%; display:none; align-items:center; justify-content:center; cursor:pointer; font-size:14px; color:var(--text-muted); transition:background 0.15s; user-select:none; }
+  .preview-nav:hover { background:rgba(255,255,255,0.15); color:var(--text); }
+  .preview-nav.left { left:12px; } .preview-nav.right { right:12px; }
+  .preview-nav.show { display:flex; }
+
+  /* ── Control ── */
+  .control-body { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; }
+  .control-body::-webkit-scrollbar { width:3px; } .control-body::-webkit-scrollbar-thumb { background:var(--border-hover); border-radius:2px; }
+
+  /* Drop Zone */
+  .drop-zone { border:1.5px dashed var(--border-hover); border-radius:var(--radius); padding:18px 12px; text-align:center; cursor:pointer; transition:all 0.2s; background:var(--surface2); position:relative; }
+  .drop-zone:hover,.drop-zone.drag-over { border-color:var(--accent); background:var(--accent-dim); }
+  .drop-zone.drag-over { transform:scale(1.02); }
+  .drop-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  .dz-icon { font-size:26px; margin-bottom:6px; opacity:0.5; }
+  .dz-title { font-size:11px; font-weight:500; color:var(--text-muted); margin-bottom:3px; }
+  .dz-sub { font-size:10px; color:var(--text-dim); font-weight:300; }
+
+  .ctrl-label { font-size:10px; font-weight:500; letter-spacing:0.6px; text-transform:uppercase; color:var(--text-dim); margin-bottom:5px; }
+  .ctrl-divider { border:none; border-top:1px solid var(--border); }
+
+  /* Mode Tabs */
+  .mode-tabs { display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px; }
+  .mode-tab { padding:7px 4px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface2); color:var(--text-muted); font-size:10px; font-weight:500; text-align:center; cursor:pointer; transition:all 0.15s; font-family:'Noto Sans KR',sans-serif; line-height:1.3; }
+  .mode-tab:hover { border-color:var(--border-hover); color:var(--text); }
+  .mode-tab.active-merge { border-color:var(--accent); background:var(--accent-dim); color:var(--accent); }
+  .mode-tab.active-group { border-color:var(--purple); background:var(--purple-dim); color:var(--purple); }
+  .mode-tab.active-individual { border-color:var(--success); background:var(--success-dim); color:var(--success); }
+
+  /* Mode description */
+  .mode-desc { font-size:10px; color:var(--text-muted); line-height:1.5; padding:8px 10px; border-radius:var(--radius-sm); background:var(--surface2); border:1px solid var(--border); }
+
+  /* Stats */
+  .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .stat-card { background:var(--surface2); border-radius:var(--radius-sm); border:1px solid var(--border); padding:8px 10px; display:flex; flex-direction:column; gap:2px; }
+  .stat-val { font-size:18px; font-weight:700; color:var(--text); font-family:'JetBrains Mono',monospace; line-height:1; }
+  .stat-lbl { font-size:9px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; }
+
+  /* Options */
+  .opt-group { display:flex; flex-direction:column; gap:7px; }
+  .opt-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .opt-row label { font-size:11px; color:var(--text-muted); white-space:nowrap; }
+  select, input[type=text] { background:var(--surface3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-size:11px; font-family:'Noto Sans KR',sans-serif; padding:5px 8px; outline:none; transition:border 0.15s; }
+  select:focus, input[type=text]:focus { border-color:var(--accent); }
+  select option { background:#1a1a1e; }
+
+  /* Save path */
+  .save-path-row { display:flex; gap:5px; align-items:stretch; }
+  .save-path-display { flex:1; background:var(--surface3); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:10px; color:var(--text-muted); padding:5px 8px; font-family:'JetBrains Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; min-width:0; }
+  .btn-folder { background:var(--surface3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-muted); font-size:11px; padding:5px 9px; cursor:pointer; white-space:nowrap; transition:all 0.15s; font-family:'Noto Sans KR',sans-serif; }
+  .btn-folder:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+  .save-path-note { font-size:10px; color:var(--text-dim); margin-top:3px; line-height:1.4; }
+
+  /* Progress */
+  .progress-wrap { display:none; flex-direction:column; gap:6px; }
+  .progress-wrap.show { display:flex; }
+  .progress-bar-bg { background:var(--surface3); border-radius:20px; height:5px; overflow:hidden; }
+  .progress-bar-fill { height:100%; background:var(--accent); border-radius:20px; transition:width 0.3s ease; width:0%; box-shadow:0 0 8px var(--accent-glow); }
+  .progress-text { font-size:10px; color:var(--text-muted); text-align:center; }
+
+  /* Buttons */
+  .btn-convert { width:100%; padding:11px 0; background:var(--accent); color:#fff; border:none; border-radius:var(--radius); font-size:13px; font-weight:700; cursor:pointer; font-family:'Noto Sans KR',sans-serif; letter-spacing:0.3px; transition:all 0.2s; box-shadow:0 0 20px rgba(79,142,247,0.25); }
+  .btn-convert:hover:not(:disabled) { background:#6aa0f9; box-shadow:0 0 28px rgba(79,142,247,0.4); transform:translateY(-1px); }
+  .btn-convert:active:not(:disabled) { transform:translateY(0); }
+  .btn-convert:disabled { opacity:0.35; cursor:not-allowed; box-shadow:none; }
+  .btn-clear { width:100%; padding:7px 0; background:transparent; color:var(--danger); border:1px solid rgba(245,91,91,0.25); border-radius:var(--radius-sm); font-size:11px; font-weight:500; cursor:pointer; font-family:'Noto Sans KR',sans-serif; transition:all 0.15s; }
+  .btn-clear:hover { background:var(--danger-dim); border-color:var(--danger); }
+
+  /* ── File List ── */
+  .list-body { flex:1; overflow-y:auto; padding:8px; display:flex; flex-direction:column; gap:4px; }
+  .list-body::-webkit-scrollbar { width:3px; } .list-body::-webkit-scrollbar-thumb { background:var(--border-hover); border-radius:2px; }
+  .list-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:var(--text-dim); }
+  .list-empty .le-icon { font-size:32px; opacity:0.2; }
+  .list-empty p { font-size:11px; font-weight:300; text-align:center; }
+
+  /* Group header */
+  .group-header { display:flex; align-items:center; gap:6px; padding:6px 8px 4px; }
+  .group-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; font-family:'JetBrains Mono',monospace; }
+  .group-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .group-actions { margin-left:auto; display:flex; gap:4px; }
+  .group-btn { background:transparent; border:1px solid var(--border); border-radius:4px; color:var(--text-dim); font-size:9px; padding:2px 6px; cursor:pointer; font-family:'Noto Sans KR',sans-serif; transition:all 0.15s; white-space:nowrap; }
+  .group-btn:hover { border-color:var(--border-hover); color:var(--text-muted); }
+  .group-name-input { background:var(--surface3); border:1px solid var(--border); border-radius:4px; color:var(--text); font-size:10px; font-family:'JetBrains Mono',monospace; padding:2px 6px; width:100px; outline:none; }
+  .group-name-input:focus { border-color:var(--purple); }
+
+  /* File item */
+  .file-item { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 9px; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; gap:7px; position:relative; }
+  .file-item:hover { border-color:var(--border-hover); background:var(--surface3); }
+  .file-item.active { border-color:var(--accent); background:var(--accent-dim); }
+  .file-item.in-group { border-left:3px solid; margin-left:10px; }
+  .file-thumb { width:34px; height:34px; border-radius:4px; object-fit:cover; flex-shrink:0; background:var(--surface3); }
+  .file-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .file-name-row { display:flex; align-items:center; gap:5px; }
+  .file-order { font-size:9px; font-family:'JetBrains Mono',monospace; color:var(--text-dim); background:var(--surface3); border-radius:3px; padding:1px 4px; flex-shrink:0; border:1px solid var(--border); }
+  .file-item.active .file-order { background:var(--accent-dim); border-color:rgba(79,142,247,0.3); color:var(--accent); }
+  .file-original { font-size:11px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .file-size { font-size:10px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; }
+
+  /* individual pdf name inline */
+  .file-pdf-name { font-size:10px; color:var(--purple); font-family:'JetBrains Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:none; }
+  .file-pdf-name.show { display:block; }
+  .file-pdf-name-input { background:var(--surface3); border:1px solid rgba(167,139,250,0.3); border-radius:3px; color:var(--purple); font-size:10px; font-family:'JetBrains Mono',monospace; padding:2px 5px; width:100%; outline:none; display:none; }
+  .file-pdf-name-input:focus { border-color:var(--purple); }
+  .file-pdf-name-input.show { display:block; }
+
+  .file-del { width:20px; height:20px; border-radius:4px; border:none; background:transparent; color:var(--text-dim); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; transition:all 0.1s; padding:0; }
+  .file-del:hover { background:var(--danger-dim); color:var(--danger); }
+  .drag-handle { color:var(--text-dim); font-size:13px; cursor:grab; flex-shrink:0; line-height:1; }
+  .drag-handle:active { cursor:grabbing; }
+  .file-item.drag-over-item { border-color:var(--accent)!important; border-style:dashed!important; }
+  .file-item.dragging { opacity:0.4; }
+
+  /* Add group button */
+  .btn-add-group { width:100%; padding:6px; border:1.5px dashed rgba(167,139,250,0.3); border-radius:var(--radius-sm); background:transparent; color:var(--purple); font-size:11px; cursor:pointer; font-family:'Noto Sans KR',sans-serif; transition:all 0.15s; display:none; }
+  .btn-add-group:hover { background:var(--purple-dim); border-color:var(--purple); }
+  .btn-add-group.show { display:block; }
+
+  /* List footer */
+  .list-footer { border-top:1px solid var(--border); padding:10px 12px; flex-shrink:0; display:flex; flex-direction:column; gap:6px; }
+  .pdf-name-label { font-size:10px; font-weight:500; letter-spacing:0.5px; text-transform:uppercase; color:var(--text-dim); }
+  .pdf-name-input-row { display:flex; align-items:center; background:var(--surface3); border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; transition:border 0.15s; }
+  .pdf-name-input-row:focus-within { border-color:var(--accent); }
+  #pdfName { flex:1; background:transparent; border:none; border-radius:0; padding:7px 10px; font-size:12px; font-family:'JetBrains Mono',monospace; color:var(--text); }
+  #pdfName:focus { border:none; box-shadow:none; }
+  .pdf-ext { font-size:12px; font-family:'JetBrains Mono',monospace; color:var(--text-muted); padding:7px 10px 7px 2px; }
+
+  /* Footer mode hint */
+  .footer-hint { font-size:10px; color:var(--text-dim); line-height:1.4; }
+
+  /* Toast */
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(10px); background:var(--surface2); border:1px solid var(--border-hover); border-radius:var(--radius); padding:10px 16px; font-size:12px; color:var(--text); opacity:0; transition:all 0.25s; z-index:999; white-space:nowrap; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.success { border-color:rgba(62,207,142,0.4); color:var(--success); }
+  .toast.error { border-color:rgba(245,91,91,0.4); color:var(--danger); }
+  .toast.warn { border-color:rgba(245,166,35,0.4); color:var(--warn); }
+
+  ::-webkit-scrollbar { width:4px; height:4px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--border-hover); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">📄</div>
+    <h1>IMG → PDF 변환기</h1>
+    <span class="tagline">이미지 파일을 PDF로 일괄 변환</span>
+  </div>
+  <div class="header-right">
+    <span class="badge badge-blue" id="countBadge">0 / 20</span>
+    <span class="badge badge-green" id="sizeBadge">0 KB</span>
+    <span class="badge badge-purple" id="modeBadge">통합 모드</span>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- ① Preview Panel -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="ph-icon" style="background:rgba(79,142,247,0.1);">🖼</div>
+      <span class="panel-title">이미지 미리보기</span>
+      <span class="panel-count" id="previewLabel">—</span>
+    </div>
+    <div class="preview-body">
+      <div class="preview-empty" id="previewEmpty">
+        <div class="empty-icon">🖼️</div>
+        <p>파일 목록에서 이미지를 클릭하면<br>여기서 미리볼 수 있어요</p>
+      </div>
+      <img id="previewImg" class="preview-img" alt="미리보기" />
+      <div class="preview-meta" id="previewMeta">
+        <span class="pm-name" id="previewName">—</span>
+        <span class="pm-info" id="previewInfo">—</span>
+      </div>
+      <button class="preview-nav left" id="navLeft" onclick="navigate(-1)">◀</button>
+      <button class="preview-nav right" id="navRight" onclick="navigate(1)">▶</button>
+    </div>
+  </div>
+
+  <!-- ② Control Panel -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="ph-icon" style="background:rgba(245,166,35,0.1);">⚙️</div>
+      <span class="panel-title">변환 설정</span>
+    </div>
+    <div class="control-body">
+
+      <!-- Drop Zone -->
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept="image/*" multiple />
+        <div class="dz-icon">📥</div>
+        <div class="dz-title">이미지를 드래그하거나<br>클릭하여 선택</div>
+        <div class="dz-sub">JPG · PNG · WEBP · BMP · GIF<br>최대 20개</div>
+      </div>
+
+      <hr class="ctrl-divider">
+
+      <!-- Output Mode -->
+      <div>
+        <div class="ctrl-label">출력 방식</div>
+        <div class="mode-tabs">
+          <button class="mode-tab active-merge" id="tab-merge" onclick="setMode('merge')">🔗 통합<br><span style="font-size:9px;opacity:0.7;">1개 PDF</span></button>
+          <button class="mode-tab" id="tab-group" onclick="setMode('group')">📦 그룹<br><span style="font-size:9px;opacity:0.7;">묶음 PDF</span></button>
+          <button class="mode-tab" id="tab-individual" onclick="setMode('individual')">🗂 개별<br><span style="font-size:9px;opacity:0.7;">각각 PDF</span></button>
+        </div>
+        <div class="mode-desc" id="modeDesc" style="margin-top:6px;">
+          모든 이미지를 하나의 PDF 파일로 통합합니다.
+        </div>
+      </div>
+
+      <hr class="ctrl-divider">
+
+      <!-- Stats -->
+      <div class="stat-grid">
+        <div class="stat-card">
+          <span class="stat-val" id="statCount">0</span>
+          <span class="stat-lbl">이미지</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-val" id="statSize">0KB</span>
+          <span class="stat-lbl">전체 용량</span>
+        </div>
+      </div>
+
+      <hr class="ctrl-divider">
+
+      <!-- PDF Options -->
+      <div>
+        <div class="ctrl-label">PDF 옵션</div>
+        <div class="opt-group">
+          <div class="opt-row">
+            <label>용지 크기</label>
+            <select id="pageSize">
+              <option value="fit">🔲 이미지 자동맞춤</option>
+              <option value="a4" selected>A4 (210×297)</option>
+              <option value="letter">Letter (216×279)</option>
+              <option value="a3">A3 (297×420)</option>
+            </select>
+          </div>
+          <div class="opt-row">
+            <label>방향</label>
+            <select id="orientation">
+              <option value="auto">자동 (이미지 기준)</option>
+              <option value="portrait">세로 고정</option>
+              <option value="landscape">가로 고정</option>
+            </select>
+          </div>
+          <div class="opt-row">
+            <label>여백</label>
+            <select id="margin">
+              <option value="0">없음</option>
+              <option value="10" selected>작게 (10mm)</option>
+              <option value="20">보통 (20mm)</option>
+              <option value="30">크게 (30mm)</option>
+            </select>
+          </div>
+          <div class="opt-row">
+            <label>이미지 품질</label>
+            <select id="quality">
+              <option value="0.7">절약 (70%)</option>
+              <option value="0.85" selected>보통 (85%)</option>
+              <option value="0.95">고품질 (95%)</option>
+              <option value="1.0">원본 (100%)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <hr class="ctrl-divider">
+
+      <!-- Save Path -->
+      <div>
+        <div class="ctrl-label">저장 위치</div>
+        <div class="save-path-row">
+          <div class="save-path-display" id="savePathDisplay">📁 다운로드 폴더 (기본값)</div>
+          <button class="btn-folder" onclick="selectSaveFolder()">폴더 선택</button>
+        </div>
+        <div class="save-path-note" id="savePathNote">Chrome/Edge에서 폴더 지정이 지원됩니다.</div>
+      </div>
+
+      <hr class="ctrl-divider">
+
+      <!-- Progress -->
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+        <div class="progress-text" id="progressText">변환 중…</div>
+      </div>
+
+      <button class="btn-convert" id="convertBtn" onclick="convertToPDF()" disabled>PDF로 변환 &amp; 저장</button>
+      <button class="btn-clear" onclick="clearAll()">전체 초기화</button>
+
+    </div>
+  </div>
+
+  <!-- ③ File List Panel -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="ph-icon" style="background:rgba(62,207,142,0.1);">📋</div>
+      <span class="panel-title">파일 목록</span>
+      <span class="panel-count" id="listCount">0개</span>
+    </div>
+    <div class="list-body" id="listBody">
+      <div class="list-empty" id="listEmpty">
+        <div class="le-icon">📂</div>
+        <p>이미지를 추가하면<br>여기에 목록이 표시됩니다</p>
+      </div>
+    </div>
+    <div class="list-footer">
+      <span class="pdf-name-label" id="footerLabel">PDF 파일명</span>
+      <div class="pdf-name-input-row" id="mergeNameRow">
+        <input type="text" id="pdfName" placeholder="파일명을 입력하세요" value="변환된_이미지" />
+        <span class="pdf-ext">.pdf</span>
+      </div>
+      <div class="footer-hint" id="footerHint"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const { jsPDF } = window.jspdf;
+
+// ── State ────────────────────────────────────────────────────────────
+let files = [];       // { file, url, name, size, pdfName, groupId }
+let groups = [];      // { id, name, color } – only used in group mode
+let activeIdx = -1;
+let mode = 'merge';   // 'merge' | 'group' | 'individual'
+let dragSrcIdx = null;
+let saveDir = null;   // FileSystemDirectoryHandle | null
+
+const GROUP_COLORS = ['#4f8ef7','#a78bfa','#3ecf8e','#f5a623','#f55b5b','#f472b6','#67e8f9','#fbbf24'];
+let nextGroupId = 1;
+let nextColor = 0;
+
+// ── Mode ─────────────────────────────────────────────────────────────
+const modeDescs = {
+  merge:      '모든 이미지를 하나의 PDF 파일로 통합합니다. (1개 출력)',
+  group:      '파일을 그룹으로 묶어 각 그룹별로 PDF를 출력합니다. 그룹 수만큼 PDF가 생성됩니다.',
+  individual: '각 이미지를 개별 PDF로 저장합니다. 파일명을 직접 지정할 수 있어요.'
+};
+
+function setMode(m) {
+  mode = m;
+  ['merge','group','individual'].forEach(x => {
+    const tab = document.getElementById('tab-'+x);
+    tab.className = 'mode-tab' + (x===m ? ` active-${x}` : '');
+  });
+  document.getElementById('modeDesc').textContent = modeDescs[m];
+  document.getElementById('modeBadge').textContent = m==='merge'?'통합 모드':m==='group'?'그룹 모드':'개별 모드';
+
+  // footer
+  const mergeRow = document.getElementById('mergeNameRow');
+  const footerHint = document.getElementById('footerHint');
+  const footerLabel = document.getElementById('footerLabel');
+
+  if (m === 'merge') {
+    mergeRow.style.display = 'flex';
+    footerLabel.textContent = 'PDF 파일명';
+    footerHint.textContent = '';
+  } else if (m === 'group') {
+    mergeRow.style.display = 'none';
+    footerLabel.textContent = '그룹별 파일명 설정';
+    footerHint.textContent = '오른쪽 목록에서 그룹 이름을 직접 수정하세요.';
+  } else {
+    mergeRow.style.display = 'none';
+    footerLabel.textContent = '개별 PDF 파일명 설정';
+    footerHint.textContent = '각 항목의 이름 칸을 클릭하여 직접 수정하세요.';
+  }
+
+  renderList();
+}
+
+// ── File Input ────────────────────────────────────────────────────────
+const fileInput = document.getElementById('fileInput');
+const dropZone  = document.getElementById('dropZone');
+fileInput.addEventListener('change', e => addFiles(e.target.files));
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); addFiles(e.dataTransfer.files); });
+
+function addFiles(rawFiles) {
+  const arr = Array.from(rawFiles).filter(f => f.type.startsWith('image/'));
+  const remaining = 20 - files.length;
+  if (remaining <= 0) { showToast('최대 20개까지만 추가할 수 있어요', 'error'); return; }
+  const toAdd = arr.slice(0, remaining);
+  if (arr.length > remaining) showToast(`${arr.length - remaining}개는 한도 초과로 제외됐어요`, 'warn');
+
+  // default group for group mode
+  const defaultGroupId = (mode === 'group' && groups.length > 0) ? groups[groups.length-1].id : null;
+
+  const promises = toAdd.map(f => new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const baseName = f.name.replace(/\.[^.]+$/, '');
+      files.push({ file:f, url:e.target.result, name:f.name, size:f.size,
+                   pdfName: baseName, groupId: defaultGroupId });
+      resolve();
+    };
+    reader.readAsDataURL(f);
+  }));
+
+  Promise.all(promises).then(() => {
+    fileInput.value = '';
+    // auto-create first group if group mode and no groups
+    if (mode === 'group' && groups.length === 0) addGroup();
+    renderList(); updateStats();
+    if (activeIdx === -1 && files.length > 0) selectFile(0);
+    showToast(`${toAdd.length}개 이미지 추가됨`, 'success');
+  });
+}
+
+// ── Groups ────────────────────────────────────────────────────────────
+function addGroup() {
+  const id = nextGroupId++;
+  const color = GROUP_COLORS[nextColor % GROUP_COLORS.length];
+  nextColor++;
+  groups.push({ id, name:`그룹 ${id}`, color });
+  // assign ungrouped files to this new group if it's the first
+  if (groups.length === 1) files.forEach(f => { if (!f.groupId) f.groupId = id; });
+  renderList();
+}
+
+function removeGroup(id) {
+  groups = groups.filter(g => g.id !== id);
+  files.forEach(f => { if (f.groupId === id) f.groupId = groups.length ? groups[0].id : null; });
+  renderList();
+}
+
+function renameGroup(id, name) {
+  const g = groups.find(g => g.id === id);
+  if (g) g.name = name;
+}
+
+// ── Render List ───────────────────────────────────────────────────────
+function renderList() {
+  const body = document.getElementById('listBody');
+  const empEl = document.getElementById('listEmpty');
+  empEl.style.display = files.length ? 'none' : 'flex';
+  document.getElementById('convertBtn').disabled = files.length === 0;
+  document.getElementById('listCount').textContent = `${files.length}개`;
+  document.getElementById('btn-add-group') && null;
+
+  // remove old items but keep listEmpty
+  [...body.children].forEach(c => { if (!c.classList.contains('list-empty')) c.remove(); });
+
+  if (mode === 'merge') {
+    files.forEach((f, i) => body.appendChild(makeFileItem(f, i)));
+  } else if (mode === 'group') {
+    groups.forEach(g => {
+      const gFiles = files.map((f,i)=>({f,i})).filter(({f})=>f.groupId===g.id);
+      // group header
+      const gh = document.createElement('div');
+      gh.className = 'group-header';
+      gh.innerHTML = `
+        <div class="group-dot" style="background:${g.color}"></div>
+        <input class="group-name-input" value="${g.name}" data-gid="${g.id}" title="그룹 이름 수정" />
+        <span class="group-label" style="color:${g.color}">(${gFiles.length}개)</span>
+        <div class="group-actions">
+          <button class="group-btn" data-gid="${g.id}" onclick="removeGroup(${g.id})">그룹 삭제</button>
+        </div>`;
+      gh.querySelector('.group-name-input').addEventListener('input', e => renameGroup(g.id, e.target.value));
+      body.appendChild(gh);
+      gFiles.forEach(({f, i}) => {
+        const el = makeFileItem(f, i);
+        el.classList.add('in-group');
+        el.style.borderLeftColor = g.color;
+        body.appendChild(el);
+      });
+      // drop zone for ungrouped — allow dragging into group
+      const dropHint = document.createElement('div');
+      dropHint.style.cssText = 'height:4px; margin:0 0 4px 10px;';
+      body.appendChild(dropHint);
+    });
+
+    // ungrouped files
+    const ungrouped = files.map((f,i)=>({f,i})).filter(({f})=>!f.groupId || !groups.find(g=>g.id===f.groupId));
+    if (ungrouped.length) {
+      const ugh = document.createElement('div');
+      ugh.className = 'group-header';
+      ugh.innerHTML = `<div class="group-dot" style="background:var(--text-dim)"></div><span class="group-label" style="color:var(--text-dim)">그룹 없음 (${ungrouped.length}개)</span>`;
+      body.appendChild(ugh);
+      ungrouped.forEach(({f,i}) => body.appendChild(makeFileItem(f,i)));
+    }
+
+    // add group button
+    const agb = document.createElement('button');
+    agb.className = 'btn-add-group show';
+    agb.textContent = '+ 새 그룹 추가';
+    agb.onclick = addGroup;
+    body.appendChild(agb);
+
+  } else { // individual
+    files.forEach((f,i) => body.appendChild(makeFileItem(f,i)));
+  }
+}
+
+function makeFileItem(f, i) {
+  const item = document.createElement('div');
+  item.className = 'file-item' + (i===activeIdx ? ' active' : '');
+  item.dataset.idx = i;
+  item.draggable = true;
+
+  const showPdfName = mode === 'individual';
+  item.innerHTML = `
+    <span class="drag-handle" title="드래그로 순서 변경">⠿</span>
+    <img class="file-thumb" src="${f.url}" alt="" />
+    <div class="file-info">
+      <div class="file-name-row">
+        <span class="file-order">${String(i+1).padStart(2,'0')}</span>
+        <span class="file-original" title="${f.name}">${f.name}</span>
+      </div>
+      <span class="file-size">${formatSize(f.size)}</span>
+      ${showPdfName ? `<input class="file-pdf-name-input show" value="${f.pdfName}" placeholder="파일명" data-idx="${i}" title="저장될 PDF 파일명" />` : ''}
+    </div>
+    <button class="file-del" title="제거" data-idx="${i}">✕</button>`;
+
+  if (showPdfName) {
+    item.querySelector('.file-pdf-name-input').addEventListener('click', e => e.stopPropagation());
+    item.querySelector('.file-pdf-name-input').addEventListener('input', e => {
+      files[Number(e.target.dataset.idx)].pdfName = e.target.value;
+    });
+  }
+
+  // group mode: right-click or small pill to reassign group
+  if (mode === 'group' && groups.length > 1) {
+    const gpill = document.createElement('select');
+    gpill.style.cssText = 'font-size:9px;padding:2px 4px;background:var(--surface3);border:1px solid var(--border);border-radius:3px;color:var(--text-muted);cursor:pointer;flex-shrink:0;';
+    groups.forEach(g => {
+      const opt = document.createElement('option');
+      opt.value = g.id; opt.textContent = g.name;
+      if (f.groupId === g.id) opt.selected = true;
+      gpill.appendChild(opt);
+    });
+    gpill.addEventListener('change', e => { e.stopPropagation(); files[i].groupId = Number(e.target.value); renderList(); });
+    gpill.addEventListener('click', e => e.stopPropagation());
+    item.querySelector('.file-info').after(gpill);
+  }
+
+  item.addEventListener('click', e => { if (e.target.closest('.file-del')||e.target.closest('.drag-handle')||e.target.tagName==='SELECT'||e.target.tagName==='INPUT') return; selectFile(i); });
+  item.querySelector('.file-del').addEventListener('click', e => { e.stopPropagation(); removeFile(Number(e.currentTarget.dataset.idx)); });
+
+  // Drag sort
+  item.addEventListener('dragstart', e => { dragSrcIdx=i; item.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
+  item.addEventListener('dragend', () => item.classList.remove('dragging'));
+  item.addEventListener('dragover', e => { e.preventDefault(); document.querySelectorAll('.file-item').forEach(el=>el.classList.remove('drag-over-item')); item.classList.add('drag-over-item'); });
+  item.addEventListener('dragleave', () => item.classList.remove('drag-over-item'));
+  item.addEventListener('drop', e => {
+    e.preventDefault(); item.classList.remove('drag-over-item');
+    if (dragSrcIdx===null||dragSrcIdx===i) return;
+    const moved = files.splice(dragSrcIdx,1)[0];
+    files.splice(i,0,moved);
+    if (activeIdx===dragSrcIdx) activeIdx=i;
+    else if (activeIdx>dragSrcIdx&&activeIdx<=i) activeIdx--;
+    else if (activeIdx<dragSrcIdx&&activeIdx>=i) activeIdx++;
+    dragSrcIdx=null; renderList(); updateStats();
+  });
+  return item;
+}
+
+function selectFile(idx) {
+  activeIdx = idx; renderList();
+  const f = files[idx]; if (!f) return;
+  const img = document.getElementById('previewImg');
+  img.src = f.url; img.style.display = 'block';
+  document.getElementById('previewEmpty').style.display = 'none';
+  document.getElementById('previewMeta').classList.add('show');
+  document.getElementById('previewName').textContent = f.name;
+  document.getElementById('previewInfo').textContent = `${formatSize(f.size)} · ${idx+1} / ${files.length}`;
+  document.getElementById('previewLabel').textContent = `${idx+1} / ${files.length}`;
+  document.getElementById('navLeft').classList.toggle('show', files.length>1);
+  document.getElementById('navRight').classList.toggle('show', files.length>1);
+  const items = document.querySelectorAll('.file-item');
+  if (items[idx]) items[idx].scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function navigate(dir) { if (files.length===0) return; selectFile((activeIdx+dir+files.length)%files.length); }
+
+function removeFile(idx) {
+  files.splice(idx,1);
+  if (activeIdx>=files.length) activeIdx=files.length-1;
+  if (files.length===0) {
+    activeIdx=-1;
+    document.getElementById('previewImg').style.display='none';
+    document.getElementById('previewEmpty').style.display='flex';
+    document.getElementById('previewMeta').classList.remove('show');
+    document.getElementById('previewLabel').textContent='—';
+    ['navLeft','navRight'].forEach(id=>document.getElementById(id).classList.remove('show'));
+  } else selectFile(activeIdx);
+  renderList(); updateStats();
+}
+
+function clearAll() {
+  if (!files.length) return;
+  files=[]; groups=[]; activeIdx=-1; nextGroupId=1; nextColor=0;
+  document.getElementById('previewImg').style.display='none';
+  document.getElementById('previewEmpty').style.display='flex';
+  document.getElementById('previewMeta').classList.remove('show');
+  document.getElementById('previewLabel').textContent='—';
+  ['navLeft','navRight'].forEach(id=>document.getElementById(id).classList.remove('show'));
+  renderList(); updateStats(); showToast('전체 초기화됐어요');
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────
+function updateStats() {
+  const total = files.reduce((s,f)=>s+f.size,0);
+  document.getElementById('statCount').textContent = files.length;
+  document.getElementById('statSize').textContent = formatSize(total);
+  document.getElementById('countBadge').textContent = `${files.length} / 20`;
+  document.getElementById('sizeBadge').textContent = formatSize(total);
+}
+function formatSize(b) { if(b<1024)return b+'B'; if(b<1024*1024)return (b/1024).toFixed(0)+'KB'; return (b/1024/1024).toFixed(1)+'MB'; }
+
+// ── Save Folder ───────────────────────────────────────────────────────
+async function selectSaveFolder() {
+  if (!window.showDirectoryPicker) {
+    showToast('이 브라우저는 폴더 지정을 지원하지 않아요 (Chrome/Edge 권장)', 'warn');
+    document.getElementById('savePathNote').textContent = '⚠️ 현재 브라우저는 폴더 지정을 지원하지 않아요. Chrome/Edge를 사용해주세요.';
+    return;
+  }
+  try {
+    saveDir = await window.showDirectoryPicker({ mode:'readwrite' });
+    document.getElementById('savePathDisplay').textContent = '📁 ' + saveDir.name;
+    document.getElementById('savePathNote').textContent = `✅ "${saveDir.name}" 폴더에 저장됩니다.`;
+    showToast(`저장 폴더: ${saveDir.name}`, 'success');
+  } catch(e) { if(e.name!=='AbortError') showToast('폴더 선택이 취소됐어요', 'warn'); }
+}
+
+async function saveFile(blob, filename) {
+  if (saveDir) {
+    const fh = await saveDir.getFileHandle(filename, { create:true });
+    const w = await fh.createWritable();
+    await w.write(blob); await w.close();
+  } else {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url; a.download=filename; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+  }
+}
+
+// ── PDF Conversion ────────────────────────────────────────────────────
+function loadImage(url) { return new Promise((res,rej)=>{ const img=new Image(); img.onload=()=>res(img); img.onerror=rej; img.src=url; }); }
+
+function getPageSizeAndOrient(iw, ih) {
+  const pageSizeVal = document.getElementById('pageSize').value;
+  const orientVal   = document.getElementById('orientation').value;
+  const marginVal   = Number(document.getElementById('margin').value);
+  const pageFormats = { a4:[210,297], letter:[215.9,279.4], a3:[297,420] };
+
+  if (pageSizeVal === 'fit') {
+    // 이미지 자동맞춤: 이미지 크기를 그대로 페이지로
+    const wMM = Math.min(iw*0.264583, 900);
+    const hMM = Math.min(ih*0.264583, 1200);
+    return { format:[wMM+marginVal*2, hMM+marginVal*2], orient:'portrait', iw, ih, margin:marginVal, fit:true };
+  }
+
+  const fmt = pageFormats[pageSizeVal] || pageFormats.a4;
+  const isLandscape = iw > ih;
+  const orient = orientVal==='auto' ? (isLandscape?'landscape':'portrait') : orientVal;
+  const [pw,ph] = orient==='landscape' ? [fmt[1],fmt[0]] : fmt;
+  return { format:pageSizeVal, orient, pw, ph, margin:marginVal, fit:false };
+}
+
+async function addImagePage(pdf, f, isFirst) {
+  const img = await loadImage(f.url);
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  const cfg = getPageSizeAndOrient(iw, ih);
+
+  if (!isFirst) {
+    if (cfg.fit) pdf.addPage(cfg.format, cfg.orient);
+    else pdf.addPage(cfg.format, cfg.orient);
+  }
+
+  if (cfg.fit) {
+    const wMM = cfg.format[0] - cfg.margin*2;
+    const hMM = cfg.format[1] - cfg.margin*2;
+    pdf.addImage(f.url,'JPEG',cfg.margin,cfg.margin,wMM,hMM,'','FAST');
+  } else {
+    const usableW = cfg.pw - cfg.margin*2;
+    const usableH = cfg.ph - cfg.margin*2;
+    const ratio = Math.min(usableW/iw, usableH/ih);
+    const fw=iw*ratio, fh=ih*ratio;
+    const ox=cfg.margin+(usableW-fw)/2, oy=cfg.margin+(usableH-fh)/2;
+    pdf.addImage(f.url,'JPEG',ox,oy,fw,fh,'','FAST');
+  }
+}
+
+async function buildPDF(fileList) {
+  const first = fileList[0];
+  const img0 = await loadImage(first.url);
+  const cfg0 = getPageSizeAndOrient(img0.naturalWidth, img0.naturalHeight);
+  const pdf = new jsPDF({ orientation:cfg0.orient, unit:'mm', format:cfg0.fit?cfg0.format:cfg0.format });
+  for (let i=0; i<fileList.length; i++) {
+    await addImagePage(pdf, fileList[i], i===0);
+  }
+  return pdf;
+}
+
+async function convertToPDF() {
+  if (!files.length) return;
+  document.getElementById('convertBtn').disabled = true;
+  const pw = document.getElementById('progressWrap');
+  pw.classList.add('show');
+
+  try {
+    if (mode === 'merge') {
+      // ── 통합 ──
+      const name = (document.getElementById('pdfName').value.trim()||'변환된_이미지') + '.pdf';
+      setProgress(10, `통합 PDF 생성 중… (${files.length}개)`);
+      const pdf = await buildPDF(files);
+      setProgress(90, '저장 중…');
+      const blob = pdf.output('blob');
+      await saveFile(blob, name);
+      showToast(`✅ "${name}" 저장 완료!`, 'success');
+
+    } else if (mode === 'group') {
+      // ── 그룹 ──
+      const total = groups.length || 1;
+      for (let gi=0; gi<groups.length; gi++) {
+        const g = groups[gi];
+        const gFiles = files.filter(f=>f.groupId===g.id);
+        if (!gFiles.length) continue;
+        const pct = Math.round((gi/total)*85)+5;
+        setProgress(pct, `그룹 "${g.name}" 처리 중… (${gi+1}/${total})`);
+        const pdf = await buildPDF(gFiles);
+        const blob = pdf.output('blob');
+        await saveFile(blob, `${g.name}.pdf`);
+        await delay(30);
+      }
+      // ungrouped
+      const ung = files.filter(f=>!f.groupId||!groups.find(g=>g.id===f.groupId));
+      if (ung.length) {
+        setProgress(92, '그룹 없는 파일 처리 중…');
+        const pdf = await buildPDF(ung);
+        const blob = pdf.output('blob');
+        await saveFile(blob, '미분류.pdf');
+      }
+      showToast(`✅ ${groups.length}개 그룹 PDF 저장 완료!`, 'success');
+
+    } else {
+      // ── 개별 ──
+      for (let i=0; i<files.length; i++) {
+        const f = files[i];
+        const pct = Math.round((i/files.length)*85)+5;
+        setProgress(pct, `개별 변환 중… ${i+1} / ${files.length}`);
+        const img = await loadImage(f.url);
+        const cfg = getPageSizeAndOrient(img.naturalWidth, img.naturalHeight);
+        const pdf = new jsPDF({ orientation:cfg.orient, unit:'mm', format:cfg.fit?cfg.format:cfg.format });
+        await addImagePage(pdf, f, true);
+        const fname = (f.pdfName.trim()||`image_${i+1}`)+'.pdf';
+        const blob = pdf.output('blob');
+        await saveFile(blob, fname);
+        await delay(50);
+      }
+      showToast(`✅ ${files.length}개 PDF 개별 저장 완료!`, 'success');
+    }
+
+    setProgress(100, '완료!');
+    await delay(400);
+  } catch(e) {
+    console.error(e);
+    showToast('❌ 변환 중 오류가 발생했어요', 'error');
+  } finally {
+    pw.classList.remove('show');
+    document.getElementById('progressFill').style.width='0%';
+    document.getElementById('convertBtn').disabled = files.length===0;
+  }
+}
+
+function setProgress(pct, txt) {
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('progressText').textContent = txt;
+}
+function delay(ms) { return new Promise(r=>setTimeout(r,ms)); }
+
+// ── Toast ─────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, type='') {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show '+type;
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── Keyboard ──────────────────────────────────────────────────────────
+document.addEventListener('keydown', e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+  if(e.key==='ArrowLeft') navigate(-1);
+  if(e.key==='ArrowRight') navigate(1);
+  if(e.key==='Delete'&&activeIdx>=0) removeFile(activeIdx);
+});
+
+// Init
+setMode('merge');
+updateStats();
+renderList();
+</script>
+</body>
+</html>

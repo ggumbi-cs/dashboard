@@ -256,6 +256,23 @@
   .rot-badge { font-size:9px; font-family:'JetBrains Mono',monospace; color:var(--warn); background:rgba(245,166,35,0.12); border-radius:3px; padding:1px 4px; border:1px solid rgba(245,166,35,0.2); display:none; flex-shrink:0; }
   .rot-badge.show { display:inline-block; }
 
+  /* Bulk rotate buttons (panel header + group header) */
+  .bulk-rot-btns { display:flex; gap:3px; align-items:center; margin-left:auto; }
+  .bulk-rot-btn {
+    width:24px; height:24px;
+    border-radius:5px;
+    border:1.5px solid rgba(79,142,247,0.3);
+    background:rgba(79,142,247,0.08);
+    color:#7eb8ff;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    padding:0; transition:all 0.13s; flex-shrink:0;
+  }
+  .bulk-rot-btn:hover { background:rgba(79,142,247,0.22); border-color:var(--accent); color:#fff; transform:scale(1.1); }
+  .bulk-rot-btn:active { transform:scale(0.90); }
+  .bulk-rot-btn.ccw { border-color:rgba(167,139,250,0.3); background:rgba(167,139,250,0.08); color:#c4a8ff; }
+  .bulk-rot-btn.ccw:hover { background:rgba(167,139,250,0.22); border-color:var(--purple); color:#fff; }
+
   /* Add group button */
   .btn-add-group { width:100%; padding:6px; border:1.5px dashed rgba(167,139,250,0.3); border-radius:var(--radius-sm); background:transparent; color:var(--purple); font-size:11px; cursor:pointer; font-family:'Noto Sans KR',sans-serif; transition:all 0.15s; display:none; }
   .btn-add-group:hover { background:var(--purple-dim); border-color:var(--purple); }
@@ -453,6 +470,14 @@
       <div class="ph-icon" style="background:rgba(62,207,142,0.1);">📋</div>
       <span class="panel-title">파일 목록</span>
       <span class="panel-count" id="listCount">0개</span>
+      <div class="bulk-rot-btns" id="bulkRotBtns" style="display:none;">
+        <button class="bulk-rot-btn ccw" onclick="bulkRotate(-90)" title="전체 왼쪽 90° 회전">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        </button>
+        <button class="bulk-rot-btn" onclick="bulkRotate(90)" title="전체 오른쪽 90° 회전">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+        </button>
+      </div>
     </div>
     <div class="list-body" id="listBody">
       <div class="list-empty" id="listEmpty">
@@ -525,6 +550,8 @@ function setMode(m) {
   }
 
   renderList();
+  const bulkBtn = document.getElementById('bulkRotBtns');
+  if (bulkBtn) bulkBtn.style.display = files.length > 0 && m !== 'group' ? 'flex' : 'none';
 }
 
 // ── File Input ────────────────────────────────────────────────────────
@@ -550,9 +577,12 @@ function addFiles(rawFiles) {
     reader.onload = e => {
       const baseName = f.name.replace(/\.[^.]+$/, '');
       const dataUrl = e.target.result;
-      files.push({ file:f, url:dataUrl, originalUrl:dataUrl, name:f.name, size:f.size,
-                   pdfName: baseName, groupId: defaultGroupId, rotation:0 });
-      resolve();
+      // EXIF orientation 자동 보정 적용
+      correctOrientation(dataUrl, f.type).then(correctedUrl => {
+        files.push({ file:f, url:correctedUrl, originalUrl:correctedUrl, name:f.name, size:f.size,
+                     pdfName: baseName, groupId: defaultGroupId, rotation:0 });
+        resolve();
+      });
     };
     reader.readAsDataURL(f);
   }));
@@ -613,6 +643,14 @@ function renderList() {
         <div class="group-dot" style="background:${g.color}"></div>
         <input class="group-name-input" value="${g.name}" data-gid="${g.id}" title="그룹 이름 수정" />
         <span class="group-label" style="color:${g.color}">(${gFiles.length}개)</span>
+        <div class="bulk-rot-btns" style="margin-left:4px;">
+          <button class="bulk-rot-btn ccw" onclick="bulkRotate(-90,${g.id})" title="그룹 전체 왼쪽 90° 회전">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          </button>
+          <button class="bulk-rot-btn" onclick="bulkRotate(90,${g.id})" title="그룹 전체 오른쪽 90° 회전">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+          </button>
+        </div>
         <div class="group-actions">
           <button class="group-btn" data-gid="${g.id}" onclick="removeGroup(${g.id})">그룹 삭제</button>
         </div>`;
@@ -741,6 +779,26 @@ function makeFileItem(f, i) {
 }
 
 // ── Image Rotation ────────────────────────────────────────────────────
+async function bulkRotate(delta, groupId=null) {
+  // groupId 지정 시 해당 그룹만, null이면 전체
+  const targets = files
+    .map((f, i) => ({ f, i }))
+    .filter(({ f }) => groupId === null || f.groupId === groupId);
+  if (!targets.length) return;
+
+  showToast(`회전 중… (${targets.length}개)`, '');
+  for (const { f, i } of targets) {
+    f.rotation = ((f.rotation || 0) + delta + 360) % 360;
+    await bakeRotation(f);
+  }
+  renderList();
+  // 현재 선택된 파일이 회전 대상이면 미리보기 갱신
+  if (activeIdx >= 0 && (groupId === null || files[activeIdx]?.groupId === groupId)) {
+    renderPrintPreview(files[activeIdx]);
+  }
+  showToast(`✅ ${targets.length}개 회전 완료`, 'success');
+}
+
 function rotateFile(idx, delta) {
   const f = files[idx];
   if (!f) return;
@@ -750,6 +808,85 @@ function rotateFile(idx, delta) {
     renderList();
     if (activeIdx === idx) renderPrintPreview(f);
   });
+}
+
+// ── EXIF Orientation 자동 보정 ───────────────────────────────────────
+// 스마트폰 사진은 EXIF orientation 태그로 회전 정보를 저장함
+// Canvas는 EXIF를 무시하므로 직접 읽어서 보정해야 함
+function correctOrientation(dataUrl, mimeType) {
+  return new Promise(resolve => {
+    // JPEG/HEIC만 EXIF 있음
+    if (!mimeType || !mimeType.includes('jpeg')) {
+      resolve(dataUrl);
+      return;
+    }
+    const img = new Image();
+    img.onload = () => {
+      // ArrayBuffer로 EXIF orientation 읽기
+      fetch(dataUrl)
+        .then(r => r.arrayBuffer())
+        .then(buf => {
+          const orientation = getExifOrientation(buf);
+          if (!orientation || orientation <= 1) {
+            resolve(dataUrl);
+            return;
+          }
+          resolve(rotateByOrientation(img, orientation));
+        })
+        .catch(() => resolve(dataUrl));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
+function getExifOrientation(buffer) {
+  const view = new DataView(buffer);
+  if (view.getUint16(0, false) !== 0xFFD8) return null; // not JPEG
+  let offset = 2;
+  while (offset < buffer.byteLength) {
+    const marker = view.getUint16(offset, false);
+    offset += 2;
+    if (marker === 0xFFE1) { // APP1 = EXIF
+      const exifLen = view.getUint16(offset, false);
+      offset += 2;
+      if (view.getUint32(offset, false) !== 0x45786966) return null; // "Exif"
+      const little = view.getUint16(offset + 6, false) === 0x4949;
+      let tiffOffset = offset + 6;
+      const ifdOffset = view.getUint32(tiffOffset + 4, little);
+      const entries = view.getUint16(tiffOffset + ifdOffset, little);
+      for (let i = 0; i < entries; i++) {
+        const tag = view.getUint16(tiffOffset + ifdOffset + 2 + i * 12, little);
+        if (tag === 0x0112) { // Orientation tag
+          return view.getUint16(tiffOffset + ifdOffset + 2 + i * 12 + 8, little);
+        }
+      }
+      return null;
+    }
+    if ((marker & 0xFF00) !== 0xFF00) break;
+    offset += view.getUint16(offset, false);
+  }
+  return null;
+}
+
+function rotateByOrientation(img, orientation) {
+  // orientation 1=normal, 3=180, 6=90CW, 8=90CCW
+  const map = { 1:[0,false,false], 2:[0,true,false], 3:[180,false,false],
+                4:[0,false,true],  5:[90,true,false], 6:[90,false,false],
+                7:[270,true,false],8:[270,false,false] };
+  const [deg, flipX, flipY] = map[orientation] || [0,false,false];
+  const swap = deg === 90 || deg === 270;
+  const cw = swap ? img.naturalHeight : img.naturalWidth;
+  const ch = swap ? img.naturalWidth  : img.naturalHeight;
+  const canvas = document.createElement('canvas');
+  canvas.width = cw; canvas.height = ch;
+  const ctx = canvas.getContext('2d');
+  ctx.translate(cw/2, ch/2);
+  ctx.rotate(deg * Math.PI / 180);
+  if (flipX) ctx.scale(-1, 1);
+  if (flipY) ctx.scale(1, -1);
+  ctx.drawImage(img, -img.naturalWidth/2, -img.naturalHeight/2);
+  return canvas.toDataURL('image/jpeg', 0.95);
 }
 
 function bakeRotation(f) {
@@ -952,6 +1089,8 @@ function clearAll() {
 // ── Stats ─────────────────────────────────────────────────────────────
 function updateStats() {
   const total = files.reduce((s,f)=>s+f.size,0);
+  const bulkBtn = document.getElementById('bulkRotBtns');
+  if (bulkBtn) bulkBtn.style.display = files.length > 0 && mode !== 'group' ? 'flex' : 'none';
   document.getElementById('statCount').textContent = files.length;
   document.getElementById('statSize').textContent = formatSize(total);
   document.getElementById('countBadge').textContent = `${files.length} / 20`;

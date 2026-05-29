@@ -663,7 +663,7 @@ function makeFileItem(f, i) {
   const rotLabel = rotDeg !== 0 ? `${rotDeg}°` : '';
   item.innerHTML = `
     <span class="drag-handle" title="드래그로 순서 변경">⠿</span>
-    <img class="file-thumb" src="${f.url}" alt="" style="transform:rotate(${rotDeg}deg);transition:transform 0.2s;" />
+    <img class="file-thumb" src="${f.url}" alt="" />
     <div class="file-info">
       <div class="file-name-row">
         <span class="file-order">${String(i+1).padStart(2,'0')}</span>
@@ -753,25 +753,36 @@ function rotateFile(idx, delta) {
 }
 
 function bakeRotation(f) {
+  // originalUrl은 최초 1회만 저장 — 항상 원본 기준으로 회전
+  if (!f.originalUrl) f.originalUrl = f.url;
+
   return new Promise(resolve => {
+    const rot = f.rotation || 0;
+
+    // 0도면 원본 복원
+    if (rot === 0) {
+      f.url = f.originalUrl;
+      resolve();
+      return;
+    }
+
     const img = new Image();
     img.onload = () => {
-      const rot = f.rotation || 0;
       const swap = rot === 90 || rot === 270;
       const cw = swap ? img.naturalHeight : img.naturalWidth;
       const ch = swap ? img.naturalWidth  : img.naturalHeight;
       const canvas = document.createElement('canvas');
       canvas.width = cw; canvas.height = ch;
       const ctx = canvas.getContext('2d');
-      ctx.translate(cw/2, ch/2);
+      ctx.translate(cw / 2, ch / 2);
       ctx.rotate(rot * Math.PI / 180);
-      ctx.drawImage(img, -img.naturalWidth/2, -img.naturalHeight/2);
-      f.url = canvas.toDataURL('image/jpeg', 0.92);
+      ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+      // PDF와 미리보기 모두 이 url을 공유
+      f.url = canvas.toDataURL('image/jpeg', 0.95);
       resolve();
     };
-    // Use original url for rotation — store it
-    img.src = f.originalUrl || f.url;
-    if (!f.originalUrl) f.originalUrl = f.url;
+    // 반드시 원본에서 현재 각도를 한 번에 적용
+    img.src = f.originalUrl;
   });
 }
 

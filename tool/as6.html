@@ -27,8 +27,8 @@
     --purple: #a78bfa;
     --purple-dim: rgba(167,139,250,0.13);
     --text: #e8e8ed;
-    --text-muted: #888896;
-    --text-dim: #555560;
+    --text-muted: #aaaabc;
+    --text-dim: #707080;
     --radius: 10px;
     --radius-sm: 6px;
   }
@@ -52,21 +52,51 @@
   .panel:last-child { border-right:none; }
   .panel-header { padding:12px 16px 10px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; flex-shrink:0; }
   .ph-icon { width:22px; height:22px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:12px; }
-  .panel-title { font-size:11px; font-weight:500; letter-spacing:0.5px; text-transform:uppercase; color:var(--text-muted); }
+  .panel-title { font-size:11px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; color:#c0c0d0; }
   .panel-count { margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim); }
 
   /* ── Preview ── */
-  .preview-body { flex:1; display:flex; align-items:center; justify-content:center; background:var(--bg); overflow:hidden; position:relative; }
-  .preview-empty { display:flex; flex-direction:column; align-items:center; gap:12px; color:var(--text-dim); text-align:center; }
+  .preview-body { flex:1; display:flex; align-items:center; justify-content:center; background:#3a3a40; overflow:auto; position:relative; }
+  .preview-empty { display:flex; flex-direction:column; align-items:center; gap:12px; color:var(--text-dim); text-align:center; flex-shrink:0; }
   .preview-empty .empty-icon { font-size:48px; opacity:0.2; }
   .preview-empty p { font-size:13px; font-weight:300; }
-  .preview-img { max-width:100%; max-height:100%; object-fit:contain; display:none; border-radius:4px; }
-  .preview-meta { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,0.6)); padding:24px 16px 12px; display:none; flex-direction:column; gap:2px; }
-  .preview-meta.show { display:flex; }
-  .pm-name { font-size:13px; font-weight:500; color:#fff; }
-  .pm-info { font-size:11px; color:rgba(255,255,255,0.6); font-family:'JetBrains Mono',monospace; }
-  .preview-nav { position:absolute; top:50%; transform:translateY(-50%); width:32px; height:32px; background:rgba(255,255,255,0.08); border:1px solid var(--border-hover); border-radius:50%; display:none; align-items:center; justify-content:center; cursor:pointer; font-size:14px; color:var(--text-muted); transition:background 0.15s; user-select:none; }
-  .preview-nav:hover { background:rgba(255,255,255,0.15); color:var(--text); }
+
+  /* Print-preview paper */
+  .preview-paper-wrap { display:none; align-items:center; justify-content:center; padding:20px; min-height:100%; min-width:100%; }
+  .preview-paper-wrap.show { display:flex; }
+  .preview-paper {
+    background:#fff;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3);
+    position:relative;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    transition: width 0.2s, height 0.2s, padding 0.2s;
+  }
+  .preview-paper canvas {
+    display:block;
+    max-width:100%; max-height:100%;
+  }
+  .preview-paper .paper-margin-guide {
+    position:absolute; inset:0; pointer-events:none;
+    border: 1.5px dashed rgba(100,140,220,0.35);
+    transition: inset 0.2s;
+  }
+
+  /* bottom bar */
+  .preview-bar {
+    position:absolute; bottom:0; left:0; right:0;
+    background:rgba(0,0,0,0.55);
+    backdrop-filter:blur(6px);
+    padding:8px 14px;
+    display:none; align-items:center; gap:10px;
+  }
+  .preview-bar.show { display:flex; }
+  .pm-name { font-size:12px; font-weight:500; color:#fff; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pm-info { font-size:10px; color:rgba(255,255,255,0.55); font-family:'JetBrains Mono',monospace; white-space:nowrap; }
+  .pm-dims { font-size:10px; color:rgba(255,255,255,0.4); font-family:'JetBrains Mono',monospace; white-space:nowrap; }
+
+  .preview-nav { position:absolute; top:50%; transform:translateY(-50%); width:32px; height:32px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:50%; display:none; align-items:center; justify-content:center; cursor:pointer; font-size:14px; color:rgba(255,255,255,0.7); transition:background 0.15s; user-select:none; z-index:10; }
+  .preview-nav:hover { background:rgba(0,0,0,0.65); color:#fff; }
   .preview-nav.left { left:12px; } .preview-nav.right { right:12px; }
   .preview-nav.show { display:flex; }
 
@@ -75,48 +105,68 @@
   .control-body::-webkit-scrollbar { width:3px; } .control-body::-webkit-scrollbar-thumb { background:var(--border-hover); border-radius:2px; }
 
   /* Drop Zone */
-  .drop-zone { border:1.5px dashed var(--border-hover); border-radius:var(--radius); padding:18px 12px; text-align:center; cursor:pointer; transition:all 0.2s; background:var(--surface2); position:relative; }
-  .drop-zone:hover,.drop-zone.drag-over { border-color:var(--accent); background:var(--accent-dim); }
-  .drop-zone.drag-over { transform:scale(1.02); }
+  .drop-zone {
+    border: 2px dashed var(--accent);
+    border-radius: var(--radius);
+    padding: 22px 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(79,142,247,0.07);
+    position: relative;
+    box-shadow: 0 0 0 3px rgba(79,142,247,0.08), inset 0 0 20px rgba(79,142,247,0.04);
+    animation: dz-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes dz-pulse {
+    0%,100% { box-shadow: 0 0 0 3px rgba(79,142,247,0.08), inset 0 0 20px rgba(79,142,247,0.04); border-color: var(--accent); }
+    50%      { box-shadow: 0 0 0 6px rgba(79,142,247,0.16), inset 0 0 28px rgba(79,142,247,0.09); border-color: #6aa0f9; }
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: #6aa0f9;
+    background: rgba(79,142,247,0.15);
+    box-shadow: 0 0 0 6px rgba(79,142,247,0.18), inset 0 0 30px rgba(79,142,247,0.1);
+    transform: scale(1.02);
+    animation: none;
+  }
   .drop-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
-  .dz-icon { font-size:26px; margin-bottom:6px; opacity:0.5; }
-  .dz-title { font-size:11px; font-weight:500; color:var(--text-muted); margin-bottom:3px; }
-  .dz-sub { font-size:10px; color:var(--text-dim); font-weight:300; }
+  .dz-icon { font-size:30px; margin-bottom:8px; filter: drop-shadow(0 0 6px rgba(79,142,247,0.6)); }
+  .dz-title { font-size:12px; font-weight:700; color:#d0e4ff; margin-bottom:4px; letter-spacing:0.2px; }
+  .dz-sub { font-size:10px; color:rgba(160,200,255,0.7); font-weight:400; }
 
-  .ctrl-label { font-size:10px; font-weight:500; letter-spacing:0.6px; text-transform:uppercase; color:var(--text-dim); margin-bottom:5px; }
+  .ctrl-label { font-size:10px; font-weight:600; letter-spacing:0.6px; text-transform:uppercase; color:#9090a8; margin-bottom:5px; }
   .ctrl-divider { border:none; border-top:1px solid var(--border); }
 
   /* Mode Tabs */
   .mode-tabs { display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px; }
-  .mode-tab { padding:7px 4px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface2); color:var(--text-muted); font-size:10px; font-weight:500; text-align:center; cursor:pointer; transition:all 0.15s; font-family:'Noto Sans KR',sans-serif; line-height:1.3; }
+  .mode-tab { padding:7px 4px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface2); color:#b0b0c8; font-size:10px; font-weight:500; text-align:center; cursor:pointer; transition:all 0.15s; font-family:'Noto Sans KR',sans-serif; line-height:1.3; }
   .mode-tab:hover { border-color:var(--border-hover); color:var(--text); }
   .mode-tab.active-merge { border-color:var(--accent); background:var(--accent-dim); color:var(--accent); }
   .mode-tab.active-group { border-color:var(--purple); background:var(--purple-dim); color:var(--purple); }
   .mode-tab.active-individual { border-color:var(--success); background:var(--success-dim); color:var(--success); }
 
   /* Mode description */
-  .mode-desc { font-size:10px; color:var(--text-muted); line-height:1.5; padding:8px 10px; border-radius:var(--radius-sm); background:var(--surface2); border:1px solid var(--border); }
+  .mode-desc { font-size:10px; color:#b0b0c4; line-height:1.5; padding:8px 10px; border-radius:var(--radius-sm); background:var(--surface2); border:1px solid var(--border); }
 
   /* Stats */
   .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
   .stat-card { background:var(--surface2); border-radius:var(--radius-sm); border:1px solid var(--border); padding:8px 10px; display:flex; flex-direction:column; gap:2px; }
   .stat-val { font-size:18px; font-weight:700; color:var(--text); font-family:'JetBrains Mono',monospace; line-height:1; }
-  .stat-lbl { font-size:9px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.4px; }
+  .stat-lbl { font-size:9px; color:#9090a8; text-transform:uppercase; letter-spacing:0.4px; }
 
   /* Options */
   .opt-group { display:flex; flex-direction:column; gap:7px; }
   .opt-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-  .opt-row label { font-size:11px; color:var(--text-muted); white-space:nowrap; }
+  .opt-row label { font-size:11px; color:#c0c0d0; white-space:nowrap; font-weight:500; }
   select, input[type=text] { background:var(--surface3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-size:11px; font-family:'Noto Sans KR',sans-serif; padding:5px 8px; outline:none; transition:border 0.15s; }
   select:focus, input[type=text]:focus { border-color:var(--accent); }
   select option { background:#1a1a1e; }
 
   /* Save path */
   .save-path-row { display:flex; gap:5px; align-items:stretch; }
-  .save-path-display { flex:1; background:var(--surface3); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:10px; color:var(--text-muted); padding:5px 8px; font-family:'JetBrains Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; min-width:0; }
-  .btn-folder { background:var(--surface3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-muted); font-size:11px; padding:5px 9px; cursor:pointer; white-space:nowrap; transition:all 0.15s; font-family:'Noto Sans KR',sans-serif; }
+  .save-path-display { flex:1; background:var(--surface3); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:10px; color:#aaaabc; padding:5px 8px; font-family:'JetBrains Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; min-width:0; }
+  .btn-folder { background:var(--surface3); border:1px solid var(--border); border-radius:var(--radius-sm); color:#c0c0d8; font-size:11px; padding:5px 9px; cursor:pointer; white-space:nowrap; transition:all 0.15s; font-family:'Noto Sans KR',sans-serif; }
   .btn-folder:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
-  .save-path-note { font-size:10px; color:var(--text-dim); margin-top:3px; line-height:1.4; }
+  .save-path-note { font-size:10px; color:#9090a8; margin-top:3px; line-height:1.4; }
 
   /* Progress */
   .progress-wrap { display:none; flex-direction:column; gap:6px; }
@@ -160,8 +210,8 @@
   .file-name-row { display:flex; align-items:center; gap:5px; }
   .file-order { font-size:9px; font-family:'JetBrains Mono',monospace; color:var(--text-dim); background:var(--surface3); border-radius:3px; padding:1px 4px; flex-shrink:0; border:1px solid var(--border); }
   .file-item.active .file-order { background:var(--accent-dim); border-color:rgba(79,142,247,0.3); color:var(--accent); }
-  .file-original { font-size:11px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .file-size { font-size:10px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; }
+  .file-original { font-size:11px; color:#c8c8da; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .file-size { font-size:10px; color:#8888a0; font-family:'JetBrains Mono',monospace; }
 
   /* individual pdf name inline */
   .file-pdf-name { font-size:10px; color:var(--purple); font-family:'JetBrains Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:none; }
@@ -176,6 +226,35 @@
   .drag-handle:active { cursor:grabbing; }
   .file-item.drag-over-item { border-color:var(--accent)!important; border-style:dashed!important; }
   .file-item.dragging { opacity:0.4; }
+
+  /* Rotation buttons */
+  .rot-btns { display:flex; gap:3px; flex-shrink:0; align-items:center; }
+  .rot-btn {
+    width:26px; height:26px;
+    border-radius:6px;
+    border:1.5px solid rgba(79,142,247,0.35);
+    background: rgba(79,142,247,0.1);
+    color: #7eb8ff;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px;
+    padding:0;
+    transition:all 0.13s;
+    line-height:1;
+    box-shadow: 0 0 0 0 rgba(79,142,247,0);
+  }
+  .rot-btn:hover {
+    background: rgba(79,142,247,0.25);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 8px rgba(79,142,247,0.35);
+    transform: scale(1.08);
+  }
+  .rot-btn:active { transform:scale(0.90); }
+  .rot-btn[data-rot="-90"]:hover { background:rgba(167,139,250,0.25); border-color:var(--purple); color:#fff; box-shadow:0 0 8px rgba(167,139,250,0.35); }
+  .rot-btn[data-rot="-90"] { border-color:rgba(167,139,250,0.35); background:rgba(167,139,250,0.1); color:#c4a8ff; }
+  .rot-badge { font-size:9px; font-family:'JetBrains Mono',monospace; color:var(--warn); background:rgba(245,166,35,0.12); border-radius:3px; padding:1px 4px; border:1px solid rgba(245,166,35,0.2); display:none; flex-shrink:0; }
+  .rot-badge.show { display:inline-block; }
 
   /* Add group button */
   .btn-add-group { width:100%; padding:6px; border:1.5px dashed rgba(167,139,250,0.3); border-radius:var(--radius-sm); background:transparent; color:var(--purple); font-size:11px; cursor:pointer; font-family:'Noto Sans KR',sans-serif; transition:all 0.15s; display:none; }
@@ -192,7 +271,7 @@
   .pdf-ext { font-size:12px; font-family:'JetBrains Mono',monospace; color:var(--text-muted); padding:7px 10px 7px 2px; }
 
   /* Footer mode hint */
-  .footer-hint { font-size:10px; color:var(--text-dim); line-height:1.4; }
+  .footer-hint { font-size:10px; color:#9090a8; line-height:1.4; }
 
   /* Toast */
   .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(10px); background:var(--surface2); border:1px solid var(--border-hover); border-radius:var(--radius); padding:10px 16px; font-size:12px; color:var(--text); opacity:0; transition:all 0.25s; z-index:999; white-space:nowrap; }
@@ -223,21 +302,29 @@
 
 <div class="main">
 
-  <!-- ① Preview Panel -->
+  <!-- ① Preview Panel (Print Preview) -->
   <div class="panel">
     <div class="panel-header">
-      <div class="ph-icon" style="background:rgba(79,142,247,0.1);">🖼</div>
-      <span class="panel-title">이미지 미리보기</span>
+      <div class="ph-icon" style="background:rgba(79,142,247,0.1);">🖨</div>
+      <span class="panel-title">인쇄 미리보기</span>
       <span class="panel-count" id="previewLabel">—</span>
     </div>
-    <div class="preview-body">
+    <div class="preview-body" id="previewBody">
       <div class="preview-empty" id="previewEmpty">
-        <div class="empty-icon">🖼️</div>
-        <p>파일 목록에서 이미지를 클릭하면<br>여기서 미리볼 수 있어요</p>
+        <div class="empty-icon">🖨️</div>
+        <p>이미지를 추가하면<br>PDF 출력 모습이 여기 표시됩니다</p>
       </div>
-      <img id="previewImg" class="preview-img" alt="미리보기" />
-      <div class="preview-meta" id="previewMeta">
+      <!-- paper preview -->
+      <div class="preview-paper-wrap" id="paperWrap">
+        <div class="preview-paper" id="previewPaper">
+          <canvas id="previewCanvas"></canvas>
+          <div class="paper-margin-guide" id="marginGuide"></div>
+        </div>
+      </div>
+      <!-- bottom info bar -->
+      <div class="preview-bar" id="previewBar">
         <span class="pm-name" id="previewName">—</span>
+        <span class="pm-dims" id="previewDims">—</span>
         <span class="pm-info" id="previewInfo">—</span>
       </div>
       <button class="preview-nav left" id="navLeft" onclick="navigate(-1)">◀</button>
@@ -298,16 +385,16 @@
         <div class="opt-group">
           <div class="opt-row">
             <label>용지 크기</label>
-            <select id="pageSize">
-              <option value="fit">🔲 이미지 자동맞춤</option>
-              <option value="a4" selected>A4 (210×297)</option>
+            <select id="pageSize" onchange="onOptionChange()" oninput="onOptionChange()">
+              <option value="fit" selected>🔲 이미지 자동맞춤</option>
+              <option value="a4">A4 (210×297)</option>
               <option value="letter">Letter (216×279)</option>
               <option value="a3">A3 (297×420)</option>
             </select>
           </div>
           <div class="opt-row">
             <label>방향</label>
-            <select id="orientation">
+            <select id="orientation" onchange="onOptionChange()" oninput="onOptionChange()">
               <option value="auto">자동 (이미지 기준)</option>
               <option value="portrait">세로 고정</option>
               <option value="landscape">가로 고정</option>
@@ -315,7 +402,7 @@
           </div>
           <div class="opt-row">
             <label>여백</label>
-            <select id="margin">
+            <select id="margin" onchange="onOptionChange()" oninput="onOptionChange()">
               <option value="0">없음</option>
               <option value="10" selected>작게 (10mm)</option>
               <option value="20">보통 (20mm)</option>
@@ -462,8 +549,9 @@ function addFiles(rawFiles) {
     const reader = new FileReader();
     reader.onload = e => {
       const baseName = f.name.replace(/\.[^.]+$/, '');
-      files.push({ file:f, url:e.target.result, name:f.name, size:f.size,
-                   pdfName: baseName, groupId: defaultGroupId });
+      const dataUrl = e.target.result;
+      files.push({ file:f, url:dataUrl, originalUrl:dataUrl, name:f.name, size:f.size,
+                   pdfName: baseName, groupId: defaultGroupId, rotation:0 });
       resolve();
     };
     reader.readAsDataURL(f);
@@ -571,16 +659,33 @@ function makeFileItem(f, i) {
   item.draggable = true;
 
   const showPdfName = mode === 'individual';
+  const rotDeg = f.rotation || 0;
+  const rotLabel = rotDeg !== 0 ? `${rotDeg}°` : '';
   item.innerHTML = `
     <span class="drag-handle" title="드래그로 순서 변경">⠿</span>
-    <img class="file-thumb" src="${f.url}" alt="" />
+    <img class="file-thumb" src="${f.url}" alt="" style="transform:rotate(${rotDeg}deg);transition:transform 0.2s;" />
     <div class="file-info">
       <div class="file-name-row">
         <span class="file-order">${String(i+1).padStart(2,'0')}</span>
         <span class="file-original" title="${f.name}">${f.name}</span>
+        <span class="rot-badge${rotDeg!==0?' show':''}">${rotLabel}</span>
       </div>
       <span class="file-size">${formatSize(f.size)}</span>
       ${showPdfName ? `<input class="file-pdf-name-input show" value="${f.pdfName}" placeholder="파일명" data-idx="${i}" title="저장될 PDF 파일명" />` : ''}
+    </div>
+    <div class="rot-btns">
+      <button class="rot-btn" data-rot="-90" data-idx="${i}" title="왼쪽 90° 회전">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+      </button>
+      <button class="rot-btn" data-rot="90" data-idx="${i}" title="오른쪽 90° 회전">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+          <path d="M21 3v5h-5"/>
+        </svg>
+      </button>
     </div>
     <button class="file-del" title="제거" data-idx="${i}">✕</button>`;
 
@@ -606,7 +711,15 @@ function makeFileItem(f, i) {
     item.querySelector('.file-info').after(gpill);
   }
 
-  item.addEventListener('click', e => { if (e.target.closest('.file-del')||e.target.closest('.drag-handle')||e.target.tagName==='SELECT'||e.target.tagName==='INPUT') return; selectFile(i); });
+  item.querySelectorAll('.rot-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const idx2 = Number(btn.dataset.idx);
+      const delta = Number(btn.dataset.rot);
+      rotateFile(idx2, delta);
+    });
+  });
+  item.addEventListener('click', e => { if (e.target.closest('.file-del')||e.target.closest('.drag-handle')||e.target.closest('.rot-btns')||e.target.tagName==='SELECT'||e.target.tagName==='INPUT') return; selectFile(i); });
   item.querySelector('.file-del').addEventListener('click', e => { e.stopPropagation(); removeFile(Number(e.currentTarget.dataset.idx)); });
 
   // Drag sort
@@ -627,20 +740,175 @@ function makeFileItem(f, i) {
   return item;
 }
 
+// ── Image Rotation ────────────────────────────────────────────────────
+function rotateFile(idx, delta) {
+  const f = files[idx];
+  if (!f) return;
+  f.rotation = ((f.rotation || 0) + delta + 360) % 360;
+  // Re-bake the rotated image into a new data URL so PDF gets correct pixels
+  bakeRotation(f).then(() => {
+    renderList();
+    if (activeIdx === idx) renderPrintPreview(f);
+  });
+}
+
+function bakeRotation(f) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const rot = f.rotation || 0;
+      const swap = rot === 90 || rot === 270;
+      const cw = swap ? img.naturalHeight : img.naturalWidth;
+      const ch = swap ? img.naturalWidth  : img.naturalHeight;
+      const canvas = document.createElement('canvas');
+      canvas.width = cw; canvas.height = ch;
+      const ctx = canvas.getContext('2d');
+      ctx.translate(cw/2, ch/2);
+      ctx.rotate(rot * Math.PI / 180);
+      ctx.drawImage(img, -img.naturalWidth/2, -img.naturalHeight/2);
+      f.url = canvas.toDataURL('image/jpeg', 0.92);
+      resolve();
+    };
+    // Use original url for rotation — store it
+    img.src = f.originalUrl || f.url;
+    if (!f.originalUrl) f.originalUrl = f.url;
+  });
+}
+
 function selectFile(idx) {
   activeIdx = idx; renderList();
   const f = files[idx]; if (!f) return;
-  const img = document.getElementById('previewImg');
-  img.src = f.url; img.style.display = 'block';
-  document.getElementById('previewEmpty').style.display = 'none';
-  document.getElementById('previewMeta').classList.add('show');
-  document.getElementById('previewName').textContent = f.name;
-  document.getElementById('previewInfo').textContent = `${formatSize(f.size)} · ${idx+1} / ${files.length}`;
   document.getElementById('previewLabel').textContent = `${idx+1} / ${files.length}`;
   document.getElementById('navLeft').classList.toggle('show', files.length>1);
   document.getElementById('navRight').classList.toggle('show', files.length>1);
   const items = document.querySelectorAll('.file-item');
   if (items[idx]) items[idx].scrollIntoView({ behavior:'smooth', block:'nearest' });
+  renderPrintPreview(f);
+}
+
+// ── Print Preview Renderer ────────────────────────────────────────────
+// Page size definitions in mm
+const PAGE_DEFS = {
+  fit:    null,  // computed from image
+  a4:     [210, 297],
+  letter: [215.9, 279.4],
+  a3:     [297, 420],
+};
+
+function computeLayout(iw, ih) {
+  const pageSizeVal = document.getElementById('pageSize').value;
+  const orientVal   = document.getElementById('orientation').value;
+  const marginMM    = Number(document.getElementById('margin').value);
+
+  let pageWmm, pageHmm;
+
+  if (pageSizeVal === 'fit') {
+    // Page = exact image aspect ratio, no rotation applied
+    pageWmm = iw * 0.264583;
+    pageHmm = ih * 0.264583;
+    const scale = Math.min(1, 420 / Math.max(pageWmm, pageHmm));
+    pageWmm *= scale; pageHmm *= scale;
+
+    // Apply forced orientation by swapping if needed
+    const forceHoriz = orientVal === 'landscape';
+    const forceVert  = orientVal === 'portrait';
+    if (forceHoriz && pageHmm > pageWmm) { [pageWmm, pageHmm] = [pageHmm, pageWmm]; }
+    if (forceVert  && pageWmm > pageHmm) { [pageWmm, pageHmm] = [pageHmm, pageWmm]; }
+  } else {
+    const base = PAGE_DEFS[pageSizeVal] || PAGE_DEFS.a4;
+    // auto = decide by image shape; portrait/landscape = forced
+    const makeHoriz =
+      orientVal === 'landscape' ||
+      (orientVal === 'auto' && iw > ih);
+    [pageWmm, pageHmm] = makeHoriz ? [base[1], base[0]] : [base[0], base[1]];
+  }
+
+  const usableW = pageWmm - marginMM * 2;
+  const usableH = pageHmm - marginMM * 2;
+  const ratio = Math.min(usableW / iw, usableH / ih);
+  const imgW = iw * ratio;
+  const imgH = ih * ratio;
+  const imgX = marginMM + (usableW - imgW) / 2;
+  const imgY = marginMM + (usableH - imgH) / 2;
+
+  return { pageWmm, pageHmm, marginMM, imgX, imgY, imgW, imgH };
+}
+
+// Refresh preview when options change — called via oninput on the selects
+function onOptionChange() {
+  if (activeIdx >= 0 && files[activeIdx]) renderPrintPreview(files[activeIdx]);
+}
+
+async function renderPrintPreview(f) {
+  document.getElementById('previewEmpty').style.display = 'none';
+  const wrap = document.getElementById('paperWrap');
+  wrap.classList.add('show');
+  document.getElementById('previewBar').classList.add('show');
+
+  // Load image to get natural dimensions
+  const img = await loadImage(f.url);
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+
+  const layout = computeLayout(iw, ih);
+  const { pageWmm, pageHmm, marginMM, imgX, imgY, imgW, imgH } = layout;
+
+  // Figure out how big to draw the paper in the preview area
+  const container = document.getElementById('previewBody');
+  const availW = container.clientWidth  - 40;
+  const availH = container.clientHeight - 40 - 36; // 36 = bar height
+  const mmToPx = Math.min(availW / pageWmm, availH / pageHmm, 4); // max 4px/mm
+
+  const paperPxW = Math.round(pageWmm * mmToPx);
+  const paperPxH = Math.round(pageHmm * mmToPx);
+
+  const paper = document.getElementById('previewPaper');
+  paper.style.width  = paperPxW + 'px';
+  paper.style.height = paperPxH + 'px';
+
+  // Draw on canvas
+  const canvas = document.getElementById('previewCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = paperPxW * dpr;
+  canvas.height = paperPxH * dpr;
+  canvas.style.width  = paperPxW + 'px';
+  canvas.style.height = paperPxH + 'px';
+  canvas.style.position = 'absolute';
+  canvas.style.top = '0'; canvas.style.left = '0';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  // White background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, paperPxW, paperPxH);
+
+  // Draw image at computed position
+  const drawX = imgX * mmToPx;
+  const drawY = imgY * mmToPx;
+  const drawW = imgW * mmToPx;
+  const drawH = imgH * mmToPx;
+  ctx.drawImage(img, drawX, drawY, drawW, drawH);
+
+  // Update margin guide inset
+  const marginPx = marginMM * mmToPx;
+  const guide = document.getElementById('marginGuide');
+  if (marginMM > 0) {
+    guide.style.inset = marginPx + 'px';
+    guide.style.display = 'block';
+  } else {
+    guide.style.display = 'none';
+  }
+
+  // Info bar
+  document.getElementById('previewName').textContent = f.name;
+  document.getElementById('previewDims').textContent = `${iw}×${ih}px`;
+  const pageSizeVal = document.getElementById('pageSize').value;
+  const orientVal   = document.getElementById('orientation').value;
+  const marginVal   = Number(document.getElementById('margin').value);
+  const sizeLabel   = pageSizeVal === 'fit' ? '이미지 맞춤' : pageSizeVal.toUpperCase();
+  const orientLabel = orientVal === 'auto' ? '자동' : orientVal === 'portrait' ? '세로' : '가로';
+  document.getElementById('previewInfo').textContent =
+    `${sizeLabel} · ${orientLabel} · 여백${marginVal}mm`;
 }
 
 function navigate(dir) { if (files.length===0) return; selectFile((activeIdx+dir+files.length)%files.length); }
@@ -650,9 +918,9 @@ function removeFile(idx) {
   if (activeIdx>=files.length) activeIdx=files.length-1;
   if (files.length===0) {
     activeIdx=-1;
-    document.getElementById('previewImg').style.display='none';
+    document.getElementById('paperWrap').classList.remove('show');
+    document.getElementById('previewBar').classList.remove('show');
     document.getElementById('previewEmpty').style.display='flex';
-    document.getElementById('previewMeta').classList.remove('show');
     document.getElementById('previewLabel').textContent='—';
     ['navLeft','navRight'].forEach(id=>document.getElementById(id).classList.remove('show'));
   } else selectFile(activeIdx);
@@ -662,9 +930,9 @@ function removeFile(idx) {
 function clearAll() {
   if (!files.length) return;
   files=[]; groups=[]; activeIdx=-1; nextGroupId=1; nextColor=0;
-  document.getElementById('previewImg').style.display='none';
+  document.getElementById('paperWrap').classList.remove('show');
+  document.getElementById('previewBar').classList.remove('show');
   document.getElementById('previewEmpty').style.display='flex';
-  document.getElementById('previewMeta').classList.remove('show');
   document.getElementById('previewLabel').textContent='—';
   ['navLeft','navRight'].forEach(id=>document.getElementById(id).classList.remove('show'));
   renderList(); updateStats(); showToast('전체 초기화됐어요');
@@ -718,16 +986,28 @@ function getPageSizeAndOrient(iw, ih) {
   const pageFormats = { a4:[210,297], letter:[215.9,279.4], a3:[297,420] };
 
   if (pageSizeVal === 'fit') {
-    // 이미지 자동맞춤: 이미지 크기를 그대로 페이지로
-    const wMM = Math.min(iw*0.264583, 900);
-    const hMM = Math.min(ih*0.264583, 1200);
-    return { format:[wMM+marginVal*2, hMM+marginVal*2], orient:'portrait', iw, ih, margin:marginVal, fit:true };
+    let wMM = iw * 0.264583;
+    let hMM = ih * 0.264583;
+    // Apply forced orientation by swapping dimensions if needed
+    if (orientVal === 'landscape' && hMM > wMM) { [wMM, hMM] = [hMM, wMM]; }
+    if (orientVal === 'portrait'  && wMM > hMM) { [wMM, hMM] = [hMM, wMM]; }
+    const orient = wMM >= hMM ? 'landscape' : 'portrait';
+    return {
+      format:  [wMM + marginVal*2, hMM + marginVal*2],
+      orient,
+      pw:      wMM + marginVal*2,
+      ph:      hMM + marginVal*2,
+      margin:  marginVal,
+      fit:     true,
+      imgWmm:  wMM,
+      imgHmm:  hMM
+    };
   }
 
   const fmt = pageFormats[pageSizeVal] || pageFormats.a4;
-  const isLandscape = iw > ih;
-  const orient = orientVal==='auto' ? (isLandscape?'landscape':'portrait') : orientVal;
-  const [pw,ph] = orient==='landscape' ? [fmt[1],fmt[0]] : fmt;
+  const makeHoriz = orientVal === 'landscape' || (orientVal === 'auto' && iw > ih);
+  const orient = makeHoriz ? 'landscape' : 'portrait';
+  const [pw, ph] = makeHoriz ? [fmt[1], fmt[0]] : fmt;
   return { format:pageSizeVal, orient, pw, ph, margin:marginVal, fit:false };
 }
 
@@ -737,21 +1017,19 @@ async function addImagePage(pdf, f, isFirst) {
   const cfg = getPageSizeAndOrient(iw, ih);
 
   if (!isFirst) {
-    if (cfg.fit) pdf.addPage(cfg.format, cfg.orient);
-    else pdf.addPage(cfg.format, cfg.orient);
+    pdf.addPage(cfg.format, cfg.orient);
   }
 
   if (cfg.fit) {
-    const wMM = cfg.format[0] - cfg.margin*2;
-    const hMM = cfg.format[1] - cfg.margin*2;
-    pdf.addImage(f.url,'JPEG',cfg.margin,cfg.margin,wMM,hMM,'','FAST');
+    // Image fills the page exactly minus margin — no scaling distortion
+    pdf.addImage(f.url, 'JPEG', cfg.margin, cfg.margin, cfg.imgWmm, cfg.imgHmm, '', 'FAST');
   } else {
     const usableW = cfg.pw - cfg.margin*2;
     const usableH = cfg.ph - cfg.margin*2;
     const ratio = Math.min(usableW/iw, usableH/ih);
     const fw=iw*ratio, fh=ih*ratio;
     const ox=cfg.margin+(usableW-fw)/2, oy=cfg.margin+(usableH-fh)/2;
-    pdf.addImage(f.url,'JPEG',ox,oy,fw,fh,'','FAST');
+    pdf.addImage(f.url, 'JPEG', ox, oy, fw, fh, '', 'FAST');
   }
 }
 
@@ -759,7 +1037,7 @@ async function buildPDF(fileList) {
   const first = fileList[0];
   const img0 = await loadImage(first.url);
   const cfg0 = getPageSizeAndOrient(img0.naturalWidth, img0.naturalHeight);
-  const pdf = new jsPDF({ orientation:cfg0.orient, unit:'mm', format:cfg0.fit?cfg0.format:cfg0.format });
+  const pdf = new jsPDF({ orientation: cfg0.orient, unit:'mm', format: cfg0.format });
   for (let i=0; i<fileList.length; i++) {
     await addImagePage(pdf, fileList[i], i===0);
   }
@@ -815,7 +1093,7 @@ async function convertToPDF() {
         setProgress(pct, `개별 변환 중… ${i+1} / ${files.length}`);
         const img = await loadImage(f.url);
         const cfg = getPageSizeAndOrient(img.naturalWidth, img.naturalHeight);
-        const pdf = new jsPDF({ orientation:cfg.orient, unit:'mm', format:cfg.fit?cfg.format:cfg.format });
+        const pdf = new jsPDF({ orientation: cfg.orient, unit:'mm', format: cfg.format });
         await addImagePage(pdf, f, true);
         const fname = (f.pdfName.trim()||`image_${i+1}`)+'.pdf';
         const blob = pdf.output('blob');
@@ -858,6 +1136,15 @@ document.addEventListener('keydown', e=>{
   if(e.key==='ArrowLeft') navigate(-1);
   if(e.key==='ArrowRight') navigate(1);
   if(e.key==='Delete'&&activeIdx>=0) removeFile(activeIdx);
+});
+
+// Re-render preview on window resize
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (activeIdx >= 0 && files[activeIdx]) renderPrintPreview(files[activeIdx]);
+  }, 150);
 });
 
 // Init

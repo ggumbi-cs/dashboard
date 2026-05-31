@@ -553,6 +553,8 @@
   <!-- 액션바 -->
   <div style="display:flex;gap:8px;justify-content:flex-end;padding:4px 0 0;flex-shrink:0;">
     <button class="btn btn-secondary" onclick="saveSettings()">💾 설정 저장</button>
+    <button class="btn btn-secondary" id="sheetSaveBtn" onclick="saveToSheet()" title="입력된 링크·이름을 구글시트에 저장">🗂 시트 저장</button>
+    <button class="btn btn-secondary" id="sheetLoadBtn" onclick="loadFromSheet()" title="구글시트에서 링크·이름 불러오기">📥 시트 불러오기</button>
     <button class="btn btn-secondary" id="stopBtn" style="display:none;" onclick="stopBot()">⛔ 중지</button>
     <button class="btn btn-primary" id="runBtn" onclick="startBot()">🤖 봇 실행</button>
   </div>
@@ -611,6 +613,63 @@
 </div><!-- /main -->
 
 <script>
+// ── 구글시트 연동 ─────────────────────────────────────────
+const GAS_URL = "https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec";
+
+async function saveToSheet(){
+  const urls = [], names = [];
+  for(let i=0; i<ROW_COUNT; i++){
+    const url  = document.getElementById('url_'+i)?.value.trim() || '';
+    const name = document.getElementById('name_'+i)?.value.trim() || '';
+    urls.push(url);
+    names.push(name);
+  }
+  const filled = urls.filter(u=>u).length;
+  if(filled === 0){ alert('저장할 URL이 없습니다.'); return; }
+
+  const btn = document.getElementById('sheetSaveBtn');
+  btn.disabled = true; btn.textContent = '저장중...';
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action:'saveCsvLinks', urls, names }),
+    });
+    const data = await res.json();
+    if(data.ok){
+      addLog(`구글시트 저장 완료 — ${filled}개 항목`, 'success');
+    } else {
+      addLog('시트 저장 실패: ' + (data.msg||''), 'error');
+    }
+  } catch(e){
+    addLog('시트 저장 오류: ' + e.message, 'error');
+  }
+  btn.disabled = false; btn.textContent = '🗂 시트 저장';
+}
+
+async function loadFromSheet(){
+  const btn = document.getElementById('sheetLoadBtn');
+  btn.disabled = true; btn.textContent = '불러오는중...';
+  try {
+    const res = await fetch(GAS_URL + '?action=getCsvLinks');
+    const data = await res.json();
+    if(data.ok && data.urls){
+      data.urls.forEach((url, i)=>{
+        if(i >= ROW_COUNT) return;
+        const u = document.getElementById('url_'+i);
+        const n = document.getElementById('name_'+i);
+        if(u){ u.value = url||''; u.classList.toggle('has-value', !!(url)); updateRowStatus(i, url?'idle':null); }
+        if(n){ n.value = (data.names&&data.names[i])||''; n.classList.toggle('has-value', !!(data.names&&data.names[i])); }
+      });
+      addLog(`구글시트에서 불러오기 완료 — ${data.urls.filter(u=>u).length}개 항목`, 'success');
+    } else {
+      addLog('시트 불러오기 실패: ' + (data.msg||''), 'error');
+    }
+  } catch(e){
+    addLog('시트 불러오기 오류: ' + e.message, 'error');
+  }
+  btn.disabled = false; btn.textContent = '📥 시트 불러오기';
+}
+
 // ── 상수 ──
 const ROW_COUNT = 20;
 const STORAGE_KEY = 'notion_dl_settings';

@@ -645,6 +645,63 @@ async function saveToSheet(){
   btn.disabled = false; btn.textContent = '🗂 시트 저장';
 }
 
+// ── 자동저장 debounce ──
+let _autoSaveTimer = null;
+let _lastSavedSnapshot = '';
+
+function getSnapshot(){
+  const urls = [], names = [];
+  for(let i=0; i<ROW_COUNT; i++){
+    urls.push(document.getElementById('url_'+i)?.value.trim() || '');
+    names.push(document.getElementById('name_'+i)?.value.trim() || '');
+  }
+  return JSON.stringify({urls, names});
+}
+
+function scheduleAutoSave(){
+  clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = setTimeout(async () => {
+    const snap = getSnapshot();
+    if(snap === _lastSavedSnapshot) return; // 변경 없으면 스킵
+    const parsed = JSON.parse(snap);
+    const filled = parsed.urls.filter(u=>u).length;
+    if(filled === 0) return; // 빈 상태면 저장 안 함
+    try {
+      const payload = encodeURIComponent(snap);
+      const res = await fetch(GAS_URL + '?action=saveCsvLinks&data=' + payload);
+      const data = await res.json();
+      if(data.ok){
+        _lastSavedSnapshot = snap;
+        addLog(`자동저장 완료 — ${filled}개 항목`, 'success');
+      }
+    } catch(e){
+      // 자동저장 실패는 조용히 (로그 과다 방지)
+      console.warn('자동저장 실패:', e.message);
+    }
+  }, 2000); // 2초 후 저장
+}
+
+// 시작 시 조용히 불러오기 (버튼 상태 변경 없음)
+async function loadFromSheetSilent(){
+  try {
+    const res = await fetch(GAS_URL + '?action=getCsvLinks');
+    const data = await res.json();
+    if(data.ok && data.urls && data.urls.filter(u=>u).length > 0){
+      data.urls.forEach((url, i)=>{
+        if(i >= ROW_COUNT) return;
+        const u = document.getElementById('url_'+i);
+        const n = document.getElementById('name_'+i);
+        if(u){ u.value = url||''; u.classList.toggle('has-value', !!(url)); updateRowStatus(i, url?'idle':null); }
+        if(n){ n.value = (data.names&&data.names[i])||''; n.classList.toggle('has-value', !!(data.names&&data.names[i])); }
+      });
+      _lastSavedSnapshot = getSnapshot(); // 불러온 상태를 기준점으로
+      addLog(`시트에서 자동 불러오기 완료 — ${data.urls.filter(u=>u).length}개 항목`, 'success');
+    }
+  } catch(e){
+    console.warn('시트 자동 불러오기 실패:', e.message);
+  }
+}
+
 async function loadFromSheet(){
   const btn = document.getElementById('sheetLoadBtn');
   btn.disabled = true; btn.textContent = '불러오는중...';
@@ -686,6 +743,8 @@ document.addEventListener("keydown", function(e){
 function init(){
   buildTable();
   loadSettings();
+  // 시작 시 시트 자동 불러오기
+  loadFromSheetSilent();
 }
 
 // ── 테이블 생성 ──
@@ -716,10 +775,12 @@ function buildTable(){
 function onUrlInput(i, el){
   el.classList.toggle('has-value', el.value.trim().length > 0);
   updateRowStatus(i, el.value.trim() ? 'idle' : null);
+  scheduleAutoSave();
 }
 
 function onNameInput(i, el){
   el.classList.toggle('has-value', el.value.trim().length > 0);
+  scheduleAutoSave();
 }
 
 // ── 상태 배지 업데이트 ──

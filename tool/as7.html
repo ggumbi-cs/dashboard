@@ -164,9 +164,24 @@ header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20p
 
 /* 로그 */
 .log-wrap{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
-.log-area{flex:1;overflow-y:auto;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.75;color:var(--text3)}
-.log-line.info{color:var(--text2)}.log-line.success{color:var(--success)}.log-line.warn{color:var(--warn)}.log-line.error{color:var(--danger)}
+.log-area{flex:1;overflow-y:auto;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.75;color:var(--text3)}
+.log-line{color:var(--text3)}
+.log-line.info{color:var(--text2)}.log-line.warn{color:var(--warn)}
 .log-line .ts{color:var(--text3);margin-right:5px}
+.log-group{margin-top:5px}
+.log-group-hd{display:flex;align-items:center;gap:5px;cursor:pointer;padding:2px 0;user-select:none;font-weight:500;font-size:10px}
+.log-group-hd:hover{opacity:0.75}
+.log-group-hd .arrow{font-size:8px;transition:transform 0.18s;display:inline-block}
+.log-group-hd .cnt{font-family:'JetBrains Mono',monospace;font-size:9px;padding:1px 5px;border-radius:10px}
+.log-group.success-grp .log-group-hd{color:var(--success)}
+.log-group.success-grp .cnt{background:rgba(61,214,140,0.15);color:var(--success)}
+.log-group.fail-grp    .log-group-hd{color:var(--danger)}
+.log-group.fail-grp    .cnt{background:rgba(255,92,92,0.15);color:var(--danger)}
+.log-group-body{padding-left:10px;border-left:1px solid var(--border2);margin-left:3px;display:none}
+.log-group-body.open{display:block}
+.log-group-hd.open .arrow{transform:rotate(90deg)}
+.log-entry{padding:1px 0;line-height:1.6;font-size:10px}
+.log-entry.ok{color:var(--success)}.log-entry.ng{color:var(--danger)}
 
 #fileInput{display:none}
 ::-webkit-scrollbar{width:3px;height:3px}
@@ -279,20 +294,14 @@ header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20p
       <div class="r-title">🔗 구글시트 연동</div>
       <div class="gs-fields">
         <div>
-          <div class="gs-label">GAS 웹앱 URL</div>
-          <div class="gs-row">
-            <input class="gs-input" id="gasUrlInput" placeholder="https://script.google.com/..." style="font-size:9px">
-            <button class="gs-btn" id="gsLoadBtn">불러오기</button>
-          </div>
-        </div>
-        <div>
           <div class="gs-label">사용자 이름</div>
-          <div class="gs-row">
-            <input class="gs-input" id="gsNameInput" placeholder="홍길동">
-            <button class="gs-btn" id="gsSaveBtn">저장</button>
+          <input class="gs-input" id="gsNameInput" placeholder="홍길동" style="margin-bottom:6px;width:100%">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <button class="gs-btn" id="gsLoadBtn" style="width:100%">⬇ 불러오기</button>
+            <button class="gs-btn" id="gsSaveBtn" style="width:100%">⬆ 저장</button>
           </div>
         </div>
-        <div class="gs-hint" id="gsHint">팀tool_개인설정 시트 21번행 이후 저장됩니다.</div>
+        <div class="gs-hint" id="gsHint">이름 입력 후 불러오기 / 저장</div>
       </div>
     </div>
 
@@ -314,6 +323,8 @@ header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20p
       <div class="log-area" id="logArea">
         <div class="log-line info"><span class="ts">[00:00]</span> 준비 완료. ZIP 파일을 추가해주세요.</div>
       </div>
+      <!-- 성공/실패 그룹 (작업 후 생성) -->
+      <div id="logGroups" style="padding:0 12px 8px"></div>
     </div>
 
   </div>
@@ -339,7 +350,6 @@ const logArea       = document.getElementById('logArea');
 const totalBar      = document.getElementById('totalBar');
 const progressText  = document.getElementById('progressText');
 const progressPct   = document.getElementById('progressPct');
-const gasUrlInput   = document.getElementById('gasUrlInput');
 const gsNameInput   = document.getElementById('gsNameInput');
 const gsSaveBtn     = document.getElementById('gsSaveBtn');
 const gsLoadBtn     = document.getElementById('gsLoadBtn');
@@ -354,9 +364,10 @@ let files     = [];
 let isRunning = false;
 let mappings  = [{ key: '', name: '' }];
 
-const LS_URL  = 'as7_gasUrl';
+// ── GAS URL 하드코딩
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec';
+
 const LS_NAME = 'as7_gsName';
-gasUrlInput.value = localStorage.getItem(LS_URL)  || '';
 gsNameInput.value = localStorage.getItem(LS_NAME) || '';
 
 // ═══════════════════════════════════════════════════
@@ -366,14 +377,75 @@ function ts() {
   const n = new Date();
   return `[${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}]`;
 }
+
+// 공용 안내 로그 (info/warn 계열 — 그룹 밖, 항상 표시)
 function log(msg, cls='') {
+  // success/error는 그룹 로그로 처리하므로 여기선 일반 라인만
   const d = document.createElement('div');
   d.className = `log-line ${cls}`;
   d.innerHTML = `<span class="ts">${ts()}</span>${msg}`;
   logArea.appendChild(d);
   logArea.scrollTop = logArea.scrollHeight;
 }
-function clearLog() { logArea.innerHTML=''; log('로그 지워짐.','info'); }
+
+// ── 작업별 성공/실패 누적 버퍼
+let _logBuf = { ok: [], ng: [] };
+
+function logReset() { _logBuf = { ok: [], ng: [] }; }
+
+// 성공 항목 추가
+function logOk(msg) { _logBuf.ok.push(msg); }
+
+// 실패 항목 추가
+function logNg(msg) { _logBuf.ng.push(msg); }
+
+// 작업 완료 후 성공/실패 그룹 렌더
+function logFlushGroups() {
+  const container = document.getElementById('logGroups');
+  container.innerHTML = '';
+
+  function makeGroup(type, items) {
+    if (items.length === 0) return;
+    const grp = document.createElement('div');
+    grp.className = `log-group ${type === 'ok' ? 'success-grp' : 'fail-grp'}`;
+
+    const hd = document.createElement('div');
+    hd.className = 'log-group-hd';
+    hd.innerHTML = `<span class="arrow">▶</span><span>${type === 'ok' ? '성공' : '실패'}</span><span class="cnt">${items.length}</span>`;
+    grp.appendChild(hd);
+
+    const body = document.createElement('div');
+    body.className = 'log-group-body'; // 기본 접힘
+    items.forEach(msg => {
+      const e = document.createElement('div');
+      e.className = `log-entry ${type === 'ok' ? 'ok' : 'ng'}`;
+      e.textContent = msg;
+      body.appendChild(e);
+    });
+    grp.appendChild(body);
+
+    hd.addEventListener('click', () => {
+      const isOpen = body.classList.toggle('open');
+      hd.classList.toggle('open', isOpen);
+    });
+
+    container.appendChild(grp);
+  }
+
+  makeGroup('ok', _logBuf.ok);
+  makeGroup('ng', _logBuf.ng);
+
+  // 로그 영역 스크롤 아래로
+  const lw = container.closest('.log-wrap');
+  if (lw) lw.scrollTop = lw.scrollHeight;
+}
+
+function clearLog() {
+  logArea.innerHTML = '';
+  document.getElementById('logGroups').innerHTML = '';
+  logReset();
+  log('로그 지워짐.', 'info');
+}
 
 // ═══════════════════════════════════════════════════
 // 구글시트 연동
@@ -382,24 +454,22 @@ function setGsStatus(state, msg) {
   gsDot.className = `gs-dot ${state}`;
   gsStatusText.textContent = msg;
 }
-function gasUrl() { return gasUrlInput.value.trim(); }
 function gsName() { return gsNameInput.value.trim(); }
 
 async function gsLoad() {
-  const url = gasUrl(), name = gsName();
-  if (!url)  { gsHint.textContent = 'GAS URL을 먼저 입력하세요.'; return; }
+  const name = gsName();
   if (!name) { gsHint.textContent = '이름을 입력하세요.'; return; }
   setGsStatus('loading', '불러오는 중...');
   gsHint.textContent = '구글시트에서 읽는 중...';
   try {
-    const res  = await fetch(`${url}?action=as7Load&name=${encodeURIComponent(name)}`);
+    const res  = await fetch(`${GAS_URL}?action=as7Load&name=${encodeURIComponent(name)}`);
     const json = await res.json();
     if (json.ok && json.data) {
       const d = json.data;
       if (d.mappings) { try { mappings = JSON.parse(d.mappings); } catch(e){} }
       if (d.unmatched) document.getElementById('unmatchedSelect').value = d.unmatched;
-      if (d.gasUrl)    { gasUrlInput.value = d.gasUrl; localStorage.setItem(LS_URL, d.gasUrl); }
       renderMappings();
+      localStorage.setItem(LS_NAME, name);
       setGsStatus('ok', '연결됨');
       gsHint.textContent = `불러옴: ${name}`;
       log(`구글시트 설정 불러옴 (${name})`, 'success');
@@ -416,10 +486,8 @@ async function gsLoad() {
 }
 
 async function gsSave() {
-  const url = gasUrl(), name = gsName();
-  if (!url)  { gsHint.textContent = 'GAS URL을 먼저 입력하세요.'; return; }
+  const name = gsName();
   if (!name) { gsHint.textContent = '이름을 입력하세요.'; return; }
-  localStorage.setItem(LS_URL, url);
   localStorage.setItem(LS_NAME, name);
   setGsStatus('loading', '저장 중...');
   gsHint.textContent = '구글시트에 저장 중...';
@@ -428,10 +496,10 @@ async function gsSave() {
     name,
     mappings:  JSON.stringify(mappings),
     unmatched: document.getElementById('unmatchedSelect').value,
-    gasUrl:    url
+    gasUrl:    GAS_URL
   };
   try {
-    const res  = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    const res  = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
     const json = await res.json();
     if (json.ok) {
       setGsStatus('ok', '저장됨');
@@ -440,7 +508,7 @@ async function gsSave() {
     } else { throw new Error(json.msg || 'GAS 오류'); }
   } catch(e) {
     try {
-      const res2  = await fetch(`${url}?action=as7Save&data=${encodeURIComponent(JSON.stringify(payload))}`);
+      const res2  = await fetch(`${GAS_URL}?action=as7Save&data=${encodeURIComponent(JSON.stringify(payload))}`);
       const json2 = await res2.json();
       if (json2.ok) {
         setGsStatus('ok', '저장됨');
@@ -457,7 +525,6 @@ async function gsSave() {
 
 gsLoadBtn.addEventListener('click', gsLoad);
 gsSaveBtn.addEventListener('click', gsSave);
-gasUrlInput.addEventListener('change', () => localStorage.setItem(LS_URL,  gasUrlInput.value.trim()));
 gsNameInput.addEventListener('change', () => localStorage.setItem(LS_NAME, gsNameInput.value.trim()));
 
 // ═══════════════════════════════════════════════════
@@ -614,17 +681,57 @@ function updateUI() {
 // ═══════════════════════════════════════════════════
 async function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
 
+// ── 한글 파일명 디코딩: JSZip은 ZIP 내부 파일명을 CP437로 읽어 한글이 깨짐
+// 방법: uint8array로 파일명 바이트를 꺼내 TextDecoder로 EUC-KR/UTF-8 모두 시도
+function decodeZipName(rawName, zipObj) {
+  // JSZip이 이미 UTF-8로 성공 디코딩한 경우 그대로 사용
+  // 깨진 문자(\uFFFD 또는 ?가 많이 포함)가 있으면 EUC-KR로 재시도
+  if (!rawName.includes('\uFFFD') && !/[\x00-\x1f]/.test(rawName)) {
+    return rawName; // 정상 UTF-8
+  }
+  try {
+    // JSZip 내부 _data에서 파일명 바이트를 직접 꺼낼 수 없으므로
+    // latin1로 읽은 뒤 바이트 배열로 변환해 EUC-KR 디코딩
+    const latin1 = rawName;
+    const bytes = new Uint8Array(latin1.length);
+    for (let i = 0; i < latin1.length; i++) bytes[i] = latin1.charCodeAt(i) & 0xff;
+    return new TextDecoder('euc-kr').decode(bytes);
+  } catch(e) {
+    return rawName;
+  }
+}
+
+// ZIP 로드 시 한글 파일명 보정 옵션 적용
+async function loadZipWithKorean(src) {
+  // decodeFileName 콜백으로 UTF-8 시도, 실패 시 EUC-KR 재시도
+  return JSZip.loadAsync(src, {
+    decodeFileName: (bytes) => {
+      // UTF-8 시도
+      try {
+        const utf8 = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+        return utf8;
+      } catch(e) {}
+      // EUC-KR 시도
+      try {
+        return new TextDecoder('euc-kr').decode(bytes);
+      } catch(e) {}
+      // 최후 수단: latin1
+      return new TextDecoder('latin1').decode(bytes);
+    }
+  });
+}
+
 async function processFile(item, i, mappingRules, unmatchedMode) {
   const f = item.file;
   log(`처리 시작: ${f.name}`, 'info');
   item.status='extracting'; item.progress=10; updateFileItem(i);
 
-  // 1) 외부 ZIP
+  // 1) 외부 ZIP (한글 파일명 보정 포함)
   let outerZip;
-  try { outerZip = await JSZip.loadAsync(f); }
+  try { outerZip = await loadZipWithKorean(f); }
   catch(e) {
     item.status='error'; item.error='외부ZIP 실패'; item.progress=100; updateFileItem(i);
-    log(`  외부 ZIP 읽기 실패: ${e.message}`, 'error'); return;
+    logNg(`${f.name} — 외부 ZIP 읽기 실패`); return;
   }
 
   const outerEntries = Object.values(outerZip.files).filter(zf => !zf.dir);
@@ -635,58 +742,66 @@ async function processFile(item, i, mappingRules, unmatchedMode) {
 
   let targetCsvFile = null;
   let csvFileName   = null;
-  // 매칭 후보 문자열: 외부ZIP 파일명(확장자 제거)
-  let matchCandidates = [ f.name.replace(/\.zip$/i, '') ];
+  // 매칭 후보: 소문자로 통일해서 저장 (대소문자 무시 매칭)
+  let matchCandidates = [ f.name.replace(/\.zip$/i, '').toLowerCase() ];
 
   if (innerZipEntry) {
     // ── 이중압축 경로
     log(`  내부 ZIP 발견: ${innerZipEntry.name}`, '');
-    matchCandidates.push(innerZipEntry.name.replace(/\.zip$/i, ''));
+    matchCandidates.push(innerZipEntry.name.replace(/\.zip$/i, '').toLowerCase());
     item.progress=35; updateFileItem(i);
 
     let innerBuf;
     try { innerBuf = await innerZipEntry.async('arraybuffer'); }
     catch(e) {
       item.status='error'; item.error='내부ZIP 읽기 실패'; item.progress=100; updateFileItem(i);
-      log(`  내부 ZIP 읽기 실패`, 'error'); return;
+      logNg(`${f.name} — 내부 ZIP 읽기 실패`); return;
     }
 
+    // 내부 ZIP도 한글 파일명 보정 적용
     let innerZip;
-    try { innerZip = await JSZip.loadAsync(innerBuf); }
+    try { innerZip = await loadZipWithKorean(innerBuf); }
     catch(e) {
       item.status='error'; item.error='내부ZIP 파싱 실패'; item.progress=100; updateFileItem(i);
-      log(`  내부 ZIP 파싱 실패`, 'error'); return;
+      logNg(`${f.name} — 내부 ZIP 파싱 실패`); return;
     }
     item.progress=55; updateFileItem(i);
 
     const allCsv = Object.values(innerZip.files).filter(zf => !zf.dir && zf.name.toLowerCase().endsWith('.csv'));
     log(`  내부ZIP CSV ${allCsv.length}개: ${allCsv.map(z=>z.name).join(', ')}`, '');
 
-    // 'all' 미포함 우선
-    const filtered = allCsv.filter(zf => !zf.name.split('/').pop().toLowerCase().includes('_all'));
+    // 'all' 미포함 우선 (띄어쓰기 포함 다양한 패턴 대응)
+    const filtered = allCsv.filter(zf => {
+      const base = zf.name.split('/').pop().toLowerCase();
+      return !/ all/.test(base) && !/_all/.test(base) && !/\ball\b/.test(base);
+    });
     targetCsvFile = filtered.length > 0 ? filtered[0] : (allCsv.length > 0 ? allCsv[0] : null);
 
     if (!targetCsvFile) {
       item.status='error'; item.error='CSV 없음'; item.progress=100; updateFileItem(i);
-      log(`  내부 ZIP에서 CSV 없음`, 'error'); return;
+      logNg(`${f.name} — 내부 ZIP에서 CSV 없음`); return;
     }
     csvFileName = targetCsvFile.name.split('/').pop();
-    matchCandidates.push(csvFileName.replace(/\.csv$/i, ''));  // ← CSV명도 후보
+    // CSV 파일명도 후보에 추가 (소문자)
+    matchCandidates.push(csvFileName.replace(/\.csv$/i, '').toLowerCase());
     log(`  대상 CSV: ${csvFileName}`, '');
 
   } else {
     // ── 단일 압축 경로
     log(`  내부 ZIP 없음. 단일 압축으로 처리.`, 'warn');
     const allCsv = outerEntries.filter(zf => zf.name.toLowerCase().endsWith('.csv'));
-    const filtered = allCsv.filter(zf => !zf.name.split('/').pop().toLowerCase().includes('_all'));
+    const filtered = allCsv.filter(zf => {
+      const base = zf.name.split('/').pop().toLowerCase();
+      return !/ all/.test(base) && !/_all/.test(base) && !/\ball\b/.test(base);
+    });
     targetCsvFile = filtered.length > 0 ? filtered[0] : (allCsv.length > 0 ? allCsv[0] : null);
 
     if (!targetCsvFile) {
       item.status='error'; item.error='CSV 없음'; item.progress=100; updateFileItem(i);
-      log(`  CSV 없음`, 'error'); return;
+      logNg(`${f.name} — CSV 없음`); return;
     }
     csvFileName = targetCsvFile.name.split('/').pop();
-    matchCandidates.push(csvFileName.replace(/\.csv$/i, ''));
+    matchCandidates.push(csvFileName.replace(/\.csv$/i, '').toLowerCase());
     log(`  대상 CSV: ${csvFileName}`, '');
   }
 
@@ -695,18 +810,20 @@ async function processFile(item, i, mappingRules, unmatchedMode) {
   let csvData;
   try { csvData = await targetCsvFile.async('uint8array'); }
   catch(e) {
-    item.status='error'; item.error='CSV 읽기 실패'; item.progress=100; updateFileItem(i); return;
+    item.status='error'; item.error='CSV 읽기 실패'; item.progress=100; updateFileItem(i); logNg(`${f.name} — CSV 읽기 실패`); return;
   }
   item.progress=78; updateFileItem(i);
 
-  // 3) 키 매핑 (외부ZIP명 / 내부ZIP명 / CSV명 세 후보 전부 검색)
+  // 3) 키 매핑
+  // 외부ZIP명 / 내부ZIP명 / CSV파일명 세 후보 전부 소문자로 검색 (대소문자 무시)
   log(`  매칭 후보: [${matchCandidates.join(' | ')}]`, '');
   let outputName = null;
   for (const rule of mappingRules) {
     if (!rule.key.trim()) continue;
-    if (matchCandidates.some(c => c.includes(rule.key))) {
+    const keyLower = rule.key.trim().toLowerCase();
+    if (matchCandidates.some(c => c.includes(keyLower))) {
       outputName = rule.name.trim() ? rule.name.trim()+'.csv' : csvFileName;
-      log(`  키 '${rule.key}' 매칭 → ${outputName}`, 'success');
+      log(`  키 '${rule.key}' 매칭 → ${outputName}`);
       break;
     }
   }
@@ -717,7 +834,7 @@ async function processFile(item, i, mappingRules, unmatchedMode) {
       log(`  매칭 없음 → 원본명: ${outputName}`, 'warn');
     } else {
       item.status='nomatch'; item.progress=100; item.error='매칭 규칙 없음'; updateFileItem(i);
-      log(`  매칭 없음. 건너뜀.`, 'warn'); return;
+      logNg(`${f.name} — 매칭 규칙 없음`); return;
     }
   }
 
@@ -733,7 +850,7 @@ async function processFile(item, i, mappingRules, unmatchedMode) {
   await sleep(250);
 
   item.status='done'; item.progress=100; item.resultName=outputName; updateFileItem(i);
-  log(`  저장 완료: ${outputName}`, 'success');
+  logOk(`${f.name} → ${outputName} 저장 완료`);
 }
 
 // ═══════════════════════════════════════════════════
@@ -747,19 +864,23 @@ runBtn.addEventListener('click', async () => {
   isRunning = true; runBtn.disabled=true;
   files.forEach(f => { if (f.status!=='done') { f.status='pending'; f.progress=0; f.resultName=null; f.error=null; } });
   renderFileList();
+  logReset();
   log('===== 작업 시작 =====', 'info');
   for (let i=0; i<files.length; i++) {
     if (files[i].status==='done') continue;
     await processFile(files[i], i, mappingRules, unmatchedMode);
     updateUI();
   }
-  isRunning=false; updateUI(); log('===== 작업 완료 =====', 'success'); renderFileList();
+  isRunning=false; updateUI();
+  log('===== 작업 완료 =====', 'info');
+  logFlushGroups();
+  renderFileList();
 });
 
 resetBtn.addEventListener('click', () => {
   files=[]; isRunning=false; renderFileList(); updateUI();
   totalBar.style.width='0%'; progressPct.textContent='0%'; progressText.textContent='대기 중...';
-  log('초기화 완료.', 'info');
+  clearLog();
 });
 
 // ═══════════════════════════════════════════════════

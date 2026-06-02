@@ -491,6 +491,8 @@ async function gsSave() {
   localStorage.setItem(LS_NAME, name);
   setGsStatus('loading', '저장 중...');
   gsHint.textContent = '구글시트에 저장 중...';
+
+  // GAS는 CORS로 POST가 막히므로 처음부터 GET 방식만 사용
   const payload = {
     action:    'as7Save',
     name,
@@ -499,27 +501,20 @@ async function gsSave() {
     gasUrl:    GAS_URL
   };
   try {
-    const res  = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    const url  = `${GAS_URL}?action=as7Save&data=${encodeURIComponent(JSON.stringify(payload))}`;
+    const res  = await fetch(url);
     const json = await res.json();
     if (json.ok) {
       setGsStatus('ok', '저장됨');
       gsHint.textContent = `저장 완료: ${name} (${new Date().toLocaleTimeString('ko-KR')})`;
-      log(`설정 저장 완료 (${name})`, 'success');
-    } else { throw new Error(json.msg || 'GAS 오류'); }
-  } catch(e) {
-    try {
-      const res2  = await fetch(`${GAS_URL}?action=as7Save&data=${encodeURIComponent(JSON.stringify(payload))}`);
-      const json2 = await res2.json();
-      if (json2.ok) {
-        setGsStatus('ok', '저장됨');
-        gsHint.textContent = `저장 완료: ${name}`;
-        log(`설정 저장 완료 (${name})`, 'success');
-      } else { throw new Error(json2.msg || ''); }
-    } catch(e2) {
-      setGsStatus('err', '저장 실패');
-      gsHint.textContent = '저장 실패: ' + e2.message;
-      log('설정 저장 실패: ' + e2.message, 'error');
+      log(`설정 저장 완료 (${name})`, 'info');
+    } else {
+      throw new Error(json.msg || 'GAS 오류');
     }
+  } catch(e) {
+    setGsStatus('err', '저장 실패');
+    gsHint.textContent = '저장 실패: ' + e.message;
+    log('설정 저장 실패: ' + e.message, 'error');
   }
 }
 

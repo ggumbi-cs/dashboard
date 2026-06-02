@@ -85,13 +85,7 @@ header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20p
 /* 파일 목록 (드래그 후 노출) */
 .file-list{flex:1;overflow-y:auto;display:none;flex-direction:column}
 .file-list.visible{display:flex}
-.file-item{padding:9px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:9px;transition:background 0.12s}
-.file-item:hover{background:var(--bg2)}
-.file-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:var(--bg4);border:1px solid var(--border)}
-.file-info{flex:1;min-width:0}
-.file-name{font-size:11px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
-.file-meta{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace}
-.file-status{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:82px}
+.file-icon{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;background:var(--bg4);border:1px solid var(--border)}
 .status-badge{font-size:9px;font-weight:500;padding:2px 7px;border-radius:20px}
 .status-badge.pending{background:var(--bg4);color:var(--text3)}
 .status-badge.running{background:rgba(79,142,255,0.15);color:var(--accent)}
@@ -129,6 +123,22 @@ header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20p
 .del-btn:hover{border-color:var(--danger);color:var(--danger);background:rgba(255,92,92,0.08)}
 .add-map-btn{background:none;border:1px dashed var(--border);border-radius:8px;color:var(--text3);cursor:pointer;font-size:11px;font-family:'Noto Sans KR',sans-serif;padding:7px;width:100%;transition:all 0.12s;display:flex;align-items:center;justify-content:center;gap:4px}
 .add-map-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
+/* 파일 아이템 - 파일명 영역 + 키워드 영역 */
+.file-item{padding:8px 12px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:26px minmax(0,1fr) minmax(0,1.4fr) 76px auto;gap:8px;align-items:start;transition:background 0.12s}
+.file-item:hover{background:var(--bg2)}
+.file-left{min-width:0;display:flex;flex-direction:column;gap:2px}
+.file-name{font-size:10px;font-weight:500;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-meta{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+/* 키워드 영역 */
+.file-kw{display:flex;flex-direction:column;gap:4px;min-width:0}
+.file-kw-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em}
+.file-kw-chips{display:flex;flex-wrap:wrap;gap:3px}
+.kw-chip{background:var(--bg4);border:1px solid var(--border2);border-radius:5px;padding:2px 7px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text2);cursor:pointer;transition:all 0.12s;user-select:none;white-space:nowrap}
+.kw-chip:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
+.kw-chip.used{border-color:var(--success);color:var(--success);background:rgba(61,214,140,0.08);cursor:default}
+.kw-analyzing{font-size:9px;color:var(--text3);font-style:italic}
+/* 우측 상태 */
+.file-status{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:76px}
 
 /* ═══ 우: 옵션 + GS + 실행 + 로그 ═══ */
 .right-panel{background:var(--bg2)}
@@ -262,6 +272,7 @@ header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20p
       </div>
       <div class="mapping-list" id="mappingList"></div>
       <button class="add-map-btn" id="addMappingBtn">＋ 매핑 추가</button>
+
     </div>
   </div>
 
@@ -550,12 +561,20 @@ function renderMappings() {
   });
 }
 
-addMappingBtn.addEventListener('click', () => { mappings.push({key:'',name:''}); renderMappings(); });
+addMappingBtn.addEventListener('click', () => {
+  mappings.push({key:'',name:''}); renderMappings();
+  // 키워드 used 상태 갱신
+  files.forEach(item => renderFileKeywords(item.file.name, fileKeywords.get(item.file.name) || []));
+});
 renderMappings();
 
 // ═══════════════════════════════════════════════════
-// 파일 관리
+// 파일 관리 + 파일별 고유 키워드
 // ═══════════════════════════════════════════════════
+
+// 파일별 키워드 저장: Map<fileName, string[]>
+let fileKeywords = new Map();
+
 function addFiles(newFiles) {
   const zips = Array.from(newFiles).filter(f => f.name.toLowerCase().endsWith('.zip'));
   const remaining = 20 - files.length;
@@ -566,6 +585,106 @@ function addFiles(newFiles) {
       files.push({ file:f, status:'pending', progress:0, resultName:null, error:null });
   });
   renderFileList(); updateUI();
+  // 모든 파일 키워드 분석 (전체 파일 기준으로 고유성 계산해야 하므로 전체 재분석)
+  reAnalyzeAllKeywords();
+}
+
+// 모든 파일의 CSV 파일명 한글 토큰 추출 후 → 파일별 고유 키워드 계산
+async function reAnalyzeAllKeywords() {
+  // 1) 각 파일의 raw 토큰 수집
+  const rawMap = new Map(); // fileName → Set<token>
+
+  await Promise.all(files.map(async item => {
+    const f = item.file;
+    // 분석 중 표시
+    fileKeywords.set(f.name, null); // null = 분석중
+    renderFileKeywords(f.name, null);
+
+    try {
+      const outerZip = await loadZipWithKorean(f);
+      const outerEntries = Object.values(outerZip.files).filter(zf => !zf.dir);
+      const innerZipEntry = outerEntries.find(zf => zf.name.toLowerCase().endsWith('.zip'));
+
+      let csvNames = [];
+      if (innerZipEntry) {
+        const innerBuf = await innerZipEntry.async('arraybuffer');
+        const innerZip = await loadZipWithKorean(innerBuf);
+        csvNames = Object.values(innerZip.files)
+          .filter(zf => !zf.dir && zf.name.toLowerCase().endsWith('.csv'))
+          .filter(zf => !/ all|_all/.test(zf.name.split('/').pop().toLowerCase()))
+          .map(zf => zf.name.split('/').pop().replace(/\.csv$/i, ''));
+      } else {
+        csvNames = outerEntries
+          .filter(zf => zf.name.toLowerCase().endsWith('.csv'))
+          .filter(zf => !/ all|_all/.test(zf.name.split('/').pop().toLowerCase()))
+          .map(zf => zf.name.split('/').pop().replace(/\.csv$/i, ''));
+      }
+
+      const tokens = new Set();
+      csvNames.forEach(name => {
+        (name.match(/[가-힣]{2,}/g) || []).forEach(t => tokens.add(t));
+      });
+      rawMap.set(f.name, tokens);
+    } catch(e) {
+      rawMap.set(f.name, new Set());
+    }
+  }));
+
+  // 2) 파일별 고유 키워드 계산: 다른 파일들에 없는 토큰만 남김
+  for (const [fname, tokens] of rawMap) {
+    if (!tokens || tokens.size === 0) {
+      fileKeywords.set(fname, []);
+      continue;
+    }
+    // 다른 파일들의 토큰 전체 합집합
+    const othersTokens = new Set();
+    for (const [otherName, otherTokens] of rawMap) {
+      if (otherName === fname || !otherTokens) continue;
+      otherTokens.forEach(t => othersTokens.add(t));
+    }
+    // 다른 파일에 없는 것만 고유 키워드
+    const unique = [...tokens].filter(t => !othersTokens.has(t));
+    fileKeywords.set(fname, unique);
+  }
+
+  // 3) 렌더
+  renderFileList();
+}
+
+// 특정 파일의 키워드 칩 업데이트 (renderFileList 없이 부분 업데이트)
+function renderFileKeywords(fname, keywords) {
+  const idx = files.findIndex(f => f.file.name === fname);
+  if (idx < 0) return;
+  const el = document.getElementById(`fi-${idx}`);
+  if (!el) return;
+  const kwWrap = el.querySelector('.file-kw-chips');
+  if (!kwWrap) return;
+  kwWrap.innerHTML = '';
+  if (keywords === null) {
+    kwWrap.innerHTML = '<span class="kw-analyzing">분석중…</span>';
+    return;
+  }
+  if (keywords.length === 0) {
+    kwWrap.innerHTML = '<span class="kw-analyzing">—</span>';
+    return;
+  }
+  const usedKeys = new Set(mappings.map(m => m.key.trim()).filter(Boolean));
+  keywords.forEach(kw => {
+    const chip = document.createElement('span');
+    chip.className = 'kw-chip' + (usedKeys.has(kw) ? ' used' : '');
+    chip.textContent = kw;
+    chip.title = usedKeys.has(kw) ? '이미 사용 중' : '클릭 → 키 매핑 등록';
+    chip.addEventListener('click', () => {
+      if (usedKeys.has(kw)) return;
+      const emptyIdx = mappings.findIndex(m => !m.key.trim());
+      if (emptyIdx >= 0) { mappings[emptyIdx].key = kw; }
+      else { mappings.push({ key: kw, name: '' }); }
+      renderMappings();
+      // used 상태 전체 갱신
+      files.forEach(item => renderFileKeywords(item.file.name, fileKeywords.get(item.file.name) || []));
+    });
+    kwWrap.appendChild(chip);
+  });
 }
 
 const SM = {
@@ -599,11 +718,16 @@ function renderFileList() {
       : `${(item.file.size/1048576).toFixed(2)}MB`;
     const [cls, lbl] = SM[item.status] || SM.pending;
     const pBarCls = item.status==='done' ? ' done' : item.status==='error' ? ' error' : '';
+    const kws = fileKeywords.get(item.file.name);
     el.innerHTML = `
       <div class="file-icon">🗜️</div>
-      <div class="file-info">
+      <div class="file-left">
         <div class="file-name" title="${escHtml(item.file.name)}">${escHtml(item.file.name)}</div>
         <div class="file-meta">${sz}</div>
+      </div>
+      <div class="file-kw">
+        <div class="file-kw-label">추천 키워드</div>
+        <div class="file-kw-chips"></div>
       </div>
       <div class="file-status">
         <span class="status-badge ${cls}">${lbl}</span>
@@ -613,9 +737,17 @@ function renderFileList() {
       ${!isRunning ? `<button class="remove-btn" data-i="${i}" title="제거">×</button>` : ''}
     `;
     fileListEl.appendChild(el);
+    // 키워드 칩 렌더
+    renderFileKeywords(item.file.name, kws === undefined ? null : kws);
   });
   fileListEl.querySelectorAll('.remove-btn').forEach(btn => {
-    btn.addEventListener('click', e => { files.splice(+e.target.dataset.i, 1); renderFileList(); updateUI(); });
+    btn.addEventListener('click', e => {
+      const idx = +e.target.dataset.i;
+      fileKeywords.delete(files[idx].file.name);
+      files.splice(idx, 1);
+      reAnalyzeAllKeywords();
+      renderFileList(); updateUI();
+    });
   });
 }
 
@@ -873,7 +1005,9 @@ runBtn.addEventListener('click', async () => {
 });
 
 resetBtn.addEventListener('click', () => {
-  files=[]; isRunning=false; renderFileList(); updateUI();
+  files=[]; isRunning=false;
+  fileKeywords = new Map();
+  renderFileList(); updateUI();
   totalBar.style.width='0%'; progressPct.textContent='0%'; progressText.textContent='대기 중...';
   clearLog();
 });

@@ -622,10 +622,13 @@ async function reAnalyzeAllKeywords() {
 
       const tokens = new Set();
       csvNames.forEach(name => {
-        // 헥사 해시(32자 영숫자), 순수 숫자, 영문만 제거 → 남은 한글+기호 덩어리를 통째로
+        // 규칙:
+        // 1) 헥사 해시: 영문+숫자 혼합 8자 이상 연속 → 제거 (예: 3208bca2d219808...)
+        // 2) 순수 영문만으로 된 단어 → 제거
+        // 3) 한글과 붙어있거나 사이에 낀 숫자(2025년, 07월, 1건 등) → 보존
         let cleaned = name
-          .replace(/[0-9a-f]{8,}/gi, '')   // 헥사 해시 제거
-          .replace(/[a-zA-Z0-9_\-]+/g, ' ') // 영문/숫자 제거
+          .replace(/[0-9a-fA-F]{8,}/g, ' ')     // 헥사 해시 제거 (8자 이상 영숫자 혼합)
+          .replace(/(?<![가-힣\d])[a-zA-Z]+(?![가-힣\d])/g, ' ') // 한글/숫자와 무관한 순수 영문 제거
           .replace(/\s+/g, ' ')
           .trim();
         if (cleaned) tokens.add(cleaned);

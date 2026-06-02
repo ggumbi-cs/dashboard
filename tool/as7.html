@@ -864,7 +864,6 @@ async function loadZipWithKorean(src) {
 
 async function processFile(item, i, mappingRules, unmatchedMode) {
   const f = item.file;
-  log(`처리 시작: ${f.name}`, 'info');
   item.status='extracting'; item.progress=10; updateFileItem(i);
 
   // 1) 외부 ZIP (한글 파일명 보정 포함)
@@ -876,7 +875,6 @@ async function processFile(item, i, mappingRules, unmatchedMode) {
   }
 
   const outerEntries = Object.values(outerZip.files).filter(zf => !zf.dir);
-  log(`  외부ZIP 내 ${outerEntries.length}개: ${outerEntries.map(z=>z.name).join(', ')}`, '');
   item.progress=25; updateFileItem(i);
 
   const innerZipEntry = outerEntries.find(zf => zf.name.toLowerCase().endsWith('.zip'));
@@ -888,7 +886,6 @@ async function processFile(item, i, mappingRules, unmatchedMode) {
 
   if (innerZipEntry) {
     // ── 이중압축 경로
-    log(`  내부 ZIP 발견: ${innerZipEntry.name}`, '');
     matchCandidates.push(innerZipEntry.name.replace(/\.zip$/i, '').toLowerCase());
     item.progress=35; updateFileItem(i);
 
@@ -909,7 +906,6 @@ async function processFile(item, i, mappingRules, unmatchedMode) {
     item.progress=55; updateFileItem(i);
 
     const allCsv = Object.values(innerZip.files).filter(zf => !zf.dir && zf.name.toLowerCase().endsWith('.csv'));
-    log(`  내부ZIP CSV ${allCsv.length}개: ${allCsv.map(z=>z.name).join(', ')}`, '');
 
     // 'all' 미포함 우선 (띄어쓰기 포함 다양한 패턴 대응)
     const filtered = allCsv.filter(zf => {
@@ -925,11 +921,9 @@ async function processFile(item, i, mappingRules, unmatchedMode) {
     csvFileName = targetCsvFile.name.split('/').pop();
     // CSV 파일명도 후보에 추가 (소문자)
     matchCandidates.push(csvFileName.replace(/\.csv$/i, '').toLowerCase());
-    log(`  대상 CSV: ${csvFileName}`, '');
 
   } else {
     // ── 단일 압축 경로
-    log(`  내부 ZIP 없음. 단일 압축으로 처리.`, 'warn');
     const allCsv = outerEntries.filter(zf => zf.name.toLowerCase().endsWith('.csv'));
     const filtered = allCsv.filter(zf => {
       const base = zf.name.split('/').pop().toLowerCase();
@@ -943,7 +937,6 @@ async function processFile(item, i, mappingRules, unmatchedMode) {
     }
     csvFileName = targetCsvFile.name.split('/').pop();
     matchCandidates.push(csvFileName.replace(/\.csv$/i, '').toLowerCase());
-    log(`  대상 CSV: ${csvFileName}`, '');
   }
 
   // 2) CSV 데이터 읽기
@@ -957,14 +950,12 @@ async function processFile(item, i, mappingRules, unmatchedMode) {
 
   // 3) 키 매핑
   // 외부ZIP명 / 내부ZIP명 / CSV파일명 세 후보 전부 소문자로 검색 (대소문자 무시)
-  log(`  매칭 후보: [${matchCandidates.join(' | ')}]`, '');
   let outputName = null;
   for (const rule of mappingRules) {
     if (!rule.key.trim()) continue;
     const keyLower = rule.key.trim().toLowerCase();
     if (matchCandidates.some(c => c.includes(keyLower))) {
       outputName = rule.name.trim() ? rule.name.trim()+'.csv' : csvFileName;
-      log(`  키 '${rule.key}' 매칭 → ${outputName}`);
       break;
     }
   }
@@ -972,7 +963,6 @@ async function processFile(item, i, mappingRules, unmatchedMode) {
   if (!outputName) {
     if (unmatchedMode === 'original') {
       outputName = csvFileName;
-      log(`  매칭 없음 → 원본명: ${outputName}`, 'warn');
     } else {
       item.status='nomatch'; item.progress=100; item.error='매칭 규칙 없음'; updateFileItem(i);
       logNg(`${f.name} — 매칭 규칙 없음`); return;

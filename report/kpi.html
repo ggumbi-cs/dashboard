@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>주요 KPI</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -294,7 +293,7 @@
   <div class="load-status" id="loadStatus">데이터 로딩중…</div>
 </div>
 
-<div id="root"><div class="loading">⏳ report.xlsx 로딩 중...</div></div>
+<div id="root"><div class="loading">⏳ 데이터 로딩 중...</div></div>
 
 <script>
 // ── URL 파라미터 파싱 ──
@@ -302,45 +301,71 @@ const params = new URLSearchParams(location.search);
 const periodParam = params.get('period') || '';
 const typeParam   = params.get('type')   || '';
 
-// ── 엑셀 파일 경로 (깃허브 기준 상대경로) ──
-const EXCEL_PATH = 'report.xlsx';
+// ── CSV 파일 경로 ──
+const CSV_PATH = '../data/클로드_kpi.csv';
 
-async function loadExcel() {
-  try {
-    const res = await fetch(EXCEL_PATH + '?t=' + Date.now());
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const buf = await res.arrayBuffer();
-    const wb  = XLSX.read(buf, { type: 'array' });
-    return wb;
-  } catch(e) {
-    throw e;
-  }
+async function loadCSV() {
+  const res = await fetch(CSV_PATH + '?t=' + Date.now());
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const text = await res.text();
+  return parseCSV(text);
 }
 
-function parseKpiSheet(wb) {
-  const ws = wb.Sheets['주요kpi'];
-  if (!ws) throw new Error("'주요kpi' 시트를 찾을 수 없습니다.");
-  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+function parseCSV(text) {
+  // BOM 제거
+  text = text.replace(/^\uFEFF/, '');
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  const rows = lines.map(line => {
+    // 쉼표 구분, 큰따옴표 안의 쉼표 보호
+    const result = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    result.push(cur.trim());
+    return result;
+  });
+  return rows; // rows[0] = 헤더
+}
 
-  // 2행(index 1)에서 전체진행율 직접 읽기
-  const overallRow = rows[1] || [];
-  const overallFromSheet = overallRow[5]; // F2열
+function parseKpiSheet(rows) {
+  // 헤더: 연번,클루드,대목표,중목표,완료목표일,🚩(지표별 달성률),진행현황 요약,중요도,메인,...
+  // index:  0     1      2      3       4           5                  6            7      8
 
   const data = [];
-  for (let i = 2; i < rows.length; i++) {
+  for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
     if (!r || !r[3]) continue;
+    if (r[1] !== '대상') continue; // 클루드 = '대상'인 행만
+
+    const pctRaw = r[5] ? r[5].replace('%','').trim() : null;
+    const pctVal = pctRaw !== null && pctRaw !== '' ? Number(pctRaw) / 100 : null;
+
     data.push({
-      주기:     r[1],
-      대분류:   r[2],
-      명칭:     r[3],
-      설명:     r[4],
-      달성율:   r[5],
+      대분류:   r[2] || '',
+      명칭:     r[3] || '',
+      설명:     '',
+      달성율:   pctVal,
       특이사항: r[6] || '',
-      링크:     r[7] || '',
+      링크:     '',
       담당:     r[8] || '',
     });
   }
+
+  // 전체진행율: 😀(팀총점) 열(index 9) 합산
+  let overallFromSheet = null;
+  const teamScores = rows.slice(1).filter(r => r[1] === '대상' && r[9]);
+  if (teamScores.length > 0) {
+    const sum = teamScores.reduce((s, r) => {
+      const v = parseFloat(r[9].replace('%',''));
+      return s + (isNaN(v) ? 0 : v);
+    }, 0);
+    overallFromSheet = sum / 100; // 퍼센트 → 소수
+  }
+
   return { data, overallFromSheet };
 }
 
@@ -524,8 +549,8 @@ function renderCard(grid, item) {
 async function init() {
   const root = document.getElementById('root');
   try {
-    const wb = await loadExcel();
-    const { data, overallFromSheet } = parseKpiSheet(wb);
+    const rows = await loadCSV();
+    const { data, overallFromSheet } = parseKpiSheet(rows);
     kpiData = data;
 
     // 전체 진행율: F2열 값 우선, 없으면 평균 계산

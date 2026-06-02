@@ -588,8 +588,21 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 // ══════════════════════════════════════════════════════════════
 // 설정
 // ══════════════════════════════════════════════════════════════
-const REPORT_URL = 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/report.xlsx';
-const ISSUE_URL  = 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/issue.xlsx';
+const BASE_URL = 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/data/';
+const CSV_URLS = {
+  kpi:        BASE_URL + '클로드_kpi.csv',
+  인입태그:   BASE_URL + '클로드_인입태그.csv',
+  상담태그:   BASE_URL + '클로드_상담태그.csv',
+  만족도:     BASE_URL + '클로드_만족도조사.csv',
+  통화성공율: BASE_URL + '클로드_통화성공율.csv',
+  관여율:     BASE_URL + '클로드_관여율.csv',
+  반품관리:   BASE_URL + '클로드_반품관리.csv',
+  반품율:     BASE_URL + '클로드_반품율.csv',
+  개선품질:   BASE_URL + '클로드_개선품질.csv',
+  가전마감:   BASE_URL + '클로드_가전마감.csv',
+  가전외마감: BASE_URL + '클로드_가전외마감.csv',
+  자재수급:   BASE_URL + '클로드_자재수급현황.csv',
+};
 // ★ Apps Script 배포 후 여기에 웹앱 URL 입력
 // SCRIPT_URL: index.html에서 postMessage로 수신 (중앙 관리)
 // 단독 실행 fallback 포함
@@ -1102,18 +1115,180 @@ function renderDelta(deltaId, cur, prev, unit, lowerIsBetter, decimals) {
 // ══════════════════════════════════════════════════════════════
 // GitHub xlsx 로드
 // ══════════════════════════════════════════════════════════════
-async function fetchXlsx(url) {
+// ══════════════════════════════════════════════════════════════
+// CSV 로드 + DATA.report 구조 어댑터
+// ══════════════════════════════════════════════════════════════
+async function fetchCSV(url) {
   const res = await fetch(url + '?t=' + Date.now());
   if (!res.ok) throw new Error(res.status);
-  return XLSX.read(new Uint8Array(await res.arrayBuffer()), { type:'array' });
+  const text = await res.text();
+  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
+  const parseRow = line => {
+    const result=[]; let cur=''; let inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){inQ=!inQ;}
+      else if(c===','&&!inQ){result.push(cur.trim());cur='';}
+      else{cur+=c;}
+    }
+    result.push(cur.trim());
+    return result.map(v=>v.replace(/^"|"$/g,''));
+  };
+  const rows = lines.slice(1).map(l=>parseRow(l));
+  return rows;
+}
+
+// CSV 데이터를 기존 코드가 기대하는 DATA.report.Sheets 구조로 변환
+function buildReportFromCSV(csv) {
+  // ── 상담실적 시트 행 구조 (기존 코드 컬럼 기준) ──
+  // col0='총인입데이터', col1='주간/월간', col2=회차, col3=채널, col4=건수
+  // col6='ALF관여/해결율', col7='주간/월간', col8=회차, col9=텍스트, col10=건수
+  // col12='수신응답율..', col13='주간', col14=회차(숫자), col18=응답률(소수)
+  // col20='만족도조사', col21='월간', col22=회차, col27=만족도점수
+
+  const 상담실적 = [];
+  // 인입태그: [마감기준,구분,년,주/월,회차,서비스태그,인입수,비고]
+  for(const r of (csv.인입태그||[])){
+    const 주월 = r[3]; // '주간' or '월간'
+    const 회차raw = r[4];
+    const 회차 = /^\d{6}$/.test(String(회차raw)) ? parseInt(회차raw) : 회차raw;
+    상담실적.push(['총인입데이터', 주월, 회차, r[5], parseInt(r[6])||0]);
+  }
+  // 관여율: [마감기준,년,월,텍스트,관여건,비고]
+  for(const r of (csv.관여율||[])){
+    const 회차raw = r[2];
+    const 회차 = /^\d{6}$/.test(String(회차raw)) ? parseInt(회차raw) : 회차raw;
+    const 주월 = /^\d{6}$/.test(String(회차raw)) ? '주간' : '월간';
+    // col6='ALF관여/해결율', col7=주월, col8=회차, col9=텍스트, col10=건수
+    const row = new Array(15).fill(null);
+    row[6]='ALF관여/해결율'; row[7]=주월; row[8]=회차; row[9]=r[3]; row[10]=parseInt(r[4])||0;
+    상담실적.push(row);
+  }
+  // 통화성공율: [마감일,년,회차,총유입,부재중,수신콜,통화성공률,...,주기]
+  for(const r of (csv.통화성공율||[])){
+    const 회차raw = r[2];
+    const 성공률raw = String(r[6]||'').replace('%','');
+    const 성공률 = parseFloat(성공률raw)/100;
+    const 회차 = /^\d{6}$/.test(String(회차raw)) ? parseInt(회차raw) : 회차raw;
+    // col12='수신응답율..', col13='주간', col14=회차, col18=응답률
+    const row = new Array(20).fill(null);
+    row[12]='수신응답율, 통화성골률, 총유입Call'; row[13]='주간'; row[14]=회차; row[18]=성공률;
+    상담실적.push(row);
+  }
+  // 만족도: [구분,월별,상담종료,문자발송,참여건,참여율,만족도,...,마감일]
+  for(const r of (csv.만족도||[])){
+    const 회차 = r[1]; // '26.05월'
+    const 점수 = parseFloat(r[6]);
+    if(!회차||isNaN(점수)) continue;
+    const row = new Array(30).fill(null);
+    row[20]='만족도조사'; row[21]='월간'; row[22]=회차; row[27]=점수;
+    // 참여율 col28, 참여건 col29
+    row[28]=r[4]; row[29]=String(r[5]).replace('%','');
+    상담실적.push(row);
+  }
+
+  // ── 반품현황 시트 ──
+  // 기존: col0='반품현황(반품/교환율만 제외)', col2=회차, col3='꿈비', col4=사유, col7=건수
+  //       col9='반품/교환율', col11=회차, col12='꿈비', col13=율(소수)
+  // 기존: col0='반품현황(반품/교환율만 제외)', col5=가전구분, col6=교환/반품구분
+  const 반품현황 = [null, null]; // 2행 헤더
+  // 반품율: [구분,마감월,항목,월간배송수량,월간교환/반품수량,반품/교환율,비고]
+  for(const r of (csv.반품율||[])){
+    const row = new Array(15).fill(null);
+    row[9]='반품/교환율'; row[12]=r[0]; // 구분(꿈비)
+    row[11]=r[1]; // 마감월
+    const 율raw = String(r[5]).replace('%','');
+    row[13]=parseFloat(율raw)/100;
+    반품현황.push(row);
+  }
+  // 반품관리: [주/월,마감회차,구분,사유,품목,교환/반품,건수,비고]
+  for(const r of (csv.반품관리||[])){
+    const 회차raw = r[1];
+    const 회차 = /^\d{6}$/.test(String(회차raw)) ? parseInt(회차raw) : 회차raw;
+    const row = new Array(10).fill(null);
+    row[0]='반품현황 (반품/교환율만 제외)';
+    row[2]=회차; row[3]=r[2]; row[4]=r[3]; // 구분(꿈비), 사유
+    row[5]=r[4]; // 품목(가전/가전외)
+    row[6]=r[5]; // 교환/반품
+    row[7]=parseInt(r[6])||0; // 건수
+    반품현황.push(row);
+  }
+
+  // ── 품질관리 시트 ──
+  // 기존: col0=구분, col1=진행단계, col2=등록일, col3=완료일, col4=제품명, col5=핵심키워드
+  // 개선품질: [구분,진행단계,등록일,완료일,제품명,핵심키워드,주제,...]
+  const 품질관리 = [null, null]; // 2행 헤더
+  for(const r of (csv.개선품질||[])){
+    품질관리.push([r[0],r[1],r[2],r[3],r[4],r[5],r[6],r[7],r[8]]);
+  }
+
+  // ── data_가전마감 시트 ──
+  // 기존: col0=접수일, col2=제품명, col5=처리일, col7=유/무상, col8=구분, col11=접수불량, col13=소요일
+  // 가전마감: [접수일,고객명,제품명,주문번호,제품증상,처리일,유상AS비용,유/무상,구분,사용부품,입고일,접수불량,확인불량,소요일,...]
+  const data_가전마감 = [null]; // 1행 헤더
+  for(const r of (csv.가전마감||[])){
+    data_가전마감.push([r[0],r[1],r[2],r[3],r[4],r[5],r[6],r[7],r[8],r[9],r[10],r[11],r[12],r[13]]);
+  }
+
+  // ── data_가전외마감 시트 ──
+  // 기존 코드 참조 방식 확인 후 동일 구조
+  // 가전외마감: [년월,접수일자,완료일자,소요기간,Projects,상품명,상품구분,진행사항,수리방법,유/무상,비용,AS진행업체,...]
+  const data_가전외마감 = [null];
+  for(const r of (csv.가전외마감||[])){
+    data_가전외마감.push([r[0],r[1],r[2],r[3],r[4],r[5],r[6],r[7],r[8],r[9],r[10],r[11]]);
+  }
+
+  // ── 자재수급 시트 (클로드_자재수급현황.csv) ──
+  // CSV: [진행상태,제품구분,건명,기안일,...] → 기존 코드: r[2]=상태, r[3]=제품구분, r[4]=건명, r[5]=기안일
+  const 자재수급 = [null]; // 헤더 행
+  for(const r of (csv.자재수급||[])){
+    const row = new Array(9).fill(null);
+    row[2] = r[0]; // 진행상태
+    row[3] = r[1]; // 제품구분
+    row[4] = r[2]; // 건명
+    row[5] = r[3]; // 기안일 (문자열: '2026년 5월 20일')
+    자재수급.push(row);
+  }
+
+  // Sheets 어댑터 반환
+  const makeSheet = (rows) => ({
+    _rows: rows,
+    _isAdapter: true,
+  });
+
+  return {
+    _isCSV: true,
+    Sheets: {
+      '상담실적':    makeSheet(상담실적),
+      '반품현황':    makeSheet(반품현황),
+      '품질관리':    makeSheet(품질관리),
+      'data_가전마감':  makeSheet(data_가전마감),
+      'data_가전외마감': makeSheet(data_가전외마감),
+      '자재수급':    makeSheet(자재수급),
+    }
+  };
+}
+
+// SheetJS 어댑터: sheet_to_json 대신 _rows 직접 반환
+const _origSheetToJson = XLSX?.utils?.sheet_to_json;
+function sheetToRows(ws, opts) {
+  if(ws && ws._isAdapter) return ws._rows || [];
+  if(_origSheetToJson) return _origSheetToJson(ws, opts);
+  return [];
 }
 
 async function loadAllData() {
   setStatus('loading','로딩 중...',true);
   document.getElementById('aiBtn').disabled = true;
   let ok = 0;
-  try { DATA.report = await fetchXlsx(REPORT_URL); ok++; } catch(e) { console.warn(e); }
-  // 자재수급 이슈는 report.xlsx 자재수급 시트에서 직접 읽음 (issue.xlsx 별도 fetch 불필요)
+  try {
+    const results = await Promise.all(
+      Object.entries(CSV_URLS).map(async ([key, url]) => [key, await fetchCSV(url)])
+    );
+    const csv = Object.fromEntries(results);
+    DATA.report = buildReportFromCSV(csv);
+    ok++;
+  } catch(e) { console.warn('CSV 로드 실패:', e); }
   // 프롬프트 구글시트에서 불러오기 (없으면 기본값 유지)
   loadPrompts();
   // 분析용요약 시트에서 현재 기간 탭별 요약 불러오기
@@ -1127,7 +1302,7 @@ async function loadAllData() {
       DATA.tabSummaries = null;
     }
   } catch(e) { console.warn('분析용요약 불러오기 실패:', e); DATA.tabSummaries = null; }
-  setStatus(ok>0?'ok':'err', ok===2?'✓ 데이터 로드 완료':ok===1?'✓ 일부 로드 완료':'⚠ 로드 실패');
+  setStatus(ok>0?'ok':'err', ok>0?'✓ 데이터 로드 완료':'⚠ 로드 실패');
   if (ok>0) {
     document.getElementById('aiBtn').disabled=false;
     renderAll();
@@ -1177,9 +1352,10 @@ function debugPeriodFilter() {
   console.log('AS      CUR:', CUR.as, '/ PREV:', PREV.as);
   console.log('자재이슈 CUR:', CUR.issue, '/ PREV:', PREV.issue);
 
-  // 반품 rateMap 상세 (어떤 키가 수집됐는지)
-  if(DATA.report?.Sheets['반품현황']) {
-    const rows = XLSX.utils.sheet_to_json(DATA.report.Sheets['반품현황'], {header:1, defval:null});
+  // 반품 rateMap 상세
+  if(DATA.report?.Sheets?.['반품현황']) {
+    const ws = DATA.report.Sheets['반품현황'];
+    const rows = sheetToRows(ws, {header:1, defval:null});
     const rm={};
     for(let i=2;i<rows.length;i++){
       const r=rows[i]; if(!r||r[9]!=='반품/교환율'||r[12]!=='꿈비'||!r[13]) continue;
@@ -1251,7 +1427,7 @@ function renderSummary() {
     // ── 상담실적 ──────────────────────────────────────────────
     const ws1 = DATA.report.Sheets['상담실적'];
     if (ws1) {
-      const rows = XLSX.utils.sheet_to_json(ws1, {header:1, defval:null});
+      const rows = sheetToRows(ws1, {header:1, defval:null});
 
       // 총인입 + 채널별
       // - 월간: 월간 마감 행 사용
@@ -1453,7 +1629,7 @@ function renderSummary() {
     // ── 반품 ──────────────────────────────────────────────────
     const ws2 = DATA.report.Sheets['반품현황'];
     if (ws2) {
-      const rows = XLSX.utils.sheet_to_json(ws2, {header:1, defval:null});
+      const rows = sheetToRows(ws2, {header:1, defval:null});
 
       // rateMap: {'26.03월': 3.1, '26.04월': 3.3, ...}
       const rateMap={};
@@ -1568,7 +1744,7 @@ function renderSummary() {
     // ── 품질 ──────────────────────────────────────────────────
     const ws3 = DATA.report.Sheets['품질관리'];
     if (ws3) {
-      const rows = XLSX.utils.sheet_to_json(ws3, {header:1, defval:null});
+      const rows = sheetToRows(ws3, {header:1, defval:null});
       // 구분(col0)별 건수 집계
       const 구분Map = {};
       let total = 0;
@@ -1612,7 +1788,7 @@ function renderSummary() {
     // ── AS ────────────────────────────────────────────────────
     const ws4 = DATA.report.Sheets['data_가전마감'];
     if (ws4) {
-      const rows = XLSX.utils.sheet_to_json(ws4, {header:1, defval:null});
+      const rows = sheetToRows(ws4, {header:1, defval:null});
       let curCnt=0, prevCnt=0;
       if(P.mode==='year'){
         curCnt=rows.length-1;
@@ -1656,13 +1832,18 @@ function renderSummary() {
   // ★ report.xlsx 자재수급 시트 사용 (A=대분류, C=진행상태, D=제품구분, E=건명, F=기안일)
   const wsIssue = DATA.report ? DATA.report.Sheets['자재수급'] : null;
   if (wsIssue) {
-    const getIssueRows = () => XLSX.utils.sheet_to_json(wsIssue, {header:1, defval:null}).slice(1)
+    const getIssueRows = () => sheetToRows(wsIssue, {header:1, defval:null}).slice(1)
       .filter(r => r && r[2] && (r[2]==='미입고'||r[2]==='결재대기') && r[4]);
 
     const parseDate = (v) => {
       if (!v) return null;
       if (typeof v === 'number') return new Date((v-25569)*86400000);
-      if (typeof v === 'string') { const d=new Date(v); return isNaN(d)?null:d; }
+      if (typeof v === 'string') {
+        // 한국어 날짜: '2026년 5월 20일' → Date
+        const km = v.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
+        if (km) return new Date(parseInt(km[1]), parseInt(km[2])-1, parseInt(km[3]));
+        const d = new Date(v); return isNaN(d)?null:d;
+      }
       return null;
     };
 
@@ -1704,7 +1885,7 @@ function renderReport() {
   const wsQ = DATA.report.Sheets['품질관리'];
   if (!wsQ) { document.getElementById('qualityBody').innerHTML='<tr><td colspan="7" style="text-align:center;color:#aaa;padding:30px;">데이터 없음</td></tr>'; return; }
 
-  const qrows = XLSX.utils.sheet_to_json(wsQ, {header:1, defval:null}).slice(2).filter(r=>r&&r[1]);
+  const qrows = sheetToRows(wsQ, {header:1, defval:null}).slice(2).filter(r=>r&&r[1]);
   const tbody = document.getElementById('qualityBody');
   if(!qrows.length){ tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#aaa;padding:30px;">데이터 없음</td></tr>'; return; }
 
@@ -1831,7 +2012,7 @@ function renderVOC() {
 
   const ws2=DATA.report.Sheets['반품현황'];
   if (ws2) {
-    const rows=XLSX.utils.sheet_to_json(ws2,{header:1,defval:null});
+    const rows=sheetToRows(ws2,{header:1,defval:null});
     const rm={}, pm={}, rmPrev={}, pmPrev={};
 
     // 전회차 기준 계산
@@ -1876,7 +2057,7 @@ function renderVOC() {
 
   const ws4=DATA.report.Sheets['data_가전마감'];
   if(ws4){
-    const rows=XLSX.utils.sheet_to_json(ws4,{header:1,defval:null});
+    const rows=sheetToRows(ws4,{header:1,defval:null});
     const sm={}, smPrev={};
     const P2 = parsePeriod();
     for(let i=1;i<rows.length;i++){
@@ -1900,14 +2081,18 @@ function renderVOC() {
   // ★ report.xlsx 자재수급 시트로 이슈 목록 렌더
   const wsIL = DATA.report ? DATA.report.Sheets['자재수급'] : null;
   if(wsIL){
-    const allRows = XLSX.utils.sheet_to_json(wsIL,{header:1,defval:null}).slice(1);
+    const allRows = sheetToRows(wsIL,{header:1,defval:null}).slice(1);
     const el=document.getElementById('issueList');
     const today = new Date(); today.setHours(0,0,0,0);
 
     const parseDate = (v) => {
       if(!v) return null;
       if(typeof v==='number') return new Date((v-25569)*86400000);
-      if(typeof v==='string'){ const d=new Date(v); return isNaN(d)?null:d; }
+      if(typeof v==='string'){
+        const km = v.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
+        if(km) return new Date(parseInt(km[1]), parseInt(km[2])-1, parseInt(km[3]));
+        const d=new Date(v); return isNaN(d)?null:d;
+      }
       return null;
     };
 
@@ -2786,7 +2971,7 @@ function buildDataSummary(){
     // 채널별 인입 상세
     const ws1=DATA.report.Sheets['상담실적'];
     if(ws1){
-      const rows=XLSX.utils.sheet_to_json(ws1,{header:1,defval:null});
+      const rows=sheetToRows(ws1,{header:1,defval:null});
       const curCh={}, prevCh={};
       for(let i=2;i<rows.length;i++){
         const r=rows[i]; if(!r||r[0]!=='총인입데이터'||r[1]!=='월간'||!r[3]) continue;
@@ -2807,7 +2992,7 @@ function buildDataSummary(){
     // 반품 사유 + 상세 구조화 (월/주간 구분)
     const ws2=DATA.report.Sheets['반품현황'];
     if(ws2){
-      const rows=XLSX.utils.sheet_to_json(ws2,{header:1,defval:null});
+      const rows=sheetToRows(ws2,{header:1,defval:null});
 
       // 반품 사유별 건수 (꿈비)
       const rm={}, rmPrev={};
@@ -2900,7 +3085,7 @@ function buildDataSummary(){
     // AS 증상별 제품 TOP5 (col11=접수불량, col2=제품명)
     const ws4=DATA.report.Sheets['data_가전마감'];
     if(ws4){
-      const rows=XLSX.utils.sheet_to_json(ws4,{header:1,defval:null});
+      const rows=sheetToRows(ws4,{header:1,defval:null});
       const symProd={};
       rows.slice(1).forEach(r=>{
         if(!r||!r[11]||!r[2]) return;
@@ -2919,7 +3104,7 @@ function buildDataSummary(){
     // 품질관리 진행중 개선요청
     const ws3=DATA.report.Sheets['품질관리'];
     if(ws3){
-      const rows=XLSX.utils.sheet_to_json(ws3,{header:1,defval:null});
+      const rows=sheetToRows(ws3,{header:1,defval:null});
       lines.push('\n[품질 개선요청 진행중]');
       rows.slice(2).filter(r=>r&&r[1]&&String(r[1]).includes('개선요청')&&r[4]).slice(0,10).forEach(r=>{
         const prod=String(r[4]).replace(/\[(꿈비|리코코)\] /g,'').substring(0,25);
@@ -2932,7 +3117,7 @@ function buildDataSummary(){
   // 자재수급 이슈 (report.xlsx 자재수급 시트)
   const wsIssueSumm = DATA.report ? DATA.report.Sheets['자재수급'] : null;
   if(wsIssueSumm){
-    const rows=XLSX.utils.sheet_to_json(wsIssueSumm,{header:1,defval:null}).slice(1);
+    const rows=sheetToRows(wsIssueSumm,{header:1,defval:null}).slice(1);
     const activeIssues = rows.filter(r=>r&&r[4]&&(r[2]==='미입고'||r[2]==='결재대기'));
     if(activeIssues.length){
       lines.push('\n[자재수급 이슈]');

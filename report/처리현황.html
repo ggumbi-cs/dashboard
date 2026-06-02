@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>처리현황</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <style>
 * { box-sizing:border-box; margin:0; padding:0; }
 :root {
@@ -233,58 +233,98 @@ function geRoundKey(rec) {
 }
 
 // ══════════════════════════════════════
-// xlsx 로드 (report.xlsx 실시간 읽기)
+// CSV 파싱 유틸
+// ══════════════════════════════════════
+function parseCSV(text) {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  const result = [];
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const row = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') {
+        if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+        else inQ = !inQ;
+      } else if (c === ',' && !inQ) {
+        row.push(cur); cur = '';
+      } else {
+        cur += c;
+      }
+    }
+    row.push(cur);
+    result.push(row);
+  }
+  return result;
+}
+
+// 노션 날짜 문자열 → JS Date (UTC)
+// 형식: "2026년 3월 17일" 또는 "2026년 03월 17일"
+function parseKoDate(v) {
+  if (!v) return null;
+  const s = String(v).trim();
+  const m = s.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
+  if (m) return new Date(Date.UTC(+m[1], +m[2]-1, +m[3]));
+  return null;
+}
+
+// ══════════════════════════════════════
+// CSV 로드 (실시간 읽기)
+// data/ 폴더 기준
 // ══════════════════════════════════════
 async function loadXlsx() {
-  const path = './report.xlsx';
-  try {
-    const res = await fetch(path + '?t=' + Date.now());
-    if (!res.ok) throw new Error('파일 없음');
-    const buf = await res.arrayBuffer();
-    const wb  = XLSX.read(buf, { type:'array', cellDates:true });
+  const BASE = './data/';
+  const ts   = '?t=' + Date.now();
 
-    // ── A. data_가전마감 시트 파싱 (전자제품·자재출고 직접 집계) ──
-    // 컬럼(0-based): A=0 접수일, C=2 제품명, E=4 제품증상, F=5 처리일,
-    //                G=6 유상AS비용, H=7 유/무상, I=8 구분, J=9 사용부품, N=13 소요일
-    const ws = wb.Sheets['data_가전마감'];
-    if (!ws) throw new Error('data_가전마감 시트 없음');
-    const rawGm = XLSX.utils.sheet_to_json(ws, { header:1, defval:null });
+  try {
+    // ── A. 클로드_가전마감.csv 파싱 ──
+    // 컬럼: 0접수일, 2제품명, 5처리일, 6유상AS비용, 7유/무상, 8구분,
+    //       9사용부품, 13소요일, 14진행상황
+    const resGm = await fetch(BASE + '클로드_가전마감.csv' + ts);
+    if (!resGm.ok) throw new Error('클로드_가전마감.csv 없음');
+    const textGm = await resGm.text();
+    const rawGm  = parseCSV(textGm);
     RAW_GM = [];
     for (let i = 1; i < rawGm.length; i++) {
       const r = rawGm[i];
-      const 처리일 = serialToDate(r[5]);
+      if (!r || r.length < 5) continue;
+      const 처리일 = parseKoDate(r[5]);
       if (!처리일) continue; // 처리일 없으면 미완료 → 제외
+      const 비용str = r[6] ? String(r[6]).replace(/,/g, '').trim() : '';
       RAW_GM.push({
-        접수일: serialToDate(r[0]),
+        접수일:   parseKoDate(r[0]),
         처리일,
-        제품명: r[2]  ? String(r[2]).trim()  : '',
-        유무상: r[7]  ? String(r[7]).trim()  : '',
-        구분:   r[8]  ? String(r[8]).trim()  : '',
-        비용:   parseFloat(r[6]) || 0,
-        소요일: parseFloat(r[13]) || 0,
+        제품명:   r[2]  ? String(r[2]).trim()  : '',
+        유무상:   r[7]  ? String(r[7]).trim()  : '',
+        구분:     r[8]  ? String(r[8]).trim()  : '',
+        비용:     parseFloat(비용str) || 0,
+        소요일:   parseFloat(r[13]) || 0,
         진행현황: r[14] ? String(r[14]).trim() : '',
-        // 사용부품: 쉼표 구분 분리
+        // 사용부품: CSV 파서 처리 후 쉼표 구분 분리
         부품목록: r[9] ? String(r[9]).split(',').map(p=>p.trim()).filter(Boolean) : []
       });
     }
 
-    // ── B. data_가전외마감 시트 파싱 (전자제품外 원본 직접 집계) ──
-    // 컬럼(0-based): B=1 접수일, C=2 완료일, D=3 소요기간, F=5 상품명, J=9 유/무상, K=10 비용
-    const wsGe = wb.Sheets['data_가전외마감'];
-    if (wsGe) {
-      const rawGe = XLSX.utils.sheet_to_json(wsGe, { header:1, defval:null });
+    // ── B. 클로드_가전외마감.csv 파싱 ──
+    // 컬럼: 1접수일자, 2완료일자, 3소요기간, 5상품명, 9유/무상, 10비용
+    const resGe = await fetch(BASE + '클로드_가전외마감.csv' + ts);
+    if (resGe.ok) {
+      const textGe = await resGe.text();
+      const rawGe  = parseCSV(textGe);
       RAW_GE = [];
       for (let i = 1; i < rawGe.length; i++) {
         const r = rawGe[i];
-        const 완료일 = serialToDate(r[2]);
+        if (!r || r.length < 6) continue;
+        const 완료일 = parseKoDate(r[2]);
         if (!완료일) continue; // 완료일 없으면 미처리 → 제외
         RAW_GE.push({
-          접수일: serialToDate(r[1]),
+          접수일: parseKoDate(r[1]),
           완료일,
           소요일: parseFloat(r[3]) || 0,
-          상품명: r[5] ? String(r[5]).trim() : '',
-          유무상: r[9] ? String(r[9]).trim() : '',
-          비용:   parseFloat(r[10]) || 0
+          상품명: r[5]  ? String(r[5]).trim() : '',
+          유무상: r[9]  ? String(r[9]).trim() : '',
+          비용:   parseFloat(String(r[10]||'').replace(/,/g,'')) || 0
         });
       }
     }
@@ -292,7 +332,7 @@ async function loadXlsx() {
     render();
   } catch(e) {
     document.getElementById('root').innerHTML +=
-      `<div class="no-data" style="color:red;">⚠ report.xlsx 로드 실패: ${e.message}<br>이 파일과 같은 폴더에 report.xlsx를 두세요.</div>`;
+      `<div class="no-data" style="color:red;">⚠ CSV 로드 실패: ${e.message}<br>data/ 폴더에 클로드_가전마감.csv, 클로드_가전외마감.csv를 두세요.</div>`;
   }
 }
 
@@ -849,7 +889,7 @@ scaleRoot();
 window.addEventListener('resize', () => { scaleRoot(); equalizeGeCards(); });
 loadXlsx();
 
-// 30초마다 자동 갱신 (xlsx 파일 변경 반영)
+// 30초마다 자동 갱신 (CSV 파일 변경 반영)
 setInterval(loadXlsx, 30000);
 </script>
 </body>

@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>반품현황</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -25,7 +24,7 @@ body {
 #error-msg {
   display: none; padding: 14px 18px; background: #fef2f2;
   border: 1px solid #fca5a5; border-radius: 8px;
-  color: #991b1b; font-size: 13px;
+  color: #991b1b; font-size: 13px; margin-bottom: 10px;
 }
 .period-badge {
   display: inline-block; font-size: 11px; font-weight: 600;
@@ -74,28 +73,9 @@ body {
   display: flex; justify-content: space-around;
   font-size: 10px; color: #64748b; margin-top: 3px;
 }
-.donut-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-.donut-wrap { position: relative; width: 82px; height: 82px; flex-shrink: 0; }
-.donut-wrap svg { width: 82px; height: 82px; }
-.donut-center {
-  position: absolute; top: 50%; left: 50%;
-  transform: translate(-50%,-50%);
-  font-size: 13px; font-weight: 700; text-align: center;
-  color: #0f1f3d; line-height: 1.15;
-}
-.legend-list { font-size: 11px; color: #64748b; line-height: 1.9; }
 .ldot {
   display: inline-block; width: 7px; height: 7px;
   border-radius: 50%; margin-right: 3px; vertical-align: middle;
-}
-.reason-row { display: flex; align-items: flex-start; gap: 10px; }
-.reason-donut { position: relative; width: 88px; height: 88px; flex-shrink: 0; }
-.reason-donut svg { width: 88px; height: 88px; }
-.reason-center {
-  position: absolute; top: 50%; left: 50%;
-  transform: translate(-50%,-50%);
-  font-size: 14px; font-weight: 700; text-align: center;
-  color: #0f1f3d; line-height: 1.15;
 }
 .reason-legend { font-size: 10px; color: #64748b; line-height: 1.85; }
 .no-data { color: #94a3b8; font-size: 12px; padding: 12px 0; }
@@ -104,7 +84,6 @@ body {
 <body>
 
 <div id="summary-toast" style="display:none;position:fixed;bottom:18px;right:18px;background:#0f1f3d;color:#fff;font-size:12px;padding:8px 16px;border-radius:6px;z-index:9999;"></div>
-
 <div id="error-msg"></div>
 <div id="loading"><div class="spinner"></div> 데이터 불러오는 중...</div>
 <div id="app" style="display:none;"></div>
@@ -115,14 +94,12 @@ const REASON_COLORS = [
   '#f59e0b','#fd8d3c','#e74c3c','#9b59b6',
   '#3498db','#2ecc71','#e8834a','#64748b'
 ];
-// SCRIPT_URL: index.html에서 postMessage로 수신 (중앙 관리)
-// 단독 실행 시에도 동작하도록 fallback 빈 문자열
+
+// SCRIPT_URL: index에서 postMessage로 수신
 let SCRIPT_URL = '';
 window.addEventListener('message', function(e) {
-  if (e.data && e.data.type === 'SCRIPT_URL' && e.data.url) {
-    SCRIPT_URL = e.data.url;
-  }
-});;
+  if (e.data && e.data.type === 'SCRIPT_URL' && e.data.url) SCRIPT_URL = e.data.url;
+});
 
 // ── URL 파라미터 ──────────────────────────────────────────
 const params = new URLSearchParams(window.location.search);
@@ -146,84 +123,108 @@ function parsePeriod() {
 }
 const pInfo = parsePeriod();
 
-// ── xlsx 로드 ─────────────────────────────────────────────
-// 반품현황.html 은 report/ 폴더 안에 위치하므로
-// report.xlsx 도 같은 폴더(report/) 안에 있음 → 상대경로 'report.xlsx'
+// ── CSV 파싱 유틸 ─────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^\uFEFF/, ''));
+  return lines.slice(1).map(line => {
+    // 쉼표 포함 따옴표 처리
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    cols.push(cur.trim());
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (cols[i] || '').replace(/^"|"$/g, '').trim());
+    return obj;
+  }).filter(r => Object.values(r).some(v => v !== ''));
+}
+
+const BASE = 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/data/';
+
+async function fetchCSV(filename) {
+  const resp = await fetch(BASE + filename);
+  if (!resp.ok) throw new Error(`${filename} 로드 실패 (${resp.status})`);
+  const text = await resp.text();
+  return parseCSV(text);
+}
+
+// ── 데이터 로드 ───────────────────────────────────────────
+// 클로드_반품관리.csv  : 주/월, 마감회차, 구분, 사유, 품목, 교환/반품, 건수
+// 클로드_반품율.csv    : 구분, 마감월, 항목, 월간 배송수량, 월간 교환/반품 수량, 반품/교환율
 async function loadData() {
-  const resp = await fetch('https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/report.xlsx');
-  if (!resp.ok) throw new Error(`report.xlsx 로드 실패 (${resp.status})`);
-  const buf = await resp.arrayBuffer();
-  const wb  = XLSX.read(buf, { type: 'array' });
-  const ws  = wb.Sheets['반품현황'];
-  if (!ws) throw new Error('반품현황 시트 없음');
-  return XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+  const [mgmt, rate] = await Promise.all([
+    fetchCSV('클로드_반품관리.csv'),
+    fetchCSV('클로드_반품율.csv')
+  ]);
+  return { mgmt, rate };
 }
 
 // ── 필터링 ────────────────────────────────────────────────
-function filterRows(raw) {
+function filterRows({ mgmt, rate }) {
   const periodType = pInfo.mode === 'monthly' ? '월간' : '주간';
-  const left = [], right = [];
 
-  for (let i = 2; i < raw.length; i++) {
-    const r = raw[i];
-    // 좌측: 반품/교환 상세
-    if (r[1] === periodType &&
-        String(r[2]) === String(pInfo.key) &&
-        (r[3] === '꿈비' || r[3] === '소브') &&
-        r[4] && r[4] !== '사유' && r[7] != null) {
-      left.push({ brand: r[3], reason: r[4], item: r[5], type: r[6], cnt: Number(r[7]) });
-    }
-    // 우측: 반품/교환율 (월간 고정 — 주간 선택시에도 해당 월 율 표시)
-    // J열(index9)='반품/교환율', K열(10)='월간', L열(11)=마감회차, M열(12)=브랜드, N열(13)=율
-    if (r[9] === '반품/교환율' &&
-        r[10] === '월간' &&
-        r[11] != null &&
-        (r[12] === '꿈비' || r[12] === '소브') &&
-        r[13] != null) {
-      // 모든 월간 율 저장 (key: brand+회차)
-      right.push({ brand: r[12], period: String(r[11]), rate: Number(r[13]) });
-    }
-  }
+  // left: 클로드_반품관리.csv 필터
+  // 주/월 컬럼: '월간'|'주간', 마감회차: 회차 키
+  const left = mgmt
+    .filter(r =>
+      r['주/월'] === periodType &&
+      String(r['마감회차']) === String(pInfo.key) &&
+      (r['구분'] === '꿈비' || r['구분'] === '소브') &&
+      r['사유'] && r['건수']
+    )
+    .map(r => ({
+      brand:  r['구분'],
+      reason: r['사유'],
+      item:   r['품목'],
+      type:   r['교환/반품'],
+      cnt:    Number(r['건수'])
+    }));
+
+  // right: 클로드_반품율.csv — 월간 고정
+  // 반품/교환율 컬럼: '5.46%' 형식 → 숫자로 변환
+  const right = rate
+    .filter(r =>
+      (r['구분'] === '꿈비' || r['구분'] === '소브') &&
+      r['마감월'] && r['반품/교환율']
+    )
+    .map(r => ({
+      brand:  r['구분'],
+      period: r['마감월'],  // '26.03월'
+      rate:   parseFloat(r['반품/교환율'].replace('%','')) / 100
+    }));
+
   return { left, right };
 }
 
 // ── 추이 집계 ────────────────────────────────────────────
-// 월간: 최근 3회차 / 주간: 선택 회차 기준 최근 6주 (0값 포함)
-function buildTrend(raw, brand) {
+function buildTrend(mgmt, brand) {
   const periodType = pInfo.mode === 'monthly' ? '월간' : '주간';
   const map = {};
-  for (let i = 2; i < raw.length; i++) {
-    const r = raw[i];
-    if (r[1] === periodType && r[3] === brand &&
-        r[7] != null && r[4] !== '사유') {
-      const k = String(r[2]);
-      map[k] = (map[k] || 0) + Number(r[7]);
-    }
-  }
+  mgmt
+    .filter(r => r['주/월'] === periodType && r['구분'] === brand && r['건수'])
+    .forEach(r => {
+      const k = String(r['마감회차']);
+      map[k] = (map[k] || 0) + Number(r['건수']);
+    });
 
   if (pInfo.mode === 'monthly') {
-    const sorted = Object.entries(map).sort((a,b) => a[0].localeCompare(b[0]));
-    return sorted.slice(-3);
+    return Object.entries(map).sort((a,b) => a[0].localeCompare(b[0])).slice(-3);
   }
 
-  // 주간: 엑셀에 있는 모든 주간 회차 목록을 정렬, 선택 회차 포함 최근 6주
-  // 엑셀에 없는 주도 0으로 채워야 하므로, 선택 회차 기준으로 6주 역산
-  const currentKey = String(pInfo.key); // ex: '260417'
-  // 모든 주간 회차 수집 (전체 브랜드 기준)
-  const allWeeks = new Set();
-  for (let i = 2; i < raw.length; i++) {
-    const r = raw[i];
-    if (r[1] === '주간' && r[2] != null && r[2] !== '마감회차') {
-      allWeeks.add(String(r[2]));
-    }
-  }
-  const sortedWeeks = Array.from(allWeeks).sort((a,b) => a.localeCompare(b));
-  // 선택 회차 인덱스 찾기 (없으면 가장 마지막)
-  let idx = sortedWeeks.indexOf(currentKey);
-  if (idx === -1) idx = sortedWeeks.length - 1;
-  // 최근 6주 슬라이스
-  const targetWeeks = sortedWeeks.slice(Math.max(0, idx - 5), idx + 1);
-  // 0값 포함하여 반환
+  // 주간: 전체 주간 회차 정렬 후 선택 회차 기준 최근 6주 (0값 포함)
+  const allWeeks = [...new Set(
+    mgmt.filter(r => r['주/월'] === '주간').map(r => String(r['마감회차']))
+  )].sort((a,b) => a.localeCompare(b));
+
+  const currentKey = String(pInfo.key);
+  let idx = allWeeks.indexOf(currentKey);
+  if (idx === -1) idx = allWeeks.length - 1;
+  const targetWeeks = allWeeks.slice(Math.max(0, idx - 5), idx + 1);
   return targetWeeks.map(w => [w, map[w] || 0]);
 }
 
@@ -334,7 +335,7 @@ function buildReasonPie(reasonMap, color) {
     </div>`;
 }
 
-function renderBrand(brand, left, right, raw, color) {
+function renderBrand(brand, left, right, mgmt, color) {
   const bRows   = left.filter(r => r.brand === brand);
   const exchCnt = bRows.filter(r=>r.type==='교환').reduce((s,r)=>s+r.cnt,0);
   const retCnt  = bRows.filter(r=>r.type==='반품').reduce((s,r)=>s+r.cnt,0);
@@ -344,25 +345,22 @@ function renderBrand(brand, left, right, raw, color) {
   const gaTotal = ga + gaOth || 1;
   const gaPct   = Math.round(ga/gaTotal*100);
 
-  // 반품/교환율: 월간이면 해당 월, 주간이면 해당 주가 속한 월(YY.MM월 형식) 기준
+  // 반품/교환율 매칭 (월간: 해당월, 주간: 속한 월)
   let rateMatchPeriod = '';
   if (pInfo.mode === 'monthly') {
-    rateMatchPeriod = String(pInfo.key); // '26.03월'
+    rateMatchPeriod = String(pInfo.key);
   } else {
-    // 주간 선택 시: period YYMMDD → '26.MM월' 로 변환
-    const k = String(pInfo.key); // ex: '260417'
-    rateMatchPeriod = k.slice(0,2) + '.' + k.slice(2,4) + '월'; // '26.04월'
+    const k = String(pInfo.key);
+    rateMatchPeriod = k.slice(0,2) + '.' + k.slice(2,4) + '월';
   }
   const rateRow = right.find(r => r.brand === brand && r.period === rateMatchPeriod);
   const rate = rateRow ? (rateRow.rate * 100).toFixed(2) + '%' : '-';
 
-  // 반품 사유: 교환+반품 전체 기준
+  // 사유 집계 (교환+반품 전체)
   const reasonMap = {};
-  bRows.forEach(r => {
-    reasonMap[r.reason] = (reasonMap[r.reason]||0) + r.cnt;
-  });
+  bRows.forEach(r => { reasonMap[r.reason] = (reasonMap[r.reason]||0) + r.cnt; });
 
-  const trend = buildTrend(raw, brand);
+  const trend = buildTrend(mgmt, brand);
   const trendTitle = pInfo.mode === 'monthly' ? '월별 추이' : '주별 추이';
   const trendSub   = pInfo.mode === 'monthly' ? '반품/교환건 월별 추이' : '반품/교환건 주별 추이';
 
@@ -419,7 +417,7 @@ function renderBrand(brand, left, right, raw, color) {
     </div>`;
 }
 
-// ── 실행 ─────────────────────────────────────────────────
+// ── AI 전달 ───────────────────────────────────────────────
 function showToast(msg, bg) {
   const el = document.getElementById('summary-toast');
   el.textContent = msg; el.style.background = bg||'#0f1f3d'; el.style.display='block';
@@ -430,50 +428,36 @@ async function saveSummaryToSheet() {
   const btn = document.getElementById('btn-save-summary');
   btn.disabled = true; btn.textContent = '저장 중...';
   try {
-    const raw  = await loadData();
-    const { left, right } = filterRows(raw);
-
-    const brands = ['꿈비', '소브'];
+    const { mgmt, rate } = await loadData();
+    const { left, right } = filterRows({ mgmt, rate });
     const brandData = {};
-    brands.forEach(brand => {
-      const bRows   = left.filter(r => r.brand === brand);
+    ['꿈비','소브'].forEach(brand => {
+      const bRows = left.filter(r => r.brand === brand);
       const exchCnt = bRows.filter(r=>r.type==='교환').reduce((s,r)=>s+r.cnt,0);
       const retCnt  = bRows.filter(r=>r.type==='반품').reduce((s,r)=>s+r.cnt,0);
-
-      // 반품 사유 TOP5
       const reasonMap = {};
       bRows.forEach(r => { reasonMap[r.reason] = (reasonMap[r.reason]||0)+r.cnt; });
       const topReasons = Object.entries(reasonMap).sort((a,b)=>b[1]-a[1]).slice(0,5)
         .reduce((obj,[k,v])=>{ obj[k]=v; return obj; }, {});
-
-      // 반품/교환율
       let rateMatchPeriod = pInfo.mode==='monthly'
         ? String(pInfo.key)
         : String(pInfo.key).slice(0,2)+'.'+String(pInfo.key).slice(2,4)+'월';
       const rateRow = right.find(r=>r.brand===brand&&r.period===rateMatchPeriod);
-
       brandData[brand] = {
-        교환: exchCnt,
-        반품: retCnt,
-        합계: exchCnt+retCnt,
+        교환: exchCnt, 반품: retCnt, 합계: exchCnt+retCnt,
         반품교환율: rateRow ? +(rateRow.rate*100).toFixed(2) : null,
         사유TOP5: topReasons,
         가전: bRows.filter(r=>r.item==='가전').reduce((s,r)=>s+r.cnt,0),
         가전외: bRows.filter(r=>r.item==='가전외').reduce((s,r)=>s+r.cnt,0),
       };
     });
-
-    const summaryData = {
-      period: pInfo.mode,
-      round:  String(pInfo.key),
-      label:  pInfo.label,
-      브랜드별: brandData
-    };
-
-    const periodKey = String(pInfo.key);
     const resp = await fetch(SCRIPT_URL, {
       method:'POST',
-      body: JSON.stringify({ action:'saveSummary', tab:'반품현황', period: periodKey, data: summaryData })
+      body: JSON.stringify({
+        action:'saveSummary', tab:'반품현황',
+        period: String(pInfo.key),
+        data: { period: pInfo.mode, round: String(pInfo.key), label: pInfo.label, 브랜드별: brandData }
+      })
     });
     const json = await resp.json();
     showToast(json.ok?`✓ 저장 완료 (${json.mode==='update'?'갱신':'신규'})`:'⚠ 저장 실패: '+json.msg, json.ok?'#0f1f3d':'#991b1b');
@@ -484,31 +468,30 @@ async function saveSummaryToSheet() {
   }
 }
 
+// ── 실행 ─────────────────────────────────────────────────
 async function main() {
-  let raw = null;
+  let mgmt = [], rate = [];
   try {
-    raw = await loadData();
+    const data = await loadData();
+    mgmt = data.mgmt; rate = data.rate;
   } catch(e) {
     const el = document.getElementById('error-msg');
     el.style.display = 'block';
     el.textContent = '⚠️ ' + e.message;
   }
   document.getElementById('loading').style.display = 'none';
-  const left  = raw ? filterRows(raw).left  : [];
-  const right = raw ? filterRows(raw).right : [];
-  const safeRaw = raw || [];
+  const { left, right } = filterRows({ mgmt, rate });
   const app = document.getElementById('app');
   app.innerHTML = `
     <div class="period-badge">📅 ${pInfo.label}</div>
     <div class="brands-grid">
-      ${renderBrand('꿈비', left, right, safeRaw, '#1e40af')}
-      ${renderBrand('소브',  left, right, safeRaw, '#0f766e')}
+      ${renderBrand('꿈비', left, right, mgmt, '#1e40af')}
+      ${renderBrand('소브',  left, right, mgmt, '#0f766e')}
     </div>`;
   app.style.display = 'block';
 }
 
 main().then(() => {
-  // 마감 버튼 주입 (데이터 로드 후)
   const btn = document.createElement('div');
   btn.style.cssText = 'display:flex;justify-content:flex-end;margin-bottom:10px;';
   btn.innerHTML = `<button id="btn-save-summary" onclick="saveSummaryToSheet()" style="font-size:12px;font-weight:600;padding:7px 16px;background:#1e40af;color:#fff;border:none;border-radius:6px;cursor:pointer;">☁ 이번 마감 데이터 AI에 전달</button>`;

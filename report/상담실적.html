@@ -4,16 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>상담실적</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{
-  background:#f1f5f9;
-  font-family:'Malgun Gothic','맑은 고딕',sans-serif;
-  font-size:13px;
-  color:#334155;
-  padding:14px;
-}
+body{background:#f1f5f9;font-family:'Malgun Gothic','맑은 고딕',sans-serif;font-size:13px;color:#334155;padding:14px;}
 .card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px;}
 .card-title{font-size:13px;font-weight:600;color:#0f1f3d;}
 .card-header{padding-bottom:8px;border-bottom:1px solid #e2e8f0;margin-bottom:12px;}
@@ -21,13 +14,10 @@ body{
 .left-col{flex:1.1;display:flex;flex-direction:column;gap:10px;min-width:0;}
 .right-col{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0;}
 .donut-row{display:flex;gap:10px;}
-.donut-card{flex:1;min-width:0;}
+.donut-card{flex:1;min-width:0;display:flex;flex-direction:column;}
+.donut-card .card-header{flex-shrink:0;}
 .line-row{display:flex;gap:10px;}
 .line-card{flex:1;min-width:0;}
-
-/* 도넛 카드 세로 중앙 정렬 */
-.donut-card{display:flex;flex-direction:column;}
-.donut-card .card-header{flex-shrink:0;}
 .donut-body{flex:1;display:flex;align-items:center;}
 .donut-inner{display:flex;align-items:center;gap:10px;width:100%;}
 .donut-wrap{position:relative;width:90px;height:90px;flex-shrink:0;}
@@ -39,21 +29,14 @@ body{
 .legend{font-size:10px;color:#334155;line-height:1.9;min-width:0;}
 .leg-row{display:flex;align-items:center;gap:4px;white-space:nowrap;}
 .leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-/* ALF 배지 */
 .alf-badge{font-size:9px;color:#94a3b8;background:#f1f5f9;border-radius:4px;padding:2px 6px;margin-bottom:6px;display:inline-block;}
-
-/* 테이블 */
 .data-tbl{width:100%;border-collapse:collapse;font-size:11px;}
 .data-tbl th{background:#0f1f3d;color:#fff;padding:5px 6px;text-align:center;font-weight:500;white-space:nowrap;font-size:10px;}
 .data-tbl td{padding:5px 6px;text-align:center;border-bottom:1px solid #f1f5f9;color:#334155;white-space:nowrap;}
 .data-tbl tbody tr:last-child td{font-weight:600;background:#f8fafc;}
-
-/* chip 헤더 */
 .chip-header{display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid #e2e8f0;margin-bottom:10px;}
 .chip{font-size:10px;font-weight:600;padding:3px 8px;border-radius:12px;background:#e2e8f0;color:#334155;}
 .chip.on{background:#0f1f3d;color:#fff;}
-
-/* 로딩 */
 .loading{color:#94a3b8;font-size:12px;padding:20px;text-align:center;}
 .err{color:#ef4444;font-size:11px;padding:8px;}
 </style>
@@ -112,260 +95,266 @@ body{
 </div>
 
 <script>
-// ── 인덱스에서 받는 신호 (URL 파라미터: ?type=monthly&period=26.03월)
-const params = new URLSearchParams(window.location.search);
-const typeParam   = params.get('type')   || 'monthly';   // monthly | weekly
+// ── 인덱스 신호 (URL 파라미터)
+const params      = new URLSearchParams(window.location.search);
+const typeParam   = params.get('type')   || 'monthly';
 const periodParam = params.get('period') || '';
-
 const FILTER = {
   period: typeParam === 'weekly' ? '주간' : '월간',
-  round:  periodParam   // 예: '26.03월' 또는 '260501'
+  round:  periodParam
 };
 
-// 도넛 색상 팔레트
 const PALETTE = [
   '#4e79c4','#74c476','#6baed6','#fd8d3c','#e8834a',
   '#5b9bd5','#70b8a8','#9b59b6','#e74c3c','#3498db','#2ecc71','#f39c12'
 ];
 
-// ── xlsx 파일 경로 (같은 report\ 폴더 기준)
-const XLSX_PATH = 'report.xlsx';
-// SCRIPT_URL: index.html에서 postMessage로 수신 (중앙 관리)
-// 단독 실행 시에도 동작하도록 fallback 빈 문자열
+// ── CSV 파일 경로 (data/ 폴더)
+const BASE = 'data/';
+const FILES = {
+  inflow  : BASE + '클로드_인입태그.csv',
+  tag     : BASE + '클로드_상담태그.csv',
+  alf     : BASE + '클로드_관여율.csv',
+  callStat: BASE + '클로드_통화성공율.csv',
+  satisfy : BASE + '클로드_만족도조사.csv',
+};
+
 let SCRIPT_URL = '';
-window.addEventListener('message', function(e) {
-  if (e.data && e.data.type === 'SCRIPT_URL' && e.data.url) {
-    SCRIPT_URL = e.data.url;
-  }
-});;
+window.addEventListener('message', e => {
+  if (e.data?.type === 'SCRIPT_URL' && e.data.url) SCRIPT_URL = e.data.url;
+});
 
-// ── 데이터 로드
+// ── CSV 파싱 (BOM 제거, 쉼표/따옴표 처리)
+function parseCSV(text) {
+  const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(l => l.trim());
+  const headers = splitCSVLine(lines[0]);
+  return lines.slice(1).map(line => {
+    const vals = splitCSVLine(line);
+    const obj = {};
+    headers.forEach((h, i) => { obj[h.trim()] = (vals[i] || '').trim(); });
+    return obj;
+  }).filter(r => Object.values(r).some(v => v !== ''));
+}
+
+function splitCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
+    else { cur += c; }
+  }
+  result.push(cur);
+  return result;
+}
+
+// 숫자 파싱 (콤마, %, 공백 제거)
+function toNum(v) {
+  if (v == null || v === '') return 0;
+  return parseFloat(String(v).replace(/,/g, '').replace(/%/, '')) || 0;
+}
+
+// ── 각 CSV 로드 및 파싱
 async function loadData() {
-  const res = await fetch(XLSX_PATH);
-  if (!res.ok) throw new Error(`파일 로드 실패: ${res.status}`);
-  const ab  = await res.arrayBuffer();
-  const wb  = XLSX.read(ab, { type: 'array' });
-  const ws  = wb.Sheets['상담실적'];
-  // header:1 → 배열 배열 (첫 행 포함 raw)
-  return XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+  const [inflowRaw, tagRaw, alfRaw, callRaw, satRaw] = await Promise.all(
+    Object.values(FILES).map(p => fetch(p).then(r => {
+      if (!r.ok) throw new Error(`로드 실패: ${p}`);
+      return r.text();
+    }))
+  );
+
+  // 총인입데이터: 클로드_인입태그.csv
+  // 컬럼: 마감기준, 구분, 년, 주/월, 회차, 서비스태그, 인입수, 비고
+  const inflow = parseCSV(inflowRaw).map(r => ({
+    period: r['주/월'],
+    round:  String(r['회차']),
+    item:   r['서비스태그'],
+    val:    toNum(r['인입수'])
+  }));
+
+  // 태그별통계: 클로드_상담태그.csv
+  // 컬럼: 마감기준, 구분, 년, 주/월, 회차, 상담태그, 인입수, 비고
+  const tag = parseCSV(tagRaw).map(r => ({
+    period: r['주/월'],
+    round:  String(r['회차']),
+    item:   r['상담태그'],
+    val:    toNum(r['인입수'])
+  }));
+
+  // ALF 관여율: 클로드_관여율.csv
+  // 컬럼: 마감기준, 년, 월, 텍스트, 관여건, 비고  → 월간만 존재
+  const alf = parseCSV(alfRaw).map(r => ({
+    period: '월간',
+    round:  String(r['월']),
+    item:   r['텍스트'],
+    val:    toNum(r['관여건'])
+  }));
+
+  // 통화성공율: 클로드_통화성공율.csv
+  // 컬럼: 마감일, 년, 회차, 총유입, 부재중, 수신콜(IN) , 통화성공률(IN), IN, OUT, 통화 call, 발신콜(OUT), 비고, 주기
+  const callStat = parseCSV(callRaw).map(r => {
+    const rateStr = r['통화성공률(IN)'] || '';
+    const rateVal = rateStr ? parseFloat(rateStr.replace('%','')) / 100 : null;
+    return {
+      period: r['주기'],
+      round:  String(r['회차']),
+      total:  toNum(r['총유입']),
+      absent: toNum(r['부재중']),
+      recv:   toNum(r['수신콜(IN) '] || r['수신콜(IN)']),
+      rate:   isNaN(rateVal) ? null : rateVal
+    };
+  });
+
+  // 만족도조사: 클로드_만족도조사.csv
+  // 컬럼: 구분, 월별, 상담종료, 문자발송, 참여건, 참여율, 만족도, 비고, 마감일
+  const satisfy = parseCSV(satRaw).map(r => {
+    const joinRateStr = r['참여율'] || '';
+    const joinRate = joinRateStr ? parseFloat(joinRateStr.replace('%','')) / 100 : null;
+    return {
+      period:   '월간',
+      round:    String(r['월별']),
+      end:      toNum(r['상담종료']),
+      sms:      toNum(r['문자발송']),
+      join:     toNum(r['참여건']),
+      joinRate: isNaN(joinRate) ? null : joinRate,
+      score:    toNum(r['만족도'])
+    };
+  });
+
+  return { inflow, tag, alf, callStat, satisfy };
 }
 
-// ── 행 파싱: col A~E = 총인입/태그, G~K = ALF, M~S = 수신/통화, U~AB = 만족도
-function parseRows(raw) {
-  const data = { inflow:[], tag:[], alf:[], callStat:[], satisfy:[] };
-  // row[0] 은 그룹 타이틀행, row[1] 은 컬럼명행 → row[2]부터 데이터
-  for (let i = 2; i < raw.length; i++) {
-    const r = raw[i];
-    // 총인입데이터 / 태그별통계 (col 0~4)
-    if (r[0] === '총인입데이터')  data.inflow.push({ period: r[1], round: String(r[2]), item: r[3], val: r[4] });
-    if (r[0] === '태그별통계')    data.tag.push(   { period: r[1], round: String(r[2]), item: r[3], val: r[4] });
-    // ALF (col 6~10)
-    if (r[6] === 'ALF관여/해결율') data.alf.push(  { period: r[7], round: String(r[8]), item: r[9], val: r[10] });
-    // 수신/통화/총유입 (col 12~18)
-    if (r[12] != null && r[13] != null) {
-      data.callStat.push({ period: r[13], round: String(r[14]), total: r[15], absent: r[16], recv: r[17], rate: r[18] });
-    }
-    // 만족도 (col 20~27)
-    if (r[20] === '만족도조사') data.satisfy.push({ period: r[21], round: String(r[22]), end: r[23], sms: r[24], join: r[25], joinRate: r[26], score: r[27] });
-  }
-  return data;
-}
-
-// ── 선택된 period 기준 동일 period 데이터에서 최근 6개 슬라이딩
-// 주간: round가 숫자형 YYMMDD → 숫자 비교 정렬
-// 월간: round가 'YY.MM월' 문자열 → 문자 정렬 (사전순 일치)
-function getRecent6(arr, period, selectedRound) {
+// ── 슬라이딩 최근 N개
+function getRecentN(arr, period, selectedRound, n=6) {
   const pool = arr
     .filter(d => d.period === period)
     .map(d => ({ ...d, _sort: period === '주간' ? Number(d.round) : d.round }))
     .sort((a, b) => a._sort < b._sort ? -1 : a._sort > b._sort ? 1 : 0);
-
-  // 선택된 회차 이하인 것만 → 뒤에서 6개
   const cutoff = period === '주간' ? Number(selectedRound) : selectedRound;
-  const filtered = pool.filter(d => d._sort <= cutoff);
-  return filtered.slice(-6);
+  return pool.filter(d => d._sort <= cutoff).slice(-n);
 }
 
-// ── 특정 period+round 정확히 일치 필터 (도넛용)
 function f(arr, period, round) {
   return arr.filter(d => d.period === period && d.round === round);
 }
 
-// ── 도넛 SVG 생성
+// ── 도넛 SVG
 function buildDonut(items, total, centerNum, subLabel) {
   const CIRC = 2 * Math.PI * 35;
-  let offset = 0;
-  let arcs = '';
+  let offset = 0, arcs = '';
   items.forEach((it, i) => {
     const dash = (it.val / total) * CIRC;
-    arcs += `<circle cx="45" cy="45" r="35" fill="none" stroke="${PALETTE[i % PALETTE.length]}"
+    arcs += `<circle cx="45" cy="45" r="35" fill="none" stroke="${PALETTE[i%PALETTE.length]}"
       stroke-width="9" stroke-dasharray="${dash.toFixed(1)} ${CIRC.toFixed(1)}"
       stroke-dashoffset="${(-offset).toFixed(1)}"/>`;
     offset += dash;
   });
-  return `
-  <div class="donut-body">
-    <div class="donut-inner">
-      <div class="donut-wrap">
-        <svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
-          <g transform="rotate(-90 45 45)">${arcs}</g>
-        </svg>
-        <div class="donut-hole"></div>
-        <div class="donut-center">
-          <span class="dnum">${centerNum.toLocaleString()}</span>
-          <span class="dsub">${subLabel}</span>
-        </div>
-      </div>
-      <div class="legend">
-        ${items.map((it, i) => {
-          const pct = total > 0 ? (it.val / total * 100).toFixed(1) : '0.0';
-          const label = it.item.length > 6 ? it.item.slice(0,6)+'..' : it.item;
-          return `<div class="leg-row">
-            <span class="leg-dot" style="background:${PALETTE[i % PALETTE.length]}"></span>
-            ${label} ${pct}% (${it.val.toLocaleString()}건)
-          </div>`;
-        }).join('')}
+  return `<div class="donut-body"><div class="donut-inner">
+    <div class="donut-wrap">
+      <svg viewBox="0 0 90 90"><g transform="rotate(-90 45 45)">${arcs}</g></svg>
+      <div class="donut-hole"></div>
+      <div class="donut-center">
+        <span class="dnum">${centerNum.toLocaleString()}</span>
+        <span class="dsub">${subLabel}</span>
       </div>
     </div>
-  </div>`;
+    <div class="legend">
+      ${items.map((it,i)=>{
+        const pct = total>0?(it.val/total*100).toFixed(1):'0.0';
+        const lbl = it.item.length>6?it.item.slice(0,6)+'..':it.item;
+        return `<div class="leg-row"><span class="leg-dot" style="background:${PALETTE[i%PALETTE.length]}"></span>${lbl} ${pct}% (${it.val.toLocaleString()}건)</div>`;
+      }).join('')}
+    </div>
+  </div></div>`;
 }
 
-// ── 꺾은선 SVG 생성 (이미 정렬+슬라이싱된 rows 배열 받음)
+// ── 꺾은선 SVG
 function buildLineChart(rows, valueKey, unit, color, fillColor) {
   if (!rows.length) return '<div class="err">데이터 없음</div>';
-
-  const vals  = rows.map(d => d[valueKey]);
-  const maxV  = Math.max(...vals) || 1;
-  const PAD_L = 44, PAD_R = 14, PAD_T = 14, PAD_B = 22;
-  const W = 260, H = 120;
-  const chartW = W - PAD_L - PAD_R;
-  const chartH = H - PAD_T - PAD_B;
-  const n = rows.length;
-
-  const xp = i => PAD_L + (i / Math.max(n-1, 1)) * chartW;
-  const yp = v => PAD_T + (1 - v / maxV) * chartH;
-
-  const pts       = rows.map((d,i) => `${xp(i).toFixed(1)},${yp(d[valueKey]).toFixed(1)}`).join(' ');
-  const areaClose = `${xp(n-1).toFixed(1)},${(PAD_T+chartH).toFixed(1)} ${xp(0).toFixed(1)},${(PAD_T+chartH).toFixed(1)}`;
-
-  const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map(r => {
-    const v = maxV * r;
-    return { y: yp(v), label: unit === '%' ? (v*100).toFixed(0)+'%' : Math.round(v).toLocaleString() };
-  });
-
-  const gridLines = yTicks.map(t =>
-    `<line x1="${PAD_L}" y1="${t.y.toFixed(1)}" x2="${W-PAD_R}" y2="${t.y.toFixed(1)}" stroke="#e2e8f0" stroke-width="1"/>`
-  ).join('');
-  const yLabels = yTicks.map(t =>
-    `<text x="${PAD_L-3}" y="${(t.y+3).toFixed(1)}" text-anchor="end" font-size="8" fill="#94a3b8">${t.label}</text>`
-  ).join('');
-
-  // X축 레이블: 주간이면 MM/DD 형태로 표시
-  const xLabels = rows.map((d,i) => {
-    let lbl;
-    if (FILTER.period === '주간') {
-      const s = String(d.round).slice(2); // 260501 → 0501
-      lbl = s.slice(0,2) + '/' + s.slice(2); // 05/01
-    } else {
-      lbl = d.round; // 26.03월 그대로
-    }
+  const vals = rows.map(d=>d[valueKey]);
+  const maxV = Math.max(...vals) || 1;
+  const PL=44, PR=14, PT=14, PB=22, W=260, H=120;
+  const CW=W-PL-PR, CH=H-PT-PB, n=rows.length;
+  const xp = i => PL+(i/Math.max(n-1,1))*CW;
+  const yp = v => PT+(1-v/maxV)*CH;
+  const pts = rows.map((d,i)=>`${xp(i).toFixed(1)},${yp(d[valueKey]).toFixed(1)}`).join(' ');
+  const ac  = `${xp(n-1).toFixed(1)},${(PT+CH).toFixed(1)} ${xp(0).toFixed(1)},${(PT+CH).toFixed(1)}`;
+  const yticks = [0,.25,.5,.75,1].map(r=>({
+    y:yp(maxV*r),
+    label: unit==='%'?(maxV*r*100).toFixed(0)+'%':Math.round(maxV*r).toLocaleString()
+  }));
+  const grids  = yticks.map(t=>`<line x1="${PL}" y1="${t.y.toFixed(1)}" x2="${W-PR}" y2="${t.y.toFixed(1)}" stroke="#e2e8f0" stroke-width="1"/>`).join('');
+  const ylbls  = yticks.map(t=>`<text x="${PL-3}" y="${(t.y+3).toFixed(1)}" text-anchor="end" font-size="8" fill="#94a3b8">${t.label}</text>`).join('');
+  const xlbls  = rows.map((d,i)=>{
+    let lbl = FILTER.period==='주간' ? (s=>s.slice(0,2)+'/'+s.slice(2))(String(d.round).slice(2)) : d.round;
     return `<text x="${xp(i).toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="8" fill="#94a3b8">${lbl}</text>`;
   }).join('');
-
-  const dots = rows.map((d,i) => {
-    const x = xp(i).toFixed(1), y = yp(d[valueKey]).toFixed(1);
-    const vLabel = unit === '%' ? (d[valueKey]*100).toFixed(1)+'%' : d[valueKey].toLocaleString();
+  const dots = rows.map((d,i)=>{
+    const x=xp(i).toFixed(1), y=yp(d[valueKey]).toFixed(1);
+    const vl = unit==='%'?(d[valueKey]*100).toFixed(1)+'%':d[valueKey].toLocaleString();
     return `<circle cx="${x}" cy="${y}" r="4" fill="${color}"/>
-    <text x="${x}" y="${(parseFloat(y)-5).toFixed(1)}" text-anchor="middle" font-size="8" fill="${color}" font-weight="700">${vLabel}</text>`;
+    <text x="${x}" y="${(parseFloat(y)-5).toFixed(1)}" text-anchor="middle" font-size="8" fill="${color}" font-weight="700">${vl}</text>`;
   }).join('');
-
-  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;">
-    ${gridLines}${yLabels}
-    <polygon points="${pts} ${areaClose}" fill="${fillColor}" opacity="0.2"/>
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;">${grids}${ylbls}
+    <polygon points="${pts} ${ac}" fill="${fillColor}" opacity="0.2"/>
     <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2"/>
-    ${dots}${xLabels}
-  </svg>`;
+    ${dots}${xlbls}</svg>`;
 }
 
-// ── 렌더링 함수들
+// ── 렌더링
 function renderInflow(data) {
-  const rows   = f(data.inflow, FILTER.period, FILTER.round);
-  const total  = rows.reduce((s,d)=>s+d.val,0);
-  const sorted = [...rows].sort((a,b)=>b.val-a.val);
+  const rows  = f(data.inflow, FILTER.period, FILTER.round);
+  const total = rows.reduce((s,d)=>s+d.val,0);
   document.querySelector('#card-inflow .loading')?.remove();
   document.getElementById('card-inflow').insertAdjacentHTML('beforeend',
-    buildDonut(sorted, total, total, '합계 인입수'));
+    buildDonut([...rows].sort((a,b)=>b.val-a.val), total, total, '합계 인입수'));
 }
 
 function renderTag(data) {
-  const rows   = f(data.tag, FILTER.period, FILTER.round);
-  const total  = rows.reduce((s,d)=>s+d.val,0);
-  const sorted = [...rows].sort((a,b)=>b.val-a.val).slice(0,8);
+  const rows  = f(data.tag, FILTER.period, FILTER.round);
+  const total = rows.reduce((s,d)=>s+d.val,0);
   document.querySelector('#card-tag .loading')?.remove();
   document.getElementById('card-tag').insertAdjacentHTML('beforeend',
-    buildDonut(sorted, total, total, '합계 인입수'));
+    buildDonut([...rows].sort((a,b)=>b.val-a.val).slice(0,8), total, total, '합계 인입수'));
 }
 
 function renderAlf(data) {
-  // 주간 선택 시 ALF는 월간 데이터로 fallback (가장 최근 월간 회차)
-  let period = FILTER.period;
-  let round  = FILTER.round;
-  let isWeeklyFallback = false;
-
+  // ALF는 월간만 존재 → 주간 선택 시 최근 월간 회차 자동 선택
+  let round = FILTER.round, isWeekly = false;
   if (FILTER.period === '주간') {
-    isWeeklyFallback = true;
-    // 월간 데이터 중 가장 최근 회차 자동 선택
-    const monthRounds = [...new Set(data.alf.filter(d=>d.period==='월간').map(d=>d.round))]
-      .sort((a,b)=> a<b?-1:1);
-    period = '월간';
-    round  = monthRounds[monthRounds.length - 1] || '';
+    isWeekly = true;
+    const rounds = [...new Set(data.alf.map(d=>d.round))].sort();
+    round = rounds[rounds.length-1] || '';
   }
-
-  const rows  = f(data.alf, period, round);
-  const total = rows.reduce((s,d)=>s+d.val, 0);
-  const sorted = [...rows].sort((a,b)=>b.val-a.val);
-
-  const el = document.getElementById('card-alf');
+  const rows  = f(data.alf, '월간', round);
+  const total = rows.reduce((s,d)=>s+d.val,0);
+  const el    = document.getElementById('card-alf');
   el.querySelector('.loading')?.remove();
-
-  // 주간 선택시 안내 배지
-  const badge = isWeeklyFallback
-    ? `<div class="alf-badge">📅 월단위 집계 (${round})</div>`
-    : '';
-
-  // 도넛 HTML (buildDonut 재사용)
-  const donutHtml = buildDonut(sorted, total, total, '합계 관여건');
-
-  el.insertAdjacentHTML('beforeend', badge + donutHtml);
+  const badge = isWeekly ? `<div class="alf-badge">📅 월단위 집계 (${round})</div>` : '';
+  el.insertAdjacentHTML('beforeend', badge + buildDonut([...rows].sort((a,b)=>b.val-a.val), total, total, '합계 관여건'));
 }
 
 function renderCallStat(data) {
-  // FILTER.period 기준 선택 회차 이하 최근 6개
-  const validRows = data.callStat.filter(d => d.rate != null && d.total > 0);
-  const recent6   = getRecent6(validRows, FILTER.period, FILTER.round);
-
+  const valid  = data.callStat.filter(d=>d.rate!=null&&d.total>0);
+  const recent = getRecentN(valid, FILTER.period, FILTER.round, 6);
   document.getElementById('card-receive').querySelector('.loading')?.remove();
   document.getElementById('card-receive').insertAdjacentHTML('beforeend',
-    buildLineChart(recent6, 'rate', '%', '#6d28d9', '#c5b8e8'));
-
+    buildLineChart(recent, 'rate', '%', '#6d28d9', '#c5b8e8'));
   document.getElementById('card-call').querySelector('.loading')?.remove();
   document.getElementById('card-call').insertAdjacentHTML('beforeend',
-    buildLineChart(recent6, 'total', '', '#1e40af', '#b8c8e8'));
+    buildLineChart(recent, 'total', '', '#1e40af', '#b8c8e8'));
 }
 
 function renderSatisfy(data) {
-  // 만족도는 항상 월간 (주간 선택이어도 월간 데이터 표시)
-  const recent6 = getRecent6(data.satisfy, '월간', FILTER.period === '월간' ? FILTER.round : '99.99월')
-    .filter(r => String(r.round).startsWith('26.'));
+  // 만족도: 항상 월간, 26.으로 시작, 선택회차 이하 최근 6개
+  const satRound = FILTER.period==='월간' ? FILTER.round : '99.99월';
+  const recent = getRecentN(data.satisfy, '월간', satRound, 6)
+    .filter(r=>String(r.round).startsWith('26.'));
   const el = document.getElementById('card-satisfy');
   el.querySelector('.loading')?.remove();
 
-  const totalEnd  = recent6.reduce((s,r)=>s+(r.end||0),0);
-  const totalSms  = recent6.reduce((s,r)=>s+(r.sms||0),0);
-  const totalJoin = recent6.reduce((s,r)=>s+(r.join||0),0);
-  const avgScore  = recent6.length ? (recent6.reduce((s,r)=>s+(r.score||0),0)/recent6.length).toFixed(2) : '-';
-
-  let tbody = recent6.map(r=>`<tr>
+  const tbody = recent.map(r=>`<tr>
     <td>${r.round}</td>
     <td>${r.end?.toLocaleString()??'-'}</td>
     <td>${r.sms?.toLocaleString()??'-'}</td>
@@ -374,10 +363,6 @@ function renderSatisfy(data) {
     <td>${r.score??'-'}</td>
     <td></td>
   </tr>`).join('');
-  tbody += `<tr>
-    <td>합계</td><td>${totalEnd.toLocaleString()}</td><td>${totalSms.toLocaleString()}</td>
-    <td>${totalJoin.toLocaleString()}</td><td>-</td><td>${avgScore}</td><td></td>
-  </tr>`;
 
   el.insertAdjacentHTML('beforeend', `
     <table class="data-tbl">
@@ -387,22 +372,20 @@ function renderSatisfy(data) {
 }
 
 function renderCallRate(data) {
-  // FILTER.period 기준 최근 6개
-  const validRows = data.callStat.filter(d => d.total > 0 && String(d.round).startsWith('26'));
-  const recent6   = getRecent6(validRows, FILTER.period, FILTER.round);
-  const el = document.getElementById('card-callrate');
+  const valid  = data.callStat.filter(d=>d.total>0&&String(d.round).startsWith('26'));
+  const recent = getRecentN(valid, FILTER.period, FILTER.round, 6);
+  const el     = document.getElementById('card-callrate');
   el.querySelector('.loading')?.remove();
 
-  // 회차 포맷: 주간이면 260417 → 26.04.17 주차, 월간이면 그대로
   const fmtRound = r => {
-    if (FILTER.period === '주간') {
-      const s = String(r.round);
+    if (FILTER.period==='주간') {
+      const s=String(r.round);
       return `${s.slice(0,2)}.${s.slice(2,4)}.${s.slice(4,6)} 주차`;
     }
     return r.round;
   };
 
-  const tbody = recent6.map(r=>`<tr>
+  const tbody = recent.map(r=>`<tr>
     <td>${fmtRound(r)}</td>
     <td>${r.total?.toLocaleString()??'-'}</td>
     <td>${r.total?.toLocaleString()??'-'}</td>
@@ -419,79 +402,55 @@ function renderCallRate(data) {
     </table>`);
 }
 
-// ── 마감 데이터 구글시트 저장
+// ── AI 전달
 async function saveSummaryToSheet() {
   const btn = document.getElementById('btn-save-summary');
-  btn.disabled = true; btn.textContent = '저장 중...';
-
+  btn.disabled=true; btn.textContent='저장 중...';
   try {
-    const raw  = await loadData();
-    const data = parseRows(raw);
-
-    // 현재 period/round 기준 핵심 수치 추출
+    const data = await loadData();
     const inflowRows = f(data.inflow, FILTER.period, FILTER.round);
-    const totalInflow = inflowRows.reduce((s,d) => s + d.val, 0);
-
+    const totalInflow = inflowRows.reduce((s,d)=>s+d.val,0);
     const tagRows = f(data.tag, FILTER.period, FILTER.round);
     const tagSummary = {};
-    tagRows.forEach(d => { tagSummary[d.item] = (tagSummary[d.item]||0) + d.val; });
-
-    // ALF
-    let alfPeriod = FILTER.period, alfRound = FILTER.round;
-    if (FILTER.period === '주간') {
-      const monthRounds = [...new Set(data.alf.filter(d=>d.period==='월간').map(d=>d.round))].sort();
-      alfPeriod = '월간'; alfRound = monthRounds[monthRounds.length-1] || '';
-    }
-    const alfRows = f(data.alf, alfPeriod, alfRound);
+    tagRows.forEach(d=>{tagSummary[d.item]=(tagSummary[d.item]||0)+d.val;});
+    const alfRound = FILTER.period==='주간'
+      ? [...new Set(data.alf.map(d=>d.round))].sort().slice(-1)[0]||''
+      : FILTER.round;
+    const alfRows  = f(data.alf,'월간',alfRound);
     const alfTotal = alfRows.reduce((s,d)=>s+d.val,0);
-    const alfSum = {};
-    alfRows.forEach(d => { alfSum[d.item] = d.val; });
-
-    // 수신응답률 (최근 1개)
-    const validCall = data.callStat.filter(d=>d.rate!=null&&d.total>0);
-    const recent1 = getRecent6(validCall, FILTER.period, FILTER.round).slice(-1)[0] || null;
-
-    // 만족도 (최근 1개)
-    const satRecent = getRecent6(data.satisfy, '월간', FILTER.period==='월간'?FILTER.round:'99.99월').slice(-1)[0]||null;
-
+    const alfSum   = {};
+    alfRows.forEach(d=>{alfSum[d.item]=d.val;});
+    const recent1 = getRecentN(data.callStat.filter(d=>d.rate!=null&&d.total>0),FILTER.period,FILTER.round,1)[0]||null;
+    const satRecent = getRecentN(data.satisfy,'월간',FILTER.period==='월간'?FILTER.round:'99.99월',1)[0]||null;
     const summaryData = {
-      period: FILTER.period,
-      round:  FILTER.round,
-      총인입:  totalInflow,
-      태그별:  tagSummary,
-      ALF관여해결:   alfSum,
-      ALF총계:       alfTotal,
-      ALF기준회차:   alfPeriod==='월간'?alfRound:alfRound+'(월간)',
-      수신응답률:    recent1 ? +(recent1.rate*100).toFixed(2) : null,
-      총유입Call:    recent1 ? recent1.total : null,
-      만족도점수:    satRecent ? satRecent.score : null,
-      만족도참여율:  satRecent ? +(satRecent.joinRate*100).toFixed(1) : null,
+      period:FILTER.period, round:FILTER.round,
+      총인입:totalInflow, 태그별:tagSummary,
+      ALF관여해결:alfSum, ALF총계:alfTotal, ALF기준회차:alfRound,
+      수신응답률:recent1?+(recent1.rate*100).toFixed(2):null,
+      총유입Call:recent1?recent1.total:null,
+      만족도점수:satRecent?satRecent.score:null,
+      만족도참여율:satRecent?+(satRecent.joinRate*100).toFixed(1):null,
     };
-
-    const resp = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'saveSummary', tab: '상담실적', period: FILTER.round || FILTER.period, data: summaryData })
-    });
+    const resp = await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'saveSummary',tab:'상담실적',period:FILTER.round||FILTER.period,data:summaryData})});
     const json = await resp.json();
-    showToast(json.ok ? `✓ 저장 완료 (${json.mode === 'update' ? '갱신' : '신규'})` : '⚠ 저장 실패: ' + json.msg, json.ok ? '#0f1f3d' : '#991b1b');
+    showToast(json.ok?`✓ 저장 완료 (${json.mode==='update'?'갱신':'신규'})`:'⚠ 저장 실패: '+json.msg, json.ok?'#0f1f3d':'#991b1b');
   } catch(e) {
-    showToast('⚠ 오류: ' + e.message, '#991b1b');
+    showToast('⚠ 오류: '+e.message,'#991b1b');
   } finally {
-    btn.disabled = false; btn.textContent = '☁ 이번 마감 데이터 AI에 전달';
+    btn.disabled=false; btn.textContent='☁ 이번 마감 데이터 AI에 전달';
   }
 }
 
-function showToast(msg, bg) {
-  const el = document.getElementById('summary-toast');
-  el.textContent = msg; el.style.background = bg || '#0f1f3d'; el.style.display = 'block';
-  setTimeout(() => { el.style.display = 'none'; }, 3000);
+function showToast(msg,bg){
+  const el=document.getElementById('summary-toast');
+  el.textContent=msg; el.style.background=bg||'#0f1f3d'; el.style.display='block';
+  setTimeout(()=>{el.style.display='none';},3000);
 }
 
-// ── 메인 실행
-(async ()=>{
+// ── 메인
+(async()=>{
   try {
-    const raw  = await loadData();
-    const data = parseRows(raw);
+    const data = await loadData();
     renderInflow(data);
     renderTag(data);
     renderAlf(data);

@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>품질관리</title>
 <!-- SheetJS: 엑셀 직접 파싱 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: #f0f2f5; font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; font-size: 12px; color: #222; padding: 12px; }
@@ -75,56 +74,72 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', '맑은 고딕', sans-
 <div id="content" style="display:none;"></div>
 
 <script>
-// ── 깃허브 엑셀 fetch & 파싱 ─────────────────────────────────────
+// ── CSV fetch & 파싱 ──────────────────────────────────────────────
+const BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  ? '../data/' : 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/data/';
 
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const header = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,''));
+  return lines.slice(1).map(line => {
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let c of line) {
+      if (c==='"') { inQ=!inQ; }
+      else if (c===',' && !inQ) { cols.push(cur.trim()); cur=''; }
+      else cur += c;
+    }
+    cols.push(cur.trim());
+    const obj = {};
+    header.forEach((h,i) => obj[h] = (cols[i]||'').replace(/^"|"$/g,'').trim() || null);
+    return obj;
+  });
+}
+
+function korDateToISO(v) {
+  if (!v) return null;
+  const m = String(v).match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
+  if (m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  if (String(v).match(/^\d{4}-\d{2}-\d{2}/)) return v.slice(0,10);
+  return null;
+}
 
 async function loadExcel() {
   try {
-    document.getElementById('loading').textContent = '📊 report.xlsx 불러오는 중...';
-    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    const XLSX_URL = isLocal ? 'report.xlsx' : 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/report.xlsx';
-    const res = await fetch(XLSX_URL);
-    if (!res.ok) throw new Error('fetch 실패: ' + res.status);
-    const buf = await res.arrayBuffer();
-    const wb  = XLSX.read(buf, { type:'array' });
+    document.getElementById('loading').textContent = '📊 데이터 불러오는 중...';
 
-    // ── data_가전마감 파싱 ──
-    const ws  = wb.Sheets['data_가전마감'];
-    const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:null });
+    const [res1, res2] = await Promise.all([
+      fetch(BASE + '클로드_가전마감.csv'),
+      fetch(BASE + '클로드_개선품질.csv'),
+    ]);
+    if (!res1.ok) throw new Error('가전마감 로드 실패');
+    if (!res2.ok) throw new Error('개선품질 로드 실패');
 
-    // 엑셀 시리얼 날짜 → 'YYYY-MM-DD' 변환
-    function serialToDate(v) {
-      if (!v) return null;
-      if (typeof v === 'string' && v.match(/^\d{4}-\d{2}-\d{2}/)) return v.slice(0,10);
-      if (typeof v === 'number' && v > 40000) {
-        const d = new Date(Date.UTC(1899,11,30) + v * 86400000);
-        return d.toISOString().slice(0,10);
-      }
-      return null;
-    }
+    const [text1, text2] = await Promise.all([res1.text(), res2.text()]);
 
+    // ── 가전마감 파싱 ──
+    const rows = parseCSV(text1);
     const raw = [];
-    for (let i = 1; i < rows.length; i++) {
-      const r = rows[i];
-      const d = serialToDate(r[0]);
-      if (!d || !r[2]) continue;
-      raw.push({ d, p: r[2], g: r[8] || null, f: r[11] || null });
+    for (const r of rows) {
+      const d = korDateToISO(r['접수일']);
+      if (!d || !r['제품명']) continue;
+      raw.push({ d, p: r['제품명'], g: r['구분']||null, f: r['접수불량']||null });
     }
 
-    // ── 품질관리 시트 파싱 (헤더 자동 감지) ──
-    const ws2  = wb.Sheets['품질관리'];
-    const rows2 = XLSX.utils.sheet_to_json(ws2, { header:1, defval:null });
-
-    let headerIdx = rows2.findIndex(r => r[0] === '구분');
+    // ── 개선품질 파싱 ──
+    const rows2 = parseCSV(text2);
     const improve = [];
-    for (let i = headerIdx + 1; i < rows2.length; i++) {
-      const r = rows2[i];
-      if (!r[0]) continue;
+    for (const r of rows2) {
+      if (!r['구분']) continue;
       improve.push({
-        gubun: r[0], stage: r[1],
-        reg:   serialToDate(r[2]),
-        comp:  serialToDate(r[3]),
-        prod:  r[4], kw: r[5], subject: r[6]
+        gubun:   r['구분'],
+        stage:   r['진행단계'],
+        reg:     korDateToISO(r['등록일']),
+        comp:    korDateToISO(r['완료일']),
+        prod:    r['제품명'],
+        kw:      r['핵심키워드'],
+        subject: r['주제'],
+        link:    r['링크'] || null,
       });
     }
 
@@ -137,6 +152,7 @@ async function loadExcel() {
     return null;
   }
 }
+
 
 const params = new URLSearchParams(window.location.search);
 const type   = params.get('type')   || 'monthly';

@@ -1798,7 +1798,7 @@ function renderSummary() {
         const curYM=selYY*100+selMM, prevYM=selMM===1?(selYY-1)*100+12:selYY*100+(selMM-1);
         for(let i=1;i<rows.length;i++){
           const r=rows[i]; if(!r||!r[0]) continue;
-          const d=typeof r[0]==='number'?new Date((r[0]-25569)*86400000):new Date(r[0]);
+          const d=(()=>{if(!r[0])return null;if(typeof r[0]==='number')return new Date((r[0]-25569)*86400000);const km=String(r[0]).match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);if(km)return new Date(parseInt(km[1]),parseInt(km[2])-1,parseInt(km[3]));const d=new Date(r[0]);return isNaN(d)?null:d;})();if(!d)continue;
           const ym=d.getFullYear()*100+(d.getMonth()+1);
           if(ym===curYM) curCnt++;
           if(ym===prevYM) prevCnt++;
@@ -1814,7 +1814,7 @@ function renderSummary() {
         const prevSat = new Date(sat); prevSat.setDate(sat.getDate()-7);
         for(let i=1;i<rows.length;i++){
           const r=rows[i]; if(!r||!r[5]) continue; // col5=처리일
-          const d=typeof r[5]==='number'?new Date(Date.UTC(1899,11,30)+r[5]*86400000):new Date(r[5]);
+          const d=(()=>{if(!r[5])return null;if(typeof r[5]==='number')return new Date(Date.UTC(1899,11,30)+r[5]*86400000);const km=String(r[5]).match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);if(km)return new Date(parseInt(km[1]),parseInt(km[2])-1,parseInt(km[3]));const d=new Date(r[5]);return isNaN(d)?null:d;})();if(!d)continue;
           if(isNaN(d)) continue;
           const dLocal = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
           if(dLocal>=sat  && dLocal<=fri)     curCnt++;
@@ -2060,10 +2060,18 @@ function renderVOC() {
     const rows=sheetToRows(ws4,{header:1,defval:null});
     const sm={}, smPrev={};
     const P2 = parsePeriod();
+    const parseKoDate = (v) => {
+      if(!v) return null;
+      if(typeof v==='number') return new Date((v-25569)*86400000);
+      const km = String(v).match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
+      if(km) return new Date(parseInt(km[1]), parseInt(km[2])-1, parseInt(km[3]));
+      const d = new Date(v); return isNaN(d)?null:d;
+    };
     for(let i=1;i<rows.length;i++){
       const r=rows[i]; if(!r||!r[11]) continue;
       if(P2.mode!=='year' && r[0]){
-        const d=typeof r[0]==='number'?new Date((r[0]-25569)*86400000):new Date(r[0]);
+        const d = parseKoDate(r[0]);
+        if(!d) continue;
         const ym=`${String(d.getFullYear()).slice(2)}.${String(d.getMonth()+1).padStart(2,'0')}월`;
         if(ym===P2.monthStr) sm[r[11]]=(sm[r[11]]||0)+1;
         else if(ym===P2.prevMonthStr) smPrev[r[11]]=(smPrev[r[11]]||0)+1;

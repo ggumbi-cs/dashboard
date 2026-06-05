@@ -1347,8 +1347,9 @@ async function loadAllData() {
     document.getElementById('aiBtn').disabled=false;
     renderAll();
     loadInsightFromSheet();
-    loadInsightAIReports();  // AI 종합 분석 패널 자동 복원
+    loadInsightAIReports();  // AI 종합 분析 패널 자동 복원
     loadFavFromSheet();
+    if (document.getElementById('sec-aireport')?.classList.contains('active')) loadAireportFrame();
   }
   loadFromSheet();
 }
@@ -3280,6 +3281,10 @@ function buildDataSummary(){
 readPeriodFromURL();
 restoreSection();   // 이전에 보던 섹션 복원
 renderActionTable();
+// aireport 섹션이 복원된 경우 바로 로드
+if (document.getElementById('sec-aireport')?.classList.contains('active')) {
+  loadAireportFrame();
+}
 // loadAllData()는 SCRIPT_URL postMessage 수신 후 자동 실행
 // index.html 없이 단독 실행 시를 위한 fallback (1.5초 후)
 setTimeout(() => { if (!_dataLoaded) { _dataLoaded = true; loadAllData(); } }, 3000);

@@ -490,6 +490,9 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
   <!-- ⑤ AI 간이보고 -->
   <div class="section" id="sec-aireport">
     <div class="sec-title">AI 간이보고</div>
+    <div id="aireportEmpty" style="display:none;padding:60px;text-align:center;color:#aaa;font-size:14px;">
+      📄 아직 이 회차의 보고서가 없습니다.
+    </div>
     <iframe
       id="aireportFrame"
       style="width:100%;height:80vh;border:none;border-radius:10px;background:#fff;"
@@ -961,14 +964,32 @@ function buildAireportUrl(type, period) {
   }
 }
 
-function loadAireportFrame() {
+async function loadAireportFrame() {
   const frame = document.getElementById('aireportFrame');
+  const empty = document.getElementById('aireportEmpty');
   if (!frame) return;
+
   const url = buildAireportUrl(DATA.type, DATA.period);
-  if (url) {
-    frame.src = url;
-  } else {
-    frame.srcdoc = '<div style="padding:40px;text-align:center;color:#999;font-size:14px;">아직 보고서가 없습니다.</div>';
+  if (!url) {
+    frame.style.display = 'none';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+
+  // fetch로 파일 존재 여부 확인 후 로드
+  try {
+    const res = await fetch(url, { method: 'HEAD' });
+    if (res.ok) {
+      frame.style.display = 'block';
+      if (empty) empty.style.display = 'none';
+      frame.src = url;
+    } else {
+      frame.style.display = 'none';
+      if (empty) empty.style.display = 'block';
+    }
+  } catch(e) {
+    frame.style.display = 'none';
+    if (empty) empty.style.display = 'block';
   }
 }
 

@@ -1079,19 +1079,32 @@ function renderCX(cx) {
 
 // ALF vs 상담원 비교
 function renderALFvsHuman(alf, human) {
+  const alfResolveRate = (alf.handled||0) > 0 ? ((alf.resolve||0)/(alf.handled||1)*100).toFixed(1) : '0.0';
+  const humResolveRate = (human.handled||0) > 0 ? ((human.resolve||0)/(human.handled||1)*100).toFixed(1) : '0.0';
+  const alfCx   = (alf.cx||0) > 0 ? (alf.cx||0).toFixed(1) : '-';
+  const humCx   = (human.cx||0) > 0 ? (human.cx||0).toFixed(1) : (CH_DATA&&CH_DATA.cx&&CH_DATA.cx.score>0 ? CH_DATA.cx.score.toFixed(1) : '-');
+
   document.getElementById('alfStats').innerHTML = `
     <div class="compare-stat"><span class="compare-stat-lbl">처리 건수</span><span class="compare-stat-val">${fmtN(alf.handled||0)}<span class="unit">건</span></span></div>
     <div class="compare-stat"><span class="compare-stat-lbl">자동 해결</span><span class="compare-stat-val">${fmtN(alf.resolve||0)}<span class="unit">건</span></span></div>
     <div class="compare-stat"><span class="compare-stat-lbl">미해결 전환</span><span class="compare-stat-val">${fmtN(alf.unresolve||0)}<span class="unit">건</span></span></div>
     <div class="compare-stat"><span class="compare-stat-lbl">평균 응답</span><span class="compare-stat-val">${(alf.avgResp||0).toFixed(1)}<span class="unit">분</span></span></div>
-    <div class="compare-stat"><span class="compare-stat-lbl">해결률</span><span class="compare-stat-val">${alf.handled ? ((alf.resolve/alf.handled)*100).toFixed(1) : 0}<span class="unit">%</span></span></div>`;
+    <div class="compare-stat"><span class="compare-stat-lbl">해결률</span><span class="compare-stat-val">${alfResolveRate}<span class="unit">%</span></span></div>
+    <div class="compare-stat" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px;">
+      <span class="compare-stat-lbl">⭐ CX 스코어</span>
+      <span class="compare-stat-val" style="color:${alfCx!=='-'&&parseFloat(alfCx)>=4?'var(--green)':alfCx!=='-'&&parseFloat(alfCx)<3.5?'var(--red)':'var(--text)'};">${alfCx}<span class="unit">${alfCx!=='-'?'/ 5.0':''}</span></span>
+    </div>`;
 
   document.getElementById('humanStats').innerHTML = `
     <div class="compare-stat"><span class="compare-stat-lbl">처리 건수</span><span class="compare-stat-val">${fmtN(human.handled||0)}<span class="unit">건</span></span></div>
     <div class="compare-stat"><span class="compare-stat-lbl">완료 건수</span><span class="compare-stat-val">${fmtN(human.resolve||0)}<span class="unit">건</span></span></div>
     <div class="compare-stat"><span class="compare-stat-lbl">미해결</span><span class="compare-stat-val">${fmtN(human.unresolve||0)}<span class="unit">건</span></span></div>
     <div class="compare-stat"><span class="compare-stat-lbl">평균 응답</span><span class="compare-stat-val">${(human.avgResp||0).toFixed(1)}<span class="unit">분</span></span></div>
-    <div class="compare-stat"><span class="compare-stat-lbl">활성 상담원</span><span class="compare-stat-val">${human.agents||0}<span class="unit">명</span></span></div>`;
+    <div class="compare-stat"><span class="compare-stat-lbl">활성 상담원</span><span class="compare-stat-val">${human.agents||0}<span class="unit">명</span></span></div>
+    <div class="compare-stat" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px;">
+      <span class="compare-stat-lbl">⭐ CX 스코어</span>
+      <span class="compare-stat-val" style="color:${humCx!=='-'&&parseFloat(humCx)>=4?'var(--green)':humCx!=='-'&&parseFloat(humCx)<3.5?'var(--red)':'var(--text)'};">${humCx}<span class="unit">${humCx!=='-'?'/ 5.0':''}</span></span>
+    </div>`;
 }
 
 // 상담원 테이블

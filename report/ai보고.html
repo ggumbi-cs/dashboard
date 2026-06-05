@@ -942,6 +942,36 @@ function resetPrompts() {
 
 // UI 헬퍼
 // ══════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════
+// AI 간이보고 — 기간별 동적 URL
+// ══════════════════════════════════════════════════════════════
+function buildAireportUrl(type, period) {
+  const base = 'https://ggumbi-cs.github.io/dashboard/report';
+  if (!period) return null;
+  const isWeekly = type === 'weekly' || type === 'direct';
+  if (isWeekly) {
+    // '260522' → report/week/260522.html
+    return `${base}/week/${period}.html`;
+  } else {
+    // '26.02월' → '2602' → report/month/2602.html
+    const m = String(period).match(/^(\d{2})\.(\d{2})월$/);
+    if (m) return `${base}/month/${m[1]}${m[2]}.html`;
+    return null;
+  }
+}
+
+function loadAireportFrame() {
+  const frame = document.getElementById('aireportFrame');
+  if (!frame) return;
+  const url = buildAireportUrl(DATA.type, DATA.period);
+  if (url) {
+    frame.src = url;
+  } else {
+    frame.srcdoc = '<div style="padding:40px;text-align:center;color:#999;font-size:14px;">아직 보고서가 없습니다.</div>';
+  }
+}
+
 function showSection(id, el) {
   // 프롬프트 탭에서 이탈 시 저장 확인
   const promptSec = document.getElementById('sec-prompt');
@@ -961,16 +991,9 @@ function showSection(id, el) {
   el.classList.add('active');
   sessionStorage.setItem('walpimiSection', id);
 
-  // AI 간이보고 탭 — iframe 최초 1회 로드
+  // AI 간이보고 탭 — 기간에 맞는 파일 로드
   if (id === 'aireport') {
-    const frame = document.getElementById('aireportFrame');
-    if (frame) {
-      const target = 'https://ggumbi-cs.github.io/dashboard/report/ai회의자료.html'
-                   + (DATA.period ? '?period=' + encodeURIComponent(DATA.period) : '');
-      if (!frame.src.includes('ai회의자료')) {
-        frame.src = target;
-      }
-    }
+    loadAireportFrame();
   }
 }
 
@@ -1079,14 +1102,10 @@ window.addEventListener('message', e => {
     DATA.type   = e.data.periodType   || DATA.type;
     DATA.period = e.data.periodValue  || DATA.period;
     renderAll();
-    // aireport 탭이 열려있으면 period 파라미터 포함해서 iframe 갱신
+    // aireport 탭이 열려있으면 기간에 맞는 파일로 갱신
     const aireportSec = document.getElementById('sec-aireport');
     if (aireportSec && aireportSec.classList.contains('active')) {
-      const frame = document.getElementById('aireportFrame');
-      if (frame) {
-        frame.src = 'https://ggumbi-cs.github.io/dashboard/report/ai회의자료.html'
-                  + '?period=' + encodeURIComponent(DATA.period || '');
-      }
+      loadAireportFrame();
     }
   }
 });

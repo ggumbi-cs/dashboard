@@ -267,6 +267,7 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
 
 <div class="tabs">
   <div class="tab active" data-tab="AI보고" onclick="switchTab(this)">AI보고 <span style="font-size:10px;color:#4fc3f7;margin-left:2px;">★</span></div>
+  <div class="tab" data-tab="상담분석" onclick="switchTab(this)">상담분석</div>
   <div class="tab" data-tab="주요kpi"  onclick="switchTab(this)">주요KPI</div>
   <div class="tab" data-tab="상담실적" onclick="switchTab(this)">상담실적</div>
   <div class="tab" data-tab="반품현황" onclick="switchTab(this)">반품현황</div>
@@ -401,6 +402,7 @@ const TAB_MAP = {
   '품질관리': 'report/품질관리.html',
   'Issue':    'report/Issue.html',
   'AI보고':   'report/ai보고.html',
+  '상담분석':  'report/채널톡보고.html',
   '팀Tool':   'report/팀Tool.html',
   '개발자':   'report/개발자.html',
 };
@@ -856,8 +858,8 @@ const ACCOUNTS = {
 
 // 역할별 허용 탭 목록 (null = 전체허용)
 const ROLE_TABS = {
-  'leader': ['AI보고','주요kpi','상담실적','반품현황','처리현황','품질관리','Issue','팀Tool'],
-  'ggumbi': ['AI보고','주요kpi','상담실적','반품현황','처리현황','품질관리','Issue','팀Tool'],
+  'leader': ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','Issue','팀Tool'],
+  'ggumbi': ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','Issue','팀Tool'],
   'ermore': ['팀Tool'],
   'dev':    null,
 };

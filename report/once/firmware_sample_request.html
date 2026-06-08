@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>펌웨어 수정 요청 — 세척 공정 샘플 요청표</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:#0f2240; --navy-mid:#1a3560;
+    --sky:#3b82c4; --sky-light:#dbeafe;
+    --gold:#c9a84c; --gold-light:#fef9ee;
+    --teal:#0d9488; --teal-light:#ccfbf1;
+    --orange:#ea580c; --orange-light:#fff7ed;
+    --purple:#7c3aed; --purple-light:#f3e8ff;
+    --neutral-50:#f8fafc; --neutral-100:#f1f5f9;
+    --neutral-200:#e2e8f0; --neutral-600:#475569; --neutral-800:#1e293b;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Noto Sans KR',sans-serif;font-size:13px;line-height:1.7;color:var(--neutral-800);background:#f0f4f8;}
+  .page-wrap{width:100%;background:white;box-shadow:0 4px 40px rgba(0,0,0,0.10);}
+
+  /* COVER */
+  .cover{background:linear-gradient(160deg,#0f2240 0%,#1a3560 55%,#1e4a8a 100%);color:white;padding:44px 64px 38px;position:relative;overflow:hidden;}
+  .cover::before{content:'';position:absolute;top:-60px;right:-60px;width:300px;height:300px;border-radius:50%;background:rgba(59,130,196,0.15);}
+  .cover-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold);padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500;margin-bottom:16px;letter-spacing:0.5px;}
+  .cover-label{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:14px;}
+  .cover-title{font-family:'Noto Serif KR',serif;font-size:26px;font-weight:700;line-height:1.35;margin-bottom:6px;}
+  .cover-subtitle{font-size:14px;color:rgba(255,255,255,0.7);margin-bottom:28px;font-weight:300;}
+  .cover-meta{display:flex;gap:40px;border-top:1px solid rgba(255,255,255,0.2);padding-top:20px;font-size:12px;color:rgba(255,255,255,0.65);}
+  .cover-meta strong{display:block;color:white;font-size:13px;margin-bottom:2px;}
+
+  /* BODY */
+  .body-wrap{padding:40px 64px 60px;}
+
+  /* SECTION HEADER */
+  .sec-head{display:flex;align-items:center;gap:10px;margin:36px 0 16px;}
+  .sec-head .bar{width:4px;height:22px;border-radius:2px;flex-shrink:0;background:var(--sky);}
+  .sec-head .bar.gold{background:var(--gold);}
+  .sec-head .bar.teal{background:var(--teal);}
+  .sec-head .bar.orange{background:var(--orange);}
+  .sec-head h2{font-family:'Noto Serif KR',serif;font-size:17px;font-weight:700;color:var(--navy);white-space:nowrap;}
+  .sec-head .chip{font-size:10px;background:var(--sky-light);color:var(--sky);padding:2px 8px;border-radius:10px;font-weight:500;white-space:nowrap;}
+  .sec-head .chip.gold{background:var(--gold-light);color:#8a6820;}
+  .sec-head .chip.teal{background:var(--teal-light);color:var(--teal);}
+  .sec-head .chip.orange{background:var(--orange-light);color:var(--orange);}
+
+  /* PREMISE CARDS */
+  .premise-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:28px;}
+  .p-card{color:white;border-radius:10px;padding:16px 14px;text-align:center;}
+  .p-card.navy{background:var(--navy);}
+  .p-card.sky{background:var(--sky);}
+  .p-card.gold{background:linear-gradient(135deg,var(--gold) 0%,#a8852a 100%);}
+  .p-card.teal{background:var(--teal);}
+  .p-card.orange{background:var(--orange);}
+  .p-card .num{font-family:'Noto Serif KR',serif;font-size:20px;font-weight:700;line-height:1;}
+  .p-card .lbl{font-size:10.5px;opacity:0.85;margin-top:4px;letter-spacing:0.3px;}
+
+  /* REF BOX */
+  .ref-box{background:var(--neutral-50);border:1.5px solid var(--neutral-200);border-radius:10px;padding:18px 22px;margin-bottom:18px;}
+  .ref-box h3{font-family:'Noto Serif KR',serif;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px;}
+  .ref-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .ref-item{background:white;border:1px solid var(--neutral-200);border-radius:8px;padding:12px 14px;}
+  .ref-item .ri-label{font-size:10.5px;font-weight:700;color:var(--neutral-600);letter-spacing:0.5px;margin-bottom:6px;}
+  .ref-item .ri-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;}
+  .ri-key{color:var(--neutral-600);}
+  .ri-val{font-weight:600;color:var(--navy);font-family:monospace;}
+  .ri-badge{display:inline-block;font-size:10px;font-weight:700;padding:1px 7px;border-radius:8px;margin-bottom:5px;}
+  .ri-badge.eco{background:#dcfce7;color:#065f46;}
+  .ri-badge.glass{background:#dbeafe;color:#1e40af;}
+  .ri-badge.normal{background:#f3e8ff;color:#6b21a8;}
+
+  /* LOGIC BOX */
+  .logic-box{background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);border:1.5px solid #93c5fd;border-radius:10px;padding:18px 22px;margin-bottom:28px;font-size:12.5px;line-height:1.75;color:#1e3a5f;}
+  .logic-box h3{font-family:'Noto Serif KR',serif;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;}
+  .logic-box ul{padding-left:18px;}
+  .logic-box li{margin-bottom:4px;}
+  .logic-box strong{color:var(--navy);}
+
+  /* DIVIDER */
+  .divider{height:1px;background:linear-gradient(90deg,transparent,var(--neutral-200),transparent);margin:28px 0;}
+
+  /* ─── MAIN SAMPLE TABLE ─── */
+  .tbl-wrap{overflow-x:auto;margin-bottom:16px;}
+
+  .sample-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .sample-table thead tr.grp-row th{padding:8px 10px;text-align:center;font-weight:700;font-size:12px;white-space:nowrap;letter-spacing:0.2px;}
+  .sample-table thead tr.sub-row th{padding:7px 10px;text-align:center;font-size:11px;font-weight:600;white-space:nowrap;}
+
+  .th-meta{background:var(--navy);color:white;}
+  .th-wash{background:#1d4ed8;color:white;}
+  .th-rinse{background:#0d6e66;color:white;}
+  .th-total{background:#b45309;color:white;}
+  .th-note{background:#374151;color:white;}
+
+  /* 섹션 구분 행 */
+  .section-row td{background:#f1f5f9;padding:6px 14px;font-size:11.5px;font-weight:700;color:var(--navy);letter-spacing:0.5px;border-bottom:2px solid var(--neutral-200);}
+  .section-row.long td{background:#e0e7ff;color:#3730a3;border-bottom:2px solid #a5b4fc;}
+  .section-row.std td{background:#ecfdf5;color:#065f46;border-bottom:2px solid #6ee7b7;}
+  .section-row.fast td{background:#fff7ed;color:#9a3412;border-bottom:2px solid #fed7aa;}
+  .section-row.ai td{background:#fef9ee;color:#92400e;border-bottom:2px solid #fcd34d;}
+
+  .sample-table tbody tr.data-row{border-bottom:1px solid var(--neutral-200);}
+  .sample-table tbody tr.data-row:hover{background:#f8fafc;}
+  .sample-table tbody td{padding:9px 10px;text-align:center;vertical-align:middle;white-space:nowrap;}
+  .sample-table tbody td.left{text-align:left;}
+
+  /* 셀 컬러 */
+  .c-wash{background:#eff6ff;}
+  .c-rinse{background:#f0fdfa;}
+  .c-total{background:#fef9ee;}
+  .c-na{background:#f8fafc;color:#9ca3af;font-size:11px;}
+
+  /* 값 스타일 */
+  .s-num{font-family:'Noto Serif KR',serif;font-weight:700;color:var(--navy);font-size:15px;}
+  .cc-val{font-family:monospace;font-size:13px;font-weight:700;color:var(--navy);}
+  .cc-min{font-size:11px;color:var(--neutral-600);display:block;margin-top:1px;}
+  .min-val{font-family:monospace;font-size:12.5px;font-weight:600;color:var(--teal);}
+  .total-cc{font-family:monospace;font-size:13px;font-weight:700;color:#b45309;}
+  .total-min{font-family:monospace;font-size:13px;font-weight:700;color:#6b21a8;}
+  .na-cell{color:#cbd5e1;font-size:12px;}
+
+  /* 배지 */
+  .tag{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700;white-space:nowrap;}
+  .tag-4{background:#dbeafe;color:#1e40af;}
+  .tag-3{background:#fce7f3;color:#9d174d;}
+  .tag-ai{background:#fef9c3;color:#78350f;}
+
+  /* 범례 */
+  .legend-row{display:flex;gap:20px;flex-wrap:nowrap;margin-bottom:14px;font-size:12px;align-items:center;}
+  .leg-item{display:flex;align-items:center;gap:6px;white-space:nowrap;}
+  .leg-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+
+  /* NOTE BOX */
+  .note-box{background:var(--orange-light);border:1.5px solid #fed7aa;border-radius:10px;padding:16px 20px;font-size:12.5px;line-height:1.75;color:#7c2d12;margin-bottom:20px;}
+  .note-box h3{font-family:'Noto Serif KR',serif;font-size:13px;font-weight:700;color:#7c2d12;margin-bottom:10px;}
+  .note-box ul{padding-left:18px;}
+  .note-box li{margin-bottom:4px;}
+
+  /* FOOTER */
+  .doc-footer{background:var(--neutral-100);border-top:1px solid var(--neutral-200);padding:16px 64px;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--neutral-600);}
+  .doc-footer strong{color:var(--neutral-800);}
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<!-- ══ COVER ══ -->
+<div class="cover">
+  <div class="cover-badge">📋 개발사 펌웨어 요청</div>
+  <div class="cover-label">GGUMBI CS LAB — FIRMWARE SAMPLE REQUEST</div>
+  <div class="cover-title">제조사 펌웨어 수정 요청<br><span style="font-size:19px;color:rgba(255,255,255,0.85);">세척 공정 샘플 요청표</span></div>
+  <div class="cover-subtitle">세척 1회 + 헹굼 3~4회 / 코스별 물용량 및 가동시간 조합 10종</div>
+  <div class="cover-meta">
+    <div><strong>작성일</strong>2026년 06월 08일</div>
+    <div><strong>요청자</strong>엄마감동팀 심우승 SQ</div>
+    <div><strong>대상 제품</strong>꿈비 NEW 젖병세척기 올 스테인리스</div>
+    <div><strong>수조통 용량</strong>4.5 L (개선 예정)</div>
+  </div>
+</div>
+
+<div class="body-wrap">
+
+  <!-- 기본 조건 -->
+  <div class="sec-head" style="margin-top:0">
+    <div class="bar gold"></div>
+    <h2>공정 설계 기본 조건</h2>
+    <span class="chip gold">설계 전제</span>
+  </div>
+  <div class="premise-grid">
+    <div class="p-card sky"><div class="num">4.5 L</div><div class="lbl">수조통 총 용량 (개선 예정)</div></div>
+    <div class="p-card teal"><div class="num">1 + 3~4</div><div class="lbl">세척 1회 + 헹굼 3 또는 4회</div></div>
+    <div class="p-card navy"><div class="num">850 cc↑</div><div class="lbl">공정당 최소 물량 (필수)</div></div>
+    <div class="p-card gold"><div class="num">900 cc↑</div><div class="lbl">공정당 권장 물량</div></div>
+    <div class="p-card orange"><div class="num">29~83분</div><div class="lbl">세척+헹굼 시간 범위</div></div>
+  </div>
+
+  <!-- 기존 참조 데이터 -->
+  <div class="sec-head">
+    <div class="bar"></div>
+    <h2>기존 공정 참조 데이터 (설계 근거)</h2>
+    <span class="chip">기존 3코스 / 세척1+헹굼2 구조</span>
+  </div>
+  <div class="ref-box">
+    <h3>📊 기존 꿈비 올 스테인리스 — 세척·헹굼 실측값</h3>
+    <div class="ref-grid">
+      <div class="ref-item">
+        <div class="ri-label"><span class="ri-badge eco">ECO 코스</span></div>
+        <div class="ri-row"><span class="ri-key">세척 (1회차)</span><span class="ri-val">12분</span></div>
+        <div class="ri-row"><span class="ri-key">헹굼① (2회차)</span><span class="ri-val">3분</span></div>
+        <div class="ri-row"><span class="ri-key">헹굼② (3회차)</span><span class="ri-val">8분</span></div>
+        <div class="ri-row" style="border-top:1px solid var(--neutral-200);margin-top:4px;padding-top:4px;">
+          <span class="ri-key">세척+헹굼 합계</span><span class="ri-val" style="color:#065f46;">약 23분</span>
+        </div>
+        <div class="ri-row"><span class="ri-key">총 배출량</span><span class="ri-val">3,700 cc</span></div>
+      </div>
+      <div class="ref-item">
+        <div class="ri-label"><span class="ri-badge glass">GLASS 코스</span></div>
+        <div class="ri-row"><span class="ri-key">세척 (1회차)</span><span class="ri-val">18분</span></div>
+        <div class="ri-row"><span class="ri-key">헹굼① (2회차)</span><span class="ri-val">6분</span></div>
+        <div class="ri-row"><span class="ri-key">헹굼② (3회차)</span><span class="ri-val">29분</span></div>
+        <div class="ri-row" style="border-top:1px solid var(--neutral-200);margin-top:4px;padding-top:4px;">
+          <span class="ri-key">세척+헹굼 합계</span><span class="ri-val" style="color:#1e40af;">약 53분</span>
+        </div>
+        <div class="ri-row"><span class="ri-key">총 배출량</span><span class="ri-val">3,700 cc</span></div>
+      </div>
+      <div class="ref-item">
+        <div class="ri-label"><span class="ri-badge normal">NORMAL 코스</span></div>
+        <div class="ri-row"><span class="ri-key">세척 (1회차)</span><span class="ri-val">37분</span></div>
+        <div class="ri-row"><span class="ri-key">헹굼① (2회차)</span><span class="ri-val">8분</span></div>
+        <div class="ri-row"><span class="ri-key">헹굼② (3회차)</span><span class="ri-val">28분</span></div>
+        <div class="ri-row" style="border-top:1px solid var(--neutral-200);margin-top:4px;padding-top:4px;">
+          <span class="ri-key">세척+헹굼 합계</span><span class="ri-val" style="color:#6b21a8;">약 73분</span>
+        </div>
+        <div class="ri-row"><span class="ri-key">총 배출량</span><span class="ri-val">3,750 cc</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="logic-box">
+    <h3>🔢 샘플 설계 원칙</h3>
+    <ul>
+      <li>수조통 <strong>4,500cc</strong> 전량 사용 — 모든 샘플 총합 정확히 4,500cc</li>
+      <li>공정당 최소 <strong>850cc 이상 (필수)</strong> / 권장 <strong>900cc 이상</strong></li>
+      <li>세척(1회차)에 <strong>가장 많은 물량 배정</strong> — 배관 에어 퍼지 + 초기 세정력 확보</li>
+      <li>세척1+헹굼4 (5공정) 7개 / 세척1+헹굼3 (4공정) 3개 — 총 10종</li>
+      <li>정렬 기준: <strong>세척 시간 긴 순</strong> — 장시간형 3개 → 표준형 3개 → 급속형 3개 → AI추천 1개</li>
+    </ul>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 샘플 요청표 -->
+  <div class="sec-head">
+    <div class="bar orange"></div>
+    <h2>펌웨어 샘플 요청표 — 10종</h2>
+    <span class="chip orange">세척 긴 순 정렬</span>
+  </div>
+
+  <p style="font-size:12.5px;color:var(--neutral-600);margin-bottom:12px;line-height:1.7;">
+    아래 10종의 조합을 펌웨어로 제작 요청합니다. <strong>물량(cc)과 공정시간(분)</strong>이 핵심 조정 변수입니다.
+    건조 시간은 기존 코스값 유지. 본 표는 <strong>세척+헹굼 구간만</strong> 해당합니다.
+  </p>
+
+  <div class="legend-row">
+    <div class="leg-item"><div class="leg-dot" style="background:#1d4ed8;"></div> 세척 (1회차) — 항상 최다 물량</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#0d6e66;"></div> 헹굼 회차</div>
+    <div class="leg-item"><span class="tag tag-4">세척1+헹굼4</span> 5공정</div>
+    <div class="leg-item"><span class="tag tag-3">세척1+헹굼3</span> 4공정</div>
+    <div class="leg-item"><span class="tag tag-ai">AI 추천</span></div>
+    <div class="leg-item" style="margin-left:auto;font-size:11.5px;color:#b45309;font-weight:600;">※ 전 공정 최소 850cc 이상 / 총합 4,500cc</div>
+  </div>
+
+  <div class="tbl-wrap">
+  <table class="sample-table">
+    <thead>
+      <tr class="grp-row">
+        <th rowspan="2" class="th-meta" style="width:50px;">샘플</th>
+        <th rowspan="2" class="th-meta" style="width:70px;">구성</th>
+        <th colspan="2" class="th-wash">세척 (1회차)</th>
+        <th colspan="2" class="th-rinse">헹굼 ① (2회차)</th>
+        <th colspan="2" class="th-rinse">헹굼 ② (3회차)</th>
+        <th colspan="2" class="th-rinse">헹굼 ③ (4회차)</th>
+        <th colspan="2" class="th-rinse">헹굼 ④ (5회차)</th>
+        <th colspan="2" class="th-total">합계</th>
+        <th rowspan="2" class="th-note" style="min-width:130px;">특징</th>
+      </tr>
+      <tr class="sub-row">
+        <th class="th-wash">물량(cc)</th><th class="th-wash">시간(분)</th>
+        <th class="th-rinse">물량(cc)</th><th class="th-rinse">시간(분)</th>
+        <th class="th-rinse">물량(cc)</th><th class="th-rinse">시간(분)</th>
+        <th class="th-rinse">물량(cc)</th><th class="th-rinse">시간(분)</th>
+        <th class="th-rinse">물량(cc)</th><th class="th-rinse">시간(분)</th>
+        <th class="th-total">물량(cc)</th><th class="th-total">시간(분)</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <!-- ── 장시간형 ── -->
+      <tr class="section-row long"><td colspan="15">🔵 장시간형 — 세척 시간 38분 이상 / 고강도 세정</td></tr>
+
+      <!-- S-01 장시간 1+3 -->
+      <tr class="data-row">
+        <td><span class="s-num">S-01</span></td>
+        <td><span class="tag tag-3">1+헹굼3</span></td>
+        <td class="c-wash"><span class="cc-val">1,800</span></td><td class="c-wash"><span class="min-val">55분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">10분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">9분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">9분</span></td>
+        <td class="c-na"><span class="na-cell">—</span></td><td class="c-na"><span class="na-cell">—</span></td>
+        <td class="c-total"><span class="total-cc">4,500</span></td><td class="c-total"><span class="total-min">83분</span></td>
+        <td class="left" style="font-size:12px;color:var(--neutral-600);">세척 최강화. 유리병·분유잔여물 대응</td>
+      </tr>
+
+      <!-- S-02 장시간 1+4 -->
+      <tr class="data-row">
+        <td><span class="s-num">S-02</span></td>
+        <td><span class="tag tag-4">1+헹굼4</span></td>
+        <td class="c-wash"><span class="cc-val">1,050</span></td><td class="c-wash"><span class="min-val">45분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">9분</span></td>
+        <td class="c-rinse"><span class="cc-val">850</span></td><td class="c-rinse"><span class="min-val">8분</span></td>
+        <td class="c-rinse"><span class="cc-val">850</span></td><td class="c-rinse"><span class="min-val">7분</span></td>
+        <td class="c-rinse"><span class="cc-val">850</span></td><td class="c-rinse"><span class="min-val">6분</span></td>
+        <td class="c-total"><span class="total-cc">4,500</span></td><td class="c-total"><span class="total-min">75분</span></td>
+        <td class="left" style="font-size:12px;color:var(--neutral-600);">헹굼4회 장시간. Glass급 집중</td>
+      </tr>
+
+      <!-- S-03 장시간 1+4 -->
+      <tr class="data-row">
+        <td><span class="s-num">S-03</span></td>
+        <td><span class="tag tag-4">1+헹굼4</span></td>
+        <td class="c-wash"><span class="cc-val">1,000</span></td><td class="c-wash"><span class="min-val">38분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">9분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">8분</span></td>
+        <td class="c-rinse"><span class="cc-val">850</span></td><td class="c-rinse"><span class="min-val">7분</span></td>
+        <td class="c-rinse"><span class="cc-val">850</span></td><td class="c-rinse"><span class="min-val">5분</span></td>
+        <td class="c-total"><span class="total-cc">4,500</span></td><td class="c-total"><span class="total-min">67분</span></td>
+        <td class="left" style="font-size:12px;color:var(--neutral-600);">Normal급. 헹굼④ 단축형</td>
+      </tr>
+
+      <!-- ── 표준형 ── -->
+      <tr class="section-row std"><td colspan="15">🟢 표준형 — 세척 시간 18~28분 / 일반 세정</td></tr>
+
+      <!-- S-04 표준 1+3 -->
+      <tr class="data-row">
+        <td><span class="s-num">S-04</span></td>
+        <td><span class="tag tag-3">1+헹굼3</span></td>
+        <td class="c-wash"><span class="cc-val">1,700</span></td><td class="c-wash"><span class="min-val">28분</span></td>
+        <td class="c-rinse"><span class="cc-val">950</span></td><td class="c-rinse"><span class="min-val">8분</span></td>
+        <td class="c-rinse"><span class="cc-val">950</span></td><td class="c-rinse"><span class="min-val">7분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">6분</span></td>
+        <td class="c-na"><span class="na-cell">—</span></td><td class="c-na"><span class="na-cell">—</span></td>
+        <td class="c-total"><span class="total-cc">4,500</span></td><td class="c-total"><span class="total-min">49분</span></td>
+        <td class="left" style="font-size:12px;color:var(--neutral-600);">헹굼3회 표준. 세척 물량 최대화</td>
+      </tr>
+
+      <!-- S-05 표준 1+4 -->
+      <tr class="data-row">
+        <td><span class="s-num">S-05</span></td>
+        <td><span class="tag tag-4">1+헹굼4</span></td>
+        <td class="c-wash"><span class="cc-val">950</span></td><td class="c-wash"><span class="min-val">22분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">7분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">6분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">6분</span></td>
+        <td class="c-rinse"><span class="cc-val">850</span></td><td class="c-rinse"><span class="min-val">5분</span></td>
+        <td class="c-total"><span class="total-cc">4,500</span></td><td class="c-total"><span class="total-min">46분</span></td>
+        <td class="left" style="font-size:12px;color:var(--neutral-600);">Eco급 균형. 헹굼4회 표준</td>
+      </tr>
+
+      <!-- S-06 표준 1+4 전회900 -->
+      <tr class="data-row">
+        <td><span class="s-num">S-06</span></td>
+        <td><span class="tag tag-4">1+헹굼4</span></td>
+        <td class="c-wash"><span class="cc-val">900</span></td><td class="c-wash"><span class="min-val">18분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">7분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">6분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">6분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">5분</span></td>
+        <td class="c-total"><span class="total-cc">4,500</span></td><td class="c-total"><span class="total-min">42분</span></td>
+        <td class="left" style="font-size:12px;color:var(--neutral-600);">전 공정 900cc 균등 배분</td>
+      </tr>
+
+      <!-- ── 급속형 ── -->
+      <tr class="section-row fast"><td colspan="15">🟠 급속형 — 세척 시간 10~13분 / 경량 오염 대응</td></tr>
+
+      <!-- S-07 급속 1+3 -->
+      <tr class="data-row">
+        <td><span class="s-num">S-07</span></td>
+        <td><span class="tag tag-3">1+헹굼3</span></td>
+        <td class="c-wash"><span class="cc-val">1,650</span></td><td class="c-wash"><span class="min-val">13분</span></td>
+        <td class="c-rinse"><span class="cc-val">1,000</span></td><td class="c-rinse"><span class="min-val">6분</span></td>
+        <td class="c-rinse"><span class="cc-val">950</span></td><td class="c-rinse"><span class="min-val">5분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">4분</span></td>
+        <td class="c-na"><span class="na-cell">—</span></td><td class="c-na"><span class="na-cell">—</span></td>
+        <td class="c-total"><span class="total-cc">4,500</span></td><td class="c-total"><span class="total-min">28분</span></td>
+        <td class="left" style="font-size:12px;color:var(--neutral-600);">헹굼3회 급속. 세척↑ 시간↓</td>
+      </tr>
+
+      <!-- S-08 급속 1+4 -->
+      <tr class="data-row">
+        <td><span class="s-num">S-08</span></td>
+        <td><span class="tag tag-4">1+헹굼4</span></td>
+        <td class="c-wash"><span class="cc-val">1,050</span></td><td class="c-wash"><span class="min-val">12분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">6분</span></td>
+        <td class="c-rinse"><span class="cc-val">850</span></td><td class="c-rinse"><span class="min-val">5분</span></td>
+        <td class="c-rinse"><span class="cc-val">850</span></td><td class="c-rinse"><span class="min-val">5분</span></td>
+        <td class="c-rinse"><span class="cc-val">850</span></td><td class="c-rinse"><span class="min-val">4분</span></td>
+        <td class="c-total"><span class="total-cc">4,500</span></td><td class="c-total"><span class="total-min">32분</span></td>
+        <td class="left" style="font-size:12px;color:var(--neutral-600);">헹굼4회 단시간. 세척 집중</td>
+      </tr>
+
+      <!-- S-09 급속 1+4 균등 -->
+      <tr class="data-row">
+        <td><span class="s-num">S-09</span></td>
+        <td><span class="tag tag-4">1+헹굼4</span></td>
+        <td class="c-wash"><span class="cc-val">900</span></td><td class="c-wash"><span class="min-val">10분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">5분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">5분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">5분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">4분</span></td>
+        <td class="c-total"><span class="total-cc">4,500</span></td><td class="c-total"><span class="total-min">29분</span></td>
+        <td class="left" style="font-size:12px;color:var(--neutral-600);">전 공정 900cc 균등 최속</td>
+      </tr>
+
+      <!-- ── AI 추천 ── -->
+      <tr class="section-row ai"><td colspan="15">⭐ AI 추천 — 헹굼 강화 균형형 / 잔류물 제거 최적화</td></tr>
+
+      <!-- S-10 AI추천 -->
+      <tr class="data-row">
+        <td><span class="s-num">S-10</span></td>
+        <td><span class="tag tag-ai">AI 추천</span></td>
+        <td class="c-wash"><span class="cc-val">1,000</span></td><td class="c-wash"><span class="min-val">30분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">9분</span></td>
+        <td class="c-rinse"><span class="cc-val">900</span></td><td class="c-rinse"><span class="min-val">8분</span></td>
+        <td class="c-rinse"><span class="cc-val">850</span></td><td class="c-rinse"><span class="min-val">7분</span></td>
+        <td class="c-rinse"><span class="cc-val">850</span></td><td class="c-rinse"><span class="min-val">6분</span></td>
+        <td class="c-total"><span class="total-cc">4,500</span></td><td class="c-total"><span class="total-min">60분</span></td>
+        <td class="left" style="font-size:12px;color:var(--neutral-600);">헹굼①② 충분 확보. 잔류물 최소화 추천</td>
+      </tr>
+
+    </tbody>
+  </table>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 요청 조건 -->
+  <div class="sec-head">
+    <div class="bar teal"></div>
+    <h2>개발사 요청 조건 안내</h2>
+    <span class="chip teal">전달 사항</span>
+  </div>
+  <div class="note-box">
+    <h3>📌 펌웨어 제작 요청 시 공통 전달 조건</h3>
+    <ul>
+      <li>샘플 번호별로 <strong>독립된 메인보드(또는 펌웨어 버전)</strong>으로 제작 요청 — 동일 보드 내 코스 선택 방식 불가</li>
+      <li>건조 타임은 <strong>기존 코스값 유지</strong> (변경 없음) — 본 표는 세척+헹굼 구간만 해당</li>
+      <li>수조통 용량: <strong>4,500cc</strong> 기준 (현 3,800cc → 개선 예정) — 실제 샘플 제작 시 개선된 수조통 적용 요청</li>
+      <li>각 공정회차 종료 시 <strong>완전 배수 후 다음 회차 진입</strong> 필수 (기존 Normal/Glass 배수 미발생 버그 수정 전제)</li>
+      <li>공정당 물량 최소 <strong>850cc 이상 필수 / 권장 900cc</strong> — 미만 시 배관 충진 불량 가능성</li>
+      <li>세척(1회차)는 배관 에어 퍼지 고려 → <strong>항상 해당 샘플 내 최다 물량</strong> 유지 요청</li>
+      <li>수령 후 실측 항목: 실제 배수량, 세척 성능(잔류물), 공정별 시간 측정 진행 예정</li>
+    </ul>
+  </div>
+
+</div><!-- /body-wrap -->
+
+<div class="doc-footer">
+  <div><strong>꿈비(Ggumbi)</strong> &nbsp;|&nbsp; 엄마감동팀 CS Lab</div>
+  <div>요청자 : 심우승 SQ &nbsp;|&nbsp; 작성일 : 2026년 06월 08일</div>
+  <div style="color:#9ca3af;font-size:10px;">FIRMWARE REQUEST — INTERNAL USE ONLY</div>
+</div>
+
+</div><!-- /page-wrap -->
+</body>
+</html>

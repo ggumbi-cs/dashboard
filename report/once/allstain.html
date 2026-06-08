@@ -55,6 +55,10 @@
     padding: 52px 64px 44px;
     position: relative;
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
   }
   .cover::before {
     content: '';
@@ -63,6 +67,7 @@
     width: 320px; height: 320px;
     border-radius: 50%;
     background: rgba(59,130,196,0.15);
+    pointer-events: none;
   }
   .cover::after {
     content: '';
@@ -71,6 +76,65 @@
     width: 200px; height: 200px;
     border-radius: 50%;
     background: rgba(201,168,76,0.12);
+    pointer-events: none;
+  }
+  .cover-left { flex: 1; min-width: 0; position: relative; z-index: 1; }
+  .cover-right { flex-shrink: 0; position: relative; z-index: 1; }
+
+  /* ─── 펌웨어 요청서 바로가기 버튼 ─── */
+  .fw-link-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.07);
+    border: 2px solid rgba(201,168,76,0.6);
+    border-radius: 18px;
+    padding: 28px 32px;
+    width: 220px;
+    cursor: pointer;
+    text-decoration: none;
+    color: white;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+    backdrop-filter: blur(4px);
+  }
+  .fw-link-btn:hover {
+    background: rgba(201,168,76,0.18);
+    border-color: var(--gold);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 32px rgba(0,0,0,0.35);
+  }
+  .fw-link-btn .fw-icon {
+    font-size: 36px;
+    line-height: 1;
+  }
+  .fw-link-btn .fw-label-top {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .fw-link-btn .fw-label-main {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .fw-link-btn .fw-label-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    text-align: center;
+    line-height: 1.4;
+  }
+  .fw-link-btn .fw-arrow {
+    font-size: 18px;
+    color: var(--gold);
+    margin-top: 2px;
   }
   .cover-label {
     font-size: 11px;
@@ -472,14 +536,25 @@
 
   <!-- ══════════ COVER ══════════ -->
   <div class="cover">
-    <div class="cover-badge">🔬 내부 검사 보고서</div>
-    <div class="cover-label">GGUMBI CS LAB — PRODUCT INSPECTION REPORT</div>
-    <div class="cover-title">신규 개발품 검사 결과 보고서<br><span style="font-size:20px; color:rgba(255,255,255,0.85);">올 스테인리스 젖병세척기</span></div>
-    <div class="cover-subtitle">베이비브레짜 경쟁 제품 대비 기능·성능 분석 및 개선 방향</div>
-    <div class="cover-meta">
-      <div><strong>검사일</strong>2026년 06월 04일 ~ 06월 08일</div>
-      <div><strong>검사자</strong>엄마감동팀 심우승 SQ</div>
-      <div><strong>작성</strong>엄마감동팀</div>
+    <div class="cover-left">
+      <div class="cover-badge">🔬 내부 검사 보고서</div>
+      <div class="cover-label">GGUMBI CS LAB — PRODUCT INSPECTION REPORT</div>
+      <div class="cover-title">신규 개발품 검사 결과 보고서<br><span style="font-size:20px; color:rgba(255,255,255,0.85);">올 스테인리스 젖병세척기</span></div>
+      <div class="cover-subtitle">베이비브레짜 경쟁 제품 대비 기능·성능 분석 및 개선 방향</div>
+      <div class="cover-meta">
+        <div><strong>검사일</strong>2026년 06월 04일 ~ 06월 08일</div>
+        <div><strong>검사자</strong>엄마감동팀 심우승 SQ</div>
+        <div><strong>작성</strong>엄마감동팀</div>
+      </div>
+    </div>
+    <div class="cover-right">
+      <a class="fw-link-btn" href="https://ggumbi-cs.github.io/dashboard/report/once/firmware_sample_request.html" target="_blank">
+        <div class="fw-icon">📋</div>
+        <div class="fw-label-top">관련 문서 바로가기</div>
+        <div class="fw-label-main">제조사 펌웨어<br>수정 요청서</div>
+        <div class="fw-label-sub">세척 공정 샘플 10종<br>물용량 · 시간 조합표</div>
+        <div class="fw-arrow">↗</div>
+      </a>
     </div>
   </div>
 

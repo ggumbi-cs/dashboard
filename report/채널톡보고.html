@@ -955,15 +955,22 @@ function renderKPI(d) {
   setDelta('kd-alf', d.alfRate, d.alfPrev, '%p', false);
 
   setText('kv-resp', `${(d.respMin||0).toFixed(1)}`);
-  setText('ks-resp', '평균 첫응답 소요시간');
+  setText('ks-resp', '단위: 분 (대기열→상담원 응대)');
   setDelta('kd-resp', d.respMin, d.respPrev, '분', true); // 낮을수록 좋음
 
   const score = d.cx?.score || d.cxScore || 0;
-  const prev  = d.cx?.prev  || d.cxPrev  || 0;
-  setText('kv-cx', score.toFixed(1));
-  const respRate = d.cx?.respRate || 0;
-  setText('ks-cx', `응답률 ${respRate.toFixed(1)}%`);
-  setDelta('kd-cx', score, prev, '점', false);
+  if (score > 0) {
+    const prev = d.cx?.prev || d.cxPrev || 0;
+    setText('kv-cx', score.toFixed(1));
+    setText('ks-cx', `응답률 ${(d.cx?.respRate||0).toFixed(1)}%`);
+    setDelta('kd-cx', score, prev, '점', false);
+  } else {
+    const kvEl = document.getElementById('kv-cx');
+    if (kvEl) kvEl.innerHTML = '<span style="font-size:14px;color:var(--textL);">미사용</span>';
+    setText('ks-cx', 'CSAT 기능 미활성화');
+    const kdEl = document.getElementById('kd-cx');
+    if (kdEl) kdEl.innerHTML = '';
+  }
 }
 
 function setText(id, val) { const el=document.getElementById(id); if(el) el.textContent=val; }
@@ -1057,13 +1064,22 @@ function renderTagBar(tags) {
 
 // CX 스코어
 function renderCX(cx) {
+  if (!cx || cx.noData || (cx.score||0) === 0) {
+    // CSAT 미사용
+    const bigEl = document.getElementById('cxScoreBig');
+    if (bigEl) { bigEl.textContent = '-'; bigEl.className = 'cx-score-num'; }
+    const gradeEl = document.getElementById('cxScoreGrade');
+    if (gradeEl) gradeEl.textContent = 'CSAT 미활성화';
+    document.getElementById('cxDistWrap').innerHTML = '<div class="empty-state" style="padding:16px;"><div class="icon">⭐</div><p>채널톡 CSAT 기능이 활성화되어 있지 않아요.<br>채널톡 설정에서 CSAT를 켜면 자동 집계됩니다.</p></div>';
+    document.getElementById('cxMeta').innerHTML = '';
+    return;
+  }
   const score = cx.score || 0;
   const el    = document.getElementById('cxScoreBig');
   el.textContent = score.toFixed(1);
   el.className   = 'cx-score-num ' + (score >= 4.5 ? 'good' : score >= 3.5 ? 'warn' : 'bad');
   document.getElementById('cxScoreGrade').textContent = score >= 4.5 ? '😊 매우 만족' : score >= 3.5 ? '🙂 만족' : '😐 보통';
 
-  const total = cx.total || (cx.dist||[]).reduce((s,r)=>s+r.cnt,0) || 1;
   const maxCnt = Math.max(...(cx.dist||[]).map(r=>r.cnt),1);
   document.getElementById('cxDistWrap').innerHTML = (cx.dist||[]).sort((a,b)=>b.star-a.star).map(r => `
     <div class="cx-bar-row">

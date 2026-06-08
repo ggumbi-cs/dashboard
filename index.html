@@ -273,7 +273,7 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
   <div class="tab" data-tab="반품현황" onclick="switchTab(this)">반품현황</div>
   <div class="tab" data-tab="처리현황" onclick="switchTab(this)">처리현황</div>
   <div class="tab" data-tab="품질관리" onclick="switchTab(this)">품질관리</div>
-  <div class="tab" data-tab="Issue"    onclick="switchTab(this)">Issue <span style="font-size:10px;color:#e87a3a;margin-left:2px;">!</span></div>
+  <div class="tab" data-tab="건별보고" onclick="switchTab(this)">건별보고</div>
   <div class="tab" data-tab="팀Tool"   onclick="switchTab(this)">팀Tool ✓</div>
   <div class="tab" data-tab="개발자"   onclick="switchTab(this)">개발자</div>
 </div>
@@ -317,6 +317,12 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
     </div>
 
     <!-- ── 팀Tool 전용 사이드바 ── -->
+    <!-- ── 건별보고 전용 사이드바 ── -->
+    <div id="onceSidebar" style="display:none;">
+      <div class="sb-label">건별보고</div>
+      <div class="sb-item" onclick="onceNav('report/once/allstain.html', this)">세척기 (꿈비-브레쨔)</div>
+    </div>
+
     <div id="toolSidebar" style="display:none;">
       <div class="sb-label">팀 Tool</div>
       <div class="sb-item" onclick="toolNav('tool/tool_main.html', this)">업무Tool 코딩</div>
@@ -400,7 +406,7 @@ const TAB_MAP = {
   '반품현황': 'report/반품현황.html',
   '처리현황': 'report/처리현황.html',
   '품질관리': 'report/품질관리.html',
-  'Issue':    'report/Issue.html',
+  '건별보고': 'report/once/allstain.html',
   'AI보고':   'report/ai보고.html',
   '상담분석':  'report/채널톡보고.html',
   '팀Tool':   'report/팀Tool.html',
@@ -701,11 +707,13 @@ function switchTab(el) {
   el.classList.add('active');
   state.tab = el.dataset.tab;
 
-  const isToolTab = state.tab === '팀Tool' || state.tab === '개발자';
-  const isKpiTab  = state.tab === '주요kpi';
+  const isToolTab  = state.tab === '팀Tool' || state.tab === '개발자';
+  const isKpiTab   = state.tab === '주요kpi';
+  const isOnceTab  = state.tab === '건별보고';
 
-  document.getElementById('dashSidebar').style.display = isToolTab ? 'none' : 'block';
-  document.getElementById('toolSidebar').style.display = isToolTab ? 'block' : 'none';
+  document.getElementById('dashSidebar').style.display  = (isToolTab || isOnceTab) ? 'none' : 'block';
+  document.getElementById('toolSidebar').style.display  = isToolTab ? 'block' : 'none';
+  document.getElementById('onceSidebar').style.display  = isOnceTab ? 'block' : 'none';
 
   // 주요KPI: 월간/주간/직접선택 숨김, 연간만 표시
   const monthly  = document.getElementById('monthlyList');
@@ -741,7 +749,9 @@ function switchTab(el) {
     }
   }
 
-  if (isToolTab) {
+  if (isOnceTab) {
+    onceNav('report/once/allstain.html', null);
+  } else if (isToolTab) {
     if (state.tab === '팀Tool') toolNav('tool/tool_main.html', null);
     else if (state.tab === '개발자') toolNav('report/개발자.html', null);
     setTimeout(() => loadAndBroadcastCSV(false), 0);
@@ -752,6 +762,14 @@ function switchTab(el) {
 }
 
 // 팀Tool 내 메뉴 이동
+function onceNav(path, el) {
+  if (el) {
+    document.querySelectorAll('#onceSidebar .sb-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+  }
+  document.getElementById('mainFrame').src = path;
+}
+
 function toolNav(path, el) {
   if (el) {
     document.querySelectorAll('#toolSidebar .sb-item').forEach(i => i.classList.remove('active'));
@@ -858,8 +876,8 @@ const ACCOUNTS = {
 
 // 역할별 허용 탭 목록 (null = 전체허용)
 const ROLE_TABS = {
-  'leader': ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','Issue','팀Tool'],
-  'ggumbi': ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','Issue','팀Tool'],
+  'leader': ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','건별보고','팀Tool'],
+  'ggumbi': ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','건별보고','팀Tool'],
   'ermore': ['팀Tool'],
   'dev':    null,
 };

@@ -539,10 +539,14 @@ function runProcess() {
 
   const rows = work.map(row => {
     const [name, symptom, serial, link] = parseCsHistory(row['cs이력']||'', fallbackCol ? safeStr(row[fallbackCol]) : '');
+    const typeVal = safeStr(row['반품타입']);
+    let 사용부품 = '';
+    if (typeVal.includes('교환')) 사용부품 = '교환';
+    else if (typeVal.includes('취소')) 사용부품 = '환불';
     return {
       '도착일': normDate(row['도착일']), '주문번호': safeStr(row['주문번호']),
       '제품명': safeStr(row['어드민상품']), '고객명': name, '제품증상': symptom,
-      '시리얼넘버': serial, '영상링크': link, '사용부품':'', '과실':'', '접수불량':'',
+      '시리얼넘버': serial, '영상링크': link, '사용부품': 사용부품, '과실':'', '접수불량':'',
     };
   });
 
@@ -568,9 +572,12 @@ function renderTable(data) {
   }
   const cols = Object.keys(data[0]);
   document.getElementById('tableHead').innerHTML = '<tr>' + cols.map(c=>`<th>${c}</th>`).join('') + '</tr>';
-  document.getElementById('tableBody').innerHTML = data.map(row =>
-    '<tr>' + cols.map(c=>`<td title="${row[c]}">${row[c]}</td>`).join('') + '</tr>'
-  ).join('');
+  document.getElementById('tableBody').innerHTML = data.map(row => {
+    const link = row['영상링크'] || '';
+    const isErr = !link || !link.startsWith('http');
+    const rowStyle = isErr ? ' style="background:#fde8e8;color:#a00;"' : '';
+    return `<tr${rowStyle}>` + cols.map(c=>`<td title="${row[c]}">${row[c]}</td>`).join('') + '</tr>';
+  }).join('');
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('tableWrap').style.display = 'block';
   const badge = document.getElementById('resultBadge');

@@ -276,6 +276,9 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
   <div class="tab" data-tab="건별보고" onclick="switchTab(this)">건별보고</div>
   <div class="tab" data-tab="팀Tool"   onclick="switchTab(this)">팀Tool ✓</div>
   <div class="tab" data-tab="개발자"   onclick="switchTab(this)">개발자</div>
+  <button onclick="openTestServer()" title="테스트서버 열기" style="margin-left:auto;height:26px;display:flex;align-items:center;gap:6px;background:#1e4a2a;border:1px solid #2e7a3e;color:#5be87a;padding:0 12px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background 0.15s;" onmouseenter="this.style.background='#256032'" onmouseleave="this.style.background='#1e4a2a'">
+    <span style="font-size:14px;">🖥</span> 테스트서버
+  </button>
 </div>
 
 <div class="main">
@@ -317,6 +320,17 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
     </div>
 
     <!-- ── 팀Tool 전용 사이드바 ── -->
+    <!-- ── 개발자 전용 사이드바 ── -->
+    <div id="devSidebar" style="display:none;">
+      <div class="sb-label">계정설정</div>
+      <div class="sb-item" onclick="devNav('developer/account.html', this)">계정설정</div>
+      <div class="sb-item" onclick="devNav('developer/permission.html', this)">권한설정</div>
+      <div class="sb-divider"></div>
+      <div class="sb-label">메뉴설정</div>
+      <div class="sb-item" onclick="devNav('developer/webinfo.html', this)">웹구성정보</div>
+      <div class="sb-item" onclick="devNav('developer/menuconfig.html', this)">메뉴구성</div>
+    </div>
+
     <!-- ── 건별보고 전용 사이드바 ── -->
     <div id="onceSidebar" style="display:none;">
       <div class="sb-label">건별보고</div>
@@ -410,7 +424,7 @@ const TAB_MAP = {
   'AI보고':   'report/ai보고.html',
   '상담분석':  'report/채널톡보고.html',
   '팀Tool':   'report/팀Tool.html',
-  '개발자':   'report/개발자.html',
+  '개발자':   'developer/account.html',
 };
 
 let state = {
@@ -707,13 +721,15 @@ function switchTab(el) {
   el.classList.add('active');
   state.tab = el.dataset.tab;
 
-  const isToolTab  = state.tab === '팀Tool' || state.tab === '개발자';
+  const isToolTab  = state.tab === '팀Tool';
+  const isDevTab   = state.tab === '개발자';
   const isKpiTab   = state.tab === '주요kpi';
   const isOnceTab  = state.tab === '건별보고';
 
-  document.getElementById('dashSidebar').style.display  = (isToolTab || isOnceTab) ? 'none' : 'block';
+  document.getElementById('dashSidebar').style.display  = (isToolTab || isOnceTab || isDevTab) ? 'none' : 'block';
   document.getElementById('toolSidebar').style.display  = isToolTab ? 'block' : 'none';
   document.getElementById('onceSidebar').style.display  = isOnceTab ? 'block' : 'none';
+  document.getElementById('devSidebar').style.display   = isDevTab  ? 'block' : 'none';
 
   // 주요KPI: 월간/주간/직접선택 숨김, 연간만 표시
   const monthly  = document.getElementById('monthlyList');
@@ -751,9 +767,10 @@ function switchTab(el) {
 
   if (isOnceTab) {
     onceNav('report/once/allstain.html', null);
+  } else if (isDevTab) {
+    devNav('developer/account.html', null);
   } else if (isToolTab) {
-    if (state.tab === '팀Tool') toolNav('tool/tool_main.html', null);
-    else if (state.tab === '개발자') toolNav('report/개발자.html', null);
+    toolNav('tool/tool_main.html', null);
     setTimeout(() => loadAndBroadcastCSV(false), 0);
   } else {
     updateFrame();
@@ -762,6 +779,17 @@ function switchTab(el) {
 }
 
 // 팀Tool 내 메뉴 이동
+function devNav(path, el) {
+  if (el) {
+    document.querySelectorAll('#devSidebar .sb-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+  }
+  const role = sessionStorage.getItem('userRole') || '';
+  // 읽기전용 여부를 URL 파라미터로 전달
+  const readOnly = role === 'leader' ? '?readonly=1' : '';
+  document.getElementById('mainFrame').src = path + readOnly;
+}
+
 function onceNav(path, el) {
   if (el) {
     document.querySelectorAll('#onceSidebar .sb-item').forEach(i => i.classList.remove('active'));
@@ -838,6 +866,10 @@ function updateHeader() {
 }
 
 // ── 초기화 ─────────────────────────────────────────
+function openTestServer() {
+  window.open('https://shim0627.github.io/shim0627/', '_blank');
+}
+
 function init() {
   renderMonthly();
   renderWeekly();
@@ -876,7 +908,7 @@ const ACCOUNTS = {
 
 // 역할별 허용 탭 목록 (null = 전체허용)
 const ROLE_TABS = {
-  'leader': ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','건별보고','팀Tool'],
+  'leader': ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','건별보고','팀Tool','개발자'],
   'ggumbi': ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','건별보고','팀Tool'],
   'ermore': ['팀Tool'],
   'dev':    null,

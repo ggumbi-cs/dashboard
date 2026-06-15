@@ -70,17 +70,21 @@ input, select {
 
 <label>모델명 입력방식</label>
 <select id="modelType">
-    <option>4종 선택</option>
+    <option>모델 선택</option>
     <option>직접입력</option>
 </select>
 
 <div id="selectWrap">
-    <label>4종 선택</label>
+    <label>모델 선택</label>
     <select id="productSelect">
-        <option>분유쉐이커</option>
-        <option>LED분유쉐이커</option>
-        <option>휴대용분유포트</option>
+        <option>(일체형) 휴대용 분유포트</option>
         <option>(분리형) 휴대용 분유포트</option>
+        <option>LED 분유쉐이커</option>
+        <option>분유쉐이커 솔로</option>
+        <option>젖병살균세척기</option>
+        <option>스팀플러스</option>
+        <option>쿨시트</option>
+        <option>쿨링커버</option>
     </select>
 </div>
 
@@ -143,7 +147,7 @@ input, select {
 </div>
 
 <script>
-const LINKMOM = ["분유쉐이커","LED분유쉐이커","휴대용분유포트","(분리형) 휴대용 분유포트"];
+const LINKMOM = ["(일체형) 휴대용 분유포트","(분리형) 휴대용 분유포트","LED 분유쉐이커","분유쉐이커 솔로","젖병살균세척기","스팀플러스","쿨시트","쿨링커버"];
 
 const modelType = document.getElementById("modelType");
 const selectWrap = document.getElementById("selectWrap");
@@ -166,12 +170,15 @@ const copyBtn = document.getElementById("copyBtn");
 const resetBtn = document.getElementById("resetBtn");
 
 function getProduct(){
-    return modelType.value === "4종 선택"
+    return modelType.value === "모델 선택"
         ? productSelect.value.trim()
         : productInput.value.trim();
 }
 
 function isLinkmom(p){
+    // 4종 선택이면 목록 포함 여부로 판단
+    // 직접입력이면 항상 링크맘으로 처리
+    if(modelType.value === "직접입력") return true;
     return LINKMOM.includes(p);
 }
 
@@ -268,7 +275,7 @@ document.querySelectorAll("input, select").forEach(el=>{
 });
 
 modelType.addEventListener("change", ()=>{
-    if(modelType.value==="4종 선택"){
+    if(modelType.value==="모델 선택"){
         selectWrap.style.display="block";
         inputWrap.style.display="none";
     }else{

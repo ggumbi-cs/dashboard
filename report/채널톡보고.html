@@ -1135,12 +1135,20 @@ function renderAgentTable(agents) {
 
   const html = `
     <table class="data-table">
+      <colgroup>
+        <col style="width:160px;">
+        <col style="width:90px;">
+        <col style="width:140px;">
+        <col style="min-width:220px;">
+        <col style="width:90px;">
+        <col style="width:80px;">
+      </colgroup>
       <thead>
         <tr>
           <th>상담원</th>
           <th class="num">처리건수</th>
-          <th style="width:160px;">처리 비중</th>
-          <th style="width:200px;">
+          <th>처리 비중</th>
+          <th>
             응답속도
             ${hasTeamAvg ? `<span style="font-size:10px;color:var(--textL);font-weight:400;margin-left:4px;">팀평균 ${teamAvg.toFixed(1)}분 기준</span>` : ''}
           </th>

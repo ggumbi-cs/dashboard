@@ -425,10 +425,7 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
         <span class="nav-item-label">AI보고 <span style="font-size:10px;color:#4fc3f7;">★</span></span>
         <button class="vis-btn" data-tab="AI보고" onclick="openVisModal(event,'AI보고')">⚙</button>
       </div>
-      <div class="nav-item" data-tab="상담분석" onclick="switchTab(this)">
-        <span class="nav-item-label">ALF(채널톡)</span>
-        <button class="vis-btn" data-tab="상담분석" onclick="openVisModal(event,'상담분석')">⚙</button>
-      </div>
+
     </div>
   </div>
 
@@ -442,8 +439,12 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
         <span class="nav-item-label">주요KPI</span>
         <button class="vis-btn" data-tab="주요kpi" onclick="openVisModal(event,'주요kpi')">⚙</button>
       </div>
-      <div class="nav-item" data-tab="상담실적" onclick="switchTab(this)">
-        <span class="nav-item-label">상담실적</span>
+      <div class="nav-item" data-tab="상담분석" onclick="switchTab(this)">
+        <span class="nav-item-label">상담실적 <span style="font-size:11px;color:#4fc3f7;" title="채널톡(ALF) 연동">🔗</span></span>
+        <button class="vis-btn" data-tab="상담분석" onclick="openVisModal(event,'상담분석')">⚙</button>
+      </div>
+      <div class="nav-item admin-only-item" data-tab="상담실적" onclick="switchTab(this)" style="display:none;">
+        <span class="nav-item-label" style="color:#6a8faa;">상담실적(미사용)</span>
         <button class="vis-btn" data-tab="상담실적" onclick="openVisModal(event,'상담실적')">⚙</button>
       </div>
       <div class="nav-item" data-tab="반품현황" onclick="switchTab(this)">
@@ -760,9 +761,16 @@ function applyRolePermissions(role) {
   if (isAdmin) navBar.classList.add('admin-mode');
   else         navBar.classList.remove('admin-mode');
 
+  // 관리자 전용 항목 표시/숨김
+  document.querySelectorAll('.admin-only-item').forEach(item => {
+    item.style.display = isAdmin ? 'flex' : 'none';
+  });
+
   // 계열사: 팀Tool만 → 나머지 숨김 처리
   document.querySelectorAll('.nav-item[data-tab]').forEach(item => {
     const tabName = item.dataset.tab;
+    // 관리자 전용 항목은 위에서 이미 처리
+    if (item.classList.contains('admin-only-item')) return;
     if (allowed !== null && !allowed.includes(tabName)) {
       item.style.display = role === 'affiliate' ? 'none' : 'flex';
       item.style.opacity = role === 'affiliate' ? '' : '0.45';

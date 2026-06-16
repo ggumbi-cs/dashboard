@@ -984,12 +984,17 @@ function _applyTab(tabName, role) {
   hideNoPermission();
   _switchSidebar(tabName);
 
-  const isToolTab = tabName === '팀Tool';
-  const isDevTab  = tabName === '개발자';
-  const isKpiTab  = tabName === '주요kpi';
-  const isOnceTab = tabName === '건별보고' || tabName === '건별Issue';
+  const isToolTab  = tabName === '팀Tool';
+  const isDevTab   = tabName === '개발자';
+  const isKpiTab   = tabName === '주요kpi';
+  const isOnceTab  = tabName === '건별보고';
+  const isIssueTab = tabName === '건별Issue';
 
-  if (isOnceTab) {
+  if (isIssueTab) {
+    // 사이드바 첫 번째 아이템을 기본으로 열기
+    const firstItem = document.querySelector('#issueSidebar .sb-item');
+    if (firstItem) onceNav(firstItem.getAttribute('onclick').match(/'([^']+)'/)[1], firstItem);
+  } else if (isOnceTab) {
     onceNav(TAB_MAP[tabName] || 'report/once/allstain.html', null);
   } else if (isDevTab) {
     devNav('developer/account.html', null);

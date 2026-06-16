@@ -191,6 +191,24 @@
   }
   .result-close:hover { background: #dddafc; }
 
+  /* GAS 상태 표시 */
+  .gas-status-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 1.5rem;
+    font-size: 11px; color: var(--text-sub);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    min-height: 28px;
+  }
+  .gas-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #ccc; flex-shrink: 0; transition: background 0.3s;
+  }
+  .gas-dot.loading { background: #f0a020; animation: blink 0.8s ease infinite alternate; }
+  .gas-dot.ok      { background: #3b6; }
+  .gas-dot.err     { background: var(--red); }
+  @keyframes blink { from{opacity:1} to{opacity:0.3} }
+
   /* MODE PANELS */
   .mode-panel { display: none; }
   .mode-panel.active { display: block; }
@@ -241,6 +259,12 @@
     <span class="badge-2x">당첨 시 2배 구매</span>
   </div>
   <span class="month-chip" id="month-chip"></span>
+</div>
+
+<!-- GAS 상태바 -->
+<div class="gas-status-bar">
+  <div class="gas-dot" id="gas-dot"></div>
+  <span id="gas-status-text">항목 불러오는 중...</span>
 </div>
 
 <!-- MODE SELECTOR -->
@@ -333,17 +357,9 @@ const COLORS = [
 // ── STATE ──
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec';
 
-const defaultItems = [
-  { name: '오리온 비초비 비스켓', votes: 5 },
-  { name: '곰곰 달달 맛밥', votes: 6 },
-  { name: '오리온 눈을감자', votes: 2 },
-  { name: '오레오 화이트크림+딸기', votes: 1 },
-  { name: '몽쉘 생크림케이크 카카오', votes: 3 },
-  { name: '빼빼로 아몬드', votes: 5 },
-  { name: '새 간식 후보 A', votes: 3 },
-];
-
-let items = defaultItems.map(i => ({...i}));
+// 항목은 GAS 시트에서 불러옴 (하드코딩 없음)
+let items = [];
+let gasSaveTimer = null;
 let isSpinning = false;
 let currentAngle = -Math.PI / 2;  // 포인터가 12시(위)이므로 첫 슬라이스도 12시부터 시작
 let monthWinner = null;
@@ -401,7 +417,7 @@ function renderList() {
   );
   itemsList.querySelectorAll('.del-btn').forEach(el =>
     el.addEventListener('click', e => {
-      if (items.length <= 2) return;
+      if (items.length <= 1) return;
       items.splice(+e.target.dataset.i, 1);
       renderList();
       if (currentMode === 'fishing') initFishing();
@@ -409,6 +425,7 @@ function renderList() {
     })
   );
   addBtn.style.display = items.length >= 10 ? 'none' : 'block';
+  spinBtn.disabled = items.length < 2 || !!monthWinner;
   drawWheel();
   if (currentMode === 'fishing') initFishing();
 }
@@ -1141,42 +1158,62 @@ btnReset.addEventListener('click', () => {
 });
 
 // ── 설정 ──
-function showStatus(msg,type){
-  // GAS 상태 콘솔 로그
+function showStatus(msg, type) {
   console.log('[GAS]', type, msg);
+  const dot  = document.getElementById('gas-dot');
+  const text = document.getElementById('gas-status-text');
+  if (!dot || !text) return;
+  dot.className  = 'gas-dot ' + type;
+  text.textContent = msg;
+  // ok/err 는 3초 후 idle로 복귀
+  if (type === 'ok' || type === 'err') {
+    setTimeout(() => {
+      dot.className   = 'gas-dot';
+      text.textContent = '';
+    }, 3000);
+  }
 }
 
 async function loadItemsFromGAS() {
   const url = GAS_URL;
-  if (!url) return;
+  if (!url) return false;
   showStatus('항목 불러오는 중...', 'loading');
   try {
     const res = await fetch(`${url}?action=getSnackItems`);
     if (!res.ok) throw new Error('응답 오류 ' + res.status);
     const data = await res.json();
+    console.log('[GAS] getSnackItems 응답:', data);
     if (!data.ok) throw new Error(data.msg || '불러오기 실패');
     if (Array.isArray(data.items) && data.items.length >= 2) {
       items = data.items.map(it => ({ name: String(it.name||''), votes: Math.max(1, Number(it.votes)||1) }));
-      renderList();
-      if (currentMode === 'fishing') initFishing();
       showStatus('✅ 항목을 불러왔습니다.', 'ok');
+      return true;  // 불러오기 성공
     } else {
       showStatus('저장된 항목 없음 — 기본값 사용', 'ok');
+      return false; // 저장된 항목 없음
     }
   } catch(e) {
     showStatus('⚠ 항목 불러오기 실패: ' + e.message, 'err');
+    return false;
   }
 }
 
 async function saveItemsToGAS() {
   const url = GAS_URL;
   if (!url) return;
+  console.log('[GAS] saveSnackItems 호출, items:', JSON.stringify(items));
   try {
-    const res = await fetch(url + '?action=saveSnackItems&data=' + encodeURIComponent(JSON.stringify({ items })));
-    const data = await res.json();
+    const fullUrl = url + '?action=saveSnackItems&data=' + encodeURIComponent(JSON.stringify({ items }));
+    console.log('[GAS] 요청 URL 길이:', fullUrl.length);
+    const res = await fetch(fullUrl);
+    const text = await res.text();
+    console.log('[GAS] 응답 raw:', text.slice(0, 200));
+    const data = JSON.parse(text);
     if (!data.ok) throw new Error(data.msg);
+    console.log('[GAS] 저장 성공:', data);
     showStatus('✅ 항목 저장됨', 'ok');
   } catch(e) {
+    console.error('[GAS] 저장 실패:', e.message);
     showStatus('⚠ 항목 저장 실패: ' + e.message, 'err');
   }
 }
@@ -1188,12 +1225,11 @@ function scheduleGASSave() {
 }
 
 // ── INIT ──
-loadItemsFromGAS().then(() => {
-  // GAS에서 불러오기 성공하면 이미 renderList 호출됨
-  // 실패하거나 URL 없으면 기본 defaultItems로 렌더
-}).catch(() => {});
-renderList();
-initFishing();
+loadItemsFromGAS().finally(() => {
+  // GAS 결과 상관없이 항상 renderList/initFishing 실행
+  renderList();
+  initFishing();
+});
 </script>
 </body>
 </html>

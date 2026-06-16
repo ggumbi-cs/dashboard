@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎡 팀 간식 룰렛</title>
+<title>🎡 팀 간식 룰렛 v2</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
 
   :root {
     --purple-light: #EEEDFE;
@@ -18,57 +18,53 @@
     --text: #1a1825;
     --text-sub: #6b6880;
     --red: #E24B4A;
+    --water: #1a7fd4;
+    --water-dark: #0d5a9e;
+    --water-light: #5bb3f0;
+    --sand: #f5e6c8;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'Noto Sans KR', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-  }
+  body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
   /* ── HEADER ── */
   .header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     padding: 1rem 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
   }
   .header-left { display: flex; align-items: center; gap: 10px; }
   .header-left h1 { font-size: 17px; font-weight: 700; color: var(--purple-deep); }
   .badge-2x {
-    background: var(--purple-light);
-    color: var(--purple-dark);
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 999px;
-    letter-spacing: 0.03em;
+    background: var(--purple-light); color: var(--purple-dark);
+    font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; letter-spacing: 0.03em;
   }
   .month-chip {
-    background: var(--purple-mid);
-    color: #fff;
-    font-size: 12px;
-    font-weight: 500;
-    padding: 4px 12px;
-    border-radius: 999px;
+    background: var(--purple-mid); color: #fff;
+    font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: 999px;
   }
+
+  /* ── MODE SELECTOR ── */
+  .mode-selector {
+    display: flex; gap: 10px; padding: 1.25rem 1.5rem 0;
+  }
+  .mode-btn {
+    flex: 1; padding: 14px; border-radius: 14px; border: 2px solid var(--border);
+    background: var(--surface); cursor: pointer; font-family: inherit;
+    font-size: 14px; font-weight: 700; color: var(--text-sub);
+    transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .mode-btn .mode-icon { font-size: 28px; }
+  .mode-btn:hover { border-color: var(--purple-mid); color: var(--purple-dark); background: var(--purple-light); }
+  .mode-btn.active { border-color: var(--purple-dark); background: var(--purple-light); color: var(--purple-deep); box-shadow: 0 2px 12px rgba(83,74,183,0.2); }
 
   /* ── WINNER BANNER ── */
   .winner-banner {
-    display: none;
-    background: linear-gradient(135deg, #EEEDFE 0%, #F0EEFF 100%);
-    border: 1px solid #AFA9EC;
-    border-radius: 14px;
-    margin: 1.25rem 1.5rem 0;
-    padding: 1rem 1.25rem;
-    align-items: center;
-    gap: 14px;
+    display: none; background: linear-gradient(135deg, #EEEDFE 0%, #F0EEFF 100%);
+    border: 1px solid #AFA9EC; border-radius: 14px;
+    margin: 1.25rem 1.5rem 0; padding: 1rem 1.25rem;
+    align-items: center; gap: 14px;
   }
   .winner-banner.show { display: flex; }
   .winner-trophy { font-size: 32px; flex-shrink: 0; }
@@ -78,73 +74,150 @@
   .winner-date { font-size: 11px; color: var(--purple-mid); margin-top: 3px; }
   .winner-actions { display: flex; gap: 8px; flex-shrink: 0; }
   .btn-replay {
-    background: var(--purple-dark);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 7px 14px;
-    font-size: 12px;
-    font-family: inherit;
-    cursor: pointer;
-    transition: background 0.15s;
+    background: var(--purple-dark); color: #fff; border: none; border-radius: 8px;
+    padding: 7px 14px; font-size: 12px; font-family: inherit; cursor: pointer; transition: background 0.15s;
   }
   .btn-replay:hover { background: var(--purple-deep); }
   .btn-reset {
-    background: none;
-    color: var(--text-sub);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 7px 12px;
-    font-size: 12px;
-    font-family: inherit;
-    cursor: pointer;
-    transition: color 0.15s;
+    background: none; color: var(--text-sub); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 12px; font-size: 12px; font-family: inherit;
+    cursor: pointer; transition: color 0.15s;
   }
   .btn-reset:hover { color: var(--red); border-color: var(--red); }
 
-  /* ── GIST CONFIG ── */
+  /* ── MAIN LAYOUT ── */
+  .main {
+    display: grid; grid-template-columns: minmax(280px, 480px) 1fr;
+    gap: 1.25rem; padding: 1.25rem 1.5rem 2rem; align-items: start;
+  }
+  @media (max-width: 700px) { .main { grid-template-columns: 1fr; } }
+
+  /* ── SETUP PANEL ── */
+  .setup-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; }
+  .setup-panel h3 { font-size: 13px; font-weight: 700; color: var(--text-sub); margin-bottom: 12px; letter-spacing: 0.04em; }
+  .col-labels { display: grid; grid-template-columns: 3fr 64px 28px; gap: 6px; margin-bottom: 4px; }
+  .col-labels span { font-size: 10px; color: var(--text-sub); padding: 0 4px; }
+  .item-row { display: grid; grid-template-columns: 3fr 64px 28px; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .item-row input[type="text"], .item-row input[type="number"] {
+    font-size: 12px; padding: 5px 8px; height: 30px; border-radius: 7px;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text);
+    font-family: inherit; width: 100%;
+  }
+  .item-row input[type="number"] { text-align: center; }
+  .item-row input:focus { outline: none; border-color: var(--purple-mid); }
+  .del-btn {
+    background: none; border: 1px solid var(--border); border-radius: 7px;
+    color: var(--text-sub); cursor: pointer; width: 28px; height: 30px;
+    display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all 0.15s;
+  }
+  .del-btn:hover { background: #FCEBEB; color: var(--red); border-color: var(--red); }
+  .add-btn {
+    margin-top: 6px; background: none; border: 1px dashed var(--border);
+    border-radius: 8px; color: var(--text-sub); cursor: pointer; width: 100%;
+    padding: 7px; font-size: 12px; font-family: inherit; transition: background 0.15s;
+  }
+  .add-btn:hover { background: var(--purple-light); color: var(--purple-dark); }
+
+  /* ── ROULETTE PANEL ── */
+  .roulette-panel { display: flex; flex-direction: column; align-items: center; gap: 1.25rem; }
+  .canvas-wrap { position: relative; }
+  #roulette { display: block; border-radius: 50%; }
+  .pointer-wrap { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); }
+  .pointer {
+    width: 0; height: 0;
+    border-left: 16px solid transparent; border-right: 16px solid transparent;
+    border-top: 36px solid var(--red); filter: drop-shadow(0 2px 4px rgba(226,75,74,0.4));
+  }
+  .spin-btn-big {
+    padding: 12px 52px; font-size: 15px; font-weight: 700; font-family: inherit;
+    border-radius: 999px; border: none;
+    background: linear-gradient(135deg, var(--purple-mid), var(--purple-dark));
+    color: #fff; cursor: pointer; transition: transform 0.1s, box-shadow 0.15s;
+    box-shadow: 0 4px 18px rgba(83,74,183,0.35); letter-spacing: 0.02em;
+  }
+  .spin-btn-big:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(83,74,183,0.45); }
+  .spin-btn-big:active { transform: scale(0.97); }
+  .spin-btn-big:disabled { background: #ddd; color: #999; box-shadow: none; cursor: not-allowed; transform: none; }
+
+  /* ── FISHING GAME ── */
+  .fishing-panel {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px; overflow: hidden;
+  }
+  #fishing-canvas { border-radius: 12px; display: block; cursor: pointer; }
+  .fish-btn {
+    padding: 12px 52px; font-size: 15px; font-weight: 700; font-family: inherit;
+    border-radius: 999px; border: none;
+    background: linear-gradient(135deg, #1a7fd4, #0d5a9e);
+    color: #fff; cursor: pointer; transition: transform 0.1s, box-shadow 0.15s;
+    box-shadow: 0 4px 18px rgba(26,127,212,0.4); letter-spacing: 0.02em;
+  }
+  .fish-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(26,127,212,0.5); }
+  .fish-btn:active { transform: scale(0.97); }
+  .fish-btn:disabled { background: #ddd; color: #999; box-shadow: none; cursor: not-allowed; transform: none; }
+  .fish-hint { font-size: 12px; color: var(--text-sub); text-align: center; line-height: 1.6; }
+
+  /* ── OVERLAY / RESULT ── */
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(20,16,50,0.65); z-index: 100;
+    align-items: center; justify-content: center; backdrop-filter: blur(3px);
+  }
+  .overlay.show { display: flex; }
+  #confetti-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 99; width: 100%; height: 100%; }
+  .result-card {
+    background: var(--surface); border-radius: 20px;
+    padding: 2.5rem 2rem 2rem; text-align: center; max-width: 360px; width: 90%;
+    border: 1px solid var(--border); position: relative; z-index: 101;
+    box-shadow: 0 24px 60px rgba(83,74,183,0.25);
+    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes popIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .result-ribbon {
+    display: inline-block; background: var(--purple-light); color: var(--purple-dark);
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    padding: 4px 14px; border-radius: 999px; margin-bottom: 16px;
+  }
+  .result-trophy { font-size: 60px; margin-bottom: 10px; display: block; animation: bounce 0.6s 0.3s ease both; }
+  @keyframes bounce { 0%{transform:scale(0)} 60%{transform:scale(1.3)} 80%{transform:scale(0.9)} 100%{transform:scale(1)} }
+  .result-name { font-size: 22px; font-weight: 700; color: var(--purple-deep); margin-bottom: 8px; word-break: keep-all; }
+  .result-sub { font-size: 13px; color: var(--text-sub); line-height: 1.7; margin-bottom: 1.75rem; }
+  .result-sub strong { color: var(--purple-dark); }
+  .result-close {
+    background: var(--purple-light); border: none; border-radius: 10px;
+    padding: 10px 32px; font-size: 14px; font-weight: 500; font-family: inherit;
+    color: var(--purple-dark); cursor: pointer; transition: background 0.15s;
+  }
+  .result-close:hover { background: #dddafc; }
+
+  /* MODE PANELS */
+  .mode-panel { display: none; }
+  .mode-panel.active { display: block; }
+
+  /* GIST PANEL */
   .gist-panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    margin: 1.25rem 1.5rem 0;
-    padding: 1rem 1.25rem;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    margin: 0 1.5rem 0; padding: 1rem 1.25rem;
   }
   .gist-panel summary {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-sub);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    user-select: none;
+    font-size: 13px; font-weight: 500; color: var(--text-sub);
+    cursor: pointer; display: flex; align-items: center; gap: 6px; user-select: none;
   }
-  .gist-panel summary::marker { display: none; }
-  .gist-panel summary::-webkit-details-marker { display: none; }
+  .gist-panel summary::marker, .gist-panel summary::-webkit-details-marker { display: none; }
   .gist-arrow { transition: transform 0.2s; display: inline-block; }
   details[open] .gist-arrow { transform: rotate(90deg); }
   .gist-fields { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
   .gist-fields label { font-size: 11px; color: var(--text-sub); margin-bottom: 2px; display: block; }
   .gist-fields input {
-    width: 100%;
-    font-size: 13px;
-    font-family: 'Courier New', monospace;
-    padding: 7px 10px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--bg);
-    color: var(--text);
+    width: 100%; font-size: 13px; font-family: 'Courier New', monospace;
+    padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg); color: var(--text);
   }
   .gist-fields input:focus { outline: none; border-color: var(--purple-mid); }
   .gist-help {
-    font-size: 11px;
-    color: var(--text-sub);
-    line-height: 1.6;
-    background: #f9f8ff;
-    border-radius: 8px;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
+    font-size: 11px; color: var(--text-sub); line-height: 1.6;
+    background: #f9f8ff; border-radius: 8px; padding: 10px 12px; border: 1px solid var(--border);
   }
   .gist-help a { color: var(--purple-dark); }
   .gist-status { font-size: 11px; margin-top: 6px; padding: 5px 10px; border-radius: 6px; display: none; }
@@ -152,207 +225,11 @@
   .gist-status.err { display: block; background: #FCEBEB; color: #A32D2D; }
   .gist-status.loading { display: block; background: var(--purple-light); color: var(--purple-dark); }
   .btn-gist-save {
-    background: var(--purple-dark);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-size: 13px;
-    font-family: inherit;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s;
+    background: var(--purple-dark); color: #fff; border: none; border-radius: 8px;
+    padding: 8px 16px; font-size: 13px; font-family: inherit; font-weight: 500;
+    cursor: pointer; transition: background 0.15s;
   }
   .btn-gist-save:hover { background: var(--purple-deep); }
-
-  /* ── MAIN LAYOUT ── */
-  .main {
-    display: grid;
-    grid-template-columns: minmax(320px, 560px) 1fr;
-    gap: 1.25rem;
-    padding: 1.25rem 1.5rem 2rem;
-    align-items: start;
-  }
-  @media (max-width: 600px) {
-    .main { grid-template-columns: 1fr; }
-  }
-
-  /* ── SETUP PANEL ── */
-  .setup-panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 1.25rem;
-  }
-  .setup-panel h3 {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text-sub);
-    margin-bottom: 12px;
-    letter-spacing: 0.04em;
-  }
-  .col-labels {
-    display: grid;
-    grid-template-columns: 3fr 64px 28px;
-    gap: 6px;
-    margin-bottom: 4px;
-  }
-  .col-labels span { font-size: 10px; color: var(--text-sub); padding: 0 4px; }
-  .item-row {
-    display: grid;
-    grid-template-columns: 3fr 64px 28px;
-    gap: 6px;
-    align-items: center;
-    margin-bottom: 6px;
-  }
-  .item-row input[type="text"],
-  .item-row input[type="number"] {
-    font-size: 12px;
-    padding: 5px 8px;
-    height: 30px;
-    border-radius: 7px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text);
-    font-family: inherit;
-    width: 100%;
-  }
-  .item-row input[type="number"] { text-align: center; }
-  .item-row input:focus { outline: none; border-color: var(--purple-mid); }
-  .del-btn {
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    color: var(--text-sub);
-    cursor: pointer;
-    width: 28px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    transition: all 0.15s;
-  }
-  .del-btn:hover { background: #FCEBEB; color: var(--red); border-color: var(--red); }
-  .add-btn {
-    margin-top: 6px;
-    background: none;
-    border: 1px dashed var(--border);
-    border-radius: 8px;
-    color: var(--text-sub);
-    cursor: pointer;
-    width: 100%;
-    padding: 7px;
-    font-size: 12px;
-    font-family: inherit;
-    transition: background 0.15s;
-  }
-  .add-btn:hover { background: var(--purple-light); color: var(--purple-dark); }
-
-  /* ── ROULETTE ── */
-  .roulette-panel {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.25rem;
-  }
-  .canvas-wrap { position: relative; }
-  #roulette { display: block; border-radius: 50%; }
-  .pointer-wrap {
-    position: absolute;
-    top: 50%;
-    right: -26px;
-    transform: translateY(-50%);
-  }
-  .pointer {
-    width: 0; height: 0;
-    border-top: 20px solid transparent;
-    border-bottom: 20px solid transparent;
-    border-right: 36px solid var(--red);
-    filter: drop-shadow(0 2px 4px rgba(226,75,74,0.4));
-  }
-  #spin-btn {
-    padding: 12px 52px;
-    font-size: 15px;
-    font-weight: 700;
-    font-family: inherit;
-    border-radius: 999px;
-    border: none;
-    background: linear-gradient(135deg, var(--purple-mid), var(--purple-dark));
-    color: #fff;
-    cursor: pointer;
-    transition: transform 0.1s, box-shadow 0.15s;
-    box-shadow: 0 4px 18px rgba(83,74,183,0.35);
-    letter-spacing: 0.02em;
-  }
-  #spin-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(83,74,183,0.45); }
-  #spin-btn:active { transform: scale(0.97); }
-  #spin-btn:disabled {
-    background: #ddd;
-    color: #999;
-    box-shadow: none;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  /* ── OVERLAY / RESULT ── */
-  .overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(20,16,50,0.6);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(2px);
-  }
-  .overlay.show { display: flex; }
-  #confetti-canvas {
-    position: fixed; inset: 0;
-    pointer-events: none;
-    z-index: 99;
-    width: 100%; height: 100%;
-  }
-  .result-card {
-    background: var(--surface);
-    border-radius: 20px;
-    padding: 2.5rem 2rem 2rem;
-    text-align: center;
-    max-width: 340px;
-    width: 90%;
-    border: 1px solid var(--border);
-    position: relative;
-    z-index: 101;
-    box-shadow: 0 24px 60px rgba(83,74,183,0.2);
-  }
-  .result-ribbon {
-    display: inline-block;
-    background: var(--purple-light);
-    color: var(--purple-dark);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    padding: 4px 14px;
-    border-radius: 999px;
-    margin-bottom: 16px;
-  }
-  .result-trophy { font-size: 52px; margin-bottom: 10px; display: block; }
-  .result-name { font-size: 22px; font-weight: 700; color: var(--purple-deep); margin-bottom: 8px; word-break: keep-all; }
-  .result-sub { font-size: 13px; color: var(--text-sub); line-height: 1.7; margin-bottom: 1.75rem; }
-  .result-sub strong { color: var(--purple-dark); }
-  .result-close {
-    background: var(--purple-light);
-    border: none;
-    border-radius: 10px;
-    padding: 10px 32px;
-    font-size: 14px;
-    font-weight: 500;
-    font-family: inherit;
-    color: var(--purple-dark);
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .result-close:hover { background: #dddafc; }
 </style>
 </head>
 <body>
@@ -366,8 +243,20 @@
   <span class="month-chip" id="month-chip"></span>
 </div>
 
+<!-- MODE SELECTOR -->
+<div class="mode-selector">
+  <button class="mode-btn active" id="mode-roulette" onclick="setMode('roulette')">
+    <span class="mode-icon">🎡</span>
+    <span>클래식 룰렛</span>
+  </button>
+  <button class="mode-btn" id="mode-fishing" onclick="setMode('fishing')">
+    <span class="mode-icon">🎣</span>
+    <span>낚시 뽑기</span>
+  </button>
+</div>
+
 <!-- WINNER BANNER -->
-<div class="winner-banner" id="winner-banner">
+<div class="winner-banner" id="winner-banner" style="margin-top:1.25rem">
   <div class="winner-trophy">🏆</div>
   <div class="winner-info">
     <div class="winner-label">이달의 당첨 간식</div>
@@ -380,36 +269,11 @@
   </div>
 </div>
 
-<!-- GIST CONFIG (개발자 전용 — ?dev=1 파라미터일 때만 표시) -->
-<details class="gist-panel" id="gist-details" style="display:none">
-  <summary>
-    <span class="gist-arrow">▶</span>
-    ⚙️ 결과 공유 설정 (GitHub Gist 연동)
-  </summary>
-  <div class="gist-fields">
-    <div class="gist-help">
-      📌 <strong>설정 방법</strong><br>
-      1. <a href="https://gist.github.com" target="_blank">gist.github.com</a>에서 <code>snack_result.json</code> 이름으로 <strong>공개(Public)</strong> Gist 생성<br>
-      2. 파일 내용은 <code>{}</code> 로 시작하면 됩니다<br>
-      3. <a href="https://github.com/settings/tokens" target="_blank">GitHub Token</a>에서 <code>gist</code> 권한으로 토큰 발급<br>
-      4. 아래에 입력 후 저장 → 이제 누구나 같은 결과 확인 가능!
-    </div>
-    <div>
-      <label>Gist ID (URL의 마지막 부분)</label>
-      <input type="text" id="gist-id" placeholder="예: a1b2c3d4e5f6..." />
-    </div>
-    <div>
-      <label>GitHub Personal Access Token (gist 권한)</label>
-      <input type="password" id="gist-token" placeholder="ghp_xxxxxxxxxxxx" />
-    </div>
-    <button class="btn-gist-save" id="btn-gist-save">설정 저장 (이 브라우저에만)</button>
-    <div class="gist-status" id="gist-status"></div>
-  </div>
-</details>
+
 
 <!-- MAIN -->
 <div class="main">
-  <!-- SETUP -->
+  <!-- SETUP (공통) -->
   <div class="setup-panel">
     <h3>📋 항목 설정 (2~10가지)</h3>
     <div class="col-labels">
@@ -421,13 +285,27 @@
     <button class="add-btn" id="add-btn">＋ 항목 추가</button>
   </div>
 
-  <!-- ROULETTE -->
-  <div class="roulette-panel">
-    <div class="canvas-wrap">
-      <canvas id="roulette" width="600" height="600"></canvas>
-      <div class="pointer-wrap"><div class="pointer"></div></div>
+  <!-- RIGHT: ROULETTE or FISHING -->
+  <div>
+    <!-- ROULETTE MODE -->
+    <div id="panel-roulette" class="mode-panel active">
+      <div class="roulette-panel">
+        <div class="canvas-wrap">
+          <canvas id="roulette" width="500" height="500"></canvas>
+          <div class="pointer-wrap"><div class="pointer"></div></div>
+        </div>
+        <button class="spin-btn-big" id="spin-btn">🎰 룰렛 돌리기</button>
+      </div>
     </div>
-    <button id="spin-btn">🎰 룰렛 돌리기</button>
+
+    <!-- FISHING MODE -->
+    <div id="panel-fishing" class="mode-panel">
+      <div class="fishing-panel">
+        <canvas id="fishing-canvas" width="500" height="420"></canvas>
+        <button class="fish-btn" id="fish-btn">🎣 낚싯대 던지기!</button>
+        <p class="fish-hint" id="fish-hint">물고기를 낚으면 어떤 간식이 붙어있을까요? 🐟</p>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -436,19 +314,15 @@
   <canvas id="confetti-canvas"></canvas>
   <div class="result-card">
     <div class="result-ribbon" id="result-ribbon"></div>
-    <span class="result-trophy">🎊</span>
+    <span class="result-trophy" id="result-trophy">🎊</span>
     <div class="result-name" id="result-name"></div>
     <div class="result-sub" id="result-sub"></div>
-    <button class="result-close" id="close-btn">확인</button>
+    <button class="result-close" id="close-btn">확인 ✓</button>
   </div>
 </div>
 
 <script>
-// ── DEV MODE (?dev=1) ──
-const isDev = new URLSearchParams(window.location.search).get('dev') === '1';
-if (isDev) {
-  document.getElementById('gist-details').style.display = 'block';
-}
+// ── DEV MODE ──
 
 // ── COLORS ──
 const COLORS = [
@@ -457,6 +331,8 @@ const COLORS = [
 ];
 
 // ── STATE ──
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec';
+
 const defaultItems = [
   { name: '오리온 비초비 비스켓', votes: 5 },
   { name: '곰곰 달달 맛밥', votes: 6 },
@@ -467,10 +343,21 @@ const defaultItems = [
   { name: '새 간식 후보 A', votes: 3 },
 ];
 
-let items = defaultItems.map(i => ({ ...i }));
+let items = defaultItems.map(i => ({...i}));
 let isSpinning = false;
-let currentAngle = 0;
-let monthWinner = null; // { name, date, angle }
+let currentAngle = -Math.PI / 2;  // 포인터가 12시(위)이므로 첫 슬라이스도 12시부터 시작
+let monthWinner = null;
+let currentMode = 'roulette';
+
+// ── MODE SWITCH ──
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('mode-roulette').classList.toggle('active', mode === 'roulette');
+  document.getElementById('mode-fishing').classList.toggle('active', mode === 'fishing');
+  document.getElementById('panel-roulette').classList.toggle('active', mode === 'roulette');
+  document.getElementById('panel-fishing').classList.toggle('active', mode === 'fishing');
+  if (mode === 'fishing') initFishing();
+}
 
 // ── ELEMENTS ──
 const canvas = document.getElementById('roulette');
@@ -478,6 +365,8 @@ const ctx = canvas.getContext('2d');
 const itemsList = document.getElementById('items-list');
 const addBtn = document.getElementById('add-btn');
 const spinBtn = document.getElementById('spin-btn');
+const fishBtn = document.getElementById('fish-btn');
+const fishHint = document.getElementById('fish-hint');
 const overlay = document.getElementById('overlay');
 const closeBtn = document.getElementById('close-btn');
 const winnerBanner = document.getElementById('winner-banner');
@@ -485,164 +374,12 @@ const bannerName = document.getElementById('banner-name');
 const bannerDate = document.getElementById('banner-date');
 const btnReplay = document.getElementById('btn-replay');
 const btnReset = document.getElementById('btn-reset');
-const gistIdInput = document.getElementById('gist-id');
-const gistTokenInput = document.getElementById('gist-token');
-const btnGistSave = document.getElementById('btn-gist-save');
-const gistStatus = document.getElementById('gist-status');
 const monthChip = document.getElementById('month-chip');
 
-// ── MONTH HELPERS ──
-function getMonthKey() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-}
-function getMonthLabel() {
-  const d = new Date();
-  return `${d.getFullYear()}년 ${d.getMonth()+1}월`;
-}
+// ── MONTH ──
+function getMonthKey() { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+function getMonthLabel() { const d=new Date(); return `${d.getFullYear()}년 ${d.getMonth()+1}월`; }
 monthChip.textContent = getMonthLabel();
-
-// ── LOCAL STORAGE: gist config ──
-function loadGistConfig() {
-  gistIdInput.value = localStorage.getItem('gist_id') || '';
-  gistTokenInput.value = localStorage.getItem('gist_token') || '';
-}
-btnGistSave.addEventListener('click', () => {
-  localStorage.setItem('gist_id', gistIdInput.value.trim());
-  localStorage.setItem('gist_token', gistTokenInput.value.trim());
-  showStatus('설정이 저장되었습니다.', 'ok');
-  loadResultFromGist();
-});
-
-function showStatus(msg, type) {
-  gistStatus.textContent = msg;
-  gistStatus.className = 'gist-status ' + type;
-  if (type !== 'loading') setTimeout(() => { gistStatus.className = 'gist-status'; }, 3500);
-}
-
-// ── GIST API ──
-async function loadResultFromGist() {
-  const id = localStorage.getItem('gist_id');
-  if (!id) return;
-  showStatus('결과 불러오는 중...', 'loading');
-  try {
-    const res = await fetch(`https://api.github.com/gists/${id}`, {
-      headers: { 'Accept': 'application/vnd.github+json' }
-    });
-    if (!res.ok) throw new Error('Gist 접근 실패 (ID 확인 필요)');
-    const data = await res.json();
-    const file = data.files['snack_result.json'];
-    if (!file) throw new Error('snack_result.json 파일 없음');
-    const content = JSON.parse(file.content);
-    const key = getMonthKey();
-    if (content[key]) {
-      monthWinner = content[key];
-      showWinnerBanner(monthWinner);
-      showStatus('이달의 결과를 불러왔습니다.', 'ok');
-    } else {
-      showStatus('이번 달 결과 없음 — 룰렛을 돌려보세요!', 'ok');
-    }
-  } catch(e) {
-    showStatus('⚠ ' + e.message, 'err');
-  }
-}
-
-async function saveResultToGist(winner) {
-  const id = localStorage.getItem('gist_id');
-  const token = localStorage.getItem('gist_token');
-  if (!id || !token) {
-    showStatus('⚠ Gist ID와 Token을 먼저 설정해주세요.', 'err');
-    document.getElementById('gist-details').open = true;
-    return false;
-  }
-  showStatus('결과 저장 중...', 'loading');
-  try {
-    // 먼저 기존 내용 읽기
-    const getRes = await fetch(`https://api.github.com/gists/${id}`, {
-      headers: { 'Accept': 'application/vnd.github+json', 'Authorization': `Bearer ${token}` }
-    });
-    if (!getRes.ok) throw new Error('Gist 읽기 실패');
-    const getData = await getRes.json();
-    const existing = getData.files['snack_result.json'];
-    let content = {};
-    if (existing) {
-      try { content = JSON.parse(existing.content); } catch(e) {}
-    }
-    // 이달의 결과 추가
-    content[getMonthKey()] = winner;
-    const patchRes = await fetch(`https://api.github.com/gists/${id}`, {
-      method: 'PATCH',
-      headers: {
-        'Accept': 'application/vnd.github+json',
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        files: { 'snack_result.json': { content: JSON.stringify(content, null, 2) } }
-      })
-    });
-    if (!patchRes.ok) throw new Error('저장 실패 (Token 권한 확인)');
-    showStatus('✅ 결과가 Gist에 저장되었습니다!', 'ok');
-    return true;
-  } catch(e) {
-    showStatus('⚠ ' + e.message, 'err');
-    return false;
-  }
-}
-
-// ── WINNER BANNER ──
-function showWinnerBanner(w) {
-  bannerName.textContent = w.name;
-  bannerDate.textContent = w.date + ' 당첨';
-  winnerBanner.classList.add('show');
-  // 룰렛도 당첨 위치로 복원
-  if (typeof w.angle === 'number') {
-    currentAngle = w.angle;
-    drawWheel();
-  }
-  spinBtn.disabled = true;
-  spinBtn.textContent = '이달의 당첨 완료 🏆';
-}
-
-btnReplay.addEventListener('click', () => {
-  if (!monthWinner) return;
-  document.getElementById('result-ribbon').textContent = getMonthLabel() + ' 당첨';
-  document.getElementById('result-name').textContent = monthWinner.name;
-  document.getElementById('result-sub').innerHTML =
-    `🛒 <strong>${monthWinner.name}</strong>이(가) 당첨됐습니다!<br>수량을 <strong>2배</strong>로 구매해 주세요 🎁<br><span style="font-size:11px;color:#aaa">${monthWinner.date} 추첨</span>`;
-  overlay.classList.add('show');
-  launchConfetti();
-});
-
-btnReset.addEventListener('click', async () => {
-  if (!confirm(`${getMonthLabel()} 당첨 결과를 초기화하고 다시 돌리시겠습니까?`)) return;
-  // Gist에서 해당 월 삭제
-  const id = localStorage.getItem('gist_id');
-  const token = localStorage.getItem('gist_token');
-  if (id && token) {
-    try {
-      const getRes = await fetch(`https://api.github.com/gists/${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const getData = await getRes.json();
-      const existing = getData.files['snack_result.json'];
-      let content = {};
-      if (existing) { try { content = JSON.parse(existing.content); } catch(e) {} }
-      delete content[getMonthKey()];
-      await fetch(`https://api.github.com/gists/${id}`, {
-        method: 'PATCH',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: { 'snack_result.json': { content: JSON.stringify(content, null, 2) } } })
-      });
-    } catch(e) {}
-  }
-  monthWinner = null;
-  winnerBanner.classList.remove('show');
-  spinBtn.disabled = false;
-  spinBtn.textContent = '🎰 룰렛 돌리기';
-  currentAngle = 0;
-  drawWheel();
-});
 
 // ── ITEM LIST ──
 function renderList() {
@@ -651,204 +388,809 @@ function renderList() {
     const row = document.createElement('div');
     row.className = 'item-row';
     row.innerHTML = `
-      <input type="text" value="${item.name}" placeholder="제품명" data-i="${i}" class="name-input" />
-      <input type="number" value="${item.votes}" min="1" max="99" data-i="${i}" class="vote-input" />
-      <button class="del-btn" data-i="${i}">×</button>
-    `;
+      <input type="text" value="${item.name}" placeholder="제품명" data-i="${i}" class="name-input"/>
+      <input type="number" value="${item.votes}" min="1" max="99" data-i="${i}" class="vote-input"/>
+      <button class="del-btn" data-i="${i}">×</button>`;
     itemsList.appendChild(row);
   });
   itemsList.querySelectorAll('.name-input').forEach(el =>
-    el.addEventListener('input', e => { items[+e.target.dataset.i].name = e.target.value; drawWheel(); })
+    el.addEventListener('input', e => { items[+e.target.dataset.i].name = e.target.value; drawWheel(); scheduleGASSave(); })
   );
   itemsList.querySelectorAll('.vote-input').forEach(el =>
-    el.addEventListener('input', e => { items[+e.target.dataset.i].votes = Math.max(1, +e.target.value||1); drawWheel(); })
+    el.addEventListener('input', e => { items[+e.target.dataset.i].votes = Math.max(1, +e.target.value||1); drawWheel(); scheduleGASSave(); })
   );
   itemsList.querySelectorAll('.del-btn').forEach(el =>
     el.addEventListener('click', e => {
       if (items.length <= 2) return;
       items.splice(+e.target.dataset.i, 1);
       renderList();
+      if (currentMode === 'fishing') initFishing();
+      scheduleGASSave();
     })
   );
   addBtn.style.display = items.length >= 10 ? 'none' : 'block';
   drawWheel();
+  if (currentMode === 'fishing') initFishing();
 }
 
 addBtn.addEventListener('click', () => {
-  if (items.length < 10) { items.push({ name: '새 항목', votes: 3 }); renderList(); }
+  if (items.length < 10) { items.push({ name: '새 항목', votes: 3 }); renderList(); scheduleGASSave(); }
 });
 
-// ── WHEEL ──
+// ── WHEEL DRAW ──
 function drawWheel() {
-  const total = items.reduce((s, it) => s + it.votes, 0);
-  const cx = 300, cy = 300, r = 290;
-  ctx.clearRect(0, 0, 600, 600);
-
+  const total = items.reduce((s,it) => s+it.votes, 0);
+  const cx=250, cy=250, r=240;
+  ctx.clearRect(0,0,500,500);
   let startAngle = currentAngle;
-  items.forEach((item, i) => {
-    const slice = (item.votes / total) * Math.PI * 2;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, r, startAngle, startAngle + slice);
+  items.forEach((item,i) => {
+    const slice = (item.votes/total)*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,startAngle,startAngle+slice);
     ctx.closePath();
-    ctx.fillStyle = COLORS[i % COLORS.length];
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(startAngle + slice / 2);
-    ctx.textAlign = 'right';
-    ctx.fillStyle = 'rgba(255,255,255,0.95)';
-    ctx.font = '600 15px Noto Sans KR, sans-serif';
-    const label = item.name.length > 10 ? item.name.slice(0, 10) + '…' : item.name;
-    ctx.fillText(label, r - 14, 5);
+    ctx.fillStyle = COLORS[i%COLORS.length]; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=2.5; ctx.stroke();
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(startAngle+slice/2);
+    ctx.textAlign='right'; ctx.fillStyle='rgba(255,255,255,0.95)';
+    ctx.font='600 13px Noto Sans KR, sans-serif';
+    const label = item.name.length>10 ? item.name.slice(0,10)+'…' : item.name;
+    ctx.fillText(label, r-12, 5);
     ctx.restore();
-
     startAngle += slice;
   });
-
-  // center hub
-  ctx.beginPath();
-  ctx.arc(cx, cy, 44, 0, Math.PI * 2);
-  ctx.fillStyle = '#fff';
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(83,74,183,0.2)';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx,cy,38,0,Math.PI*2);
+  ctx.fillStyle='#fff'; ctx.fill();
+  ctx.strokeStyle='rgba(83,74,183,0.2)'; ctx.lineWidth=1.5; ctx.stroke();
 }
 
 // ── SPIN ──
 function weightedRandom(weights) {
-  const r = Math.random();
+  const r=Math.random(); let cum=0;
+  for(let i=0;i<weights.length;i++){cum+=weights[i];if(r<cum)return i;}
+  return weights.length-1;
+}
+
+// 포인터(12시=위)가 현재 가리키는 아이템 인덱스 역산
+function getItemAtPointer() {
+  const total = items.reduce((s,it) => s+it.votes, 0);
+  // 포인터 각도는 -π/2 (12시). 슬라이스는 currentAngle부터 시작.
+  // 슬라이스 i의 범위: [currentAngle + cumSlice_i, currentAngle + cumSlice_i + slice_i]
+  // 포인터(-π/2)가 이 범위 안에 있으면 해당 아이템
+  // → 포인터 - currentAngle을 0~2π로 정규화한 값이 slices 누적 범위 안에 있는지 확인
+  const POINTER = -Math.PI / 2;
+  let p = ((POINTER - currentAngle) % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
   let cum = 0;
-  for (let i = 0; i < weights.length; i++) {
-    cum += weights[i];
-    if (r < cum) return i;
+  for(let i=0; i<items.length; i++){
+    cum += (items[i].votes/total)*Math.PI*2;
+    if(p < cum) return i;
   }
-  return weights.length - 1;
+  return items.length-1;
 }
 
 spinBtn.addEventListener('click', () => {
-  if (isSpinning || items.length < 2 || monthWinner) return;
-  isSpinning = true;
-  spinBtn.disabled = true;
+  if(isSpinning||items.length<2||monthWinner) return;
+  isSpinning=true; spinBtn.disabled=true;
 
-  const total = items.reduce((s, it) => s + it.votes, 0);
-  const winnerIdx = weightedRandom(items.map(it => it.votes / total));
-  const slices = items.map(it => (it.votes / total) * Math.PI * 2);
+  const total = items.reduce((s,it)=>s+it.votes,0);
+  // 가중치로 당첨 아이템 선택
+  const winnerIdx = weightedRandom(items.map(it=>it.votes/total));
+  const slices = items.map(it=>(it.votes/total)*Math.PI*2);
 
-  const startA = currentAngle; // ← 먼저 선언
-
-  // 포인터는 오른쪽(3시 = angle 0). 휠은 currentAngle 기준으로 그려지므로,
-  // 당첨 칸의 중앙이 angle=0에 오려면 currentAngle을 -(cumSlice + sliceHalf)로 만들어야 함.
+  // 당첨 칸 중앙이 포인터(12시=-π/2)에 정확히 오는 currentAngle 계산:
+  //   칸 중앙 절대각도 = currentAngle + cumSlice + slice/2
+  //   이것이 -π/2이 되려면: currentAngle = -π/2 - cumSlice - slice/2
   let cumSlice = 0;
-  for (let i = 0; i < winnerIdx; i++) cumSlice += slices[i];
-  const sliceCenter = cumSlice + slices[winnerIdx] / 2;
+  for(let i=0; i<winnerIdx; i++) cumSlice += slices[i];
+  const targetAngleFinal = -Math.PI/2 - cumSlice - slices[winnerIdx]/2;
 
-  const spins = 7 + Math.random() * 4;
-  const normalizedCurrent = ((startA % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-  const targetFinal = -sliceCenter;
-  const targetNorm = ((targetFinal % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-  let delta = targetNorm - normalizedCurrent;
-  if (delta > 0) delta -= Math.PI * 2; // 항상 반시계 방향(음수)으로
-  const targetAngle = delta - spins * Math.PI * 2;
+  const startA = currentAngle;
+  const spins = 7 + Math.random()*4;
+
+  // startA → targetAngleFinal, 반드시 음수(반시계) 방향으로 spins바퀴 이상 회전
+  let diff = targetAngleFinal - startA;
+  // (-2π, 0] 범위로 맞춰 항상 음수 방향
+  diff = ((diff % (Math.PI*2)) - Math.PI*2) % (Math.PI*2);
+  if(diff === 0) diff = -Math.PI*2;
+  const totalRotation = diff - spins * Math.PI*2;
 
   const duration = 5500;
   const start = performance.now();
-
   function animate(now) {
     const elapsed = now - start;
-    const t = Math.min(elapsed / duration, 1);
-    const ease = 1 - Math.pow(1 - t, 4);
-    currentAngle = startA + targetAngle * ease;
+    const t = Math.min(elapsed/duration, 1);
+    const ease = 1 - Math.pow(1-t, 4);
+    currentAngle = startA + totalRotation * ease;
     drawWheel();
-    if (t < 1) {
+    if(t < 1){
       requestAnimationFrame(animate);
     } else {
-      currentAngle = startA + targetAngle;
+      currentAngle = startA + totalRotation;
       drawWheel();
       isSpinning = false;
-      setTimeout(() => finishSpin(winnerIdx), 400);
+      // 시각과 100% 일치하도록 각도 역산으로 당첨 아이템 최종 확정
+      const actualIdx = getItemAtPointer();
+      setTimeout(() => finishGame(actualIdx), 400);
     }
   }
   requestAnimationFrame(animate);
 });
 
-async function finishSpin(idx) {
+// ── FISHING GAME ──
+const fCanvas = document.getElementById('fishing-canvas');
+const fCtx = fCanvas.getContext('2d');
+const FW = 500, FH = 420;
+const WATER_Y = 140;
+
+// 아이템별 물고기 이모지 (고정 매핑)
+const FISH_EMOJIS  = ['🐟','🐠','🐡','🦈','🐬','🦑','🐙','🦐','🦀','🐸'];
+const SNACK_EMOJIS = ['🍪','🍫','🍬','🍭','🎂','🍕','🍩','🍰','🧁','🥨'];
+
+// phase: idle → casting → gathering → suspense → biting → reeling → caught
+let fishState = {
+  phase: 'idle',
+  hookX: 88, hookY: 28,
+  bobX: 300, bobY: WATER_Y + 22,
+  castProgress: 0,
+  fish: [],
+  catchFishIdx: -1,
+  // gathering/suspense
+  gatherTimer: 0,
+  gatherMax: 0,
+  gatherFishIdxs: [],   // 찌로 몰려드는 물고기 인덱스들 (2~3마리)
+  suspenseTimer: 0,
+  suspenseMax: 0,
+  // bite anim
+  biteProgress: 0,
+  biteSplash: [],
+  // reel
+  pullProgress: 0,
+  // misc
+  bobBob: 0,
+  particleTime: 0,
+  waterWaves: 0,
+  clouds: [{x:60,y:28,w:90},{x:210,y:18,w:110},{x:380,y:32,w:75}],
+  bubbles: [],
+  excitement: 0,
+};
+
+function initFishing() {
+  const total = items.reduce((s,it)=>s+it.votes,0);
+  fishState.fish = [];
+  // 아이템별로 1~2마리씩 배치 (투표권 비율 반영)
+  items.forEach((item, itemIdx) => {
+    const cnt = Math.max(1, Math.round((item.votes/total) * 9));
+    for(let j=0; j<cnt && fishState.fish.length<12; j++){
+      fishState.fish.push({
+        x:    80 + Math.random()*(FW-160),
+        y:    WATER_Y + 50 + Math.random()*(FH - WATER_Y - 80),
+        vx:   (Math.random()-0.5)*0.7,
+        vy:   (Math.random()-0.5)*0.25,
+        size: 20 + Math.random()*10,
+        itemIdx,
+        emoji: FISH_EMOJIS[itemIdx % FISH_EMOJIS.length],
+        flip:  Math.random()>0.5,
+        wobble: Math.random()*Math.PI*2,
+        depth: 0.55 + Math.random()*0.45,
+        // gathering state
+        gathering: false,   // 찌쪽으로 이동 중
+        gatherDist: 999,    // 찌까지 거리
+        circling: false,    // 찌 주변 선회 중
+        circleAngle: Math.random()*Math.PI*2,
+        circleR: 45 + Math.random()*35,
+        circleSpeed: (Math.random()>0.5?1:-1)*(0.015+Math.random()*0.012),
+      });
+    }
+  });
+  Object.assign(fishState, {
+    phase:'idle', hookX:88, hookY:28,
+    castProgress:0, catchFishIdx:-1,
+    gatherTimer:0, gatherFishIdxs:[], suspenseTimer:0,
+    biteProgress:0, biteSplash:[], pullProgress:0,
+    bobBob:0, particleTime:0, excitement:0,
+    bobX: 300, bobY: WATER_Y+22,
+  });
+  fishHint.textContent = '물고기를 낚으면 어떤 간식이 붙어있을까요? 🐟';
+  fishBtn.disabled = !!monthWinner;
+  fishBtn.textContent = monthWinner ? '🏆 이달의 당첨 완료!' : '🎣 낚싯대 던지기!';
+  drawFishing();
+}
+
+let fishAnimId = null;
+function startFishLoop() {
+  if(fishAnimId) cancelAnimationFrame(fishAnimId);
+  function loop(){ updateFishing(); drawFishing(); fishAnimId = requestAnimationFrame(loop); }
+  fishAnimId = requestAnimationFrame(loop);
+}
+function stopFishLoop() {
+  if(fishAnimId){ cancelAnimationFrame(fishAnimId); fishAnimId=null; }
+}
+
+function updateFishing() {
+  const fs = fishState;
+  fs.waterWaves += 0.04;
+  fs.bobBob     += 0.09;
+  fs.particleTime += 0.05;
+  fs.clouds.forEach(c=>{ c.x+=0.14; if(c.x>FW+120) c.x=-130; });
+  // bubbles
+  if(Math.random()<0.018) fs.bubbles.push({x:50+Math.random()*(FW-100),y:FH-10,r:2+Math.random()*3,vy:-0.4-Math.random()*0.6,alpha:0.55});
+  fs.bubbles = fs.bubbles.filter(b=>{ b.y+=b.vy; b.alpha-=0.004; return b.alpha>0&&b.y>WATER_Y; });
+
+  // ── 캐스팅 ──
+  if(fs.phase==='casting'){
+    fs.castProgress = Math.min(1, fs.castProgress+0.022);
+    const e3 = 1-Math.pow(1-fs.castProgress,3);
+    fs.hookX = 88 + (fs.bobX-88)*e3;
+    fs.hookY = 28 + (fs.bobY-28)*e3 - Math.sin(fs.castProgress*Math.PI)*90;
+    if(fs.castProgress>=1){
+      fs.phase = 'gathering';
+      fs.gatherTimer = 0;
+      fs.gatherMax = 300 + Math.random()*60;  // 5~6초 (60fps 기준) 물고기 서서히 접근
+      // 당첨 물고기 결정
+      const total = items.reduce((s,it)=>s+it.votes,0);
+      fs.catchFishIdx = weightedRandom(items.map(it=>it.votes/total));
+      // 당첨 물고기 중 1마리 + 다른 아이템 1~2마리 = 총 2~3마리 모이기
+      const winnerFishes = fs.fish.filter(f=>f.itemIdx===fs.catchFishIdx);
+      const winnerFish   = winnerFishes[Math.floor(Math.random()*winnerFishes.length)];
+      const decoyIdxs    = [];
+      // 다른 아이템의 물고기 1~2마리 추가
+      const others = fs.fish.filter(f=>f.itemIdx!==fs.catchFishIdx);
+      const shuffled = others.sort(()=>Math.random()-0.5);
+      for(let i=0;i<Math.min(2,shuffled.length);i++) decoyIdxs.push(fs.fish.indexOf(shuffled[i]));
+      const winnerIdx = fs.fish.indexOf(winnerFish);
+      fs.gatherFishIdxs = [winnerIdx, ...decoyIdxs].filter(i=>i>=0);
+      // gathering 시작
+      fs.gatherFishIdxs.forEach(fi=>{
+        fs.fish[fi].gathering = true;
+        fs.fish[fi].circleR = 50 + Math.random()*30;
+        fs.fish[fi].circleAngle = Math.random()*Math.PI*2;
+      });
+      fishHint.textContent = '찌 주변에 뭔가 몰려오고 있어요... 🌀';
+    }
+  }
+
+  // ── 물고기 이동 ──
+  fs.fish.forEach((f, fi) => {
+    f.wobble += 0.05;
+    if(fs.phase==='gathering'||fs.phase==='suspense'){
+      if(f.gathering || f.circling){
+        const bx = fs.hookX, by = fs.bobY;
+        const dx = bx-f.x, dy = by-f.y;
+        const dist = Math.sqrt(dx*dx+dy*dy);
+        f.gatherDist = dist;
+        if(dist > f.circleR+10 && fs.phase==='gathering'){
+          // 찌 방향으로 이동
+          const spd = 0.3 + (1-fs.gatherTimer/fs.gatherMax)*0.3;
+          f.vx += (dx/dist)*spd*0.18;
+          f.vy += (dy/dist)*spd*0.18;
+          // 속도 제한
+          const v = Math.sqrt(f.vx*f.vx+f.vy*f.vy);
+          if(v>1.0){ f.vx=f.vx/v*1.0; f.vy=f.vy/v*1.0; }
+          f.flip = f.vx>0;
+        } else {
+          // 선회: 찌 주변 원형 이동 (suspense에서는 점점 좁혀짐)
+          f.circling = true;
+          f.circleAngle += f.circleSpeed * (fs.phase==='suspense' ? 1.8 : 1.0);
+          const shrink = fs.phase==='suspense' ? Math.max(0.4, 1 - fs.suspenseTimer/fs.suspenseMax*0.6) : 1.0;
+          const tx = bx + Math.cos(f.circleAngle)*f.circleR*shrink;
+          const ty = by + Math.sin(f.circleAngle)*f.circleR*0.45*shrink;
+          f.vx += (tx-f.x)*0.12;
+          f.vy += (ty-f.y)*0.12;
+          const v2 = Math.sqrt(f.vx*f.vx+f.vy*f.vy);
+          if(v2>1.2){ f.vx=f.vx/v2*1.2; f.vy=f.vy/v2*1.2; }
+          f.flip = f.vx>0;
+        }
+      } else {
+        // 일반 자유 이동
+        f.x += f.vx; f.y += f.vy+Math.sin(f.wobble)*0.18;
+        if(f.x<30){f.vx=Math.abs(f.vx);f.flip=true;}
+        if(f.x>FW-30){f.vx=-Math.abs(f.vx);f.flip=false;}
+        if(f.y<WATER_Y+18){f.vy=Math.abs(f.vy);}
+        if(f.y>FH-18){f.vy=-Math.abs(f.vy);}
+        return;
+      }
+    } else {
+      // 기타 phase: 자유 이동
+      f.x += f.vx; f.y += f.vy+Math.sin(f.wobble)*0.18;
+      if(f.x<30){f.vx=Math.abs(f.vx);f.flip=true;}
+      if(f.x>FW-30){f.vx=-Math.abs(f.vx);f.flip=false;}
+      if(f.y<WATER_Y+18){f.vy=Math.abs(f.vy);}
+      if(f.y>FH-18){f.vy=-Math.abs(f.vy);}
+      return;
+    }
+    f.x += f.vx; f.y += f.vy+Math.sin(f.wobble)*0.15;
+    f.x = Math.max(20, Math.min(FW-20, f.x));
+    f.y = Math.max(WATER_Y+12, Math.min(FH-12, f.y));
+  });
+
+  // ── gathering ──
+  if(fs.phase==='gathering'){
+    fs.hookY = fs.bobY + Math.sin(fs.bobBob)*2.5;
+    fs.gatherTimer++;
+    // 진행률에 따라 hint 업데이트
+    const prog = fs.gatherTimer/fs.gatherMax;
+    if(prog>0.3 && prog<0.32) fishHint.textContent = '물고기들이 찌 근처로 모여들고 있어요! 👀';
+    if(prog>0.7 && prog<0.72) { fishHint.textContent = '어떤 물고기가 먼저 찌에 닿을까요?! 🐟🐠'; fishHint.style.fontWeight='700'; fishHint.style.color='#534AB7'; }
+    if(fs.gatherTimer>=fs.gatherMax){
+      fs.phase = 'suspense';
+      fs.suspenseTimer = 0;
+      fs.suspenseMax = 180 + Math.random()*120; // 3~5초 경쟁 긴장감
+      fishHint.textContent = '지금 당겨요!! 🎣💥';
+      fishHint.style.fontWeight='900';
+      fishHint.style.color='#E24B4A';
+      fishBtn.disabled = false;
+      fishBtn.textContent = '🎣 지금 당기기!!';
+      fishBtn.style.animation='pulse 0.4s ease infinite alternate';
+    }
+  }
+
+  // ── suspense ──
+  if(fs.phase==='suspense'){
+    fs.suspenseTimer++;
+    fs.hookY = fs.bobY + Math.sin(fs.bobBob*2.5)*5;
+    fs.excitement = Math.sin(fs.particleTime*10)*4;
+    // 작은 파문 랜덤 생성
+    if(Math.random()<0.06){
+      fs.biteSplash.push({x:fs.hookX,y:fs.bobY,angle:Math.random()*Math.PI*2,speed:1.5+Math.random()*2,r:2,life:0.7});
+    }
+    fs.biteSplash.forEach(p=>{p.life-=0.05;});
+    fs.biteSplash=fs.biteSplash.filter(p=>p.life>0);
+    if(fs.suspenseTimer>=fs.suspenseMax){
+      // 자동으로 물림 - phase 먼저 변경해서 중복 호출 차단
+      fs.phase = 'pre_bite';  // suspense 블록 재진입 방지
+      triggerBite();
+    }
+  }
+
+  // ── biting ──
+  if(fs.phase==='biting'){
+    fs.biteProgress = Math.min(1, fs.biteProgress+0.05);
+    fs.hookY = fs.bobY + Math.sin(fs.biteProgress*Math.PI)*12;
+    fs.biteSplash.forEach(p=>{p.life-=0.04;});
+    fs.biteSplash=fs.biteSplash.filter(p=>p.life>0);
+    if(fs.biteProgress>=1){
+      fs.phase='reeling';
+      fs.pullProgress=0;
+    }
+  }
+
+  // ── reeling ──
+  if(fs.phase==='reeling'){
+    fs.pullProgress = Math.min(1, fs.pullProgress+0.016);
+    const ease = fs.pullProgress<0.5
+      ? 2*fs.pullProgress*fs.pullProgress
+      : 1-Math.pow(-2*fs.pullProgress+2,2)/2;
+    fs.hookX = fs.bobX+(88-fs.bobX)*ease;
+    fs.hookY = fs.bobY+(28-fs.bobY)*ease;
+    if(fs.pullProgress<0.35&&Math.random()<0.18){
+      fs.biteSplash.push({x:fs.hookX,y:fs.hookY,angle:Math.random()*Math.PI*2,speed:3+Math.random()*4,r:2+Math.random()*3,life:0.9});
+    }
+    fs.biteSplash.forEach(p=>{p.life-=0.04;});
+    fs.biteSplash=fs.biteSplash.filter(p=>p.life>0);
+    if(fs.pullProgress>=1){
+      fs.phase='caught';
+      stopFishLoop();
+      drawFishing();
+      setTimeout(()=>finishGame(fs.catchFishIdx), 500);
+    }
+  }
+}
+
+function triggerBite(){
+  const fs = fishState;
+  if(fs.phase==='biting'||fs.phase==='reeling'||fs.phase==='caught') return; // 중복 방지
+  fs.phase = 'biting';
+  fs.biteProgress = 0;
+  fishBtn.disabled = true;
+  fishBtn.textContent = '🎣 당기는 중...';
+  fishBtn.style.animation = '';
+  fishHint.textContent = '물었다!! 끌어올리는 중... 💪';
+  fishHint.style.fontWeight = '';
+  fishHint.style.color = '';
+  // 대형 물보라
+  fs.biteSplash = Array.from({length:18},(_,i)=>({
+    x:fs.hookX, y:fs.bobY,
+    angle:i/18*Math.PI*2, speed:3+Math.random()*5, r:2+Math.random()*4, life:1
+  }));
+}
+
+function drawFishing() {
+  const fs = fishState;
+  fCtx.clearRect(0,0,FW,FH);
+
+  // ── 하늘 ──
+  const skyG = fCtx.createLinearGradient(0,0,0,WATER_Y);
+  skyG.addColorStop(0,'#87CEEB'); skyG.addColorStop(1,'#c8e8f8');
+  fCtx.fillStyle=skyG; fCtx.fillRect(0,0,FW,WATER_Y);
+
+  // 구름
+  fs.clouds.forEach(c=>{
+    fCtx.save(); fCtx.globalAlpha=0.82; fCtx.fillStyle='#fff';
+    fCtx.beginPath();
+    fCtx.ellipse(c.x,c.y,c.w/2,18,0,0,Math.PI*2);
+    fCtx.ellipse(c.x+c.w*0.15,c.y-12,c.w*0.3,16,0,0,Math.PI*2);
+    fCtx.ellipse(c.x-c.w*0.2,c.y-8,c.w*0.25,14,0,0,Math.PI*2);
+    fCtx.fill(); fCtx.globalAlpha=1; fCtx.restore();
+  });
+
+  // 먼 언덕
+  fCtx.fillStyle='#5a9e6e';
+  fCtx.beginPath(); fCtx.ellipse(FW*0.75,WATER_Y,120,30,0,Math.PI,0); fCtx.fill();
+  fCtx.fillStyle='#4a8e5e';
+  fCtx.beginPath(); fCtx.ellipse(FW*0.85,WATER_Y,80,22,0,Math.PI,0); fCtx.fill();
+
+  // ── 물 ──
+  const wG = fCtx.createLinearGradient(0,WATER_Y,0,FH);
+  wG.addColorStop(0,'#2196c8'); wG.addColorStop(0.3,'#1a7fd4'); wG.addColorStop(1,'#0d3d6e');
+  fCtx.fillStyle=wG; fCtx.fillRect(0,WATER_Y,FW,FH-WATER_Y);
+
+  // 수면 파문
+  for(let i=0;i<4;i++){
+    const wy=WATER_Y+8+i*11;
+    fCtx.beginPath();
+    for(let x=0;x<FW;x+=4){
+      const y=wy+Math.sin(x*0.025+fs.waterWaves+i)*4;
+      x===0?fCtx.moveTo(x,y):fCtx.lineTo(x,y);
+    }
+    fCtx.globalAlpha=0.35-i*0.07; fCtx.strokeStyle='rgba(255,255,255,0.6)'; fCtx.lineWidth=1.5; fCtx.stroke(); fCtx.globalAlpha=1;
+  }
+
+  // 수중 빛
+  fCtx.globalAlpha=0.05;
+  for(let i=0;i<5;i++){
+    const lx=70+i*80+Math.sin(fs.waterWaves*0.5+i)*18;
+    fCtx.fillStyle='#fff';
+    fCtx.beginPath(); fCtx.ellipse(lx,WATER_Y+50+i*12,14,5,Math.sin(fs.waterWaves+i)*0.5,0,Math.PI*2); fCtx.fill();
+  }
+  fCtx.globalAlpha=1;
+
+  // 기포
+  fs.bubbles.forEach(b=>{
+    fCtx.globalAlpha=b.alpha; fCtx.strokeStyle='rgba(255,255,255,0.75)'; fCtx.lineWidth=1;
+    fCtx.beginPath(); fCtx.arc(b.x,b.y,b.r,0,Math.PI*2); fCtx.stroke(); fCtx.globalAlpha=1;
+  });
+
+  // ── 물고기들 ──
+  const isReeling = fs.phase==='reeling'||fs.phase==='caught';
+  const winnerFishDrawn = { done: false };
+  fs.fish.forEach((f, fi) => {
+    // reeling 중 당첨 물고기는 별도 처리
+    if(isReeling && f.itemIdx===fs.catchFishIdx && !winnerFishDrawn.done){
+      winnerFishDrawn.done=true; return;
+    }
+    fCtx.save();
+    let alpha = f.depth * 0.88;
+    // gathering/suspense 단계: 모이는 물고기들 더 밝게, 나머지 희미하게
+    if((fs.phase==='gathering'||fs.phase==='suspense')){
+      const isGathering = fs.gatherFishIdxs.includes(fi);
+      alpha = isGathering ? 0.95 : f.depth*0.4;
+    }
+    fCtx.globalAlpha=alpha;
+    fCtx.font=`${f.size}px serif`; fCtx.textAlign='center'; fCtx.textBaseline='middle';
+    if(f.flip){ fCtx.scale(-1,1); fCtx.fillText(f.emoji,-f.x,f.y); }
+    else       { fCtx.fillText(f.emoji,f.x,f.y); }
+    fCtx.globalAlpha=1; fCtx.restore();
+  });
+
+  // ── 부두 ──
+  fCtx.fillStyle='#8B6914'; fCtx.fillRect(0,WATER_Y-18,110,18);
+  fCtx.fillStyle='#6B4F0E'; fCtx.fillRect(0,WATER_Y-18,110,4);
+  fCtx.strokeStyle='rgba(0,0,0,0.18)'; fCtx.lineWidth=1;
+  for(let px=20;px<110;px+=22){ fCtx.beginPath(); fCtx.moveTo(px,WATER_Y-18); fCtx.lineTo(px,WATER_Y); fCtx.stroke(); }
+  fCtx.fillStyle='#5a3e0a';
+  fCtx.fillRect(20,WATER_Y,8,40); fCtx.fillRect(65,WATER_Y,8,40);
+
+  // ── 낚시꾼 ──
+  drawFisherman(fs);
+
+  // ── 낚시줄 + 찌 ──
+  if(fs.phase!=='idle'){
+    const rodTipX=88, rodTipY=28;
+    fCtx.strokeStyle='rgba(60,40,20,0.85)'; fCtx.lineWidth=1.5;
+    fCtx.beginPath(); fCtx.moveTo(rodTipX,rodTipY);
+    if(fs.phase==='casting'){
+      const cx2=(rodTipX+fs.hookX)/2, cy2=Math.min(rodTipY,fs.hookY)-50;
+      fCtx.quadraticCurveTo(cx2,cy2,fs.hookX,fs.hookY);
+    } else {
+      const slack=Math.sin(fs.bobBob*0.4)*3;
+      fCtx.quadraticCurveTo((rodTipX+fs.hookX)/2+slack,WATER_Y-20,fs.hookX,fs.hookY);
+    }
+    fCtx.stroke();
+
+    if(fs.phase==='casting'){
+      fCtx.fillStyle='#ff3333'; fCtx.beginPath(); fCtx.arc(fs.hookX,fs.hookY,5,0,Math.PI*2); fCtx.fill();
+    } else if(fs.phase==='gathering'||fs.phase==='suspense'){
+      // 파문 (gathering 진행도에 따라 강해짐)
+      const prog = fs.phase==='gathering' ? fs.gatherTimer/fs.gatherMax : 1;
+      fCtx.save();
+      if(fs.phase==='suspense') fCtx.translate(fs.excitement*0.4,0);
+      // splash 파티클
+      fs.biteSplash.forEach(p=>{
+        fCtx.globalAlpha=p.life*0.7;
+        fCtx.fillStyle='rgba(180,230,255,0.9)';
+        fCtx.beginPath(); fCtx.arc(p.x+Math.cos(p.angle)*p.speed*(1-p.life)*18,p.y+Math.sin(p.angle)*p.speed*(1-p.life)*8,p.r*(0.5+p.life*0.5),0,Math.PI*2); fCtx.fill();
+        fCtx.globalAlpha=1;
+      });
+      // 찌
+      fCtx.globalAlpha=1;
+      fCtx.fillStyle='#ff2222';
+      fCtx.beginPath(); fCtx.ellipse(fs.hookX,fs.hookY,5,13,0,0,Math.PI*2); fCtx.fill();
+      fCtx.fillStyle='#ffffff';
+      fCtx.beginPath(); fCtx.ellipse(fs.hookX,fs.hookY-4,5,7,0,0,Math.PI*2); fCtx.fill();
+      // 파문 링 (prog에 따라 크기 증가)
+      const rr=12+prog*8; const rs=rr+Math.sin(fs.bobBob)*3;
+      fCtx.strokeStyle='rgba(255,255,255,0.45)'; fCtx.lineWidth=1.2;
+      fCtx.beginPath(); fCtx.ellipse(fs.hookX,fs.bobY+2,rs,rs*0.4,0,0,Math.PI*2); fCtx.stroke();
+      if(prog>0.5){
+        fCtx.strokeStyle='rgba(255,80,80,0.35)'; fCtx.lineWidth=1;
+        fCtx.beginPath(); fCtx.ellipse(fs.hookX,fs.bobY+2,rs*1.6,rs*0.6,0,0,Math.PI*2); fCtx.stroke();
+      }
+      fCtx.restore();
+    } else if(fs.phase==='biting'){
+      // 물보라 + 찌가 쑥 들어가는 연출
+      fs.biteSplash.forEach(p=>{
+        fCtx.globalAlpha=p.life;
+        fCtx.fillStyle='rgba(200,240,255,0.95)';
+        fCtx.beginPath(); fCtx.arc(p.x+Math.cos(p.angle)*p.speed*(1-p.life)*22,p.y+Math.sin(p.angle)*p.speed*(1-p.life)*10,p.r,0,Math.PI*2); fCtx.fill();
+        fCtx.globalAlpha=1;
+      });
+      const submerge=Math.sin(fs.biteProgress*Math.PI)*10;
+      fCtx.fillStyle='#ff2222';
+      fCtx.beginPath(); fCtx.ellipse(fs.hookX,fs.hookY+submerge,5,13,0,0,Math.PI*2); fCtx.fill();
+    } else if(fs.phase==='reeling'||fs.phase==='caught'){
+      // 물고기 공중으로 끌어올리기
+      fs.biteSplash.forEach(p=>{
+        fCtx.globalAlpha=p.life*0.8;
+        fCtx.fillStyle='rgba(150,220,255,0.85)';
+        fCtx.beginPath(); fCtx.arc(p.x+Math.cos(p.angle)*p.speed*(1-p.life)*20,p.y+Math.sin(p.angle)*p.speed*(1-p.life)*9,p.r,0,Math.PI*2); fCtx.fill();
+        fCtx.globalAlpha=1;
+      });
+      fCtx.save();
+      const swing=Math.sin(fs.pullProgress*Math.PI*3)*9;
+      fCtx.translate(fs.hookX+swing,fs.hookY);
+      const caughtEmoji = FISH_EMOJIS[fs.catchFishIdx % FISH_EMOJIS.length];
+      const snackEmoji  = SNACK_EMOJIS[fs.catchFishIdx % SNACK_EMOJIS.length];
+      fCtx.font='30px serif'; fCtx.textAlign='center'; fCtx.textBaseline='middle';
+      fCtx.fillText(caughtEmoji,0,0);
+      if(fs.pullProgress>0.35){
+        const a=Math.min(1,(fs.pullProgress-0.35)/0.3);
+        fCtx.globalAlpha=a;
+        fCtx.font='24px serif'; fCtx.fillText(snackEmoji,24,-14);
+        if(fs.pullProgress>0.6){
+          fCtx.globalAlpha=Math.min(1,(fs.pullProgress-0.6)/0.25);
+          fCtx.font='bold 11px Noto Sans KR,sans-serif';
+          fCtx.fillStyle='#fff';
+          fCtx.shadowColor='rgba(0,0,0,0.7)'; fCtx.shadowBlur=4;
+          const nm=items[fs.catchFishIdx].name;
+          fCtx.fillText(nm.length>9?nm.slice(0,9)+'…':nm,0,30);
+          fCtx.shadowBlur=0;
+        }
+        fCtx.globalAlpha=1;
+      }
+      fCtx.restore();
+    }
+  }
+
+  // 수면선
+  fCtx.strokeStyle='rgba(255,255,255,0.12)'; fCtx.lineWidth=2;
+  fCtx.beginPath(); fCtx.moveTo(0,WATER_Y); fCtx.lineTo(FW,WATER_Y); fCtx.stroke();
+
+  // ── 아이템 범례 (물고기 이모지 아이콘) ──
+  if(fs.phase==='idle'||fs.phase==='gathering'||fs.phase==='suspense'){
+    const rows = items.length;
+    const bw=148, bh=rows*20+14;
+    fCtx.globalAlpha=0.72;
+    fCtx.fillStyle='rgba(0,0,0,0.45)';
+    fCtx.beginPath(); fCtx.roundRect(FW-bw-4,8,bw,bh,8); fCtx.fill();
+    fCtx.globalAlpha=1;
+    items.forEach((item,i)=>{
+      const ey=18+i*20, ex=FW-bw+2;
+      // 물고기 이모지 아이콘
+      fCtx.font='13px serif'; fCtx.textAlign='left'; fCtx.textBaseline='middle';
+      fCtx.fillText(FISH_EMOJIS[i%FISH_EMOJIS.length], ex, ey);
+      // 이름
+      fCtx.font='10px Noto Sans KR,sans-serif';
+      fCtx.fillStyle='rgba(255,255,255,0.9)';
+      const nm=item.name.length>9?item.name.slice(0,9)+'…':item.name;
+      fCtx.fillText(nm, ex+18, ey);
+    });
+  }
+
+  // gathering 진행 게이지 (찌 아래)
+  if(fs.phase==='gathering'){
+    const prog=fs.gatherTimer/fs.gatherMax;
+    const gx=fs.hookX-40, gy=fs.bobY+28;
+    fCtx.globalAlpha=0.7;
+    fCtx.fillStyle='rgba(0,0,0,0.3)';
+    fCtx.beginPath(); fCtx.roundRect(gx,gy,80,8,4); fCtx.fill();
+    const gCol = prog<0.5 ? '#5bb3f0' : prog<0.8 ? '#f0a020' : '#E24B4A';
+    fCtx.fillStyle=gCol;
+    fCtx.beginPath(); fCtx.roundRect(gx,gy,80*prog,8,4); fCtx.fill();
+    fCtx.globalAlpha=1;
+  }
+}
+
+function drawFisherman(fs) {
+  const bx=55, by=WATER_Y-18;
+  const isExcited = fs.phase==='suspense'||fs.phase==='biting'||fs.phase==='reeling';
+  const rodAngle = fs.phase==='reeling'? -0.65 : isExcited ? -0.48+Math.sin(fs.particleTime*7)*0.06 : -0.5;
+  fCtx.save();
+  fCtx.translate(bx,by-35); fCtx.rotate(rodAngle);
+  fCtx.strokeStyle='#5a3010'; fCtx.lineWidth=4; fCtx.lineCap='round';
+  fCtx.beginPath(); fCtx.moveTo(0,0); fCtx.lineTo(55,-8); fCtx.stroke();
+  fCtx.strokeStyle='#8B4513'; fCtx.lineWidth=2;
+  fCtx.beginPath(); fCtx.moveTo(55,-8); fCtx.lineTo(75,-11); fCtx.stroke();
+  fCtx.restore();
+  fCtx.fillStyle='#2266cc';
+  fCtx.beginPath(); fCtx.roundRect(bx-10,by-40,20,28,4); fCtx.fill();
+  fCtx.strokeStyle='#2266cc'; fCtx.lineWidth=5; fCtx.lineCap='round';
+  fCtx.beginPath(); fCtx.moveTo(bx-2,by-32); fCtx.lineTo(bx+22,by-50); fCtx.stroke();
+  fCtx.strokeStyle='#1a4499'; fCtx.lineWidth=6;
+  fCtx.beginPath(); fCtx.moveTo(bx-4,by-14); fCtx.lineTo(bx-6,by); fCtx.stroke();
+  fCtx.beginPath(); fCtx.moveTo(bx+4,by-14); fCtx.lineTo(bx+6,by); fCtx.stroke();
+  fCtx.fillStyle='#FDDBB0';
+  fCtx.beginPath(); fCtx.arc(bx,by-46,11,0,Math.PI*2); fCtx.fill();
+  fCtx.fillStyle='#c4820a';
+  fCtx.beginPath(); fCtx.ellipse(bx,by-56,14,5,0,0,Math.PI*2); fCtx.fill();
+  fCtx.fillRect(bx-8,by-68,16,14);
+  fCtx.fillStyle='#a06000'; fCtx.fillRect(bx-8,by-68,16,4);
+  fCtx.fillStyle='#333';
+  fCtx.beginPath(); fCtx.arc(bx+4,by-47,1.5,0,Math.PI*2); fCtx.fill();
+  fCtx.strokeStyle='#666'; fCtx.lineWidth=1.5;
+  fCtx.beginPath();
+  if(isExcited) fCtx.arc(bx+2,by-43,4,0,Math.PI);
+  else          fCtx.arc(bx+2,by-44,3,0.1,Math.PI-0.1);
+  fCtx.stroke();
+}
+
+// ── FISH BTN CLICK ──
+fishBtn.addEventListener('click', () => {
+  if(monthWinner) return;
+  const fs = fishState;
+  if(fs.phase==='idle'){
+    fs.phase='casting'; fs.castProgress=0;
+    fs.bobX=160+Math.random()*(FW-280); fs.bobY=WATER_Y+18+Math.random()*28;
+    fs.hookX=88; fs.hookY=28;
+    fishBtn.disabled=true; fishBtn.textContent='⏳ 날아가는 중...';
+    fishHint.textContent='찌가 날아가고 있어요! ✈️';
+    fishHint.style.fontWeight=''; fishHint.style.color='';
+    fishBtn.style.animation='';
+    startFishLoop();
+    // casting 완료 후(~2초) 버튼 활성화 - gathering 중엔 '아직 준비중' 표시
+    setTimeout(()=>{
+      if(fs.phase==='gathering'){
+        fishBtn.disabled=false;
+        fishBtn.textContent='🎣 당기기!!';
+        fishHint.textContent='찌 주변에 뭔가 몰려오고 있어요... 🌀';
+      }
+    }, 2500);
+  } else if(fs.phase==='gathering'||fs.phase==='suspense'||fs.phase==='pre_bite'){
+    triggerBite();
+  } else if(fs.phase==='waiting'){
+    fishHint.textContent='아직 안 모였어요! 조금만 더... 🤫';
+  }
+});
+// ── FINISH GAME (shared) ──
+async function finishGame(idx) {
+  if(idx < 0 || idx >= items.length) { console.error('finishGame: invalid idx', idx); return; }
   const item = items[idx];
   const now = new Date();
   const dateStr = `${now.getFullYear()}.${now.getMonth()+1}.${now.getDate()}`;
-
   monthWinner = { name: item.name, date: dateStr, angle: currentAngle };
 
-  // 결과 팝업
-  document.getElementById('result-ribbon').textContent = getMonthLabel() + ' 당첨';
+  const snackEmoji = SNACK_EMOJIS[idx % SNACK_EMOJIS.length];
+  document.getElementById('result-ribbon').textContent = getMonthLabel() + ' 당첨 🎊';
+  document.getElementById('result-trophy').textContent = currentMode==='fishing' ? '🐟' : '🎊';
   document.getElementById('result-name').textContent = item.name;
   document.getElementById('result-sub').innerHTML =
-    `🛒 <strong>${item.name}</strong>이(가) 당첨됐습니다!<br>수량을 <strong>2배</strong>로 구매해 주세요 🎁`;
+    `${snackEmoji} <strong>${item.name}</strong>이(가) 당첨됐습니다!<br>수량을 <strong>2배</strong>로 구매해 주세요 🎁`;
   overlay.classList.add('show');
   launchConfetti();
-
   showWinnerBanner(monthWinner);
+  spinBtn.disabled = true;
+  spinBtn.textContent = '이달의 당첨 완료 🏆';
+  fishBtn.disabled = true;
+  fishBtn.textContent = '🏆 이달의 당첨 완료!';
 
-  // Gist 저장 (개발자만)
-  if (isDev) await saveResultToGist(monthWinner);
 }
 
 closeBtn.addEventListener('click', () => {
   overlay.classList.remove('show');
   stopConfetti();
+  if(currentMode === 'fishing'){
+    fishHint.textContent = monthWinner ? `🏆 이달의 당첨: ${monthWinner.name}` : '물고기를 낚으면 어떤 간식이 붙어있을까요? 🐟';
+    fishHint.style.fontWeight='';
+    fishHint.style.color='';
+  }
 });
 
-// ── CONFETTI ──
-let confettiAnim, confettiParticles = [];
-
-function launchConfetti() {
-  const cc = document.getElementById('confetti-canvas');
-  cc.width = window.innerWidth;
-  cc.height = window.innerHeight;
-  const cctx = cc.getContext('2d');
-  confettiParticles = Array.from({ length: 180 }, () => ({
-    x: Math.random() * cc.width,
-    y: -30 - Math.random() * 200,
-    r: 5 + Math.random() * 9,
-    color: COLORS[Math.floor(Math.random() * COLORS.length)],
-    vx: -2.5 + Math.random() * 5,
-    vy: 3 + Math.random() * 5,
-    angle: Math.random() * Math.PI * 2,
-    va: -0.06 + Math.random() * 0.12,
-    shape: Math.random() > 0.5 ? 'rect' : 'circle',
-  }));
-  function draw() {
-    cctx.clearRect(0, 0, cc.width, cc.height);
-    confettiParticles.forEach(p => {
-      p.x += p.vx; p.y += p.vy; p.vy += 0.09; p.angle += p.va;
-      cctx.save();
-      cctx.translate(p.x, p.y);
-      cctx.rotate(p.angle);
-      cctx.fillStyle = p.color;
-      if (p.shape === 'rect') cctx.fillRect(-p.r/2, -p.r/2, p.r, p.r*1.6);
-      else { cctx.beginPath(); cctx.arc(0,0,p.r/2,0,Math.PI*2); cctx.fill(); }
-      cctx.restore();
-    });
-    confettiParticles = confettiParticles.filter(p => p.y < cc.height + 40);
-    if (confettiParticles.length > 0) confettiAnim = requestAnimationFrame(draw);
-  }
-  confettiAnim = requestAnimationFrame(draw);
+// ── WINNER BANNER ──
+function showWinnerBanner(w) {
+  bannerName.textContent = w.name;
+  bannerDate.textContent = w.date + ' 당첨';
+  winnerBanner.classList.add('show');
+  if(typeof w.angle === 'number'){ currentAngle=w.angle; drawWheel(); }
 }
-function stopConfetti() {
-  cancelAnimationFrame(confettiAnim);
-  const cc = document.getElementById('confetti-canvas');
-  cc.getContext('2d').clearRect(0, 0, cc.width, cc.height);
+
+btnReplay.addEventListener('click', () => {
+  if(!monthWinner) return;
+  const idx = items.findIndex(it=>it.name===monthWinner.name);
+  const snackEmoji = idx>=0 ? SNACK_EMOJIS[idx%SNACK_EMOJIS.length] : '🎊';
+  document.getElementById('result-ribbon').textContent = getMonthLabel() + ' 당첨 🎊';
+  document.getElementById('result-trophy').textContent = snackEmoji;
+  document.getElementById('result-name').textContent = monthWinner.name;
+  document.getElementById('result-sub').innerHTML =
+    `🛒 <strong>${monthWinner.name}</strong>이(가) 당첨됐습니다!<br>수량을 <strong>2배</strong>로 구매해 주세요 🎁<br><span style="font-size:11px;color:#aaa">${monthWinner.date} 추첨</span>`;
+  overlay.classList.add('show');
+  launchConfetti();
+});
+
+btnReset.addEventListener('click', () => {
+  if(!confirm(`${getMonthLabel()} 당첨 결과를 초기화하고 다시 돌리시겠습니까?`)) return;
+  monthWinner=null;
+  winnerBanner.classList.remove('show');
+  spinBtn.disabled=false; spinBtn.textContent='🎰 룰렛 돌리기';
+  fishBtn.disabled=false; fishBtn.textContent='🎣 낚싯대 던지기!';
+  fishHint.textContent='물고기를 낚으면 어떤 간식이 붙어있을까요? 🐟';
+  fishHint.style.fontWeight=''; fishHint.style.color='';
+  currentAngle=-Math.PI/2; drawWheel();
+  stopFishLoop();
+  initFishing();
+});
+
+// ── 설정 ──
+function showStatus(msg,type){
+  // GAS 상태 콘솔 로그
+  console.log('[GAS]', type, msg);
+}
+
+async function loadItemsFromGAS() {
+  const url = GAS_URL;
+  if (!url) return;
+  showStatus('항목 불러오는 중...', 'loading');
+  try {
+    const res = await fetch(`${url}?action=getSnackItems`);
+    if (!res.ok) throw new Error('응답 오류 ' + res.status);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.msg || '불러오기 실패');
+    if (Array.isArray(data.items) && data.items.length >= 2) {
+      items = data.items.map(it => ({ name: String(it.name||''), votes: Math.max(1, Number(it.votes)||1) }));
+      renderList();
+      if (currentMode === 'fishing') initFishing();
+      showStatus('✅ 항목을 불러왔습니다.', 'ok');
+    } else {
+      showStatus('저장된 항목 없음 — 기본값 사용', 'ok');
+    }
+  } catch(e) {
+    showStatus('⚠ 항목 불러오기 실패: ' + e.message, 'err');
+  }
+}
+
+async function saveItemsToGAS() {
+  const url = GAS_URL;
+  if (!url) return;
+  try {
+    const res = await fetch(url + '?action=saveSnackItems&data=' + encodeURIComponent(JSON.stringify({ items })));
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.msg);
+    showStatus('✅ 항목 저장됨', 'ok');
+  } catch(e) {
+    showStatus('⚠ 항목 저장 실패: ' + e.message, 'err');
+  }
+}
+
+function scheduleGASSave() {
+  if (!GAS_URL) return;
+  clearTimeout(gasSaveTimer);
+  gasSaveTimer = setTimeout(() => saveItemsToGAS(), 800);
 }
 
 // ── INIT ──
-loadGistConfig();
+loadItemsFromGAS().then(() => {
+  // GAS에서 불러오기 성공하면 이미 renderList 호출됨
+  // 실패하거나 URL 없으면 기본 defaultItems로 렌더
+}).catch(() => {});
 renderList();
-loadResultFromGist();
+initFishing();
 </script>
 </body>
 </html>

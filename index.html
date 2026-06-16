@@ -541,6 +541,11 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
       <div class="sb-item" onclick="devNav('developer/menuconfig.html', this)">메뉴구성</div>
     </div>
 
+    <div id="issueSidebar" style="display:none;">
+      <div class="sb-label">Issue</div>
+      <div class="sb-item" onclick="onceNav('report/issue/0616휴대용분유포트.html', this)">전준성 (분유포트_화상)</div>
+    </div>
+
     <div id="onceSidebar" style="display:none;">
       <div class="sb-label">건별보고</div>
       <div class="sb-item" onclick="onceNav('report/once/allstain.html', this)">세척기 (꿈비-브레쨔)</div>
@@ -1026,13 +1031,15 @@ function _applyTab(tabName, role) {
 }
 
 function _switchSidebar(tabName) {
-  const isToolTab = tabName === '팀Tool';
-  const isDevTab  = tabName === '개발자';
-  const isOnceTab = tabName === '건별보고' || tabName === '건별Issue';
-  document.getElementById('dashSidebar').style.display = (isToolTab || isOnceTab || isDevTab) ? 'none' : 'block';
-  document.getElementById('toolSidebar').style.display = isToolTab ? 'block' : 'none';
-  document.getElementById('onceSidebar').style.display = isOnceTab ? 'block' : 'none';
-  document.getElementById('devSidebar').style.display  = isDevTab  ? 'block' : 'none';
+  const isToolTab  = tabName === '팀Tool';
+  const isDevTab   = tabName === '개발자';
+  const isOnceTab  = tabName === '건별보고';
+  const isIssueTab = tabName === '건별Issue';
+  document.getElementById('dashSidebar').style.display  = (isToolTab || isOnceTab || isIssueTab || isDevTab) ? 'none' : 'block';
+  document.getElementById('toolSidebar').style.display  = isToolTab  ? 'block' : 'none';
+  document.getElementById('onceSidebar').style.display  = isOnceTab  ? 'block' : 'none';
+  document.getElementById('issueSidebar').style.display = isIssueTab ? 'block' : 'none';
+  document.getElementById('devSidebar').style.display   = isDevTab   ? 'block' : 'none';
 }
 
 function showNoPermission(tabName) {

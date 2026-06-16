@@ -261,6 +261,92 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .fav-row td { background:#fffbf0 !important; }
 
 @media(max-width:900px){ .grid-4{grid-template-columns:repeat(2,1fr);} .grid-2{grid-template-columns:1fr;} }
+
+/* ── 섹션 네비 공개설정 버튼 (관리자 전용) ── */
+.snav-vis-btn {
+  display: none;
+  align-items: center;
+  background: rgba(35,86,168,0.1);
+  border: 1px solid rgba(35,86,168,0.25);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 10px;
+  color: #2356a8;
+  cursor: pointer;
+  margin-left: 6px;
+  vertical-align: middle;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1.4;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-family: var(--font);
+}
+.snav-vis-btn:hover { background: rgba(35,86,168,0.2); color: #1a3a7a; }
+.snav-vis-btn.restricted { background: rgba(192,57,43,0.1); border-color: rgba(192,57,43,0.3); color: #c0392b; }
+.snav-vis-btn.restricted:hover { background: rgba(192,57,43,0.18); }
+.admin-mode-inner .snav-vis-btn { display: inline-flex; }
+
+/* 비공개 탭 숨김 */
+.snav-item.sec-hidden,
+.snav-extra-btn.sec-hidden { display: none !important; }
+
+/* 관리자 모드에서는 비공개 탭도 흐리게 보여줌 */
+.admin-mode-inner .snav-item.sec-hidden { display: flex !important; opacity: 0.45; }
+.admin-mode-inner .snav-extra-btn.sec-hidden { display: inline-flex !important; opacity: 0.45; }
+
+/* snav-item flex 정렬 (버튼 포함) */
+.snav-item { display: flex; align-items: center; }
+
+/* ── 공개설정 모달 (섹션용) ── */
+#snavVisModal {
+  display: none;
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(0,0,0,0.45);
+  align-items: center; justify-content: center;
+}
+#snavVisModal.open { display: flex; }
+.snav-vis-modal-box {
+  background: #fff;
+  border: 1px solid #dde0ea;
+  border-radius: 12px;
+  padding: 28px 28px 22px;
+  width: 370px;
+  max-width: 95vw;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+}
+.snav-vis-modal-title { font-size: 15px; font-weight: 700; color: #1a2e50; margin-bottom: 6px; }
+.snav-vis-modal-sub { font-size: 11px; color: #8888aa; margin-bottom: 18px; line-height: 1.6; }
+.snav-vis-role-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.snav-vis-role-row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #f8fafc; border-radius: 6px; padding: 9px 14px;
+  border: 1px solid #e2e8f0;
+}
+.snav-vis-role-row .role-name { font-size: 12.5px; color: #334155; font-weight: 600; }
+.snav-vis-role-row .role-desc { font-size: 10px; color: #94a3b8; margin-top:1px; }
+.snav-vis-badge { font-size: 10.5px; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
+.snav-badge-open   { background: #e8f8f0; color: #27ae60; border: 1px solid #b2dfce; }
+.snav-badge-hidden { background: #fef0ee; color: #c0392b; border: 1px solid #f5c6b8; }
+.snav-vis-toggle-btn {
+  background: none; border: 1px solid #cbd5e1; color: #64748b;
+  border-radius: 4px; padding: 3px 10px; font-size: 11px;
+  cursor: pointer; font-family: var(--font); transition: all 0.15s;
+}
+.snav-vis-toggle-btn:hover { background: #f1f5f9; color: #1a2e50; }
+.snav-vis-modal-footer { display: flex; justify-content: flex-end; gap: 8px; }
+.snav-vis-save-btn {
+  background: #2356a8; border: none; color: #fff;
+  padding: 8px 20px; border-radius: 6px; font-size: 13px;
+  font-weight: 700; cursor: pointer; font-family: var(--font);
+  transition: background 0.15s;
+}
+.snav-vis-save-btn:hover { background: #1a3a7a; }
+.snav-vis-cancel-btn {
+  background: #f1f5f9; border: 1px solid #cbd5e1; color: #64748b;
+  padding: 8px 16px; border-radius: 6px; font-size: 13px;
+  cursor: pointer; font-family: var(--font); transition: background 0.15s;
+}
+.snav-vis-cancel-btn:hover { background: #e2e8f0; }
 </style>
 </head>
 <body>
@@ -281,17 +367,17 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 </div>
 
 <!-- 섹션 네비 -->
-<div class="section-nav">
-  <div style="display:flex;">
-    <div class="snav-item active" onclick="showSection('summary',this)">① 핵심 Summary</div>
-    <div class="snav-item" onclick="showSection('voc',this)">② VOC·클레임 분석</div>
-    <div class="snav-item" onclick="showSection('action',this)">③ 액션 현황판</div>
-    <div class="snav-item" onclick="showSection('ai',this)">④ AI 종합 분석</div>
-    <div class="snav-item" onclick="showSection('aireport',this)">⑤ AI 간이보고</div>
+<div class="section-nav" id="sectionNav">
+  <div style="display:flex;" id="snavList">
+    <div class="snav-item active" data-sec="summary" onclick="showSection('summary',this)">① 핵심 Summary<button class="snav-vis-btn" data-sec="summary" onclick="openSnavVisModal(event,'summary','핵심 Summary')">⚙</button></div>
+    <div class="snav-item" data-sec="voc" onclick="showSection('voc',this)">② VOC·클레임 분석<button class="snav-vis-btn" data-sec="voc" onclick="openSnavVisModal(event,'voc','VOC·클레임 분석')">⚙</button></div>
+    <div class="snav-item" data-sec="action" onclick="showSection('action',this)">③ 액션 현황판<button class="snav-vis-btn" data-sec="action" onclick="openSnavVisModal(event,'action','액션 현황판')">⚙</button></div>
+    <div class="snav-item" data-sec="ai" onclick="showSection('ai',this)">④ AI 종합 분석<button class="snav-vis-btn" data-sec="ai" onclick="openSnavVisModal(event,'ai','AI 종합 분석')">⚙</button></div>
+    <div class="snav-item" data-sec="aireport" onclick="showSection('aireport',this)">⑤ AI 간이보고<button class="snav-vis-btn" data-sec="aireport" onclick="openSnavVisModal(event,'aireport','AI 간이보고')">⚙</button></div>
   </div>
-  <div style="display:flex;gap:6px;flex-shrink:0;margin-left:auto;">
-    <button onclick="toggleReport(this)" style="padding:5px 12px;border:1.5px solid #cbd5e1;border-radius:6px;background:#f8fafc;color:#64748b;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font);" title="품질 개선 요청 참고자료">📋 품질현황</button>
-    <button onclick="togglePrompt(this)" style="padding:5px 12px;border:1.5px solid #cbd5e1;border-radius:6px;background:#f8fafc;color:#64748b;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font);" title="AI 프롬프트 관리">⚙️ 프롬프트</button>
+  <div style="display:flex;gap:6px;flex-shrink:0;margin-left:auto;align-items:center;" id="snavRight">
+    <button data-sec="report" onclick="toggleReport(this)" class="snav-extra-btn" style="padding:5px 12px;border:1.5px solid #cbd5e1;border-radius:6px;background:#f8fafc;color:#64748b;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font);" title="품질 개선 요청 참고자료">📋 품질현황<button class="snav-vis-btn" data-sec="report" onclick="openSnavVisModal(event,'report','품질현황')">⚙</button></button>
+    <button data-sec="prompt" onclick="togglePrompt(this)" class="snav-extra-btn" style="padding:5px 12px;border:1.5px solid #cbd5e1;border-radius:6px;background:#f8fafc;color:#64748b;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font);" title="AI 프롬프트 관리">⚙️ 프롬프트<button class="snav-vis-btn" data-sec="prompt" onclick="openSnavVisModal(event,'prompt','프롬프트')">⚙</button></button>
   </div>
 </div>
 
@@ -587,6 +673,19 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 
 </div><!-- /content -->
 
+<!-- 섹션 공개설정 모달 -->
+<div id="snavVisModal">
+  <div class="snav-vis-modal-box">
+    <div class="snav-vis-modal-title" id="snavVisModalTitle">⚙ 공개설정</div>
+    <div class="snav-vis-modal-sub">권한별로 이 메뉴의 표시 여부를 설정합니다.<br>비공개 처리 시 해당 권한 미만 접속자에게 메뉴가 숨겨집니다.</div>
+    <div class="snav-vis-role-list" id="snavVisRoleList"></div>
+    <div class="snav-vis-modal-footer">
+      <button class="snav-vis-cancel-btn" onclick="closeSnavVisModal()">취소</button>
+      <button class="snav-vis-save-btn" onclick="saveSnavVisSettings()">저장</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════════════════════════
 // 설정
@@ -611,13 +710,37 @@ const CSV_URLS = {
 // 단독 실행 fallback 포함
 let SCRIPT_URL = '';
 let _dataLoaded = false;
+// ── 내부 섹션 공개설정 ──
+let SNAV_VIS = {};        // { 'summary': ['leader','ggumbi',...], ... }
+let _snavVisLoaded = false;
+let _currentUserRole = '';
+const SNAV_VIS_KEY = 'AI보고_내부섹션';
+const SNAV_ROLE_DISPLAY = [
+  ['leader',    '리더급',  '리더급 이하'],
+  ['ggumbi',    '꿈비',    '꿈비 이하'],
+  ['affiliate', '계열사',  '계열사'],
+];
+// 번호 매핑 (원형 문자)
+const NUM_CHARS = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
+// 각 snav-item의 원래 텍스트 레이블 (번호 제외)
+const SNAV_BASE_LABELS = {
+  summary:  '핵심 Summary',
+  voc:      'VOC·클레임 분석',
+  action:   '액션 현황판',
+  ai:       'AI 종합 분석',
+  aireport: 'AI 간이보고',
+};
+
 window.addEventListener('message', function(e) {
   if (e.data && e.data.type === 'SCRIPT_URL' && e.data.url) {
     SCRIPT_URL = e.data.url;
-    // SCRIPT_URL 받은 후 아직 데이터 로드 안 됐으면 실행
+    if (e.data.userRole) {
+      _currentUserRole = e.data.userRole;
+      applyAdminMode();
+    }
     if (!_dataLoaded) { _dataLoaded = true; loadAllData(); }
   }
-});;
+});
 
 const COLORS = ['#2356a8','#4a9fd4','#2a7a6f','#e8834a','#9b59b6','#e74c3c','#f1c40f','#1abc9c','#e67e22','#c0392b'];
 
@@ -818,7 +941,7 @@ function togglePrompt(btn) {
     sessionStorage.setItem('walpimiSection','prompt');
   } else {
     document.getElementById('sec-summary').classList.add('active');
-    document.querySelector('.snav-item').classList.add('active');
+    document.querySelector('.snav-item[data-sec="summary"]').classList.add('active');
     if(promptBtn){ promptBtn.style.background=''; promptBtn.style.borderColor=''; promptBtn.style.color=''; }
     sessionStorage.setItem('walpimiSection','summary');
   }
@@ -993,6 +1116,182 @@ async function loadAireportFrame() {
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+// 섹션 공개설정 (관리자 전용)
+// ══════════════════════════════════════════════════════════════
+
+function applyAdminMode() {
+  const nav = document.getElementById('sectionNav');
+  if (!nav) return;
+  if (_currentUserRole === 'admin') {
+    nav.classList.add('admin-mode-inner');
+  } else {
+    nav.classList.remove('admin-mode-inner');
+  }
+  loadSnavVisSettings();
+}
+
+async function loadSnavVisSettings() {
+  if (!SCRIPT_URL) return;
+  try {
+    const qs = `action=getVisSettings&key=${encodeURIComponent(SNAV_VIS_KEY)}`;
+    const res = await fetch(`${SCRIPT_URL}?${qs}`, { redirect: 'follow' });
+    const json = await res.json();
+    if (json.ok && json.settings) {
+      SNAV_VIS = json.settings[SNAV_VIS_KEY] || json.settings || {};
+    }
+  } catch(e) {
+    console.warn('[SNAV_VIS] 로드 실패:', e.message);
+  }
+  _snavVisLoaded = true;
+  applySnavVisibility();
+}
+
+async function saveSnavVisToGAS() {
+  if (!SCRIPT_URL) return false;
+  try {
+    const payload = {};
+    payload[SNAV_VIS_KEY] = SNAV_VIS;
+    const qs = `action=saveVisSettings&key=${encodeURIComponent(SNAV_VIS_KEY)}&settingsJson=${encodeURIComponent(JSON.stringify(SNAV_VIS))}&savedBy=admin`;
+    const res = await fetch(`${SCRIPT_URL}?${qs}`, { redirect: 'follow' });
+    const json = await res.json();
+    return json.ok;
+  } catch(e) {
+    console.warn('[SNAV_VIS] 저장 실패:', e.message);
+    return false;
+  }
+}
+
+function applySnavVisibility() {
+  const isAdmin = _currentUserRole === 'admin';
+  // ① 숨김/표시 처리
+  document.querySelectorAll('.snav-item[data-sec]').forEach(item => {
+    const sec = item.dataset.sec;
+    const hidden = SNAV_VIS[sec] || [];
+    const shouldHide = !isAdmin && hidden.includes(_currentUserRole);
+    item.classList.toggle('sec-hidden', shouldHide);
+  });
+  document.querySelectorAll('.snav-extra-btn[data-sec]').forEach(btn => {
+    const sec = btn.dataset.sec;
+    const hidden = SNAV_VIS[sec] || [];
+    const shouldHide = !isAdmin && hidden.includes(_currentUserRole);
+    btn.classList.toggle('sec-hidden', shouldHide);
+  });
+  // ② 번호 재계산 (①~⑤ 탭만, 비관리자 기준 보이는 탭만)
+  renumberSnavItems();
+  // ③ vis-btn 상태 업데이트
+  updateSnavVisBtnDisplay();
+}
+
+function renumberSnavItems() {
+  // snav-item[data-sec] 중 표시되는 것만 순번 재부여
+  const items = document.querySelectorAll('.snav-item[data-sec]');
+  let visIdx = 0;
+  items.forEach(item => {
+    const sec = item.dataset.sec;
+    const label = SNAV_BASE_LABELS[sec];
+    if (!label) return; // 번호 없는 항목
+    const isHidden = item.classList.contains('sec-hidden');
+    const isAdmin = _currentUserRole === 'admin';
+    // 관리자: 비공개여도 흐리게 표시하므로 번호 유지 (원래 순번)
+    // 일반: 보이는 항목만 순번 재부여
+    const visBtns = item.querySelectorAll('.snav-vis-btn');
+    const textNode = getTextNode(item);
+    if (isAdmin) {
+      // 관리자 모드: 원래 번호 그대로 (다시 계산하면 혼란스러울 수 있으므로 원래 순번)
+      // 원래 순번은 SNAV_BASE_LABELS 키 순서
+      const keys = Object.keys(SNAV_BASE_LABELS);
+      const origIdx = keys.indexOf(sec);
+      if (origIdx >= 0 && textNode) {
+        textNode.textContent = NUM_CHARS[origIdx] + ' ' + label;
+      }
+    } else {
+      if (!isHidden) {
+        if (textNode) textNode.textContent = NUM_CHARS[visIdx] + ' ' + label;
+        visIdx++;
+      }
+    }
+  });
+}
+
+function getTextNode(el) {
+  // 첫 번째 텍스트 노드를 반환
+  for (let n of el.childNodes) {
+    if (n.nodeType === 3 && n.textContent.trim()) return n;
+  }
+  return null;
+}
+
+function updateSnavVisBtnDisplay() {
+  document.querySelectorAll('.snav-vis-btn[data-sec]').forEach(btn => {
+    const sec = btn.dataset.sec;
+    const hidden = SNAV_VIS[sec] || [];
+    const hasHidden = hidden.length > 0;
+    btn.classList.toggle('restricted', hasHidden);
+    btn.title = hasHidden ? `비공개: ${hidden.join(', ')}` : '공개설정';
+    btn.textContent = hasHidden ? '🔒' : '⚙';
+  });
+}
+
+// ── 공개설정 모달 ──
+let _snavVisCurrent = '';
+let _snavVisTemp = [];
+
+function openSnavVisModal(evt, sec, label) {
+  evt.stopPropagation();
+  _snavVisCurrent = sec;
+  _snavVisTemp = JSON.parse(JSON.stringify(SNAV_VIS[sec] || []));
+  document.getElementById('snavVisModalTitle').textContent = `⚙ 공개설정 — ${label}`;
+  let html = '';
+  SNAV_ROLE_DISPLAY.forEach(([role, name, desc]) => {
+    const isHidden = _snavVisTemp.includes(role);
+    html += `<div class="snav-vis-role-row" id="svrow-${role}">
+      <div>
+        <div class="role-name">${name}</div>
+        <div class="role-desc">${desc}</div>
+      </div>
+      <span class="snav-vis-badge ${isHidden ? 'snav-badge-hidden' : 'snav-badge-open'}" id="svbadge-${role}">${isHidden ? '비공개' : '공개'}</span>
+      <button class="snav-vis-toggle-btn" id="svtoggle-${role}" onclick="toggleSnavVisRole('${role}')">${isHidden ? '공개로 변경' : '비공개 설정'}</button>
+    </div>`;
+  });
+  document.getElementById('snavVisRoleList').innerHTML = html;
+  document.getElementById('snavVisModal').classList.add('open');
+}
+
+function toggleSnavVisRole(role) {
+  const idx = _snavVisTemp.indexOf(role);
+  if (idx >= 0) _snavVisTemp.splice(idx, 1);
+  else           _snavVisTemp.push(role);
+  const badge  = document.getElementById(`svbadge-${role}`);
+  const toggle = document.getElementById(`svtoggle-${role}`);
+  const isHidden = _snavVisTemp.includes(role);
+  badge.className  = `snav-vis-badge ${isHidden ? 'snav-badge-hidden' : 'snav-badge-open'}`;
+  badge.textContent = isHidden ? '비공개' : '공개';
+  toggle.textContent = isHidden ? '공개로 변경' : '비공개 설정';
+}
+
+function closeSnavVisModal() {
+  document.getElementById('snavVisModal').classList.remove('open');
+}
+
+async function saveSnavVisSettings() {
+  SNAV_VIS[_snavVisCurrent] = [..._snavVisTemp];
+  closeSnavVisModal();
+  applySnavVisibility();
+  const ok = await saveSnavVisToGAS();
+  if (!ok) {
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;top:60px;right:20px;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:10px 16px;border-radius:6px;font-size:12px;z-index:9000;';
+    msg.textContent = '⚠ GAS 저장 실패 — 이 세션에서만 유효합니다';
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 3000);
+  }
+}
+
+document.getElementById('snavVisModal').addEventListener('click', function(e) {
+  if (e.target === this) closeSnavVisModal();
+});
+
 function showSection(id, el) {
   // 프롬프트 탭에서 이탈 시 저장 확인
   const promptSec = document.getElementById('sec-prompt');
@@ -1033,7 +1332,7 @@ function toggleReport(btn) {
   } else {
     // 닫으면 summary로 복귀
     document.getElementById('sec-summary').classList.add('active');
-    document.querySelector('.snav-item').classList.add('active');
+    document.querySelector('.snav-item[data-sec="summary"]').classList.add('active');
     btn.style.background = '';
     btn.style.borderColor = '';
     btn.style.color = '';
@@ -1045,21 +1344,20 @@ function restoreSection() {
   const saved = sessionStorage.getItem('walpimiSection');
   if (!saved) return;
   const secEl = document.getElementById('sec-'+saved);
-  const navMap = { summary:0, voc:1, action:2, ai:3, aireport:4 };
   if (!secEl) return;
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.snav-item').forEach(s=>s.classList.remove('active'));
   secEl.classList.add('active');
   if (saved === 'report') {
-    // 품질현황 버튼 활성화
     const btn = document.querySelector('button[onclick*="toggleReport"]');
     if (btn) { btn.style.background='#e8f0fe'; btn.style.borderColor='#4a7fd4'; btn.style.color='#1a4a9a'; }
   } else if (saved === 'prompt') {
     const btn = document.querySelector('button[onclick*="togglePrompt"]');
     if (btn) { btn.style.background='#eef2ff'; btn.style.borderColor='#6366f1'; btn.style.color='#4338ca'; }
     setTimeout(renderPromptCards, 100);
-  } else if (navMap[saved] !== undefined) {
-    document.querySelectorAll('.snav-item')[navMap[saved]].classList.add('active');
+  } else {
+    const navItem = document.querySelector(`.snav-item[data-sec="${saved}"]`);
+    if (navItem) navItem.classList.add('active');
   }
 }
 function setStatus(cls, msg, spin) {

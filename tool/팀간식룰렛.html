@@ -743,25 +743,27 @@ function updateFishing() {
 
   // ── biting ──
   if(fs.phase==='biting'){
-    fs.biteProgress = Math.min(1, fs.biteProgress+0.05);
+    fs.biteProgress = Math.min(1, fs.biteProgress+0.04);
     fs.hookY = fs.bobY + Math.sin(fs.biteProgress*Math.PI)*12;
     fs.biteSplash.forEach(p=>{p.life-=0.04;});
     fs.biteSplash=fs.biteSplash.filter(p=>p.life>0);
     if(fs.biteProgress>=1){
       fs.phase='reeling';
       fs.pullProgress=0;
+      fs.hookX = fs.bobX;  // reeling 시작점 고정
+      fs.hookY = fs.bobY;
     }
   }
 
   // ── reeling ──
   if(fs.phase==='reeling'){
-    fs.pullProgress = Math.min(1, fs.pullProgress+0.016);
+    fs.pullProgress = Math.min(1, fs.pullProgress+0.012);
     const ease = fs.pullProgress<0.5
       ? 2*fs.pullProgress*fs.pullProgress
       : 1-Math.pow(-2*fs.pullProgress+2,2)/2;
     fs.hookX = fs.bobX+(88-fs.bobX)*ease;
     fs.hookY = fs.bobY+(28-fs.bobY)*ease;
-    if(fs.pullProgress<0.35&&Math.random()<0.18){
+    if(fs.pullProgress<0.4&&Math.random()<0.15){
       fs.biteSplash.push({x:fs.hookX,y:fs.hookY,angle:Math.random()*Math.PI*2,speed:3+Math.random()*4,r:2+Math.random()*3,life:0.9});
     }
     fs.biteSplash.forEach(p=>{p.life-=0.04;});
@@ -770,7 +772,8 @@ function updateFishing() {
       fs.phase='caught';
       stopFishLoop();
       drawFishing();
-      setTimeout(()=>finishGame(fs.catchFishIdx), 500);
+      const capturedIdx = fs.catchFishIdx;  // 클로저 캡처
+      setTimeout(()=>finishGame(capturedIdx), 600);
     }
   }
 }

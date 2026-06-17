@@ -822,6 +822,13 @@ body {
         <!-- 기본정보 -->
         <div class="form-section">
           <div class="form-section-label">기본 정보</div>
+          <div class="field-row col1" style="margin-bottom:6px;">
+            <div class="field">
+              <label>발급번호 <span style="color:var(--steel);font-weight:400;">(저장 시 자동 발행)</span></label>
+              <input type="text" id="in_docno" placeholder="저장 후 발행됩니다" readonly
+                style="background:var(--ice);color:var(--steel);font-family:monospace;font-size:13px;cursor:default;letter-spacing:.04em;">
+            </div>
+          </div>
           <div class="field-row col2">
             <div class="field">
               <label>고객명 <span class="req">*</span></label>
@@ -1038,7 +1045,7 @@ body {
           <div class="search-input-wrap">
             <span class="s-icon">🔍</span>
             <input class="search-input" id="searchInput"
-              placeholder="고객명으로 검색 (비워두면 전체 조회)"
+              placeholder="고객명 또는 발급번호로 검색 (비워두면 전체 조회)"
               onkeydown="if(event.key==='Enter') searchHistory()">
           </div>
           <button class="search-btn" onclick="searchHistory()">조회</button>
@@ -1138,6 +1145,15 @@ function removePhoto(idx) {
   syncPhotos();
 }
 
+// Drive URL / Base64 → img 표시용 URL 변환
+function toDisplayUrl(src) {
+  if (!src) return '';
+  if (src.startsWith('data:')) return src;  // Base64 그대로
+  const m = src.match(/\/d\/([-\w]+)\//);
+  if (m) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w600`;
+  return src;
+}
+
 function renderSlot(idx) {
   const slot = document.getElementById('photoGrid').children[idx];
   slot.querySelector('img')?.remove();
@@ -1146,9 +1162,28 @@ function renderSlot(idx) {
   slot.querySelector('.ps-lbl').style.display  = hasImg ? 'none' : '';
   if (hasImg) {
     const img = document.createElement('img');
-    img.src = photoData[idx];
+    img.src = toDisplayUrl(photoData[idx]);
     slot.appendChild(img);
   }
+}
+
+// Drive URL → 슬롯 표시 (썸네일 변환)
+function renderSlotFromUrl(idx, url) {
+  const slot = document.getElementById('photoGrid').children[idx];
+  slot.querySelector('img')?.remove();
+  slot.querySelector('.ps-icon').style.display = 'none';
+  slot.querySelector('.ps-lbl').style.display  = 'none';
+  const img = document.createElement('img');
+  img.src = toDisplayUrl(url);
+  img.onerror = () => {
+    // 썸네일 실패 시 Drive 아이콘으로 대체
+    img.remove();
+    slot.querySelector('.ps-icon').style.display = '';
+    slot.querySelector('.ps-icon').textContent = '🔗';
+    slot.querySelector('.ps-lbl').style.display = '';
+    slot.querySelector('.ps-lbl').textContent = 'Drive 저장됨';
+  };
+  slot.appendChild(img);
 }
 
 function syncPhotos() {
@@ -1159,7 +1194,7 @@ function syncPhotos() {
     item.className = 'doc-photo-item';
     if (photoData[i]) {
       const img = document.createElement('img');
-      img.src = photoData[i];
+      img.src = toDisplayUrl(photoData[i]);
       item.appendChild(img);
     } else {
       item.innerHTML = '<div class="doc-photo-empty">📷</div>';
@@ -1199,28 +1234,31 @@ function sync() {
    AUTO-GENERATE REPAIR
 ════════════════════════════════════════════ */
 function autoGenRepair() {
-  const product   = v('in_product').toLowerCase();
-  const parts     = v('in_parts').toLowerCase();
-  const defect    = v('in_defect').toLowerCase();
-  const custDesc  = v('in_cust_desc').toLowerCase();
+  const product  = v('in_product').toLowerCase();
+  const parts    = v('in_parts').toLowerCase();
+  const defect   = v('in_defect');          // 원문 그대로 (표시용)
+  const defectLo = defect.toLowerCase();
+  const custDesc = v('in_cust_desc').toLowerCase();
+  const partsRaw = v('in_parts');           // 원문 그대로 (표시용)
 
   const isDaecheParts = parts.includes('대체');
-  const isSteam   = product.includes('스팀플러스');
-  const isChulsu  = product.includes('출수형') || product.includes('출수');
+  const isSteam  = product.includes('스팀플러스');
+  const isChulsu = product.includes('출수형') || product.includes('출수');
 
   let result = '';
 
+  // ── Case 1: 스팀플러스 + 대체품 → 접수불량 키워드 기반 특별조건 ──
   if (isSteam && isDaecheParts) {
     const lines = [];
-    if (defect.includes('누수'))     lines.push('밸브Assy 교체');
-    if (defect.includes('건조'))     lines.push('FAN(PTC) 교체');
-    if (defect.includes('누전'))     lines.push('메인보드 교체');
-    if (defect.includes('세척'))     lines.push('세척펌프 교체');
-    if (defect.includes('온수'))     lines.push('가열판 교체');
-    if (defect.includes('e3'))       lines.push('밸브Assy 교체');
-    if (defect.includes('전원불량')) lines.push('메인보드 교체');
-    if (defect.includes('배수'))     lines.push('밸브Assy 교체');
-    if (defect.includes('소음')) {
+    if (defectLo.includes('누수'))     lines.push('밸브Assy 교체');
+    if (defectLo.includes('건조'))     lines.push('FAN(PTC) 교체');
+    if (defectLo.includes('누전'))     lines.push('메인보드 교체');
+    if (defectLo.includes('세척'))     lines.push('세척펌프 교체');
+    if (defectLo.includes('온수'))     lines.push('가열판 교체');
+    if (defectLo.includes('e3'))       lines.push('밸브Assy 교체');
+    if (defectLo.includes('전원불량')) lines.push('메인보드 교체');
+    if (defectLo.includes('배수'))     lines.push('밸브Assy 교체');
+    if (defectLo.includes('소음')) {
       const hasSe  = custDesc.includes('세척');
       const hasFan = custDesc.includes('건조') || custDesc.includes('팬');
       if      (hasSe && hasFan) lines.push('세척펌프, FAN 교체');
@@ -1230,19 +1268,24 @@ function autoGenRepair() {
     }
     result = lines.length ? lines.join(' / ') : '해당 키워드 없음 – 직접 입력';
 
+  // ── Case 2: 출수형 + 대체품 → 증상 키워드 기반 특별조건 ──
   } else if (isChulsu && isDaecheParts) {
-    const sym = defect + ' ' + custDesc;
+    const sym = defectLo + ' ' + custDesc;
     const lines = [];
-    if (sym.includes('누수'))    lines.push('모터기구 교체');
-    if (sym.includes('출수'))    lines.push('모터기구 교체');
-    if (sym.includes('가열'))    lines.push('메인보드 교체');
-    if (sym.includes('오작동'))  lines.push('메인보드 교체');
-    if (sym.includes('터치'))    lines.push('터치보드 교체');
+    if (sym.includes('누수'))   lines.push('모터기구 교체');
+    if (sym.includes('출수'))   lines.push('모터기구 교체');
+    if (sym.includes('가열'))   lines.push('메인보드 교체');
+    if (sym.includes('오작동')) lines.push('메인보드 교체');
+    if (sym.includes('터치'))   lines.push('터치보드 교체');
     result = lines.length ? [...new Set(lines)].join(' / ') : '해당 키워드 없음 – 직접 입력';
 
+  // ── Case 3: 그 외 모든 경우 → 사용부품 교체 ──
   } else {
-    if (!isSteam && !isChulsu) result = '제품명에 "스팀플러스" 또는 "출수형" 포함 필요';
-    else if (!isDaecheParts)   result = '사용부품에 "대체품" 포함 시 자동 생성 / 아니면 직접 입력';
+    if (partsRaw.trim()) {
+      result = partsRaw.trim() + ' 교체';
+    } else {
+      result = '사용부품을 입력 후 생성하세요';
+    }
   }
 
   if (result) {
@@ -1254,10 +1297,13 @@ function autoGenRepair() {
 
 /* ════════════════════════════════════════════
    AUTO-SAVE
+   - 최초 저장(발급번호 없음): 3초 디바운스 후 자동저장
+   - 불러오기 후(발급번호 있음): 자동저장 비활성, 수동 저장만
 ════════════════════════════════════════════ */
 let autoSaveTimer  = null;
 let lastSavedSnap  = '';
 let isSaving       = false;
+let currentDocNo   = '';   // 현재 문서 발급번호 ('' = 신규)
 
 function formSnapshot() {
   return ['in_customer','in_order','in_recv','in_proc','in_product',
@@ -1269,37 +1315,56 @@ function setAutoSaveStatus(status) {
   const el = document.getElementById('autoSaveStatus');
   if (!el) return;
   const map = {
-    idle:    { icon: '●', text: '변경 없음',      color: 'rgba(255,255,255,.28)' },
-    pending: { icon: '◌', text: '잠시 후 저장…',  color: 'rgba(201,168,76,.85)'  },
-    saving:  { icon: '◌', text: '저장 중…',       color: 'rgba(201,168,76,1)'    },
-    saved:   { icon: '✓', text: '자동저장 완료',  color: 'rgba(100,220,140,.95)' },
-    error:   { icon: '!', text: '저장 실패',       color: 'rgba(255,110,90,.95)'  },
-    skip:    { icon: '—', text: '필수값 미입력',   color: 'rgba(255,255,255,.2)'  },
+    idle:       { icon: '●', text: '변경 없음',       color: 'rgba(255,255,255,.28)' },
+    pending:    { icon: '◌', text: '잠시 후 저장…',   color: 'rgba(201,168,76,.85)'  },
+    saving:     { icon: '◌', text: '저장 중…',        color: 'rgba(201,168,76,1)'    },
+    saved:      { icon: '✓', text: '자동저장 완료',   color: 'rgba(100,220,140,.95)' },
+    error:      { icon: '!', text: '저장 실패',        color: 'rgba(255,110,90,.95)'  },
+    skip:       { icon: '—', text: '필수값 미입력',    color: 'rgba(255,255,255,.2)'  },
+    manual:     { icon: '■', text: '수동저장 모드',    color: 'rgba(201,168,76,.6)'   },
   };
   const s = map[status] || map.idle;
-  el.style.color   = s.color;
+  el.style.color      = s.color;
   el.style.transition = 'color .3s';
   el.innerHTML = `<span style="font-size:9px;vertical-align:middle;">${s.icon}</span> ${s.text}`;
 }
 
 function scheduleAutoSave() {
+  // 불러온 문서(발급번호 있음) → 자동저장 안 함
+  if (currentDocNo) { setAutoSaveStatus('manual'); return; }
+
   const snap = formSnapshot();
-  if (snap === lastSavedSnap) return;   // 변경 없으면 패스
+  if (snap === lastSavedSnap) return;
   setAutoSaveStatus('pending');
   clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(async () => {
     if (!v('in_customer') || !v('in_order')) { setAutoSaveStatus('skip'); return; }
     if (isSaving) return;
-    await saveRecord(true);  // silent 모드
-  }, 3000);  // 3초 디바운스
+    await saveRecord(true);  // silent 자동저장
+  }, 3000);
 }
 
 /* ════════════════════════════════════════════
    GAS SAVE
+   - 신규(currentDocNo=''): 새 발급번호 발행
+   - 기존(currentDocNo 있음): 덮어쓰기 확인 후 update
 ════════════════════════════════════════════ */
 async function saveRecord(silent = false) {
   if (!v('in_customer')) { if (!silent) showToast('고객명을 입력하세요', 'error'); return; }
   if (!v('in_order'))    { if (!silent) showToast('주문번호를 입력하세요', 'error'); return; }
+
+  // 기존 문서 수동저장: 덮어쓰기 확인
+  if (!silent && currentDocNo) {
+    const ok = confirm(`발급번호 ${currentDocNo} 문서를 덮어씌우겠습니까?
+
+확인: 현재 내용으로 업데이트
+취소: 새 발급번호로 신규 저장`);
+    if (!ok) {
+      // 취소 → 신규 저장으로 처리 (currentDocNo 초기화)
+      currentDocNo = '';
+      document.getElementById('in_docno').value = '';
+    }
+  }
 
   isSaving = true;
   setAutoSaveStatus('saving');
@@ -1309,6 +1374,7 @@ async function saveRecord(silent = false) {
 
   const payload = {
     action:    'save',
+    docNo:     currentDocNo || '',   // 있으면 덮어쓰기, 없으면 신규
     customer:  v('in_customer'),
     order:     v('in_order'),
     recvDate:  v('in_recv'),
@@ -1319,7 +1385,11 @@ async function saveRecord(silent = false) {
     symptom:   v('in_symptom'),
     repair:    v('in_repair'),
     parts:     v('in_parts'),
-    savedAt:   new Date().toLocaleString('ko-KR')
+    savedAt:   new Date().toLocaleString('ko-KR'),
+    // 사진: 새로 업로드된 것만 Base64 전송 (Drive 저장), 기존 URL은 null로 (GAS에서 유지)
+    photo1:    photoData[0] && photoData[0].startsWith('data:') ? photoData[0] : null,
+    photo2:    photoData[1] && photoData[1].startsWith('data:') ? photoData[1] : null,
+    photo3:    photoData[2] && photoData[2].startsWith('data:') ? photoData[2] : null,
   };
 
   try {
@@ -1331,9 +1401,23 @@ async function saveRecord(silent = false) {
     const data = await res.json();
     if (data.status === 'ok') {
       const docNo = data.docNo || '';
-      lastSavedSnap = formSnapshot();  // 저장 성공 시 스냅샷 갱신
+      currentDocNo  = docNo;   // 발급번호 확정
+      lastSavedSnap = formSnapshot();
+
+      // 입력칸 발급번호 표시
+      const docNoEl = document.getElementById('in_docno');
+      if (docNoEl) docNoEl.value = docNo;
+
+      // 미리보기 발급번호 표시
       document.getElementById('p_docno').innerHTML =
         `발급번호: ${docNo}<br>발급일: ${new Date().toLocaleDateString('ko-KR')}`;
+
+      // Drive URL 반환 시 photoData 업데이트 (다음 저장 시 재전송 방지)
+      if (data.photos) {
+        data.photos.forEach((url, i) => {
+          if (url) photoData[i] = url;  // Drive URL로 교체
+        });
+      }
       setAutoSaveStatus('saved');
       if (!silent) showToast(`저장 완료! 발급번호: ${docNo}`, 'success');
       else         showToast(`자동저장 완료 · ${docNo}`, 'success');
@@ -1363,7 +1447,7 @@ async function searchHistory() {
   result.innerHTML = '<div class="empty-state"><div class="es-icon"><span class="spinner" style="width:24px;height:24px;border-color:var(--line);border-top-color:var(--navy);"></span></div><div class="es-msg" style="margin-top:12px;">조회 중…</div></div>';
 
   try {
-    const url = `${GAS_URL}?action=list&keyword=${encodeURIComponent(keyword)}`;
+    const url = `${GAS_URL}?action=repairList&keyword=${encodeURIComponent(keyword)}&searchType=all`;
     const res  = await fetch(url);
     const data = await res.json();
 
@@ -1383,16 +1467,31 @@ async function searchHistory() {
         <th></th>
       </tr></thead><tbody>`;
 
+    // UTC → KST 변환 헬퍼
+    function toKST(str) {
+      if (!str) return '—';
+      // GAS 저장 형식: "2026-06-17 13:04:36" (이미 KST) 또는 ISO "2026-06-17T04:09:41.000Z" (UTC)
+      if (str.includes('T') && str.endsWith('Z')) {
+        const d = new Date(str);
+        return d.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul',
+          year:'numeric', month:'2-digit', day:'2-digit',
+          hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      }
+      return str; // 이미 KST 문자열
+    }
+
     data.rows.forEach((row, i) => {
       const safe = t => (t||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const rowJson = JSON.stringify(row).replace(/'/g,"&#39;");
       html += `<tr>
-        <td class="td-no">${safe(row.docNo||String(i+1))}</td>
-        <td style="font-size:11px;color:var(--steel);">${safe(row.savedAt||'')}</td>
+        <td class="td-no" style="cursor:pointer;color:var(--slate);text-decoration:underline;"
+            onclick='loadRecord(${rowJson})'>${safe(row.docNo||String(i+1))}</td>
+        <td style="font-size:11px;color:var(--steel);">${toKST(row.savedAt)}</td>
         <td class="td-name">${safe(row.customer||'')}</td>
         <td class="td-mono">${safe(row.order||'')}</td>
         <td style="font-size:12px;">${safe(row.product||'')}</td>
         <td style="font-size:11px;color:var(--ink2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${safe(row.repair||'')}</td>
-        <td><button class="load-btn" onclick='loadRecord(${JSON.stringify(row).replace(/'/g,"&#39;")})'>불러오기</button></td>
+        <td><button class="load-btn" onclick='loadRecord(${rowJson})'>불러오기</button></td>
       </tr>`;
     });
 
@@ -1405,17 +1504,50 @@ async function searchHistory() {
 }
 
 function loadRecord(row) {
+  // 날짜값 → input[type=date] 호환 포맷(YYYY-MM-DD) 변환
+  function toDateInput(val) {
+    if (!val) return '';
+    const s = String(val);
+    // 이미 YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    // YYYY-MM-DD HH:mm:ss 형태
+    const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (m) return m[1];
+    return s;
+  }
   const setV = (id, val) => { const el = document.getElementById(id); if (el) el.value = val||''; };
   setV('in_customer', row.customer);
   setV('in_order',    row.order);
-  setV('in_recv',     row.recvDate);
-  setV('in_proc',     row.procDate);
+  setV('in_recv',     toDateInput(row.recvDate));
+  setV('in_proc',     toDateInput(row.procDate));
   setV('in_product',  row.product);
   setV('in_cust_desc',row.custDesc);
   setV('in_defect',   row.defect);
   setV('in_symptom',  row.symptom);
   setV('in_repair',   row.repair);
   setV('in_parts',    row.parts);
+  // 불러온 문서의 발급번호 세팅 → 자동저장 비활성 + 덮어쓰기 모드
+  currentDocNo = row.docNo || '';
+  const docNoEl = document.getElementById('in_docno');
+  if (docNoEl) docNoEl.value = currentDocNo;
+  document.getElementById('p_docno').innerHTML =
+    `발급번호: ${currentDocNo}<br>발급일: ${toDateInput(row.savedAt) || '—'}`;
+  setAutoSaveStatus(currentDocNo ? 'manual' : 'idle');
+  lastSavedSnap = formSnapshot();  // 불러온 직후엔 변경없음 처리
+
+  // 사진 Drive URL 복원
+  photoData[0] = row.photo1 || null;
+  photoData[1] = row.photo2 || null;
+  photoData[2] = row.photo3 || null;
+  [0,1,2].forEach(i => {
+    if (photoData[i]) {
+      renderSlotFromUrl(i, photoData[i]);
+    } else {
+      renderSlot(i);  // 빈 슬롯
+    }
+  });
+  syncPhotos();
+
   sync();
   switchTab('write', document.querySelector('.nav-tab:first-child'));
   showToast(`"${row.customer}" 이력을 불러왔습니다`, 'success');
@@ -1430,10 +1562,15 @@ function resetForm() {
    'in_cust_desc','in_defect','in_parts','in_symptom','in_repair']
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   photoData.fill(null);
-  buildPhotoSlots();
+  buildPhotoSlots();  // 슬롯 재생성으로 완전 초기화
   syncPhotos();
-  sync();
+  currentDocNo = '';
+  lastSavedSnap = '';
+  const docNoEl = document.getElementById('in_docno');
+  if (docNoEl) docNoEl.value = '';
   document.getElementById('p_docno').innerHTML = '발급번호: —<br>발급일: —';
+  setAutoSaveStatus('idle');
+  sync();
 }
 
 /* ════════════════════════════════════════════

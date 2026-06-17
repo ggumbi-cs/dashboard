@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>수리내역서 · 주식회사 꿈비</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Noto+Serif+KR:wght@600;700;900&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════════ */
+:root {
+  --navy:      #0D1B3E;
+  --slate:     #1E3A6E;
+  --mid:       #2C5282;
+  --ice:       #EEF2F8;
+  --ice2:      #F5F7FB;
+  --white:     #FFFFFF;
+  --gold:      #C9A84C;
+  --gold-lt:   #F0E6C8;
+  --steel:     #8A95A8;
+  --ink:       #1A1F2E;
+  --ink2:      #3A4155;
+  --line:      #D4DCE8;
+  --line2:     #E8EDF5;
+  --red:       #C0392B;
+  --green:     #1A6B42;
+  --radius-sm: 4px;
+  --radius:    8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 4px rgba(13,27,62,.08);
+  --shadow:    0 4px 20px rgba(13,27,62,.12);
+  --shadow-lg: 0 8px 40px rgba(13,27,62,.18);
+  --font-sans: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  --font-serif: 'Noto Serif KR', 'Batang', serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+html { font-size: 14px; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--ice2);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* ═══════════════════════════════════════════
+   APP SHELL
+═══════════════════════════════════════════ */
+.app-header {
+  background: var(--navy);
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  gap: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,.3);
+}
+
+.app-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+.app-logo .logo-mark {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--gold) 0%, #A8882E 100%);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-serif);
+  font-weight: 900; font-size: 13px;
+  color: var(--navy);
+  letter-spacing: -0.5px;
+  flex-shrink: 0;
+}
+.app-logo .logo-text {
+  font-size: 13px; font-weight: 700;
+  color: rgba(255,255,255,.9);
+  letter-spacing: .02em;
+}
+
+.header-divider {
+  width: 1px; height: 20px;
+  background: rgba(255,255,255,.15);
+}
+
+.app-nav {
+  display: flex;
+  gap: 2px;
+}
+.nav-tab {
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 13px; font-weight: 500;
+  color: rgba(255,255,255,.55);
+  cursor: pointer;
+  transition: all .2s;
+  border: none;
+  background: transparent;
+  font-family: var(--font-sans);
+}
+.nav-tab:hover { color: rgba(255,255,255,.85); background: rgba(255,255,255,.08); }
+.nav-tab.active {
+  color: #fff;
+  background: rgba(255,255,255,.14);
+  font-weight: 600;
+}
+
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hbtn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: var(--font-sans);
+  transition: all .18s;
+  letter-spacing: .02em;
+}
+.hbtn-ghost {
+  background: rgba(255,255,255,.1);
+  color: rgba(255,255,255,.75);
+  border: 1px solid rgba(255,255,255,.15);
+}
+.hbtn-ghost:hover { background: rgba(255,255,255,.18); color: #fff; }
+.hbtn-gold {
+  background: linear-gradient(135deg, var(--gold) 0%, #A8882E 100%);
+  color: var(--navy);
+}
+.hbtn-gold:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(201,168,76,.4); }
+
+/* ═══════════════════════════════════════════
+   LAYOUT PANELS
+═══════════════════════════════════════════ */
+.workspace {
+  display: none;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 24px 24px 40px;
+}
+.workspace.active { display: block; }
+
+/* Write Tab: side-by-side */
+.write-layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.panel {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.panel-hd {
+  padding: 14px 20px;
+  background: var(--navy);
+  display: flex; align-items: center; gap: 8px;
+}
+.panel-hd-title {
+  font-size: 12px; font-weight: 700;
+  color: rgba(255,255,255,.9);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.panel-hd .gold-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  flex-shrink: 0;
+}
+
+.panel-body {
+  padding: 20px;
+}
+
+/* ═══════════════════════════════════════════
+   FORM ELEMENTS
+═══════════════════════════════════════════ */
+.form-section {
+  margin-bottom: 20px;
+}
+.form-section:last-child { margin-bottom: 0; }
+
+.form-section-label {
+  font-size: 10px; font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.form-section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line2);
+}
+
+.field-row {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.field-row.col2 { grid-template-columns: 1fr 1fr; }
+.field-row.col1 { grid-template-columns: 1fr; }
+.field-row:last-child { margin-bottom: 0; }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field label {
+  font-size: 10px; font-weight: 700;
+  color: var(--steel);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.field label .req { color: var(--red); margin-left: 2px; }
+
+.field input[type="text"],
+.field input[type="date"],
+.field textarea,
+.field select {
+  padding: 8px 11px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--ice2);
+  transition: border-color .15s, box-shadow .15s, background .15s;
+  width: 100%;
+  resize: none;
+  line-height: 1.5;
+}
+.field input[type="text"]:focus,
+.field input[type="date"]:focus,
+.field textarea:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--slate);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(30,58,110,.1);
+}
+.field textarea.h3 { height: 72px; }
+.field textarea.h2 { height: 54px; }
+
+/* ─── Gen Bar ─── */
+.gen-bar {
+  display: flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, var(--navy) 0%, var(--slate) 100%);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-bottom: 6px;
+}
+.gen-bar-text {
+  font-size: 11px; color: rgba(255,255,255,.7);
+  font-weight: 500;
+}
+.gen-btn {
+  margin-left: auto;
+  background: var(--gold);
+  color: var(--navy);
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 11px; font-weight: 800;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  letter-spacing: .04em;
+  transition: opacity .15s;
+  white-space: nowrap;
+}
+.gen-btn:hover { opacity: .85; }
+
+/* ─── Photo Upload ─── */
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+.photo-slot {
+  aspect-ratio: 4/3;
+  border: 2px dashed var(--line);
+  border-radius: var(--radius-sm);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  position: relative; overflow: hidden;
+  background: var(--ice2);
+  transition: all .15s;
+}
+.photo-slot:hover, .photo-slot.drag-over {
+  border-color: var(--gold);
+  background: var(--gold-lt);
+}
+.photo-slot input[type="file"] {
+  position: absolute; inset: 0;
+  opacity: 0; cursor: pointer;
+  width: 100%; height: 100%;
+}
+.photo-slot .ps-icon { font-size: 18px; opacity: .4; }
+.photo-slot .ps-lbl { font-size: 9px; color: var(--steel); text-align: center; line-height: 1.3; }
+.photo-slot img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+.photo-slot .rm-btn {
+  position: absolute; top: 4px; right: 4px;
+  width: 18px; height: 18px;
+  background: rgba(13,27,62,.7);
+  color: #fff; border: none;
+  border-radius: 50%;
+  font-size: 10px;
+  display: none; align-items: center; justify-content: center;
+  cursor: pointer; z-index: 3;
+}
+.photo-slot:hover .rm-btn { display: flex; }
+
+/* ─── Action Buttons ─── */
+.action-row {
+  display: flex; gap: 8px;
+  margin-top: 20px;
+}
+.abtn {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 700;
+  cursor: pointer; border: none;
+  font-family: var(--font-sans);
+  transition: all .18s;
+  letter-spacing: .02em;
+}
+.abtn-primary {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--slate) 100%);
+  color: #fff;
+}
+.abtn-primary:hover { box-shadow: 0 4px 16px rgba(13,27,62,.35); transform: translateY(-1px); }
+.abtn-outline {
+  background: #fff;
+  color: var(--navy);
+  border: 1.5px solid var(--navy);
+}
+.abtn-outline:hover { background: var(--ice); }
+.abtn-ghost {
+  background: var(--ice);
+  color: var(--steel);
+  border: 1px solid var(--line);
+}
+.abtn-ghost:hover { background: var(--line2); color: var(--ink2); }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--navy); color: #fff;
+  padding: 10px 24px; border-radius: 24px;
+  font-size: 13px; font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  opacity: 0; pointer-events: none;
+  transition: all .3s;
+  z-index: 9999;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.error { background: var(--red); }
+.toast.success { background: var(--green); }
+
+/* Spinner */
+.spinner {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══════════════════════════════════════════
+   A4 PREVIEW
+═══════════════════════════════════════════ */
+.preview-wrap {
+  position: sticky;
+  top: 80px;
+}
+.preview-label {
+  font-size: 11px; font-weight: 700;
+  color: var(--steel);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 10px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.preview-label::before, .preview-label::after {
+  content: ''; width: 40px; height: 1px; background: var(--line);
+}
+
+.a4-scaler {
+  transform-origin: top center;
+  /* JS sets scale */
+}
+
+.a4 {
+  width: 794px;
+  min-height: 1123px;
+  background: #fff;
+  box-shadow: var(--shadow-lg);
+  padding: 36px 42px 32px;
+  display: flex; flex-direction: column;
+  font-size: 11px;
+  position: relative;
+  font-family: var(--font-sans);
+  color: var(--ink);
+}
+
+/* Gold top bar */
+.a4::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 4px;
+  background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 60%, var(--navy) 100%);
+}
+
+/* ── Doc Header ── */
+.doc-hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 14px;
+  margin-bottom: 4px;
+  border-bottom: 2px solid var(--navy);
+}
+
+.doc-hd::after {
+  display: none; /* gold line handled differently */
+}
+
+.doc-title-area {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.doc-title {
+  font-family: var(--font-serif);
+  font-size: 24px; font-weight: 900;
+  color: var(--navy);
+  letter-spacing: -.5px;
+  line-height: 1.1;
+}
+.doc-sub {
+  font-size: 9px; font-weight: 500;
+  color: var(--gold);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+/* Gold accent line under title area */
+.gold-rule {
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold) 0%, transparent 100%);
+  width: 80px;
+  margin-top: 5px;
+}
+
+.doc-co {
+  text-align: right;
+  line-height: 1.8;
+}
+.doc-co-name {
+  font-size: 12px; font-weight: 800;
+  color: var(--navy);
+}
+.doc-co-detail {
+  font-size: 9px; color: var(--steel);
+}
+
+/* ── Info Grid ── */
+.doc-info-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 1.5px solid var(--navy);
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 12px 0 8px;
+}
+.dic {
+  padding: 6px 10px;
+  border-right: 1px solid var(--line);
+}
+.dic:last-child { border-right: none; }
+.dic-lbl {
+  font-size: 8px; font-weight: 800;
+  color: var(--navy);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.dic-val {
+  font-size: 11px; font-weight: 700;
+  color: var(--ink);
+  margin-top: 2px;
+}
+
+/* ── Product Bar ── */
+.doc-product-bar {
+  background: var(--navy);
+  border-radius: 5px;
+  padding: 8px 14px;
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 8px;
+}
+.dpb-lbl {
+  font-size: 8px; font-weight: 800;
+  color: var(--gold);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.dpb-val {
+  font-size: 13px; font-weight: 800;
+  color: #fff;
+}
+.dpb-num {
+  margin-left: auto;
+  font-size: 9px; color: rgba(255,255,255,.45);
+  font-weight: 500;
+}
+
+/* ── Doc Section ── */
+.doc-sec {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 7px;
+}
+.doc-sec-hd {
+  background: var(--ice);
+  padding: 4px 12px;
+  display: flex; align-items: center; gap: 6px;
+}
+.doc-sec-hd-bar {
+  width: 3px; height: 11px;
+  background: var(--gold);
+  border-radius: 2px;
+}
+.doc-sec-hd-txt {
+  font-size: 8.5px; font-weight: 800;
+  color: var(--navy);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.doc-sec-body {
+  padding: 8px 12px;
+  min-height: 34px;
+  font-size: 11px; line-height: 1.65;
+  color: var(--ink);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ── Two col ── */
+.doc-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-bottom: 7px;
+}
+
+/* ── Photo Strip ── */
+.doc-photo-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin-bottom: 7px;
+}
+.doc-photo-item {
+  aspect-ratio: 4/3;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--ice2);
+  display: flex; align-items: center; justify-content: center;
+}
+.doc-photo-item img { width: 100%; height: 100%; object-fit: cover; }
+.doc-photo-empty { color: var(--line); font-size: 20px; }
+
+/* ── Footer ── */
+.doc-footer {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.doc-ft-left {
+  font-size: 8.5px; color: var(--steel); line-height: 1.7;
+}
+.doc-ft-stamp {
+  display: flex; gap: 20px;
+}
+.stamp {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 3px;
+}
+.stamp-ring {
+  width: 50px; height: 50px;
+  border: 1.5px solid var(--navy);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; color: var(--navy);
+}
+.stamp-lbl { font-size: 8px; color: var(--steel); }
+
+/* ─── Doc No (top right) ─── */
+.doc-no-badge {
+  position: absolute;
+  top: 14px; right: 42px;
+  font-size: 8.5px; color: var(--steel);
+  text-align: right;
+  line-height: 1.6;
+}
+
+/* ═══════════════════════════════════════════
+   HISTORY TAB
+═══════════════════════════════════════════ */
+.history-layout {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.search-bar-wrap {
+  display: flex; gap: 10px;
+  margin-bottom: 20px;
+}
+.search-input-wrap {
+  flex: 1;
+  position: relative;
+}
+.search-input-wrap .s-icon {
+  position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+  font-size: 15px; color: var(--steel);
+  pointer-events: none;
+}
+.search-input {
+  width: 100%;
+  padding: 11px 14px 11px 40px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--ink);
+  background: #fff;
+  transition: border-color .15s, box-shadow .15s;
+}
+.search-input:focus {
+  outline: none;
+  border-color: var(--slate);
+  box-shadow: 0 0 0 3px rgba(30,58,110,.1);
+}
+.search-btn {
+  padding: 11px 22px;
+  background: var(--navy);
+  color: #fff; border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 14px; font-weight: 600;
+  cursor: pointer;
+  transition: all .18s;
+}
+.search-btn:hover { background: var(--slate); }
+
+.history-table-wrap {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.history-table thead tr {
+  background: var(--navy);
+}
+.history-table thead th {
+  padding: 11px 14px;
+  text-align: left;
+  font-size: 10px; font-weight: 700;
+  color: rgba(255,255,255,.7);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.history-table tbody tr {
+  border-bottom: 1px solid var(--line2);
+  cursor: pointer;
+  transition: background .12s;
+}
+.history-table tbody tr:last-child { border-bottom: none; }
+.history-table tbody tr:hover { background: var(--ice); }
+.history-table tbody td {
+  padding: 10px 14px;
+  color: var(--ink2);
+}
+.history-table .td-no {
+  font-size: 11px; color: var(--steel);
+  font-weight: 600; white-space: nowrap;
+}
+.history-table .td-name { font-weight: 700; color: var(--ink); }
+.history-table .td-mono { font-family: monospace; font-size: 12px; }
+.history-table .load-btn {
+  padding: 4px 12px;
+  background: var(--navy);
+  color: #fff; border: none;
+  border-radius: 4px;
+  font-size: 11px; font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: background .15s;
+  white-space: nowrap;
+}
+.history-table .load-btn:hover { background: var(--slate); }
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--steel);
+}
+.empty-state .es-icon { font-size: 36px; margin-bottom: 12px; opacity: .4; }
+.empty-state .es-msg { font-size: 14px; }
+
+/* ═══════════════════════════════════════════
+   PRINT MEDIA
+═══════════════════════════════════════════ */
+@media print {
+  @page { size: A4 portrait; margin: 0; }
+  body { background: #fff; }
+  .app-header,
+  .write-layout > .panel:first-child,
+  .preview-label,
+  #historyWs { display: none !important; }
+  .workspace.active { display: block !important; padding: 0 !important; }
+  .write-layout {
+    display: block !important;
+  }
+  .preview-wrap { position: static !important; }
+  .a4-scaler { transform: none !important; }
+  .a4 {
+    box-shadow: none !important;
+    width: 210mm; min-height: 297mm;
+    padding: 14mm 18mm 12mm;
+  }
+  .toast { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── App Header ── -->
+<header class="app-header">
+  <div class="app-logo">
+    <div class="logo-mark">꿈비</div>
+    <div class="logo-text">주식회사 꿈비</div>
+  </div>
+  <div class="header-divider"></div>
+  <nav class="app-nav">
+    <button class="nav-tab active" onclick="switchTab('write', this)">✏️ 수리내역서 작성</button>
+    <button class="nav-tab" onclick="switchTab('history', this)">📋 발급 이력관리</button>
+  </nav>
+  <div class="header-right">
+    <div id="autoSaveStatus" style="font-size:11px;font-weight:600;color:rgba(255,255,255,.3);letter-spacing:.04em;padding:0 6px;">● 변경 없음</div>
+    <div style="width:1px;height:18px;background:rgba(255,255,255,.15);"></div>
+    <button class="hbtn hbtn-ghost" onclick="resetForm()">초기화</button>
+    <button class="hbtn hbtn-gold" onclick="saveAndPrint()">🖨 저장 후 인쇄</button>
+  </div>
+</header>
+
+<!-- ════════════════════════════════
+     WRITE TAB
+════════════════════════════════ -->
+<div class="workspace active" id="writeWs">
+  <div class="write-layout">
+
+    <!-- LEFT: Input Panel -->
+    <div class="panel">
+      <div class="panel-hd">
+        <div class="gold-dot"></div>
+        <span class="panel-hd-title">정보 입력</span>
+      </div>
+      <div class="panel-body">
+
+        <!-- 기본정보 -->
+        <div class="form-section">
+          <div class="form-section-label">기본 정보</div>
+          <div class="field-row col2">
+            <div class="field">
+              <label>고객명 <span class="req">*</span></label>
+              <input type="text" id="in_customer" placeholder="홍길동" oninput="sync()">
+            </div>
+            <div class="field">
+              <label>주문번호 <span class="req">*</span></label>
+              <input type="text" id="in_order" placeholder="ORD-2024-00001" oninput="sync()">
+            </div>
+          </div>
+          <div class="field-row col2">
+            <div class="field">
+              <label>접수일</label>
+              <input type="date" id="in_recv" oninput="sync()">
+            </div>
+            <div class="field">
+              <label>처리일</label>
+              <input type="date" id="in_proc" oninput="sync()">
+            </div>
+          </div>
+          <div class="field-row col1">
+            <div class="field">
+              <label>제품명 <span class="req">*</span></label>
+              <input type="text" id="in_product" placeholder="예: 스팀플러스 3.0 Pro / 출수형 UV" oninput="sync()">
+            </div>
+          </div>
+        </div>
+
+        <!-- 증상 -->
+        <div class="form-section">
+          <div class="form-section-label">증상 내용</div>
+          <div class="field-row col1">
+            <div class="field">
+              <label>고객 접수내용</label>
+              <textarea class="h3" id="in_cust_desc" placeholder="고객이 신고한 내용을 입력하세요." oninput="sync()"></textarea>
+            </div>
+          </div>
+          <div class="field-row col2">
+            <div class="field">
+              <label>접수불량 <span style="color:var(--steel);font-weight:400;">(자동생성 참고용)</span></label>
+              <input type="text" id="in_defect" placeholder="누수 / 소음 / E3 등" oninput="sync()">
+            </div>
+            <div class="field">
+              <label>사용부품 <span style="color:var(--steel);font-weight:400;">(자동생성 참고용)</span></label>
+              <input type="text" id="in_parts" placeholder="대체품 / 정품" oninput="sync()">
+            </div>
+          </div>
+          <div class="field-row col1">
+            <div class="field">
+              <label>확인증상</label>
+              <input type="text" id="in_symptom" placeholder="현장에서 확인한 증상을 입력하세요." oninput="sync()">
+            </div>
+          </div>
+        </div>
+
+        <!-- 수리내용 -->
+        <div class="form-section">
+          <div class="form-section-label">수리 내용</div>
+          <div class="gen-bar">
+            <span class="gen-bar-text">💡 제품·부품·접수불량 키워드로 자동 생성</span>
+            <button class="gen-btn" onclick="autoGenRepair()">자동 생성 →</button>
+          </div>
+          <div class="field-row col1" style="margin-top:6px;">
+            <div class="field">
+              <label>수리내용 <span style="color:var(--steel);font-weight:400;">(자동생성 후 수정 가능)</span></label>
+              <textarea class="h2" id="in_repair" placeholder="자동 생성 또는 직접 입력하세요." oninput="sync()"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 사진 -->
+        <div class="form-section">
+          <div class="form-section-label">사진 첨부 (최대 3장)</div>
+          <div class="photo-grid" id="photoGrid"></div>
+        </div>
+
+        <!-- Actions -->
+        <div class="action-row">
+          <button class="abtn abtn-primary" onclick="saveRecord()">
+            <span id="saveBtnTxt">📥 GAS 저장</span>
+          </button>
+          <button class="abtn abtn-outline" onclick="window.print()">🖨 인쇄 / PDF</button>
+          <button class="abtn abtn-ghost" onclick="resetForm()">초기화</button>
+        </div>
+
+      </div><!-- panel-body -->
+    </div><!-- panel -->
+
+    <!-- RIGHT: A4 Preview -->
+    <div class="preview-wrap">
+      <div class="preview-label">미리보기 · A4 출력 기준</div>
+      <div class="a4-scaler" id="a4Scaler">
+        <div class="a4" id="docA4">
+
+          <!-- Absolute doc number -->
+          <div class="doc-no-badge" id="p_docno">
+            발급번호: —<br>
+            발급일: —
+          </div>
+
+          <!-- Header -->
+          <div class="doc-hd">
+            <div class="doc-title-area">
+              <div class="doc-title">수 리 내 역 서</div>
+              <div class="doc-sub">Repair Service Report</div>
+              <div class="gold-rule"></div>
+            </div>
+            <div class="doc-co">
+              <div class="doc-co-name">주식회사 꿈비</div>
+              <div class="doc-co-detail">경기 용인시 기흥구 동백죽전대로175번길 6 링크맘</div>
+              <div class="doc-co-detail">사업자등록번호: 318-81-04963</div>
+              <div class="doc-co-detail">☎ 1644-8135</div>
+            </div>
+          </div>
+
+          <!-- Info Grid -->
+          <div class="doc-info-grid">
+            <div class="dic">
+              <div class="dic-lbl">고객명</div>
+              <div class="dic-val" id="p_customer">—</div>
+            </div>
+            <div class="dic">
+              <div class="dic-lbl">주문번호</div>
+              <div class="dic-val" id="p_order">—</div>
+            </div>
+            <div class="dic">
+              <div class="dic-lbl">접수일</div>
+              <div class="dic-val" id="p_recv">—</div>
+            </div>
+            <div class="dic" style="border-right:none;">
+              <div class="dic-lbl">처리일</div>
+              <div class="dic-val" id="p_proc">—</div>
+            </div>
+          </div>
+
+          <!-- Product Bar -->
+          <div class="doc-product-bar">
+            <span class="dpb-lbl">제품명</span>
+            <span class="dpb-val" id="p_product">—</span>
+          </div>
+
+          <!-- 고객 접수내용 -->
+          <div class="doc-sec">
+            <div class="doc-sec-hd">
+              <div class="doc-sec-hd-bar"></div>
+              <div class="doc-sec-hd-txt">고객 접수내용</div>
+            </div>
+            <div class="doc-sec-body" id="p_cust_desc">—</div>
+          </div>
+
+          <!-- 확인증상 -->
+          <div class="doc-sec">
+            <div class="doc-sec-hd">
+              <div class="doc-sec-hd-bar"></div>
+              <div class="doc-sec-hd-txt">확인 증상</div>
+            </div>
+            <div class="doc-sec-body" id="p_symptom">—</div>
+          </div>
+
+          <!-- 수리내용 -->
+          <div class="doc-sec" style="margin-bottom:10px;">
+            <div class="doc-sec-hd">
+              <div class="doc-sec-hd-bar"></div>
+              <div class="doc-sec-hd-txt">수리 내용</div>
+            </div>
+            <div class="doc-sec-body" id="p_repair">—</div>
+          </div>
+
+          <!-- Photos -->
+          <div class="doc-photo-strip" id="p_photos">
+            <div class="doc-photo-item"><div class="doc-photo-empty">📷</div></div>
+            <div class="doc-photo-item"><div class="doc-photo-empty">📷</div></div>
+            <div class="doc-photo-item"><div class="doc-photo-empty">📷</div></div>
+          </div>
+
+          <!-- Footer -->
+          <div class="doc-footer">
+            <div class="doc-ft-left">
+              본 수리내역서는 주식회사 꿈비의 공식 서비스 문서입니다.<br>
+              16995 경기 용인시 기흥구 동백죽전대로175번길 6 링크맘 (꿈비) · ☎ 1644-8135
+            </div>
+            <div class="doc-ft-stamp">
+              <div class="stamp">
+                <div class="stamp-ring">담당자</div>
+                <div class="stamp-lbl">서명</div>
+              </div>
+              <div class="stamp">
+                <div class="stamp-ring">확인</div>
+                <div class="stamp-lbl">서명</div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- .a4 -->
+      </div><!-- a4-scaler -->
+    </div><!-- preview-wrap -->
+
+  </div><!-- write-layout -->
+</div><!-- writeWs -->
+
+<!-- ════════════════════════════════
+     HISTORY TAB
+════════════════════════════════ -->
+<div class="workspace" id="historyWs">
+  <div class="history-layout">
+
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="panel-hd">
+        <div class="gold-dot"></div>
+        <span class="panel-hd-title">발급 이력 조회</span>
+      </div>
+      <div class="panel-body">
+        <div class="search-bar-wrap">
+          <div class="search-input-wrap">
+            <span class="s-icon">🔍</span>
+            <input class="search-input" id="searchInput"
+              placeholder="고객명으로 검색 (비워두면 전체 조회)"
+              onkeydown="if(event.key==='Enter') searchHistory()">
+          </div>
+          <button class="search-btn" onclick="searchHistory()">조회</button>
+        </div>
+        <div id="historyResult">
+          <div class="empty-state">
+            <div class="es-icon">📋</div>
+            <div class="es-msg">조회 버튼을 눌러 이력을 불러오세요</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ════════════════════════════════════════════
+   CONFIG
+════════════════════════════════════════════ */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec';
+
+/* ════════════════════════════════════════════
+   TAB
+════════════════════════════════════════════ */
+function switchTab(tab, el) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('writeWs').classList.toggle('active', tab === 'write');
+  document.getElementById('historyWs').classList.toggle('active', tab === 'history');
+  if (tab === 'history') searchHistory();
+}
+
+/* ════════════════════════════════════════════
+   PHOTOS
+════════════════════════════════════════════ */
+const photoData = [null, null, null];
+
+function buildPhotoSlots() {
+  const grid = document.getElementById('photoGrid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'photo-slot';
+    slot.innerHTML = `
+      <div class="ps-icon">📷</div>
+      <div class="ps-lbl">클릭하거나<br>드래그하여 추가</div>
+      <input type="file" accept="image/*" data-idx="${i}">
+      <button class="rm-btn" data-idx="${i}" title="삭제">✕</button>
+    `;
+    slot.querySelector('input').addEventListener('change', e => handleFile(e.target.files[0], i));
+    slot.querySelector('.rm-btn').addEventListener('click', e => { e.stopPropagation(); removePhoto(i); });
+    slot.addEventListener('dragover', e => { e.preventDefault(); slot.classList.add('drag-over'); });
+    slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
+    slot.addEventListener('drop', e => {
+      e.preventDefault(); slot.classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (f && f.type.startsWith('image/')) handleFile(f, i);
+    });
+    grid.appendChild(slot);
+  }
+}
+
+function handleFile(file, idx) {
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = e => resizeImage(e.target.result, 800, resized => {
+    photoData[idx] = resized;
+    renderSlot(idx);
+    syncPhotos();
+  });
+  r.readAsDataURL(file);
+}
+
+function resizeImage(src, max, cb) {
+  const img = new Image();
+  img.onload = () => {
+    let w = img.width, h = img.height;
+    if (w > max || h > max) {
+      if (w > h) { h = Math.round(h * max / w); w = max; }
+      else       { w = Math.round(w * max / h); h = max; }
+    }
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    c.getContext('2d').drawImage(img, 0, 0, w, h);
+    cb(c.toDataURL('image/jpeg', 0.82));
+  };
+  img.src = src;
+}
+
+function removePhoto(idx) {
+  photoData[idx] = null;
+  renderSlot(idx);
+  syncPhotos();
+}
+
+function renderSlot(idx) {
+  const slot = document.getElementById('photoGrid').children[idx];
+  slot.querySelector('img')?.remove();
+  const hasImg = !!photoData[idx];
+  slot.querySelector('.ps-icon').style.display = hasImg ? 'none' : '';
+  slot.querySelector('.ps-lbl').style.display  = hasImg ? 'none' : '';
+  if (hasImg) {
+    const img = document.createElement('img');
+    img.src = photoData[idx];
+    slot.appendChild(img);
+  }
+}
+
+function syncPhotos() {
+  const strip = document.getElementById('p_photos');
+  strip.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const item = document.createElement('div');
+    item.className = 'doc-photo-item';
+    if (photoData[i]) {
+      const img = document.createElement('img');
+      img.src = photoData[i];
+      item.appendChild(img);
+    } else {
+      item.innerHTML = '<div class="doc-photo-empty">📷</div>';
+    }
+    strip.appendChild(item);
+  }
+}
+
+/* ════════════════════════════════════════════
+   SYNC TO PREVIEW
+════════════════════════════════════════════ */
+function v(id) { return (document.getElementById(id)?.value || '').trim(); }
+
+function fmtDate(s) {
+  if (!s) return '—';
+  const [y, m, d] = s.split('-');
+  return `${y}.${m}.${d}`;
+}
+
+function setTxt(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val || '—';
+}
+
+function sync() {
+  setTxt('p_customer', v('in_customer'));
+  setTxt('p_order',    v('in_order'));
+  setTxt('p_product',  v('in_product'));
+  setTxt('p_recv',     fmtDate(v('in_recv')));
+  setTxt('p_proc',     fmtDate(v('in_proc')));
+  setTxt('p_cust_desc', v('in_cust_desc'));
+  setTxt('p_symptom',  v('in_symptom'));
+  setTxt('p_repair',   v('in_repair'));
+}
+
+/* ════════════════════════════════════════════
+   AUTO-GENERATE REPAIR
+════════════════════════════════════════════ */
+function autoGenRepair() {
+  const product   = v('in_product').toLowerCase();
+  const parts     = v('in_parts').toLowerCase();
+  const defect    = v('in_defect').toLowerCase();
+  const custDesc  = v('in_cust_desc').toLowerCase();
+
+  const isDaecheParts = parts.includes('대체');
+  const isSteam   = product.includes('스팀플러스');
+  const isChulsu  = product.includes('출수형') || product.includes('출수');
+
+  let result = '';
+
+  if (isSteam && isDaecheParts) {
+    const lines = [];
+    if (defect.includes('누수'))     lines.push('밸브Assy 교체');
+    if (defect.includes('건조'))     lines.push('FAN(PTC) 교체');
+    if (defect.includes('누전'))     lines.push('메인보드 교체');
+    if (defect.includes('세척'))     lines.push('세척펌프 교체');
+    if (defect.includes('온수'))     lines.push('가열판 교체');
+    if (defect.includes('e3'))       lines.push('밸브Assy 교체');
+    if (defect.includes('전원불량')) lines.push('메인보드 교체');
+    if (defect.includes('배수'))     lines.push('밸브Assy 교체');
+    if (defect.includes('소음')) {
+      const hasSe  = custDesc.includes('세척');
+      const hasFan = custDesc.includes('건조') || custDesc.includes('팬');
+      if      (hasSe && hasFan) lines.push('세척펌프, FAN 교체');
+      else if (hasSe)           lines.push('세척펌프 교체');
+      else if (hasFan)          lines.push('FAN 교체');
+      else                      lines.push('세척펌프, FAN 교체');
+    }
+    result = lines.length ? lines.join(' / ') : '해당 키워드 없음 – 직접 입력';
+
+  } else if (isChulsu && isDaecheParts) {
+    const sym = defect + ' ' + custDesc;
+    const lines = [];
+    if (sym.includes('누수'))    lines.push('모터기구 교체');
+    if (sym.includes('출수'))    lines.push('모터기구 교체');
+    if (sym.includes('가열'))    lines.push('메인보드 교체');
+    if (sym.includes('오작동'))  lines.push('메인보드 교체');
+    if (sym.includes('터치'))    lines.push('터치보드 교체');
+    result = lines.length ? [...new Set(lines)].join(' / ') : '해당 키워드 없음 – 직접 입력';
+
+  } else {
+    if (!isSteam && !isChulsu) result = '제품명에 "스팀플러스" 또는 "출수형" 포함 필요';
+    else if (!isDaecheParts)   result = '사용부품에 "대체품" 포함 시 자동 생성 / 아니면 직접 입력';
+  }
+
+  if (result) {
+    document.getElementById('in_repair').value = result;
+    sync();
+    showToast('수리내용이 자동 생성되었습니다', 'success');
+  }
+}
+
+/* ════════════════════════════════════════════
+   AUTO-SAVE
+════════════════════════════════════════════ */
+let autoSaveTimer  = null;
+let lastSavedSnap  = '';
+let isSaving       = false;
+
+function formSnapshot() {
+  return ['in_customer','in_order','in_recv','in_proc','in_product',
+          'in_cust_desc','in_defect','in_parts','in_symptom','in_repair']
+    .map(id => v(id)).join('|');
+}
+
+function setAutoSaveStatus(status) {
+  const el = document.getElementById('autoSaveStatus');
+  if (!el) return;
+  const map = {
+    idle:    { icon: '●', text: '변경 없음',      color: 'rgba(255,255,255,.28)' },
+    pending: { icon: '◌', text: '잠시 후 저장…',  color: 'rgba(201,168,76,.85)'  },
+    saving:  { icon: '◌', text: '저장 중…',       color: 'rgba(201,168,76,1)'    },
+    saved:   { icon: '✓', text: '자동저장 완료',  color: 'rgba(100,220,140,.95)' },
+    error:   { icon: '!', text: '저장 실패',       color: 'rgba(255,110,90,.95)'  },
+    skip:    { icon: '—', text: '필수값 미입력',   color: 'rgba(255,255,255,.2)'  },
+  };
+  const s = map[status] || map.idle;
+  el.style.color   = s.color;
+  el.style.transition = 'color .3s';
+  el.innerHTML = `<span style="font-size:9px;vertical-align:middle;">${s.icon}</span> ${s.text}`;
+}
+
+function scheduleAutoSave() {
+  const snap = formSnapshot();
+  if (snap === lastSavedSnap) return;   // 변경 없으면 패스
+  setAutoSaveStatus('pending');
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(async () => {
+    if (!v('in_customer') || !v('in_order')) { setAutoSaveStatus('skip'); return; }
+    if (isSaving) return;
+    await saveRecord(true);  // silent 모드
+  }, 3000);  // 3초 디바운스
+}
+
+/* ════════════════════════════════════════════
+   GAS SAVE
+════════════════════════════════════════════ */
+async function saveRecord(silent = false) {
+  if (!v('in_customer')) { if (!silent) showToast('고객명을 입력하세요', 'error'); return; }
+  if (!v('in_order'))    { if (!silent) showToast('주문번호를 입력하세요', 'error'); return; }
+
+  isSaving = true;
+  setAutoSaveStatus('saving');
+
+  const btn = document.getElementById('saveBtnTxt');
+  if (!silent) btn.innerHTML = '<span class="spinner"></span> 저장 중…';
+
+  const payload = {
+    action:    'save',
+    customer:  v('in_customer'),
+    order:     v('in_order'),
+    recvDate:  v('in_recv'),
+    procDate:  v('in_proc'),
+    product:   v('in_product'),
+    custDesc:  v('in_cust_desc'),
+    defect:    v('in_defect'),
+    symptom:   v('in_symptom'),
+    repair:    v('in_repair'),
+    parts:     v('in_parts'),
+    savedAt:   new Date().toLocaleString('ko-KR')
+  };
+
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.status === 'ok') {
+      const docNo = data.docNo || '';
+      lastSavedSnap = formSnapshot();  // 저장 성공 시 스냅샷 갱신
+      document.getElementById('p_docno').innerHTML =
+        `발급번호: ${docNo}<br>발급일: ${new Date().toLocaleDateString('ko-KR')}`;
+      setAutoSaveStatus('saved');
+      if (!silent) showToast(`저장 완료! 발급번호: ${docNo}`, 'success');
+      else         showToast(`자동저장 완료 · ${docNo}`, 'success');
+    } else {
+      throw new Error(data.message || '저장 실패');
+    }
+  } catch(e) {
+    setAutoSaveStatus('error');
+    showToast('저장 오류: ' + e.message, 'error');
+  } finally {
+    isSaving = false;
+    if (!silent) btn.innerHTML = '📥 GAS 저장';
+  }
+}
+
+async function saveAndPrint() {
+  await saveRecord();
+  setTimeout(() => window.print(), 600);
+}
+
+/* ════════════════════════════════════════════
+   HISTORY
+════════════════════════════════════════════ */
+async function searchHistory() {
+  const keyword = document.getElementById('searchInput').value.trim();
+  const result  = document.getElementById('historyResult');
+  result.innerHTML = '<div class="empty-state"><div class="es-icon"><span class="spinner" style="width:24px;height:24px;border-color:var(--line);border-top-color:var(--navy);"></span></div><div class="es-msg" style="margin-top:12px;">조회 중…</div></div>';
+
+  try {
+    const url = `${GAS_URL}?action=list&keyword=${encodeURIComponent(keyword)}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (!data.rows || data.rows.length === 0) {
+      result.innerHTML = `<div class="empty-state"><div class="es-icon">🗂</div><div class="es-msg">${keyword ? `"${keyword}" 검색 결과가 없습니다` : '저장된 이력이 없습니다'}</div></div>`;
+      return;
+    }
+
+    let html = `<div class="history-table-wrap"><table class="history-table">
+      <thead><tr>
+        <th>발급번호</th>
+        <th>저장일시</th>
+        <th>고객명</th>
+        <th>주문번호</th>
+        <th>제품명</th>
+        <th>수리내용</th>
+        <th></th>
+      </tr></thead><tbody>`;
+
+    data.rows.forEach((row, i) => {
+      const safe = t => (t||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      html += `<tr>
+        <td class="td-no">${safe(row.docNo||String(i+1))}</td>
+        <td style="font-size:11px;color:var(--steel);">${safe(row.savedAt||'')}</td>
+        <td class="td-name">${safe(row.customer||'')}</td>
+        <td class="td-mono">${safe(row.order||'')}</td>
+        <td style="font-size:12px;">${safe(row.product||'')}</td>
+        <td style="font-size:11px;color:var(--ink2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${safe(row.repair||'')}</td>
+        <td><button class="load-btn" onclick='loadRecord(${JSON.stringify(row).replace(/'/g,"&#39;")})'>불러오기</button></td>
+      </tr>`;
+    });
+
+    html += '</tbody></table></div>';
+    result.innerHTML = html;
+
+  } catch(e) {
+    result.innerHTML = `<div class="empty-state"><div class="es-icon">⚠️</div><div class="es-msg">조회 오류: ${e.message}</div></div>`;
+  }
+}
+
+function loadRecord(row) {
+  const setV = (id, val) => { const el = document.getElementById(id); if (el) el.value = val||''; };
+  setV('in_customer', row.customer);
+  setV('in_order',    row.order);
+  setV('in_recv',     row.recvDate);
+  setV('in_proc',     row.procDate);
+  setV('in_product',  row.product);
+  setV('in_cust_desc',row.custDesc);
+  setV('in_defect',   row.defect);
+  setV('in_symptom',  row.symptom);
+  setV('in_repair',   row.repair);
+  setV('in_parts',    row.parts);
+  sync();
+  switchTab('write', document.querySelector('.nav-tab:first-child'));
+  showToast(`"${row.customer}" 이력을 불러왔습니다`, 'success');
+}
+
+/* ════════════════════════════════════════════
+   RESET
+════════════════════════════════════════════ */
+function resetForm() {
+  if (!confirm('모든 입력 내용을 초기화하겠습니까?')) return;
+  ['in_customer','in_order','in_recv','in_proc','in_product',
+   'in_cust_desc','in_defect','in_parts','in_symptom','in_repair']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  photoData.fill(null);
+  buildPhotoSlots();
+  syncPhotos();
+  sync();
+  document.getElementById('p_docno').innerHTML = '발급번호: —<br>발급일: —';
+}
+
+/* ════════════════════════════════════════════
+   TOAST
+════════════════════════════════════════════ */
+let toastTimer;
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (type ? ' ' + type : '');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* ════════════════════════════════════════════
+   A4 SCALER (fit preview in available width)
+════════════════════════════════════════════ */
+function scaleA4() {
+  const wrap   = document.querySelector('.preview-wrap');
+  const scaler = document.getElementById('a4Scaler');
+  if (!wrap || !scaler) return;
+  const available = wrap.clientWidth;
+  const a4Width   = 794;
+  const scale     = Math.min(1, available / a4Width);
+  scaler.style.transform = `scale(${scale})`;
+  scaler.style.width      = a4Width + 'px';
+  scaler.style.height     = Math.round(1123 * scale) + 'px'; // keep layout space
+  // Fix: shrink wrapper height so no extra white space
+  const a4El = document.getElementById('docA4');
+  const realH = a4El ? a4El.offsetHeight * scale : 1123 * scale;
+  scaler.parentElement && (scaler.style.marginBottom = `-${a4Width * scale * 0}px`);
+}
+
+window.addEventListener('resize', scaleA4);
+window.addEventListener('load', scaleA4);
+
+/* ════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════ */
+buildPhotoSlots();
+sync();
+document.querySelectorAll('input, textarea').forEach(el => {
+  el.addEventListener('input', () => { sync(); scheduleAutoSave(); });
+});
+</script>
+
+<!--
+╔══════════════════════════════════════════════════════════════════════════════╗
+║              📋 Google Apps Script (GAS) 백엔드 코드                        ║
+║  ─────────────────────────────────────────────────────────────────────────  ║
+║  [적용 방법]                                                                 ║
+║  1. script.google.com → 새 프로젝트 생성                                     ║
+║  2. 아래 코드 전체를 복사 → 편집기에 붙여넣기 (기존 코드 전체 교체)          ║
+║  3. 배포 → 웹 앱 → 실행: 나 / 액세스: 모든 사용자 → 배포                   ║
+║  4. 생성된 URL을 위 <script> 의 GAS_URL 변수에 붙여넣기                      ║
+║  ─────────────────────────────────────────────────────────────────────────  ║
+║  [시트 구조] 시트명: 수리내역서                                               ║
+║  A: 발급번호  B: 저장일시  C: 고객명     D: 주문번호  E: 접수일  F: 처리일   ║
+║  G: 제품명    H: 고객접수내용            I: 접수불량(참고)                    ║
+║  J: 확인증상  K: 수리내용  L: 사용부품(참고)                                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━ 아래 코드를 GAS 편집기에 붙여넣으세요 ━━━━━━━━━━━━━━
+
+/**
+ * ════════════════════════════════════════════════════════════════
+ *  주식회사 꿈비 · 수리내역서 GAS 백엔드
+ *  시트명: 수리내역서
+ *  배포: 웹 앱으로 배포 → "나" + "모든 사용자" 접근
+ * ════════════════════════════════════════════════════════════════
+ */
+
+const SHEET_NAME = '수리내역서';
+
+// 헤더 컬럼 정의 (A~L)
+const HEADERS = [
+  '발급번호',       // A
+  '저장일시',       // B
+  '고객명',         // C
+  '주문번호',       // D
+  '접수일',         // E
+  '처리일',         // F
+  '제품명',         // G
+  '고객접수내용',   // H
+  '접수불량(참고)', // I
+  '확인증상',       // J
+  '수리내용',       // K
+  '사용부품(참고)'  // L
+];
+
+/* ────────────────────────────────────
+   초기화: 시트·헤더 자동 생성
+──────────────────────────────────── */
+function getOrCreateSheet() {
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  let   sheet = ss.getSheetByName(SHEET_NAME);
+
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME);
+  }
+
+  // 헤더가 없으면 삽입
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(HEADERS);
+
+    // 헤더 스타일
+    const hdrRange = sheet.getRange(1, 1, 1, HEADERS.length);
+    hdrRange.setBackground('#0D1B3E')
+            .setFontColor('#FFFFFF')
+            .setFontWeight('bold')
+            .setFontSize(10)
+            .setHorizontalAlignment('center');
+
+    sheet.setFrozenRows(1);
+
+    // 컬럼 너비 조정
+    const widths = [90, 150, 80, 130, 90, 90, 160, 260, 120, 140, 200, 100];
+    widths.forEach((w, i) => sheet.setColumnWidth(i + 1, w));
+  }
+
+  return sheet;
+}
+
+/* ────────────────────────────────────
+   발급번호 생성: REP-YYYYMMDD-NNN
+──────────────────────────────────── */
+function generateDocNo(sheet) {
+  const today   = Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyyMMdd');
+  const prefix  = 'REP-' + today + '-';
+  const lastRow = sheet.getLastRow();
+
+  if (lastRow <= 1) return prefix + '001';
+
+  const allNos = sheet.getRange(2, 1, lastRow - 1, 1).getValues()
+    .flat()
+    .filter(v => String(v).startsWith(prefix));
+
+  if (allNos.length === 0) return prefix + '001';
+
+  const maxSeq = Math.max(...allNos.map(n => parseInt(String(n).slice(-3)) || 0));
+  return prefix + String(maxSeq + 1).padStart(3, '0');
+}
+
+/* ────────────────────────────────────
+   JSON 응답 헬퍼
+──────────────────────────────────── */
+function jsonResponse(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/* ════════════════════════════════════════════
+   POST: 저장
+════════════════════════════════════════════ */
+function doPost(e) {
+  try {
+    const payload = JSON.parse(e.postData.contents);
+
+    if (payload.action !== 'save') {
+      return jsonResponse({ status: 'error', message: 'Unknown action' });
+    }
+
+    const sheet   = getOrCreateSheet();
+    const docNo   = generateDocNo(sheet);
+    const savedAt = Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm:ss');
+
+    const row = [
+      docNo,
+      savedAt,
+      payload.customer || '',
+      payload.order    || '',
+      payload.recvDate || '',
+      payload.procDate || '',
+      payload.product  || '',
+      payload.custDesc || '',
+      payload.defect   || '',
+      payload.symptom  || '',
+      payload.repair   || '',
+      payload.parts    || ''
+    ];
+
+    sheet.appendRow(row);
+
+    // 줄무늬 스타일
+    const dataRow   = sheet.getLastRow();
+    const dataRange = sheet.getRange(dataRow, 1, 1, HEADERS.length);
+    dataRange.setBackground((dataRow % 2 === 0) ? '#F0F4FA' : '#FFFFFF')
+             .setFontSize(10)
+             .setVerticalAlignment('middle');
+    sheet.setRowHeight(dataRow, 24);
+
+    return jsonResponse({ status: 'ok', docNo: docNo, savedAt: savedAt });
+
+  } catch (err) {
+    return jsonResponse({ status: 'error', message: err.message });
+  }
+}
+
+/* ════════════════════════════════════════════
+   GET: 목록 조회
+════════════════════════════════════════════ */
+function doGet(e) {
+  try {
+    const params   = e.parameter || {};
+    const action   = params.action  || 'list';
+    const keyword  = (params.keyword || '').toLowerCase().trim();
+
+    if (action !== 'list') {
+      return jsonResponse({ status: 'error', message: 'Unknown action' });
+    }
+
+    const sheet   = getOrCreateSheet();
+    const lastRow = sheet.getLastRow();
+
+    if (lastRow <= 1) {
+      return jsonResponse({ status: 'ok', rows: [] });
+    }
+
+    const data = sheet.getRange(2, 1, lastRow - 1, HEADERS.length).getValues();
+
+    const rows = data
+      .filter(r => {
+        if (!keyword) return true;
+        return String(r[2]).toLowerCase().includes(keyword); // 고객명 검색
+      })
+      .map(r => ({
+        docNo:    r[0],
+        savedAt:  r[1],
+        customer: r[2],
+        order:    r[3],
+        recvDate: r[4],
+        procDate: r[5],
+        product:  r[6],
+        custDesc: r[7],
+        defect:   r[8],
+        symptom:  r[9],
+        repair:   r[10],
+        parts:    r[11]
+      }))
+      .reverse(); // 최신순
+
+    return jsonResponse({ status: 'ok', rows: rows });
+
+  } catch (err) {
+    return jsonResponse({ status: 'error', message: err.message });
+  }
+}
+
+━━━━━━━━━━━━━━ GAS 코드 끝 ━━━━━━━━━━━━━━
+-->
+</body>
+</html>

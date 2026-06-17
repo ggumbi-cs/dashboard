@@ -26,21 +26,10 @@ body {
 }
 
 .chat-page-layout > .chat-wrapper {
-    flex: 0 0 400px;
+    flex: 0 0 800px;
     margin: 10px 0;
 }
 
-.unchecked-frame {
-    flex: 0 0 400px;
-    width: 400px;
-    height: calc(100vh - 20px);
-    margin: 10px 0;
-    border: none;
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-    background: #b2c7da;
-}
 
 /* ── 개선요청 게시판 ── */
 .request-board {
@@ -170,9 +159,8 @@ body {
         min-height: 100vh;
         padding: 0 8px;
     }
-    .chat-page-layout > .chat-wrapper,
-    .unchecked-frame {
-        width: 400px;
+    .chat-page-layout > .chat-wrapper {
+        width: calc(100vw - 20px);
         max-width: calc(100vw - 20px);
         flex: 0 0 auto;
     }
@@ -637,12 +625,6 @@ body {
     </div>
 </div>
 
-<iframe
-    class="unchecked-frame"
-    src="chatchat_unchecked.html"
-    title="V 미체크 모아보기">
-</iframe>
-
 <!-- ── 개선요청 게시판 ── -->
 <div class="request-board" id="requestBoard">
   <div class="rb-topbar">
@@ -727,10 +709,13 @@ function renderMessage(text) {
 
     // [사진] Drive 썸네일 형식: [사진] thumbUrl|||originUrl
     if (str.startsWith("[사진] ")) {
-        const parts = str.slice(5).split("|||");
+        const parts  = str.slice(5).split("|||");
         const thumb  = parts[0].trim();
         const origin = (parts[1] || parts[0]).trim();
-        return `<img class="chat-img" src="${escapeHtml(thumb)}" onclick="window.open('${escapeHtml(origin)}','_blank')" loading="lazy" title="클릭하여 원본 보기">`;
+        // 캐시된 src 재사용 → 깜박임 방지
+        const cacheKey = 'img_' + thumb.slice(-20);
+        const cachedSrc = _imgCache[cacheKey] || escapeHtml(thumb);
+        return `<img class="chat-img" data-msgid="${cacheKey}" src="${cachedSrc}" onclick="window.open('${escapeHtml(origin)}','_blank')" loading="lazy" title="클릭하여 원본 보기">`;
     }
 
     // [영상] Drive 링크
@@ -834,6 +819,9 @@ function normalizeCheckedByText(value) {
     return result.join(", ");
 }
 
+// 기존 렌더된 이미지 src 캐시 (깜박임 방지)
+const _imgCache = {};
+
 function render(data) {
     const chat = document.getElementById("chat");
 
@@ -841,6 +829,11 @@ function render(data) {
     const prevScrollHeight = chat.scrollHeight;
     const prevClientHeight = chat.clientHeight;
     const isNearBottom = (prevScrollHeight - (prevScrollTop + prevClientHeight)) <= 40;
+
+    // 기존 이미지 src 저장
+    chat.querySelectorAll('img.chat-img[data-msgid]').forEach(img => {
+        _imgCache[img.dataset.msgid] = img.src;
+    });
 
     chat.innerHTML = "";
 
@@ -1186,6 +1179,7 @@ function rbStatusBadge(id, status, isAdmin) {
     return `<select class="rb-status ${s}" onchange="rbChangeStatus(${id}, this)" style="border:none;font-weight:700;font-size:11px;padding:2px 6px;border-radius:10px;cursor:pointer;">${opts}</select>`;
 }
 
+window.rbChangeStatus = rbChangeStatus;
 function rbChangeStatus(id, sel) {
     const newStatus = sel.value;
     sel.className = 'rb-status ' + newStatus;
@@ -1238,6 +1232,7 @@ async function rbLoad() {
 }
 
 // 신청 등록
+window.rbSubmit = rbSubmit;
 async function rbSubmit() {
     const nameEl    = document.getElementById('rbName');
     const contentEl = document.getElementById('rbContent');
@@ -1260,20 +1255,29 @@ async function rbSubmit() {
 // 답글
 async function rbReply(id) {
     const el = document.getElementById('rr_' + id);
-    const text = el ? el.value.trim() : '';
-    if (!text) return;
-    // 이름: 채팅창 이름 재활용
-    const name = (localStorage.getItem('cs_team') || '') + ' ' + (localStorage.getItem('cs_name') || '');
+    if (!el) { alert('입력창을 찾을 수 없습니다'); return; }
+    const text = el.value.trim();
+    if (!text) { el.focus(); return; }
+    const rawName = (localStorage.getItem('cs_team') || '') + ' ' + (localStorage.getItem('cs_name') || '');
+    const name = rawName.trim() || '익명';
+    const btn = el.nextElementSibling;
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
     try {
-        await fetch(RB_SERVER, {
+        const res = await fetch(RB_SERVER, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'rbReply', id, name: name.trim() || '익명', text })
+            body: JSON.stringify({ action: 'rbReply', id: String(id), name, text })
         });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.msg || '실패');
         el.value = '';
         await rbLoad();
-    } catch(e) { alert('답글 실패'); }
+    } catch(e) {
+        alert('답글 실패: ' + e.message);
+        if (btn) { btn.disabled = false; btn.textContent = '답글'; }
+    }
 }
+window.rbReply = rbReply;
 
 // 이름 자동 채우기 (채팅창 이름 연동)
 function rbSyncName() {

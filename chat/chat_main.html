@@ -798,10 +798,7 @@ function renderMessage(text) {
         const parts  = str.slice(5).split("|||");
         const thumb  = parts[0].trim();
         const origin = (parts[1] || parts[0]).trim();
-        // 캐시된 src 재사용 → 깜박임 방지
-        const cacheKey = 'img_' + thumb.slice(-20);
-        const cachedSrc = _imgCache[cacheKey] || escapeHtml(thumb);
-        return `<img class="chat-img" data-msgid="${cacheKey}" src="${cachedSrc}" onclick="window.open('${escapeHtml(origin)}','_blank')" loading="lazy" title="클릭하여 원본 보기">`;
+        return `<img class="chat-img" src="${escapeHtml(thumb)}" onclick="window.open('${escapeHtml(origin)}','_blank')" loading="lazy" title="클릭하여 원본 보기">`;
     }
 
     // [영상] Drive 링크

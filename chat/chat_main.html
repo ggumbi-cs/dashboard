@@ -602,9 +602,12 @@ body {
     margin-bottom: 1px;
 }
 .chat-reply-input {
-    display: flex;
+    display: none;
     gap: 4px;
     margin-top: 5px;
+}
+.chat-reply-input.open {
+    display: flex;
 }
 .chat-reply-input input {
     flex: 1;
@@ -636,6 +639,23 @@ body {
     user-select: none;
 }
 .chat-reply-toggle:hover { text-decoration: underline; }
+
+.reply-toggle-btn {
+    min-width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #6a8aaa;
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.7;
+    transition: opacity .15s, color .15s;
+    margin-left: 2px;
+}
+.reply-toggle-btn:hover { opacity: 1; color: #2b5fad; }
+.reply-toggle-btn.active { opacity: 1; color: #2b5fad; }
 </style>
 </head>
 <body>
@@ -916,7 +936,7 @@ function render(data) {
                                     <div>${escapeHtml(rep.text)}</div>
                                 </div>`).join('')}
                             </div>` : ''}
-                            <div class="chat-reply-input">
+                            <div class="chat-reply-input" id="cri_${d.id}">
                                 <input type="text" placeholder="답글…" id="cr_${d.id}" onkeydown="if(event.key==='Enter')chatReply(${d.id})">
                                 <button onclick="chatReply(${d.id})">↩</button>
                             </div>
@@ -926,6 +946,11 @@ function render(data) {
                             title="${checkedTitle}"
                             onclick="toggleCheck(${d.id})"
                         >✔</div>
+                        <div
+                            class="reply-toggle-btn"
+                            title="답글"
+                            onclick="toggleReplyInput(${d.id})"
+                        >💬</div>
                     </div>
                     <div class="time">${escapeHtml(d.created_at || d.time || "")}</div>
                 </div>
@@ -1364,6 +1389,27 @@ setInterval(rbLoad, 5000);
 /* ════════════════════════════════════════════
    CS채팅 답글
 ════════════════════════════════════════════ */
+function toggleReplyInput(msgId) {
+    const box = document.getElementById('cri_' + msgId);
+    const btn = box ? box.closest('.bubble-line').querySelector('.reply-toggle-btn') : null;
+    if (!box) return;
+    const isOpen = box.classList.contains('open');
+    // 다른 열린 답글창 모두 닫기
+    document.querySelectorAll('.chat-reply-input.open').forEach(el => {
+        el.classList.remove('open');
+    });
+    document.querySelectorAll('.reply-toggle-btn.active').forEach(el => {
+        el.classList.remove('active');
+    });
+    if (!isOpen) {
+        box.classList.add('open');
+        if (btn) btn.classList.add('active');
+        const input = document.getElementById('cr_' + msgId);
+        if (input) input.focus();
+    }
+}
+window.toggleReplyInput = toggleReplyInput;
+
 async function chatReply(msgId) {
     const el = document.getElementById('cr_' + msgId);
     if (!el) return;
@@ -1381,6 +1427,9 @@ async function chatReply(msgId) {
         const data = await res.json();
         if (data.status !== 'ok') throw new Error(data.msg || '실패');
         el.value = '';
+        // 답글 전송 후 입력창 닫기
+        const box2 = document.getElementById('cri_' + msgId);
+        if (box2) box2.classList.remove('open');
     } catch(e) {
         alert('답글 실패: ' + e.message);
     } finally {

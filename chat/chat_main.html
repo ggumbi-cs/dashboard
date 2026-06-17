@@ -306,8 +306,12 @@ body {
     font-size: 14px;
     line-height: 1.45;
     word-break: break-word;
-    white-space: pre-wrap;
+    white-space: normal;
     box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+}
+.bubble-text {
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .msg-row.me .bubble {
@@ -604,10 +608,16 @@ body {
 .chat-reply-input {
     display: none;
     gap: 4px;
-    margin-top: 5px;
+    margin: 0;
+    padding: 0;
+    height: 0;
+    overflow: hidden;
 }
 .chat-reply-input.open {
     display: flex;
+    height: auto;
+    margin-top: 5px;
+    overflow: visible;
 }
 .chat-reply-input input {
     flex: 1;
@@ -895,80 +905,102 @@ function normalizeCheckedByText(value) {
     return result.join(", ");
 }
 
-// 기존 렌더된 이미지 src 캐시 (깜박임 방지)
-const _imgCache = {};
+// ── 렌더링 상태 관리 ──
+const _renderedIds = new Set();   // 이미 렌더된 메시지 id
+let   _lastDataLen = 0;           // 마지막 데이터 길이
+
+function buildMsgHtml(d) {
+    const isMe       = (d.name || "").trim() === getFullName();
+    const checkedBy  = normalizeCheckedByText(d.checked_by || "");
+    const checkedClass = checkedBy ? "checked" : "";
+    const checkedTitle = checkedBy ? escapeHtml(checkedBy) : "";
+    const repliesHtml  = (d.chat_replies && d.chat_replies.length > 0)
+        ? '<div class="chat-replies">' + d.chat_replies.map(rep =>
+            '<div class="chat-reply-item"><div class="chat-reply-meta">'
+            + escapeHtml(rep.name) + ' · ' + escapeHtml(rep.time)
+            + '</div><div>' + escapeHtml(rep.text) + '</div></div>'
+          ).join('') + '</div>'
+        : '';
+    return `<div class="msg-row ${isMe ? 'me' : 'other'}" data-id="${d.id}">
+        <div class="msg-wrap">
+            <div class="name">${escapeHtml(d.name || "")}</div>
+            <div class="bubble-line">
+                <div class="bubble"><div class="bubble-text">${renderMessage(d.message || "")}</div>${repliesHtml}<div class="chat-reply-input" id="cri_${d.id}"><input type="text" placeholder="답글…" id="cr_${d.id}" onkeydown="if(event.key==='Enter')chatReply(${d.id})"><button onclick="chatReply(${d.id})">↩</button></div></div>
+                <div class="check-btn ${checkedClass}" title="${checkedTitle}" onclick="toggleCheck(${d.id})">✔</div>
+                <div class="reply-toggle-btn" title="답글" onclick="toggleReplyInput(${d.id})">💬</div>
+            </div>
+            <div class="time">${escapeHtml(d.created_at || d.time || "")}</div>
+        </div>
+    </div>`;
+}
 
 function render(data) {
     const chat = document.getElementById("chat");
-
-    const prevScrollTop = chat.scrollTop;
-    const prevScrollHeight = chat.scrollHeight;
-    const prevClientHeight = chat.clientHeight;
-    const isNearBottom = (prevScrollHeight - (prevScrollTop + prevClientHeight)) <= 40;
-
-    // 기존 이미지 src 저장
-    chat.querySelectorAll('img.chat-img[data-msgid]').forEach(img => {
-        _imgCache[img.dataset.msgid] = img.src;
-    });
-
-    chat.innerHTML = "";
-
     const list = [...data].slice(0, 100).reverse();
 
-    chat.innerHTML = list.map(d => {
-        const isMe = (d.name || "").trim() === getFullName();
-        const checkedBy = normalizeCheckedByText(d.checked_by || "");
-        const checkedClass = checkedBy ? "checked" : "";
-        const checkedTitle = checkedBy ? escapeHtml(checkedBy) : "";
+    const isNearBottom = (chat.scrollHeight - chat.scrollTop - chat.clientHeight) <= 40;
 
-        return `
-            <div class="msg-row ${isMe ? 'me' : 'other'}">
-                <div class="msg-wrap">
-                    <div class="name">${escapeHtml(d.name || "")}</div>
-                    <div class="bubble-line">
-                        <div class="bubble">
-                            ${renderMessage(d.message || "")}
-                            ${(d.chat_replies && d.chat_replies.length > 0) ? `
-                            <div class="chat-replies">
-                                ${d.chat_replies.map(rep => `
-                                <div class="chat-reply-item">
-                                    <div class="chat-reply-meta">${escapeHtml(rep.name)} · ${escapeHtml(rep.time)}</div>
-                                    <div>${escapeHtml(rep.text)}</div>
-                                </div>`).join('')}
-                            </div>` : ''}
-                            <div class="chat-reply-input" id="cri_${d.id}">
-                                <input type="text" placeholder="답글…" id="cr_${d.id}" onkeydown="if(event.key==='Enter')chatReply(${d.id})">
-                                <button onclick="chatReply(${d.id})">↩</button>
-                            </div>
-                        </div>
-                        <div
-                            class="check-btn ${checkedClass}"
-                            title="${checkedTitle}"
-                            onclick="toggleCheck(${d.id})"
-                        >✔</div>
-                        <div
-                            class="reply-toggle-btn"
-                            title="답글"
-                            onclick="toggleReplyInput(${d.id})"
-                        >💬</div>
-                    </div>
-                    <div class="time">${escapeHtml(d.created_at || d.time || "")}</div>
-                </div>
-            </div>
-        `;
-    }).join("");
-
-    if (prevScrollHeight === 0) {
+    // ── 전체 초기화가 필요한 경우 (첫 로드 or 데이터 줄어든 경우) ──
+    if (_renderedIds.size === 0 || list.length < _lastDataLen) {
+        chat.innerHTML = list.map(buildMsgHtml).join("");
+        _renderedIds.clear();
+        list.forEach(d => _renderedIds.add(String(d.id)));
+        _lastDataLen = list.length;
         chat.scrollTop = chat.scrollHeight;
         return;
     }
 
-    if (isNearBottom) {
+    // ── 증분 업데이트: 새 메시지만 추가, 기존은 답글만 갱신 ──
+    let appended = false;
+    list.forEach(d => {
+        const sid = String(d.id);
+        const existing = chat.querySelector(`[data-id="${sid}"]`);
+
+        if (!existing) {
+            // 신규 메시지 → 추가
+            chat.insertAdjacentHTML('beforeend', buildMsgHtml(d));
+            _renderedIds.add(sid);
+            appended = true;
+        } else {
+            // 기존 메시지 → 답글만 갱신 (입력창 상태 보존)
+            const repliesHtml = (d.chat_replies && d.chat_replies.length > 0)
+                ? '<div class="chat-replies">' + d.chat_replies.map(rep =>
+                    '<div class="chat-reply-item"><div class="chat-reply-meta">'
+                    + escapeHtml(rep.name) + ' · ' + escapeHtml(rep.time)
+                    + '</div><div>' + escapeHtml(rep.text) + '</div></div>'
+                  ).join('') + '</div>'
+                : '';
+            // 기존 답글 div만 교체
+            const bubble = existing.querySelector('.bubble');
+            if (bubble) {
+                let cr = bubble.querySelector('.chat-replies');
+                if (d.chat_replies && d.chat_replies.length > 0) {
+                    if (!cr) {
+                        // 새로 생긴 답글
+                        const inputDiv = bubble.querySelector('.chat-reply-input');
+                        const tmp = document.createElement('div');
+                        tmp.innerHTML = repliesHtml;
+                        bubble.insertBefore(tmp.firstChild, inputDiv);
+                    } else {
+                        // 기존 답글 업데이트
+                        cr.outerHTML = repliesHtml;
+                    }
+                }
+            }
+            // V체크 상태 갱신
+            const checkedBy = normalizeCheckedByText(d.checked_by || "");
+            const checkBtn  = existing.querySelector('.check-btn');
+            if (checkBtn) {
+                checkBtn.className = 'check-btn' + (checkedBy ? ' checked' : '');
+                checkBtn.title     = checkedBy ? escapeHtml(checkedBy) : '';
+            }
+        }
+    });
+
+    _lastDataLen = list.length;
+
+    if (appended && isNearBottom) {
         chat.scrollTop = chat.scrollHeight;
-    } else {
-        const newScrollHeight = chat.scrollHeight;
-        const heightDiff = newScrollHeight - prevScrollHeight;
-        chat.scrollTop = prevScrollTop + heightDiff;
     }
 }
 
@@ -1285,36 +1317,81 @@ function rbChangeStatus(id, sel) {
     }).catch(e => console.log('상태변경 실패', e));
 }
 
-// 렌더링
+// 렌더링 - 기존 카드 보존, 답글만 갱신
+const _rbRendered = new Set();
+
+function buildRbCardHtml(r, isAdmin) {
+    const replies = (r.replies || []).map(rep =>
+        `<div class="rb-reply"><div class="rb-reply-meta">${escapeHtml(rep.name)} · ${escapeHtml(rep.time)}</div><div>${escapeHtml(rep.text)}</div></div>`
+    ).join('');
+    return `<div class="rb-card" data-rbid="${r.id}">
+        <div class="rb-card-header">
+            ${rbStatusBadge(r.id, r.status, isAdmin)}
+            <span class="rb-requester">${escapeHtml(r.requester)}</span>
+            <span class="rb-time">${escapeHtml(r.created_at)}</span>
+        </div>
+        <div class="rb-content">${escapeHtml(r.content)}</div>
+        ${replies ? `<div class="rb-replies">${replies}</div>` : ''}
+        <div class="rb-reply-input">
+            <input type="text" placeholder="답글 입력…" id="rr_${r.id}">
+            <button onclick="rbReply('${r.id}')">답글</button>
+        </div>
+    </div>`;
+}
+
 function rbRender(rows) {
     const list = document.getElementById('rbList');
     if (!rows || rows.length === 0) {
         list.innerHTML = '<div style="padding:14px;color:#4a5661;font-size:13px;">등록된 요청이 없습니다.</div>';
+        _rbRendered.clear();
         return;
     }
     const isAdmin = rbIsAdmin();
-    list.innerHTML = rows.map(r => {
-        const replies = (r.replies || []).map(rep =>
-            `<div class="rb-reply">
-                <div class="rb-reply-meta">${escapeHtml(rep.name)} · ${escapeHtml(rep.time)}</div>
-                <div>${escapeHtml(rep.text)}</div>
-            </div>`
-        ).join('');
-        return `
-        <div class="rb-card">
-            <div class="rb-card-header">
-                ${rbStatusBadge(r.id, r.status, isAdmin)}
-                <span class="rb-requester">${escapeHtml(r.requester)}</span>
-                <span class="rb-time">${escapeHtml(r.created_at)}</span>
-            </div>
-            <div class="rb-content">${escapeHtml(r.content)}</div>
-            ${replies ? `<div class="rb-replies">${replies}</div>` : ''}
-            <div class="rb-reply-input">
-                <input type="text" placeholder="답글 입력…" id="rr_${r.id}">
-                <button onclick="rbReply('${r.id}')">답글</button>
-            </div>
-        </div>`;
-    }).join('');
+
+    // 첫 로드
+    if (_rbRendered.size === 0) {
+        list.innerHTML = rows.map(r => buildRbCardHtml(r, isAdmin)).join('');
+        rows.forEach(r => _rbRendered.add(String(r.id)));
+        return;
+    }
+
+    rows.forEach(r => {
+        const sid = String(r.id);
+        const existing = list.querySelector(`[data-rbid="${sid}"]`);
+        if (!existing) {
+            // 신규 카드 맨 앞에 추가
+            list.insertAdjacentHTML('afterbegin', buildRbCardHtml(r, isAdmin));
+            _rbRendered.add(sid);
+        } else {
+            // 답글만 갱신 (입력창 내용 보존)
+            const inputVal = existing.querySelector(`#rr_${r.id}`)?.value || '';
+            const repliesHtml = (r.replies && r.replies.length > 0)
+                ? '<div class="rb-replies">' + r.replies.map(rep =>
+                    `<div class="rb-reply"><div class="rb-reply-meta">${escapeHtml(rep.name)} · ${escapeHtml(rep.time)}</div><div>${escapeHtml(rep.text)}</div></div>`
+                  ).join('') + '</div>'
+                : '';
+            let oldReplies = existing.querySelector('.rb-replies');
+            const inputDiv = existing.querySelector('.rb-reply-input');
+            if (r.replies && r.replies.length > 0) {
+                if (!oldReplies) {
+                    inputDiv.insertAdjacentHTML('beforebegin', repliesHtml);
+                } else {
+                    oldReplies.outerHTML = repliesHtml;
+                }
+            }
+            // 입력값 복원
+            const inp = existing.querySelector(`#rr_${r.id}`);
+            if (inp && inputVal) inp.value = inputVal;
+            // 상태 뱃지 갱신 (관리자만)
+            if (isAdmin) {
+                const badge = existing.querySelector('.rb-status');
+                if (badge && badge.tagName === 'SELECT') {
+                    badge.value = r.status || '신청';
+                    badge.className = 'rb-status ' + (r.status || '신청');
+                }
+            }
+        }
+    });
 }
 
 // 목록 불러오기

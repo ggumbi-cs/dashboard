@@ -907,7 +907,7 @@ function normalizeCheckedByText(value) {
 
 // ── 렌더링 상태 관리 ──
 const _renderedIds = new Set();   // 이미 렌더된 메시지 id
-let   _lastDataLen = 0;           // 마지막 데이터 길이
+let   _initialLoaded = false;     // 최초 전체 로딩 완료 여부
 
 function buildMsgHtml(d) {
     const isMe       = (d.name || "").trim() === getFullName();
@@ -937,67 +937,60 @@ function buildMsgHtml(d) {
 function render(data) {
     const chat = document.getElementById("chat");
     const list = [...data].slice(0, 100).reverse();
-
     const isNearBottom = (chat.scrollHeight - chat.scrollTop - chat.clientHeight) <= 40;
 
-    // ── 전체 초기화가 필요한 경우 (첫 로드 or 데이터 줄어든 경우) ──
-    if (_renderedIds.size === 0 || list.length < _lastDataLen) {
+    // ── 최초 1회: 전체 렌더 후 맨 아래로 ──
+    if (!_initialLoaded) {
         chat.innerHTML = list.map(buildMsgHtml).join("");
         _renderedIds.clear();
         list.forEach(d => _renderedIds.add(String(d.id)));
-        _lastDataLen = list.length;
+        _initialLoaded = true;
         chat.scrollTop = chat.scrollHeight;
         return;
     }
 
-    // ── 증분 업데이트: 새 메시지만 추가, 기존은 답글만 갱신 ──
+    // ── 이후: 증분 업데이트 ──
     let appended = false;
     list.forEach(d => {
-        const sid = String(d.id);
+        const sid      = String(d.id);
         const existing = chat.querySelector(`[data-id="${sid}"]`);
 
         if (!existing) {
-            // 신규 메시지 → 추가
+            // 신규 메시지 추가
             chat.insertAdjacentHTML('beforeend', buildMsgHtml(d));
             _renderedIds.add(sid);
             appended = true;
         } else {
-            // 기존 메시지 → 답글만 갱신 (입력창 상태 보존)
-            const repliesHtml = (d.chat_replies && d.chat_replies.length > 0)
-                ? '<div class="chat-replies">' + d.chat_replies.map(rep =>
-                    '<div class="chat-reply-item"><div class="chat-reply-meta">'
-                    + escapeHtml(rep.name) + ' · ' + escapeHtml(rep.time)
-                    + '</div><div>' + escapeHtml(rep.text) + '</div></div>'
-                  ).join('') + '</div>'
-                : '';
-            // 기존 답글 div만 교체
+            // 기존 메시지 → 답글·V체크만 갱신, DOM 구조 유지
             const bubble = existing.querySelector('.bubble');
-            if (bubble) {
-                let cr = bubble.querySelector('.chat-replies');
-                if (d.chat_replies && d.chat_replies.length > 0) {
-                    if (!cr) {
-                        // 새로 생긴 답글
-                        const inputDiv = bubble.querySelector('.chat-reply-input');
-                        const tmp = document.createElement('div');
-                        tmp.innerHTML = repliesHtml;
-                        bubble.insertBefore(tmp.firstChild, inputDiv);
-                    } else {
-                        // 기존 답글 업데이트
-                        cr.outerHTML = repliesHtml;
-                    }
+            if (bubble && d.chat_replies && d.chat_replies.length > 0) {
+                const newRepliesHtml = '<div class="chat-replies">'
+                    + d.chat_replies.map(rep =>
+                        '<div class="chat-reply-item"><div class="chat-reply-meta">'
+                        + escapeHtml(rep.name) + ' · ' + escapeHtml(rep.time)
+                        + '</div><div>' + escapeHtml(rep.text) + '</div></div>'
+                      ).join('') + '</div>';
+                const cr = bubble.querySelector('.chat-replies');
+                if (!cr) {
+                    bubble.querySelector('.chat-reply-input')
+                          .insertAdjacentHTML('beforebegin', newRepliesHtml);
+                } else if (cr.children.length !== d.chat_replies.length) {
+                    // 답글 수 바뀔 때만 교체
+                    cr.outerHTML = newRepliesHtml;
                 }
             }
             // V체크 상태 갱신
             const checkedBy = normalizeCheckedByText(d.checked_by || "");
             const checkBtn  = existing.querySelector('.check-btn');
             if (checkBtn) {
-                checkBtn.className = 'check-btn' + (checkedBy ? ' checked' : '');
-                checkBtn.title     = checkedBy ? escapeHtml(checkedBy) : '';
+                const newClass = 'check-btn' + (checkedBy ? ' checked' : '');
+                if (checkBtn.className !== newClass) {
+                    checkBtn.className = newClass;
+                    checkBtn.title     = checkedBy ? escapeHtml(checkedBy) : '';
+                }
             }
         }
     });
-
-    _lastDataLen = list.length;
 
     if (appended && isNearBottom) {
         chat.scrollTop = chat.scrollHeight;

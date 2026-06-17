@@ -327,21 +327,23 @@ body {
 }
 
 .delete-btn {
-    min-width: 20px;
-    height: 20px;
+    min-width: 22px;
+    height: 22px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
-    color: #aab0bb;
+    font-size: 15px;
+    color: #e05555;
     cursor: pointer;
     user-select: none;
-    opacity: 0;
-    transition: opacity .15s, color .15s;
+    opacity: 1;
+    transition: transform .15s, background .15s;
     border-radius: 50%;
 }
-.msg-row:hover .delete-btn { opacity: 1; }
-.delete-btn:hover { color: #e05555; background: rgba(224,85,85,0.12); }
+.delete-btn:hover {
+    background: rgba(224,85,85,0.15);
+    transform: scale(1.2);
+}
 
 .check-users {
     display: inline-block;
@@ -586,12 +588,18 @@ body {
     gap: 3px;
 }
 .chat-reply-item {
-    background: rgba(0,0,0,0.06);
-    border-radius: 8px;
+    background: rgba(52,168,83,0.13);
+    border-left: 2.5px solid rgba(52,168,83,0.5);
+    border-radius: 0 7px 7px 0;
     padding: 5px 9px;
     font-size: 12px;
-    color: #222;
+    color: #1a3a22;
     line-height: 1.45;
+}
+.msg-row.me .chat-reply-item {
+    background: rgba(66,133,244,0.13);
+    border-left: 2.5px solid rgba(66,133,244,0.5);
+    color: #1a2a45;
 }
 .chat-reply-meta {
     font-size: 10px;
@@ -916,7 +924,7 @@ function buildMsgHtml(d) {
             <div class="name">${escapeHtml(d.name || "")}</div>
             <div class="bubble-line">
                 <div class="bubble"><div class="bubble-text">${renderMessage(d.message || "")}</div>${repliesHtml}<div class="chat-reply-input" id="cri_${d.id}"><input type="text" placeholder="답글…" id="cr_${d.id}" onkeydown="if(event.key==='Enter')chatReply(${d.id})"><button onclick="chatReply(${d.id})">↩</button></div></div>
-                <div class="delete-btn" title="삭제" onclick="deleteMsg(${d.id})">✔</div>
+                <div class="delete-btn" title="삭제" onclick="deleteMsg(${d.id})">🗑</div>
                 <div class="reply-toggle-btn" title="답글" onclick="toggleReplyInput(${d.id})">💬</div>
             </div>
             <div class="time">${escapeHtml(d.created_at || d.time || "")}</div>
@@ -940,6 +948,15 @@ function render(data) {
     }
 
     // ── 이후: 증분 업데이트 ──
+    // 서버에 없는 메시지(다른 PC가 삭제) → DOM에서도 제거
+    const serverIds = new Set(list.map(d => String(d.id)));
+    chat.querySelectorAll('[data-id]').forEach(el => {
+        if (!serverIds.has(el.dataset.id)) {
+            _renderedIds.delete(el.dataset.id);
+            el.remove();
+        }
+    });
+
     let appended = false;
     list.forEach(d => {
         const sid      = String(d.id);
@@ -1183,6 +1200,13 @@ window.send = async function () {
 
 window.deleteMsg = async function(id) {
     if (!confirm('이 대화를 삭제하겠습니까?')) return;
+
+    // 1. DOM에서 즉시 제거 (빠른 피드백)
+    const el = document.querySelector(`[data-id="${id}"]`);
+    if (el) el.remove();
+    _renderedIds.delete(String(id));
+
+    // 2. GAS에 deleted 표식 기록
     try {
         const res = await fetch(SERVER, {
             method: 'POST',
@@ -1191,12 +1215,10 @@ window.deleteMsg = async function(id) {
         });
         const data = await res.json();
         if (data.status !== 'ok') throw new Error(data.msg || '실패');
-        // DOM에서 즉시 제거
-        const el = document.querySelector(`[data-id="${id}"]`);
-        if (el) el.remove();
-        _renderedIds.delete(String(id));
+        // 성공 — 다른 PC는 다음 폴링(2초)에 자동 반영됨
     } catch(e) {
-        alert('삭제 실패: ' + e.message);
+        // GAS 기록 실패해도 내 화면은 이미 지워졌으므로 조용히 처리
+        console.warn('삭제 GAS 기록 실패:', e.message);
     }
 };
 
@@ -1263,7 +1285,7 @@ const RB_SERVER = SERVER; // 동일 GAS URL 사용
 
 // 관리자 여부 확인
 function rbIsAdmin() {
-    return localStorage.getItem('admin_mode') === '1';
+    return true;  // 팀원 모두 상태변경 가능
 }
 
 // 상태 뱃지 HTML

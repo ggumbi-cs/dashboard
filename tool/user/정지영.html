@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>조승연 · 개인설정</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f0f2f5; font-family: 'Malgun Gothic', sans-serif; font-size: 13px; color: #222; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+.top-bar {
+  background: #1a2e50; padding: 7px 16px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.top-bar .user-name { color: #c8ddf0; font-weight: 700; font-size: 13px; }
+.top-bar .save-status { font-size: 11px; color: #6a9ec0; }
+.save-btn {
+  background: #2356a8; border: none; color: #fff;
+  padding: 4px 14px; border-radius: 3px; font-size: 12px;
+  cursor: pointer; font-family: inherit; font-weight: 600;
+}
+.save-btn:hover { background: #1a3a7a; }
+.save-btn.saved { background: #2a7a6f; }
+
+.slot-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 10px;
+  padding: 10px;
+  overflow: hidden;
+}
+
+.slot-card {
+  background: #fff; border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.slot-header {
+  background: #1a2e50; color: #c8ddf0;
+  padding: 5px 10px; font-size: 12px; font-weight: 600;
+  display: flex; align-items: center; gap: 6px;
+  flex-shrink: 0; flex-wrap: nowrap;
+}
+.slot-num { color: #5bb8f5; white-space: nowrap; }
+
+/* 크기 조정 버튼 그룹 */
+.zoom-group {
+  display: flex; align-items: center; gap: 2px;
+  flex: 1;
+}
+.zoom-label {
+  color: #6a9ec0; font-size: 10px; white-space: nowrap; margin-right: 2px;
+}
+.zoom-btn {
+  background: #243d6a;
+  border: 1px solid #2e5080;
+  color: #a8c4df;
+  padding: 2px 6px;
+  font-size: 10.5px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  line-height: 1.4;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.zoom-btn:hover {
+  background: #2e5080; color: #c8ddf0;
+}
+.zoom-btn.active {
+  background: #2356a8;
+  border-color: #5bb8f5;
+  color: #fff;
+}
+
+.slot-select {
+  background: #243d6a; border: 1px solid #2e5080; color: #a8c4df;
+  padding: 3px 6px; font-size: 11.5px; border-radius: 3px;
+  cursor: pointer; outline: none; font-family: inherit; min-width: 80px;
+  margin-left: auto; flex-shrink: 0;
+}
+.slot-select:focus { border-color: #5bb8f5; }
+
+/* iframe 래퍼 — 크기 조정용 */
+.slot-body {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  color: #bbb; font-size: 12px;
+}
+
+/* iframe은 transform-origin top-left 기준으로 scale */
+.slot-body iframe {
+  position: absolute;
+  top: 0; left: 0;
+  border: none;
+  display: block;
+  transform-origin: top left;
+}
+
+/* ── Token 모달 ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.modal-overlay.hidden { display: none; }
+.modal {
+  background: #fff; border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  width: 400px; padding: 24px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.modal h3 { font-size: 14px; color: #1a2e50; }
+.modal p  { font-size: 11.5px; color: #607090; line-height: 1.6; }
+.modal input {
+  width: 100%; border: 1px solid #d0dae8; border-radius: 4px;
+  padding: 7px 9px; font-size: 12px; font-family: inherit; outline: none;
+}
+.modal input:focus { border-color: #2356a8; }
+.modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+.modal-btns button {
+  padding: 6px 18px; border: none; border-radius: 4px;
+  font-size: 12px; font-family: inherit; font-weight: 700; cursor: pointer;
+}
+.modal-btns .btn-ok  { background: #2356a8; color: #fff; }
+.modal-btns .btn-ok:hover { background: #1a3a7a; }
+.modal-btns .btn-cancel { background: #e8edf5; color: #4a6080; border: 1px solid #c8d4e4; }
+
+/* Token 설정 버튼 */
+.btn-token {
+  background: #243d6a; border: 1px solid #2e5080; color: #a8c4df;
+  padding: 3px 9px; border-radius: 3px; font-size: 11px;
+  cursor: pointer; font-family: inherit; margin-left: 8px;
+}
+.btn-token:hover { background: #2e5080; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <span class="user-name">👤 정지영 · 개인 Tool 설정</span>
+  <span class="save-status" id="saveStatus">설정 불러오는 중...</span>
+  <button class="save-btn" style="background:#2a7a6f;margin-right:4px" onclick="sheetLoad()">↓ 불러오기</button>
+  <button class="save-btn" id="saveBtn" onclick="saveSettings()">저장</button>
+</div>
+
+<div class="slot-grid">
+
+  <!-- 슬롯 1 -->
+  <div class="slot-card" id="card1">
+    <div class="slot-header">
+      <span class="slot-num">슬롯 1</span>
+      <div class="zoom-group" id="zoomGroup1">
+        <span class="zoom-label">크기:</span>
+        <button class="zoom-btn active" data-slot="1" data-scale="1.0" onclick="setZoom(1, 1.0, this)">100%</button>
+        <button class="zoom-btn" data-slot="1" data-scale="0.9" onclick="setZoom(1, 0.9, this)">90%</button>
+        <button class="zoom-btn" data-slot="1" data-scale="0.8" onclick="setZoom(1, 0.8, this)">80%</button>
+        <button class="zoom-btn" data-slot="1" data-scale="0.7" onclick="setZoom(1, 0.7, this)">70%</button>
+        <button class="zoom-btn" data-slot="1" data-scale="0.6" onclick="setZoom(1, 0.6, this)">60%</button>
+      </div>
+      <select class="slot-select" id="slot1Tool" onchange="autoSave()">
+        <option value="">-- 선택 --</option>
+        <option value="AS1">AS1</option><option value="AS2">AS2</option>
+        <option value="AS3">AS3</option><option value="AS4">AS4</option>
+        <option value="AS5">AS5</option><option value="AS6">AS6</option>
+        <option value="AS7">AS7</option><option value="AS8">AS8</option>
+        <option value="AS9">AS9</option><option value="AS10">AS10</option>
+      </select>
+    </div>
+    <div class="slot-body" id="body1">선택된 Tool이 여기에 표시됩니다</div>
+  </div>
+
+  <!-- 슬롯 2 -->
+  <div class="slot-card" id="card2">
+    <div class="slot-header">
+      <span class="slot-num">슬롯 2</span>
+      <div class="zoom-group" id="zoomGroup2">
+        <span class="zoom-label">크기:</span>
+        <button class="zoom-btn active" data-slot="2" data-scale="1.0" onclick="setZoom(2, 1.0, this)">100%</button>
+        <button class="zoom-btn" data-slot="2" data-scale="0.9" onclick="setZoom(2, 0.9, this)">90%</button>
+        <button class="zoom-btn" data-slot="2" data-scale="0.8" onclick="setZoom(2, 0.8, this)">80%</button>
+        <button class="zoom-btn" data-slot="2" data-scale="0.7" onclick="setZoom(2, 0.7, this)">70%</button>
+        <button class="zoom-btn" data-slot="2" data-scale="0.6" onclick="setZoom(2, 0.6, this)">60%</button>
+      </div>
+      <select class="slot-select" id="slot2Tool" onchange="autoSave()">
+        <option value="">-- 선택 --</option>
+        <option value="AS1">AS1</option><option value="AS2">AS2</option>
+        <option value="AS3">AS3</option><option value="AS4">AS4</option>
+        <option value="AS5">AS5</option><option value="AS6">AS6</option>
+        <option value="AS7">AS7</option><option value="AS8">AS8</option>
+        <option value="AS9">AS9</option><option value="AS10">AS10</option>
+      </select>
+    </div>
+    <div class="slot-body" id="body2">선택된 Tool이 여기에 표시됩니다</div>
+  </div>
+
+  <!-- 슬롯 3 -->
+  <div class="slot-card" id="card3">
+    <div class="slot-header">
+      <span class="slot-num">슬롯 3</span>
+      <div class="zoom-group" id="zoomGroup3">
+        <span class="zoom-label">크기:</span>
+        <button class="zoom-btn active" data-slot="3" data-scale="1.0" onclick="setZoom(3, 1.0, this)">100%</button>
+        <button class="zoom-btn" data-slot="3" data-scale="0.9" onclick="setZoom(3, 0.9, this)">90%</button>
+        <button class="zoom-btn" data-slot="3" data-scale="0.8" onclick="setZoom(3, 0.8, this)">80%</button>
+        <button class="zoom-btn" data-slot="3" data-scale="0.7" onclick="setZoom(3, 0.7, this)">70%</button>
+        <button class="zoom-btn" data-slot="3" data-scale="0.6" onclick="setZoom(3, 0.6, this)">60%</button>
+      </div>
+      <select class="slot-select" id="slot3Tool" onchange="autoSave()">
+        <option value="">-- 선택 --</option>
+        <option value="AS1">AS1</option><option value="AS2">AS2</option>
+        <option value="AS3">AS3</option><option value="AS4">AS4</option>
+        <option value="AS5">AS5</option><option value="AS6">AS6</option>
+        <option value="AS7">AS7</option><option value="AS8">AS8</option>
+        <option value="AS9">AS9</option><option value="AS10">AS10</option>
+      </select>
+    </div>
+    <div class="slot-body" id="body3">선택된 Tool이 여기에 표시됩니다</div>
+  </div>
+
+  <!-- 슬롯 4 -->
+  <div class="slot-card" id="card4">
+    <div class="slot-header">
+      <span class="slot-num">슬롯 4</span>
+      <div class="zoom-group" id="zoomGroup4">
+        <span class="zoom-label">크기:</span>
+        <button class="zoom-btn active" data-slot="4" data-scale="1.0" onclick="setZoom(4, 1.0, this)">100%</button>
+        <button class="zoom-btn" data-slot="4" data-scale="0.9" onclick="setZoom(4, 0.9, this)">90%</button>
+        <button class="zoom-btn" data-slot="4" data-scale="0.8" onclick="setZoom(4, 0.8, this)">80%</button>
+        <button class="zoom-btn" data-slot="4" data-scale="0.7" onclick="setZoom(4, 0.7, this)">70%</button>
+        <button class="zoom-btn" data-slot="4" data-scale="0.6" onclick="setZoom(4, 0.6, this)">60%</button>
+      </div>
+      <select class="slot-select" id="slot4Tool" onchange="autoSave()">
+        <option value="">-- 선택 --</option>
+        <option value="AS1">AS1</option><option value="AS2">AS2</option>
+        <option value="AS3">AS3</option><option value="AS4">AS4</option>
+        <option value="AS5">AS5</option><option value="AS6">AS6</option>
+        <option value="AS7">AS7</option><option value="AS8">AS8</option>
+        <option value="AS9">AS9</option><option value="AS10">AS10</option>
+      </select>
+    </div>
+    <div class="slot-body" id="body4">선택된 Tool이 여기에 표시됩니다</div>
+  </div>
+
+</div>
+
+<script>
+// ── 설정 ──
+const STORAGE_KEY  = 'toolSettings_' + location.pathname.split('/').pop().replace('.html','');
+const USER_NAME    = decodeURIComponent(location.pathname.split('/').pop().replace('.html',''));
+const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbx8mYZBhJ_4gqMxbcHyBoPE8LqV4aSCDT15KCc5VOq8stbB9x1ik5fLQNjS6YD-Sd5e/exec';
+
+const TOOL_FILES = {
+  'AS1':'as.html','AS2':'as2.html','AS3':'as3.html','AS4':'as4.html',
+  'AS5':'as5.html','AS6':'as6.html','AS7':'as7.html','AS8':'as8.html',
+  'AS9':'as9.html','AS10':'as10.html'
+};
+
+const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+const BASE = isLocal ? '/tool/' : '/dashboard/tool/';
+
+const slotScales = { 1: 1.0, 2: 1.0, 3: 1.0, 4: 1.0 };
+
+function setSaveStatus(msg, ok) {
+  document.getElementById('saveStatus').textContent = msg;
+  const btn = document.getElementById('saveBtn');
+  if (ok === true)  { btn.textContent = '저장됨 ✓'; btn.classList.add('saved'); setTimeout(() => { btn.textContent = '저장'; btn.classList.remove('saved'); }, 2000); }
+  if (ok === false) { btn.textContent = '저장'; btn.classList.remove('saved'); }
+}
+
+// ── 로컬 저장 ──
+function localSave(s) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+}
+
+function localLoad() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) { return {}; }
+}
+
+// ── 구글시트 저장 ──
+async function sheetSave() {
+  const s = {
+    name: USER_NAME,
+    슬롯1: document.getElementById('slot1Tool').value,
+    슬롯2: document.getElementById('slot2Tool').value,
+    슬롯3: document.getElementById('slot3Tool').value,
+    슬롯4: document.getElementById('slot4Tool').value,
+    zoom1: slotScales[1], zoom2: slotScales[2],
+    zoom3: slotScales[3], zoom4: slotScales[4],
+  };
+  localSave({
+    slot1: s.슬롯1, slot2: s.슬롯2, slot3: s.슬롯3, slot4: s.슬롯4,
+    zoom1: s.zoom1, zoom2: s.zoom2, zoom3: s.zoom3, zoom4: s.zoom4,
+  });
+  setSaveStatus('저장 중...', false);
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(s)
+    });
+    setSaveStatus('저장 완료 · ' + new Date().toLocaleTimeString(), true);
+  } catch(e) {
+    setSaveStatus('시트 저장 실패 (로컬만 저장됨)', false);
+  }
+}
+
+// ── 구글시트 불러오기 ──
+async function sheetLoad() {
+  setSaveStatus('시트에서 불러오는 중...', false);
+  try {
+    const res = await fetch(SCRIPT_URL + '?name=' + encodeURIComponent(USER_NAME));
+    const json = await res.json();
+    if (json.ok && json.data) {
+      const d = json.data;
+      const s = {
+        slot1: d['슬롯1'], slot2: d['슬롯2'], slot3: d['슬롯3'], slot4: d['슬롯4'],
+        zoom1: d['zoom1'], zoom2: d['zoom2'], zoom3: d['zoom3'], zoom4: d['zoom4'],
+      };
+      localSave(s);
+      applySettings(s);
+      setSaveStatus('시트 불러오기 완료 · ' + new Date().toLocaleTimeString(), false);
+    } else {
+      setSaveStatus('시트에 저장된 설정 없음', false);
+    }
+  } catch(e) {
+    setSaveStatus('시트 불러오기 실패 — 로컬 설정 사용', false);
+    applySettings(localLoad());
+  }
+}
+
+function applySettings(s) {
+  [1,2,3,4].forEach(i => {
+    if (s[`zoom${i}`]) {
+      const scale = parseFloat(s[`zoom${i}`]);
+      slotScales[i] = scale;
+      document.getElementById(`zoomGroup${i}`).querySelectorAll('.zoom-btn').forEach(b => {
+        b.classList.toggle('active', parseFloat(b.dataset.scale) === scale);
+      });
+    }
+    if (s[`slot${i}`]) {
+      document.getElementById(`slot${i}Tool`).value = s[`slot${i}`];
+      loadTool(i);
+    }
+  });
+}
+
+function saveSettings() { sheetSave(); }
+
+// ── 크기 조정 ──
+function setZoom(slotNum, scale, btn) {
+  slotScales[slotNum] = scale;
+  document.getElementById(`zoomGroup${slotNum}`).querySelectorAll('.zoom-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyZoom(slotNum);
+  localSave({
+    slot1: document.getElementById('slot1Tool').value,
+    slot2: document.getElementById('slot2Tool').value,
+    slot3: document.getElementById('slot3Tool').value,
+    slot4: document.getElementById('slot4Tool').value,
+    zoom1: slotScales[1], zoom2: slotScales[2], zoom3: slotScales[3], zoom4: slotScales[4],
+  });
+}
+
+function applyZoom(slotNum) {
+  const body = document.getElementById(`body${slotNum}`);
+  const iframe = body.querySelector('iframe');
+  if (!iframe) return;
+  const scale = slotScales[slotNum];
+  iframe.style.width  = (body.clientWidth  / scale) + 'px';
+  iframe.style.height = (body.clientHeight / scale) + 'px';
+  iframe.style.transform = `scale(${scale})`;
+}
+
+// ── Tool 로드 ──
+function loadTool(slotNum) {
+  const key  = document.getElementById(`slot${slotNum}Tool`).value;
+  const body = document.getElementById(`body${slotNum}`);
+  if (!key) {
+    body.innerHTML = '선택된 Tool이 여기에 표시됩니다';
+    body.style.display = 'flex';
+    return;
+  }
+  body.style.display = 'block';
+  body.style.padding = '0';
+  body.innerHTML = `<iframe src="${BASE}${TOOL_FILES[key]}"></iframe>`;
+  const iframe = body.querySelector('iframe');
+  iframe.addEventListener('load', () => applyZoom(slotNum));
+  applyZoom(slotNum);
+}
+
+let autoSaveTimer;
+function autoSave() {
+  [1,2,3,4].forEach(i => loadTool(i));
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => localSave({
+    slot1: document.getElementById('slot1Tool').value,
+    slot2: document.getElementById('slot2Tool').value,
+    slot3: document.getElementById('slot3Tool').value,
+    slot4: document.getElementById('slot4Tool').value,
+    zoom1: slotScales[1], zoom2: slotScales[2], zoom3: slotScales[3], zoom4: slotScales[4],
+  }), 800);
+}
+
+window.addEventListener('resize', () => { [1,2,3,4].forEach(i => applyZoom(i)); });
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // 로컬 먼저 복원 (빠름)
+  const local = localLoad();
+  if (local && Object.keys(local).length > 0) {
+    applySettings(local);
+    setSaveStatus('로컬 복원됨 — 시트 동기화 중...', false);
+  }
+  // 시트에서 자동 불러오기
+  await sheetLoad();
+});
+</script>
+</body>
+</html>

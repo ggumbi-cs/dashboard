@@ -326,29 +326,22 @@ body {
     border-top-left-radius: 4px;
 }
 
-.check-btn {
-    min-width: 18px;
-    height: 18px;
+.delete-btn {
+    min-width: 20px;
+    height: 20px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
-    line-height: 1;
-    color: #8a8f96;
+    font-size: 13px;
+    color: #aab0bb;
     cursor: pointer;
     user-select: none;
-    opacity: 0.75;
+    opacity: 0;
+    transition: opacity .15s, color .15s;
+    border-radius: 50%;
 }
-
-.check-btn:hover {
-    opacity: 1;
-}
-
-.check-btn.checked {
-    color: #2b7cff;
-    opacity: 1;
-    font-weight: bold;
-}
+.msg-row:hover .delete-btn { opacity: 1; }
+.delete-btn:hover { color: #e05555; background: rgba(224,85,85,0.12); }
 
 .check-users {
     display: inline-block;
@@ -923,7 +916,7 @@ function buildMsgHtml(d) {
             <div class="name">${escapeHtml(d.name || "")}</div>
             <div class="bubble-line">
                 <div class="bubble"><div class="bubble-text">${renderMessage(d.message || "")}</div>${repliesHtml}<div class="chat-reply-input" id="cri_${d.id}"><input type="text" placeholder="답글…" id="cr_${d.id}" onkeydown="if(event.key==='Enter')chatReply(${d.id})"><button onclick="chatReply(${d.id})">↩</button></div></div>
-                <div class="check-btn ${checkedClass}" title="${checkedTitle}" onclick="toggleCheck(${d.id})">✔</div>
+                <div class="delete-btn" title="삭제" onclick="deleteMsg(${d.id})">✔</div>
                 <div class="reply-toggle-btn" title="답글" onclick="toggleReplyInput(${d.id})">💬</div>
             </div>
             <div class="time">${escapeHtml(d.created_at || d.time || "")}</div>
@@ -978,9 +971,9 @@ function render(data) {
             }
             // V체크 상태 갱신
             const checkedBy = normalizeCheckedByText(d.checked_by || "");
-            const checkBtn  = existing.querySelector('.check-btn');
+            const checkBtn  = existing.querySelector('.delete-btn');
             if (checkBtn) {
-                const newClass = 'check-btn' + (checkedBy ? ' checked' : '');
+                const newClass = 'delete-btn';
                 if (checkBtn.className !== newClass) {
                     checkBtn.className = newClass;
                     checkBtn.title     = checkedBy ? escapeHtml(checkedBy) : '';
@@ -1188,35 +1181,22 @@ window.send = async function () {
     }
 };
 
-window.toggleCheck = async function (id) {
-    const fullName = getFullName();
-
-    if (!fullName) {
-        alert("소속/이름 입력");
-        checkLock();
-        return;
-    }
-
+window.deleteMsg = async function(id) {
+    if (!confirm('이 대화를 삭제하겠습니까?')) return;
     try {
-        const checkParams = new URLSearchParams({
-            action: "check",
-            id: id,
-            checker: fullName
+        const res = await fetch(SERVER, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: 'deleteChat', id: String(id) })
         });
-        const res = await fetch(SERVER + "?" + checkParams.toString(), {
-            method: "GET"
-        });
-
-        if (!res.ok) {
-            alert("체크 저장 실패");
-            console.log("체크 저장 실패 상태코드:", res.status);
-            return;
-        }
-
-        await load();
-    } catch (e) {
-        alert("체크 저장 실패");
-        console.log("체크 저장 오류:", e);
+        const data = await res.json();
+        if (data.status !== 'ok') throw new Error(data.msg || '실패');
+        // DOM에서 즉시 제거
+        const el = document.querySelector(`[data-id="${id}"]`);
+        if (el) el.remove();
+        _renderedIds.delete(String(id));
+    } catch(e) {
+        alert('삭제 실패: ' + e.message);
     }
 };
 

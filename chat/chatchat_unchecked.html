@@ -205,6 +205,29 @@ function escapeHtml(text) {
         .replaceAll("'", "&#039;");
 }
 
+function renderMessage(text) {
+    const str = String(text || "");
+    // [사진] Drive 썸네일 형식
+    if (str.startsWith("[사진] ")) {
+        const parts  = str.slice(5).split("|||");
+        const thumb  = parts[0].trim();
+        const origin = (parts[1] || parts[0]).trim();
+        return `<img src="${escapeHtml(thumb)}" onclick="window.open('${escapeHtml(origin)}','_blank')"
+            style="max-width:200px;max-height:160px;border-radius:8px;cursor:pointer;display:block;" loading="lazy">`;
+    }
+    // [영상]
+    if (str.startsWith("[영상] ")) {
+        const url = str.slice(5).trim();
+        return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener" style="color:#1d4ed8;font-weight:600;">📹 영상 보기</a>`;
+    }
+    // [IMG] 기존 호환
+    if (str.startsWith("[IMG]")) {
+        const url = str.replace("[IMG]","").trim();
+        return `<img src="${escapeHtml(url)}" style="max-width:200px;max-height:160px;border-radius:8px;display:block;" loading="lazy">`;
+    }
+    return escapeHtml(str);
+}
+
 function normalizeCheckedByText(value) {
     const items = String(value || "")
         .split(",")
@@ -248,7 +271,7 @@ function render(data) {
                 <div class="msg-wrap">
                     <div class="name">${escapeHtml(d.name || "")}</div>
                     <div class="bubble-line">
-                        <div class="bubble">${escapeHtml(d.message || "")}</div>
+                        <div class="bubble">${renderMessage(d.message || "")}</div>
                         <div
                             class="check-btn"
                             title="V 체크하기"

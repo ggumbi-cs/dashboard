@@ -26,7 +26,7 @@ body {
 }
 
 .chat-page-layout > .chat-wrapper {
-    flex: 0 0 800px;
+    flex: 0 0 1040px;
     margin: 10px 0;
 }
 
@@ -580,6 +580,62 @@ body {
 }
 
 .uploading-indicator.show { display: block; }
+
+/* ── CS채팅 답글 ── */
+.chat-replies {
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.chat-reply-item {
+    background: rgba(0,0,0,0.06);
+    border-radius: 8px;
+    padding: 5px 9px;
+    font-size: 12px;
+    color: #222;
+    line-height: 1.45;
+}
+.chat-reply-meta {
+    font-size: 10px;
+    color: #6a7580;
+    margin-bottom: 1px;
+}
+.chat-reply-input {
+    display: flex;
+    gap: 4px;
+    margin-top: 5px;
+}
+.chat-reply-input input {
+    flex: 1;
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-family: inherit;
+    background: rgba(255,255,255,0.7);
+}
+.chat-reply-input button {
+    background: #2b5fad;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.chat-reply-input button:hover { background: #1a4a99; }
+.chat-reply-toggle {
+    font-size: 11px;
+    color: #4a7ab5;
+    cursor: pointer;
+    margin-top: 3px;
+    display: inline-block;
+    user-select: none;
+}
+.chat-reply-toggle:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -850,7 +906,21 @@ function render(data) {
                 <div class="msg-wrap">
                     <div class="name">${escapeHtml(d.name || "")}</div>
                     <div class="bubble-line">
-                        <div class="bubble">${renderMessage(d.message || "")}</div>
+                        <div class="bubble">
+                            ${renderMessage(d.message || "")}
+                            ${(d.chat_replies && d.chat_replies.length > 0) ? `
+                            <div class="chat-replies">
+                                ${d.chat_replies.map(rep => `
+                                <div class="chat-reply-item">
+                                    <div class="chat-reply-meta">${escapeHtml(rep.name)} · ${escapeHtml(rep.time)}</div>
+                                    <div>${escapeHtml(rep.text)}</div>
+                                </div>`).join('')}
+                            </div>` : ''}
+                            <div class="chat-reply-input">
+                                <input type="text" placeholder="답글…" id="cr_${d.id}" onkeydown="if(event.key==='Enter')chatReply(${d.id})">
+                                <button onclick="chatReply(${d.id})">↩</button>
+                            </div>
+                        </div>
                         <div
                             class="check-btn ${checkedClass}"
                             title="${checkedTitle}"
@@ -1176,7 +1246,7 @@ function rbStatusBadge(id, status, isAdmin) {
     const opts = ['신청','완료','보류','불가'].map(v =>
         `<option value="${v}" ${v===s?'selected':''}>${v}</option>`
     ).join('');
-    return `<select class="rb-status ${s}" onchange="rbChangeStatus(${id}, this)" style="border:none;font-weight:700;font-size:11px;padding:2px 6px;border-radius:10px;cursor:pointer;">${opts}</select>`;
+    return `<select class="rb-status ${s}" onchange="rbChangeStatus('${id}', this)" style="border:none;font-weight:700;font-size:11px;padding:2px 6px;border-radius:10px;cursor:pointer;">${opts}</select>`;
 }
 
 window.rbChangeStatus = rbChangeStatus;
@@ -1216,7 +1286,7 @@ function rbRender(rows) {
             ${replies ? `<div class="rb-replies">${replies}</div>` : ''}
             <div class="rb-reply-input">
                 <input type="text" placeholder="답글 입력…" id="rr_${r.id}">
-                <button onclick="rbReply(${r.id})">답글</button>
+                <button onclick="rbReply('${r.id}')">답글</button>
             </div>
         </div>`;
     }).join('');
@@ -1290,6 +1360,34 @@ function rbSyncName() {
 rbLoad();
 rbSyncName();
 setInterval(rbLoad, 5000);
+
+/* ════════════════════════════════════════════
+   CS채팅 답글
+════════════════════════════════════════════ */
+async function chatReply(msgId) {
+    const el = document.getElementById('cr_' + msgId);
+    if (!el) return;
+    const text = el.value.trim();
+    if (!text) { el.focus(); return; }
+    const name = getFullName() || '익명';
+    const btn = el.nextElementSibling;
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
+    try {
+        const res = await fetch(SERVER, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: 'chatReply', id: String(msgId), name, text })
+        });
+        const data = await res.json();
+        if (data.status !== 'ok') throw new Error(data.msg || '실패');
+        el.value = '';
+    } catch(e) {
+        alert('답글 실패: ' + e.message);
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '↩'; }
+    }
+}
+window.chatReply = chatReply;
 
 </script>
 

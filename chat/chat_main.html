@@ -17,21 +17,22 @@ body {
 /* ===== 좌우 배치 전용: 기존 CS 채팅 기능/구조 유지 ===== */
 .chat-page-layout {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: stretch;
-    gap: 60px;
+    gap: 16px;
     width: 100%;
     height: 100vh;
+    padding: 0 16px;
 }
 
 .chat-page-layout > .chat-wrapper {
-    flex: 0 0 420px;
+    flex: 0 0 400px;
     margin: 10px 0;
 }
 
 .unchecked-frame {
-    flex: 0 0 420px;
-    width: 420px;
+    flex: 0 0 400px;
+    width: 400px;
     height: calc(100vh - 20px);
     margin: 10px 0;
     border: none;
@@ -41,6 +42,125 @@ body {
     background: #b2c7da;
 }
 
+/* ── 개선요청 게시판 ── */
+.request-board {
+    flex: 1;
+    min-width: 320px;
+    max-width: 520px;
+    height: calc(100vh - 20px);
+    margin: 10px 0;
+    background: #b2c7da;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    border: 2px solid rgba(254,229,0,0.6);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.rb-topbar {
+    background: #abc1d1;
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    flex-shrink: 0;
+}
+.rb-title { font-size: 18px; font-weight: bold; color: #1f1f1f; margin-bottom: 4px; }
+.rb-sub   { font-size: 11px; color: #3e3e3e; }
+
+.rb-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 10px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 게시판 카드 */
+.rb-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 10px 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    font-size: 13px;
+}
+.rb-card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+.rb-status {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+.rb-status.신청  { background: #dbeafe; color: #1d4ed8; }
+.rb-status.완료  { background: #dcfce7; color: #166534; }
+.rb-status.보류  { background: #fef9c3; color: #854d0e; }
+.rb-status.불가  { background: #fee2e2; color: #991b1b; }
+.rb-requester { font-size: 12px; color: #555; font-weight: 600; }
+.rb-time      { font-size: 10px; color: #aaa; margin-left: auto; }
+.rb-content   { color: #222; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+
+/* 답글 */
+.rb-replies { margin-top: 8px; border-top: 1px solid #f0f0f0; padding-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+.rb-reply   { background: #f5f7fb; border-radius: 6px; padding: 5px 8px; font-size: 12px; color: #333; }
+.rb-reply-meta { font-size: 10px; color: #aaa; margin-bottom: 2px; }
+.rb-reply-input {
+    display: flex; gap: 4px; margin-top: 6px;
+}
+.rb-reply-input input {
+    flex: 1; border: 1px solid #ddd; border-radius: 6px;
+    padding: 4px 8px; font-size: 12px; font-family: inherit;
+}
+.rb-reply-input button {
+    background: #3b82f6; color: #fff; border: none;
+    border-radius: 6px; padding: 4px 10px;
+    font-size: 12px; cursor: pointer;
+}
+.rb-reply-input button:hover { background: #2563eb; }
+
+/* 신청 입력창 */
+.rb-input-area {
+    padding: 8px 10px;
+    background: #abc1d1;
+    border-top: 1px solid rgba(0,0,0,0.08);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.rb-input-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.rb-input-row input[type=text],
+.rb-input-row textarea {
+    flex: 1;
+    border: 1.5px solid #c5d5e0;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #fff;
+    resize: none;
+}
+.rb-input-row textarea { height: 50px; }
+.rb-send-btn {
+    background: #1d4ed8;
+    color: #fff; border: none;
+    border-radius: 8px;
+    padding: 0 14px;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; height: 36px;
+    white-space: nowrap;
+}
+.rb-send-btn:hover { background: #1e40af; }
+
 @media (max-width: 900px) {
     .chat-page-layout {
         flex-direction: column;
@@ -48,13 +168,20 @@ body {
         align-items: center;
         height: auto;
         min-height: 100vh;
+        padding: 0 8px;
     }
-
     .chat-page-layout > .chat-wrapper,
     .unchecked-frame {
-        width: 420px;
+        width: 400px;
         max-width: calc(100vw - 20px);
         flex: 0 0 auto;
+    }
+    .request-board {
+        width: 400px;
+        max-width: calc(100vw - 20px);
+        flex: 0 0 auto;
+        max-width: none;
+        height: 600px;
     }
 }
 
@@ -516,6 +643,24 @@ body {
     title="V 미체크 모아보기">
 </iframe>
 
+<!-- ── 개선요청 게시판 ── -->
+<div class="request-board" id="requestBoard">
+  <div class="rb-topbar">
+    <div class="rb-title">💡 개선요청 게시판</div>
+    <div class="rb-sub">팀원 누구나 요청 가능 · 관리자가 상태 변경</div>
+  </div>
+  <div class="rb-list" id="rbList"><div style="padding:14px;color:#4a5661;font-size:13px;">불러오는 중…</div></div>
+  <div class="rb-input-area">
+    <div class="rb-input-row">
+      <input type="text" id="rbName" placeholder="요청자 이름" style="max-width:110px;">
+    </div>
+    <div class="rb-input-row">
+      <textarea id="rbContent" placeholder="개선 요청 내용을 입력하세요"></textarea>
+      <button class="rb-send-btn" onclick="rbSubmit()">신청</button>
+    </div>
+  </div>
+</div>
+
 </div>
 
 <div id="toast">
@@ -580,20 +725,33 @@ function escapeHtml(text) {
 function renderMessage(text) {
     const str = String(text || "");
 
-    // 이미지 링크
+    // [사진] Drive 썸네일 형식: [사진] thumbUrl|||originUrl
+    if (str.startsWith("[사진] ")) {
+        const parts = str.slice(5).split("|||");
+        const thumb  = parts[0].trim();
+        const origin = (parts[1] || parts[0]).trim();
+        return `<img class="chat-img" src="${escapeHtml(thumb)}" onclick="window.open('${escapeHtml(origin)}','_blank')" loading="lazy" title="클릭하여 원본 보기">`;
+    }
+
+    // [영상] Drive 링크
+    if (str.startsWith("[영상] ")) {
+        const url = str.slice(5).trim();
+        return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener" style="color:#1d4ed8;font-weight:600;">📹 영상 보기</a>`;
+    }
+
+    // 기존 [IMG] 호환
     if (/^\[IMG\](.+)$/.test(str)) {
         const url = str.replace("[IMG]", "").trim();
         return `<img class="chat-img" src="${escapeHtml(url)}" onclick="window.open('${escapeHtml(url)}','_blank')" loading="lazy">`;
     }
 
-    // 영상 링크
+    // 기존 [VIDEO] 호환
     if (/^\[VIDEO\](.+)$/.test(str)) {
         const url = str.replace("[VIDEO]", "").trim();
         return `<video class="chat-video" src="${escapeHtml(url)}" controls></video>`;
     }
 
-    // 일반 텍스트 - URL을 클릭 가능한 링크로 변환
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    // 일반 텍스트 - URL 링크 변환
     return escapeHtml(str).replace(
         /(https?:\/\/[^\s&]+)/g,
         '<a href="$1" target="_blank" rel="noopener">$1</a>'
@@ -631,11 +789,10 @@ async function uploadFile(file, senderName) {
 
         const isVideo = file.type.startsWith("video/");
 
-        // no-cors POST로 GAS에 전송 — GAS가 드라이브 저장 + 시트에 메시지 직접 기록
-        await fetch(SERVER, {
+        // GAS에 전송 — Drive 저장 + 시트 기록
+        const res = await fetch(SERVER, {
             method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "text/plain" },
             body: JSON.stringify({
                 action: "uploadFile",
                 fileName: file.name,
@@ -645,9 +802,10 @@ async function uploadFile(file, senderName) {
                 senderName: senderName || ""
             })
         });
-
-        // no-cors라 응답 못 받음 → 4초 대기 후 폴링으로 확인
-        await new Promise(r => setTimeout(r, 4000));
+        const json = await res.json().catch(() => ({}));
+        if (json.status !== 'ok') throw new Error('업로드 실패');
+        // 즉시 폴링 (Drive 저장 완료 대기)
+        await new Promise(r => setTimeout(r, 1500));
         return { uploaded: true };
 
     } catch(e) {
@@ -686,7 +844,7 @@ function render(data) {
 
     chat.innerHTML = "";
 
-    const list = [...data].slice(0, 30).reverse();
+    const list = [...data].slice(0, 100).reverse();
 
     chat.innerHTML = list.map(d => {
         const isMe = (d.name || "").trim() === getFullName();
@@ -1007,6 +1165,128 @@ checkLock();
 ensureNotificationPermission();
 load();
 setInterval(load, 2000);
+
+/* ════════════════════════════════════════════
+   개선요청 게시판
+════════════════════════════════════════════ */
+const RB_SERVER = SERVER; // 동일 GAS URL 사용
+
+// 관리자 여부 확인
+function rbIsAdmin() {
+    return localStorage.getItem('admin_mode') === '1';
+}
+
+// 상태 뱃지 HTML
+function rbStatusBadge(id, status, isAdmin) {
+    const s = status || '신청';
+    if (!isAdmin) return `<span class="rb-status ${s}">${s}</span>`;
+    const opts = ['신청','완료','보류','불가'].map(v =>
+        `<option value="${v}" ${v===s?'selected':''}>${v}</option>`
+    ).join('');
+    return `<select class="rb-status ${s}" onchange="rbChangeStatus(${id}, this)" style="border:none;font-weight:700;font-size:11px;padding:2px 6px;border-radius:10px;cursor:pointer;">${opts}</select>`;
+}
+
+function rbChangeStatus(id, sel) {
+    const newStatus = sel.value;
+    sel.className = 'rb-status ' + newStatus;
+    fetch(RB_SERVER, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'rbUpdateStatus', id, status: newStatus })
+    }).catch(e => console.log('상태변경 실패', e));
+}
+
+// 렌더링
+function rbRender(rows) {
+    const list = document.getElementById('rbList');
+    if (!rows || rows.length === 0) {
+        list.innerHTML = '<div style="padding:14px;color:#4a5661;font-size:13px;">등록된 요청이 없습니다.</div>';
+        return;
+    }
+    const isAdmin = rbIsAdmin();
+    list.innerHTML = rows.map(r => {
+        const replies = (r.replies || []).map(rep =>
+            `<div class="rb-reply">
+                <div class="rb-reply-meta">${escapeHtml(rep.name)} · ${escapeHtml(rep.time)}</div>
+                <div>${escapeHtml(rep.text)}</div>
+            </div>`
+        ).join('');
+        return `
+        <div class="rb-card">
+            <div class="rb-card-header">
+                ${rbStatusBadge(r.id, r.status, isAdmin)}
+                <span class="rb-requester">${escapeHtml(r.requester)}</span>
+                <span class="rb-time">${escapeHtml(r.created_at)}</span>
+            </div>
+            <div class="rb-content">${escapeHtml(r.content)}</div>
+            ${replies ? `<div class="rb-replies">${replies}</div>` : ''}
+            <div class="rb-reply-input">
+                <input type="text" placeholder="답글 입력…" id="rr_${r.id}">
+                <button onclick="rbReply(${r.id})">답글</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// 목록 불러오기
+async function rbLoad() {
+    try {
+        const res = await fetch(RB_SERVER + '?action=rbList');
+        const data = await res.json();
+        if (data.ok) rbRender(data.rows);
+    } catch(e) { console.log('게시판 불러오기 실패', e); }
+}
+
+// 신청 등록
+async function rbSubmit() {
+    const nameEl    = document.getElementById('rbName');
+    const contentEl = document.getElementById('rbContent');
+    const name    = nameEl.value.trim();
+    const content = contentEl.value.trim();
+    if (!name)    { alert('요청자 이름을 입력하세요'); nameEl.focus(); return; }
+    if (!content) { alert('요청 내용을 입력하세요'); contentEl.focus(); return; }
+    try {
+        await fetch(RB_SERVER, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: 'rbInsert', requester: name, content })
+        });
+        nameEl.value = '';
+        contentEl.value = '';
+        await rbLoad();
+    } catch(e) { alert('등록 실패: ' + e.message); }
+}
+
+// 답글
+async function rbReply(id) {
+    const el = document.getElementById('rr_' + id);
+    const text = el ? el.value.trim() : '';
+    if (!text) return;
+    // 이름: 채팅창 이름 재활용
+    const name = (localStorage.getItem('cs_team') || '') + ' ' + (localStorage.getItem('cs_name') || '');
+    try {
+        await fetch(RB_SERVER, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: 'rbReply', id, name: name.trim() || '익명', text })
+        });
+        el.value = '';
+        await rbLoad();
+    } catch(e) { alert('답글 실패'); }
+}
+
+// 이름 자동 채우기 (채팅창 이름 연동)
+function rbSyncName() {
+    const nameEl = document.getElementById('rbName');
+    if (!nameEl) return;
+    const saved = (localStorage.getItem('cs_team') || '') + ' ' + (localStorage.getItem('cs_name') || '');
+    if (saved.trim()) nameEl.value = saved.trim();
+}
+
+rbLoad();
+rbSyncName();
+setInterval(rbLoad, 5000);
+
 </script>
 
 </body>

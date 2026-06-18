@@ -462,10 +462,10 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
     </div>
   </div>
 
-  <!-- 대분류3: 건별보고 -->
+  <!-- 대분류3: 보고서 -->
   <div class="nav-group" id="ng-report">
     <div class="nav-parent">
-      건별보고 <span class="nav-arrow">▾</span>
+      보고서 <span class="nav-arrow">▾</span>
     </div>
     <div class="nav-dropdown">
       <div class="nav-item" data-tab="건별Issue" onclick="switchTab(this)">
@@ -550,6 +550,7 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
     <div id="onceSidebar" style="display:none;">
       <div class="sb-label">건별보고</div>
       <div class="sb-item" onclick="onceNav('report/once/allstain.html', this)">세척기 (꿈비-브레쨔)</div>
+      <div class="sb-item" onclick="onceNav('report/once/올스테인레스_직수.html', this)">세척기 (직수관)</div>
     </div>
 
     <div id="toolSidebar" style="display:none;">
@@ -1297,7 +1298,7 @@ function updateHeader() {
   document.getElementById('headerDate').textContent=`${label} · ${now.getFullYear()}.${pad(now.getMonth()+1)}.${pad(now.getDate())}`;
 }
 
-function openTestServer() { window.open('https://shim0627.github.io/shim0627/','_blank'); }
+function openTestServer() { window.open('https://ggumbi-cs.github.io/dashboard/','_blank'); }
 
 // ── 초기화 ──
 function init() {

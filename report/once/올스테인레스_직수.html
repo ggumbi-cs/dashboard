@@ -212,6 +212,70 @@ body {
   font-family: 'Noto Sans KR', sans-serif;
 }
 
+/* ── 핵심 자재 후보 사진 ── */
+.key-material-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.key-material-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.key-material-card.rank-1 { border-top: 3px solid var(--indigo); }
+.key-material-card.rank-2 { border-top: 3px solid var(--amber); }
+.key-material-card.rank-3 { border-top: 3px solid #9CA3AF; }
+.rank-pip {
+  position: absolute;
+  top: 10px; left: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(255,255,255,0.92);
+  border-radius: 20px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  z-index: 1;
+}
+.key-material-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background: var(--bg);
+  display: block;
+}
+.key-material-placeholder {
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--bg);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--text-3);
+  font-size: 11px;
+}
+.key-material-placeholder svg { opacity: 0.35; }
+.key-material-info {
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--border);
+}
+.key-material-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: 3px;
+}
+.key-material-spec {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
 /* ── 후보 자재 평가 카드 ── */
 .candidate-list { display: flex; flex-direction: column; gap: 14px; }
 
@@ -541,6 +605,52 @@ body {
           <div class="material-img-placeholder" style="display:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>이미지 준비중</div>
           <div class="material-name">1/4 PE 호스</div>
           <div class="material-spec">OD 6mm (1/4")</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 핵심 자재 후보 사진 -->
+    <section class="section">
+      <div class="section-title">핵심 커넥터 후보</div>
+      <div class="key-material-grid">
+        <div class="key-material-card rank-1">
+          <div class="rank-pip rank-pip-1">🥇 1위</div>
+          <img src="image/image 8.png" alt="녹색너트 BSP 직결형" class="key-material-img"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="key-material-placeholder" style="display:none">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            이미지 준비중
+          </div>
+          <div class="key-material-info">
+            <div class="key-material-name">녹색너트 BSP 직결형</div>
+            <div class="key-material-spec">BSP 3/4 · OD 6mm · 직결 가능</div>
+          </div>
+        </div>
+        <div class="key-material-card rank-2">
+          <div class="rank-pip rank-pip-2">🥈 2위</div>
+          <img src="image/image 7.png" alt="BSP 암나사 바브 세트" class="key-material-img"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="key-material-placeholder" style="display:none">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            이미지 준비중
+          </div>
+          <div class="key-material-info">
+            <div class="key-material-name">BSP 암나사 + 바브 세트</div>
+            <div class="key-material-spec">BSP 3/4 · 6.4mm / 8mm 바브</div>
+          </div>
+        </div>
+        <div class="key-material-card rank-3">
+          <div class="rank-pip rank-pip-3">🥉 3위</div>
+          <img src="image/image 5.png" alt="계단형 바브 절단 연결" class="key-material-img"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="key-material-placeholder" style="display:none">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            이미지 준비중
+          </div>
+          <div class="key-material-info">
+            <div class="key-material-name">전용호스 절단 + 바브 연결</div>
+            <div class="key-material-spec">계단형 바브 · 가공 필요</div>
+          </div>
         </div>
       </div>
     </section>

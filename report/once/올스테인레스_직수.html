@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>정수기라인 활용 직수공급 — 올스테인리스 젖병세척기</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #F5F6F8;
+  --surface:   #FFFFFF;
+  --border:    #E2E5EA;
+  --border-md: #CBD0D8;
+  --text-1:    #0D1117;
+  --text-2:    #4A5568;
+  --text-3:    #8A93A2;
+  --indigo:    #3B4ECC;
+  --indigo-lt: #EEF0FB;
+  --indigo-md: #C5CBF5;
+  --amber:     #D97706;
+  --amber-lt:  #FFFBEB;
+  --green:     #059669;
+  --green-lt:  #ECFDF5;
+  --steel:     #64748B;
+  --gold:      #B45309;
+}
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--text-1);
+  font-size: 14px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page { max-width: 980px; margin: 0 auto; padding: 40px 28px 80px; }
+
+/* ── 헤더 ── */
+.report-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 16px;
+  border-bottom: 2px solid var(--text-1);
+  padding-bottom: 18px;
+  margin-bottom: 28px;
+}
+.header-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--indigo);
+  margin-bottom: 6px;
+}
+.header-title {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+.header-product {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 5px;
+}
+.header-meta {
+  text-align: right;
+  font-size: 11px;
+  color: var(--text-2);
+  line-height: 1.9;
+}
+.header-meta strong { color: var(--text-1); font-weight: 600; }
+
+/* ── 상태 바 ── */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--indigo-lt);
+  border: 1px solid var(--indigo-md);
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin-bottom: 28px;
+  font-size: 12px;
+}
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--indigo);
+  box-shadow: 0 0 0 3px rgba(59,78,204,0.2);
+  flex-shrink: 0;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 3px rgba(59,78,204,.2)} 50%{box-shadow:0 0 0 6px rgba(59,78,204,.08)} }
+.status-text { color: var(--indigo); font-weight: 600; }
+.status-sep { color: var(--indigo-md); margin: 0 4px; }
+.status-sub { color: var(--steel); }
+
+/* ── 탭 ── */
+.tab-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 28px;
+}
+.tab-btn {
+  padding: 9px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-3);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+.tab-btn.active { color: var(--indigo); border-bottom-color: var(--indigo); }
+.tab-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+.tab-btn .tab-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  background: var(--border);
+  color: var(--text-3);
+  border-radius: 10px;
+  padding: 1px 6px;
+  margin-left: 5px;
+  vertical-align: middle;
+  letter-spacing: 0.04em;
+}
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── 섹션 타이틀 ── */
+.section { margin-bottom: 36px; }
+.section-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ── 필요자재 그리드 ── */
+.material-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.material-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.material-num {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  color: var(--indigo);
+  letter-spacing: 0.06em;
+}
+.material-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  border-radius: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+.material-img-placeholder {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: var(--bg);
+  border: 1px dashed var(--border-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--text-3);
+  font-size: 10px;
+}
+.material-img-placeholder svg { opacity: 0.4; }
+.material-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1);
+  line-height: 1.35;
+}
+.material-spec {
+  font-size: 10px;
+  color: var(--text-3);
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* ── 후보 자재 평가 카드 ── */
+.candidate-list { display: flex; flex-direction: column; gap: 14px; }
+
+.candidate-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+.candidate-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+.candidate-card.rank-1 { border-color: var(--indigo-md); border-left: 4px solid var(--indigo); }
+.candidate-card.rank-2 { border-left: 4px solid var(--amber); }
+.candidate-card.rank-3 { border-left: 4px solid #9CA3AF; }
+
+.candidate-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.rank-badge {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.candidate-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-1);
+  line-height: 1.3;
+}
+.candidate-name .spec-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 500;
+  background: var(--indigo-lt);
+  color: var(--indigo);
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.total-score {
+  text-align: right;
+}
+.total-score .score-num {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--indigo);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.total-score .score-label {
+  font-size: 9px;
+  color: var(--text-3);
+  margin-top: 1px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.candidate-body {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 0;
+}
+.candidate-img-wrap {
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+}
+.candidate-img {
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+.candidate-img-placeholder {
+  width: 76px;
+  height: 76px;
+  border-radius: 4px;
+  background: var(--surface);
+  border: 1px dashed var(--border-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  font-size: 10px;
+}
+.candidate-eval { padding: 12px 16px; }
+
+/* 평가 게이지 */
+.eval-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 20px;
+  margin-bottom: 10px;
+}
+.eval-row { display: flex; flex-direction: column; gap: 3px; }
+.eval-header { display: flex; justify-content: space-between; align-items: baseline; }
+.eval-label { font-size: 10px; font-weight: 600; color: var(--text-2); letter-spacing: 0.03em; }
+.eval-pct { font-size: 10px; font-family: 'Noto Sans KR', sans-serif; color: var(--indigo); font-weight: 600; }
+.eval-track {
+  height: 5px;
+  background: var(--bg);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.eval-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--indigo) 0%, #6B7FE8 100%);
+  transition: width 0.6s ease;
+}
+.eval-fill.amber { background: linear-gradient(90deg, var(--amber) 0%, #F59E0B 100%); }
+
+.candidate-gpt {
+  background: var(--bg);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 11px;
+  color: var(--text-2);
+  line-height: 1.6;
+  border-left: 2px solid var(--indigo-md);
+}
+.candidate-gpt strong { color: var(--text-1); font-weight: 600; }
+
+.candidate-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--steel);
+  text-decoration: none;
+  margin-top: 6px;
+  padding: 3px 7px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+}
+.candidate-link:hover { background: var(--bg); }
+
+/* ── 종합 순위 ── */
+.ranking-table {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.ranking-row {
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.ranking-row:last-child { border-bottom: none; }
+.ranking-row.rank-1 { background: var(--indigo-lt); }
+.rank-medal { font-size: 20px; text-align: center; }
+.rank-name { font-size: 13px; font-weight: 600; color: var(--text-1); }
+.rank-sub  { font-size: 11px; color: var(--text-2); margin-top: 1px; }
+.rank-score-wrap { text-align: right; }
+.rank-score {
+  font-size: 20px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--indigo);
+  line-height: 1;
+}
+.rank-score-label { font-size: 9px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* ── 평가 기준 박스 ── */
+.criteria-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.criteria-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.criteria-dot {
+  width: 24px; height: 24px;
+  border-radius: 6px;
+  background: var(--indigo-lt);
+  color: var(--indigo);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.criteria-label { color: var(--text-1); font-weight: 600; }
+.criteria-weight { color: var(--text-3); margin-left: 2px; }
+
+/* ── 다음 단계 ── */
+.next-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.next-card-header {
+  background: var(--text-1);
+  color: #fff;
+  padding: 10px 18px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.next-card-body { padding: 16px 18px; }
+.next-steps { display: flex; flex-direction: column; gap: 10px; }
+.next-step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 13px;
+  color: var(--text-1);
+}
+.next-step-icon {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--indigo-lt);
+  border: 1px solid var(--indigo-md);
+  color: var(--indigo);
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.next-step-content { line-height: 1.5; }
+.next-step-content strong { font-weight: 600; }
+.next-step-content span { font-size: 12px; color: var(--text-2); }
+
+/* ── 푸터 ── */
+.report-footer {
+  margin-top: 48px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-3);
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- 헤더 -->
+  <header class="report-header">
+    <div>
+      <div class="header-eyebrow">Development Report · 엄마감동팀</div>
+      <div class="header-title">정수기라인 활용 직수공급 연결 자재 선정</div>
+      <div class="header-product">[ 꿈비 ] NEW 젖병세척기 올 스테인리스 · 검사 담당 : 심우승 SQ</div>
+    </div>
+    <div class="header-meta">
+      <strong>2026년 6월 16일 기준</strong>
+      버전 : 시료 #1<br>
+      단계 : 자재선정 · 입고 준비
+    </div>
+  </header>
+
+  <!-- 상태 바 -->
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <span class="status-text">진행중</span>
+    <span class="status-sep">·</span>
+    <span class="status-sub">현재 단계 — 자재선정 확보 / 입고 후 가동테스트 예정</span>
+  </div>
+
+  <!-- 탭 -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('material', this)">자재선정</button>
+    <button class="tab-btn disabled" title="자재 입고 후 등록 예정">사전작업 <span class="tab-badge">예정</span></button>
+    <button class="tab-btn disabled" title="가동 테스트 후 등록 예정">가동테스트 <span class="tab-badge">예정</span></button>
+  </div>
+
+  <!-- 탭 패널 : 자재선정 -->
+  <div id="tab-material" class="tab-panel active">
+
+    <!-- 필요 자재 -->
+    <section class="section">
+      <div class="section-title">필요 자재 목록</div>
+      <div class="material-grid">
+        <div class="material-card">
+          <div class="material-num">MAT-01</div>
+          <img src="image/image.png" alt="T피팅" class="material-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="material-img-placeholder" style="display:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>이미지 준비중</div>
+          <div class="material-name">1/4 원터치 T피팅</div>
+          <div class="material-spec">1/4" OD</div>
+        </div>
+        <div class="material-card">
+          <div class="material-num">MAT-02</div>
+          <img src="image/image 1.png" alt="볼밸브" class="material-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="material-img-placeholder" style="display:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>이미지 준비중</div>
+          <div class="material-name">1/4 원터치 볼밸브</div>
+          <div class="material-spec">1/4" OD</div>
+        </div>
+        <div class="material-card">
+          <div class="material-num">MAT-03</div>
+          <img src="image/image 2.png" alt="체크밸브" class="material-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="material-img-placeholder" style="display:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>이미지 준비중</div>
+          <div class="material-name">1/4 체크밸브</div>
+          <div class="material-spec">역류 방지</div>
+        </div>
+        <div class="material-card">
+          <div class="material-num">MAT-04</div>
+          <img src="image/image 3.png" alt="PE호스" class="material-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="material-img-placeholder" style="display:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>이미지 준비중</div>
+          <div class="material-name">1/4 PE 호스</div>
+          <div class="material-spec">OD 6mm (1/4")</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 평가 기준 -->
+    <section class="section">
+      <div class="section-title">AI 평가 기준</div>
+      <div class="criteria-box">
+        <div class="criteria-item">
+          <div class="criteria-dot">30</div>
+          <span class="criteria-label">체결성</span><span class="criteria-weight">30%</span>
+        </div>
+        <div class="criteria-item">
+          <div class="criteria-dot">30</div>
+          <span class="criteria-label">누수위험</span><span class="criteria-weight">30%</span>
+        </div>
+        <div class="criteria-item">
+          <div class="criteria-dot">20</div>
+          <span class="criteria-label">가공필요성</span><span class="criteria-weight">20%</span>
+        </div>
+        <div class="criteria-item">
+          <div class="criteria-dot">20</div>
+          <span class="criteria-label">구매난이도</span><span class="criteria-weight">20%</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 핵심 커넥터 후보 평가 -->
+    <section class="section">
+      <div class="section-title">핵심 커넥터 후보 평가</div>
+      <div class="candidate-list">
+
+        <!-- 🥇 1위 -->
+        <div class="candidate-card rank-1">
+          <div class="candidate-header">
+            <div class="rank-badge">🥇</div>
+            <div>
+              <div class="candidate-name">
+                녹색너트 BSP 3/4 → 4/7mm 바브 직결형
+                <span class="spec-tag">BSP 3/4 · OD 6mm</span>
+              </div>
+              <div style="font-size:11px;color:var(--steel);margin-top:2px">보고자 추천 · GPT 교차 검증 1위</div>
+            </div>
+            <div class="total-score">
+              <div class="score-num">95</div>
+              <div class="score-label">종합점수</div>
+            </div>
+          </div>
+          <div class="candidate-body">
+            <div class="candidate-img-wrap">
+              <img src="image/image 8.png" alt="녹색너트 BSP" class="candidate-img"
+                onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+              <div class="candidate-img-placeholder" style="display:none">이미지<br>준비중</div>
+            </div>
+            <div class="candidate-eval">
+              <div class="eval-grid">
+                <div class="eval-row">
+                  <div class="eval-header"><span class="eval-label">체결성</span><span class="eval-pct">90%</span></div>
+                  <div class="eval-track"><div class="eval-fill" style="width:90%"></div></div>
+                </div>
+                <div class="eval-row">
+                  <div class="eval-header"><span class="eval-label">누수위험</span><span class="eval-pct" style="color:var(--green)">낮음</span></div>
+                  <div class="eval-track"><div class="eval-fill" style="width:90%"></div></div>
+                </div>
+                <div class="eval-row">
+                  <div class="eval-header"><span class="eval-label">종합가치</span><span class="eval-pct">⭐⭐⭐⭐⭐</span></div>
+                  <div class="eval-track"><div class="eval-fill" style="width:95%"></div></div>
+                </div>
+                <div class="eval-row">
+                  <div class="eval-header"><span class="eval-label">구매난이도</span><span class="eval-pct" style="color:var(--green)">용이</span></div>
+                  <div class="eval-track"><div class="eval-fill" style="width:88%"></div></div>
+                </div>
+              </div>
+              <div class="candidate-gpt">
+                <strong>GPT 의견 :</strong> 현재까지 올라온 후보 중 1위. 세척기 포트와 가장 유사한 규격. 정수기 1/4" 호스 직결 가능. OD 6mm(1/4") PE Hose 명시 확인. 즉시 구매 권장 (2개).
+              </div>
+              <a class="candidate-link" href="https://smartstore.naver.com/uldongnestore/products/13297747506" target="_blank">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                스마트스토어 상품 링크
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 🥈 2위 -->
+        <div class="candidate-card rank-2">
+          <div class="candidate-header">
+            <div class="rank-badge">🥈</div>
+            <div>
+              <div class="candidate-name">
+                규격 다양 확보 세트 (BSP 암나사 + 바브)
+                <span class="spec-tag">BSP 3/4 · 6.4mm / 8mm</span>
+              </div>
+              <div style="font-size:11px;color:var(--steel);margin-top:2px">규격 여러 개 동시 테스트 가능</div>
+            </div>
+            <div class="total-score">
+              <div class="score-num" style="color:var(--amber)">90</div>
+              <div class="score-label">종합점수</div>
+            </div>
+          </div>
+          <div class="candidate-body">
+            <div class="candidate-img-wrap">
+              <img src="image/image 7.png" alt="BSP 바브 세트" class="candidate-img"
+                onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+              <div class="candidate-img-placeholder" style="display:none">이미지<br>준비중</div>
+            </div>
+            <div class="candidate-eval">
+              <div class="eval-grid">
+                <div class="eval-row">
+                  <div class="eval-header"><span class="eval-label">체결성</span><span class="eval-pct">80%</span></div>
+                  <div class="eval-track"><div class="eval-fill amber" style="width:80%"></div></div>
+                </div>
+                <div class="eval-row">
+                  <div class="eval-header"><span class="eval-label">누수위험</span><span class="eval-pct" style="color:var(--amber)">낮음~보통</span></div>
+                  <div class="eval-track"><div class="eval-fill amber" style="width:75%"></div></div>
+                </div>
+                <div class="eval-row">
+                  <div class="eval-header"><span class="eval-label">종합가치</span><span class="eval-pct">⭐⭐⭐⭐⭐</span></div>
+                  <div class="eval-track"><div class="eval-fill amber" style="width:88%"></div></div>
+                </div>
+                <div class="eval-row">
+                  <div class="eval-header"><span class="eval-label">구매난이도</span><span class="eval-pct" style="color:var(--green)">용이</span></div>
+                  <div class="eval-track"><div class="eval-fill amber" style="width:85%"></div></div>
+                </div>
+              </div>
+              <div class="candidate-gpt">
+                <strong>GPT 의견 :</strong> 규격 다양하게 확보 가능. 개발 테스트용 샘플 구매로 매우 적합. BSP 3/4 암나사 기준 6.4mm / 8mm 두 가지 바브 병행 테스트 권장.
+              </div>
+              <a class="candidate-link" href="https://smartstore.naver.com/sosopick1215/products/13515763366" target="_blank">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                스마트스토어 상품 링크
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 🥉 3위 -->
+        <div class="candidate-card rank-3">
+          <div class="candidate-header">
+            <div class="rank-badge">🥉</div>
+            <div>
+              <div class="candidate-name">
+                전용호스 절단 + 바브 연결
+                <span class="spec-tag">절단 가공 필요</span>
+              </div>
+              <div style="font-size:11px;color:var(--steel);margin-top:2px">가공 공수 발생 · 대안 후보</div>
+            </div>
+            <div class="total-score">
+              <div class="score-num" style="color:var(--steel)">85</div>
+              <div class="score-label">종합점수</div>
+            </div>
+          </div>
+          <div class="candidate-body">
+            <div class="candidate-img-wrap">
+              <img src="image/image 5.png" alt="계단형 바브" class="candidate-img"
+                onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+              <div class="candidate-img-placeholder" style="display:none">이미지<br>준비중</div>
+            </div>
+            <div class="candidate-eval">
+              <div class="eval-grid">
+                <div class="eval-row">
+                  <div class="eval-header"><span class="eval-label">체결성</span><span class="eval-pct" style="color:var(--steel)">75%</span></div>
+                  <div class="eval-track"><div class="eval-fill" style="width:75%;background:#9CA3AF"></div></div>
+                </div>
+                <div class="eval-row">
+                  <div class="eval-header"><span class="eval-label">누수위험</span><span class="eval-pct" style="color:var(--amber)">보통</span></div>
+                  <div class="eval-track"><div class="eval-fill" style="width:65%;background:#9CA3AF"></div></div>
+                </div>
+                <div class="eval-row">
+                  <div class="eval-header"><span class="eval-label">종합가치</span><span class="eval-pct">⭐⭐⭐⭐☆</span></div>
+                  <div class="eval-track"><div class="eval-fill" style="width:80%;background:#9CA3AF"></div></div>
+                </div>
+                <div class="eval-row">
+                  <div class="eval-header"><span class="eval-label">가공필요성</span><span class="eval-pct" style="color:var(--amber)">필요</span></div>
+                  <div class="eval-track"><div class="eval-fill" style="width:55%;background:#9CA3AF"></div></div>
+                </div>
+              </div>
+              <div class="candidate-gpt">
+                <strong>GPT 의견 :</strong> 절단 가공이 필요하여 공수가 발생하나, 연결 신뢰성은 검증된 방식. 1·2위 후보 실패 시 차선 선택지.
+              </div>
+              <a class="candidate-link" href="https://www.11st.co.kr/products/9382302999" target="_blank">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                11번가 상품 링크
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 종합 순위 -->
+    <section class="section">
+      <div class="section-title">종합 순위 요약</div>
+      <div class="ranking-table">
+        <div class="ranking-row rank-1">
+          <div class="rank-medal">🥇</div>
+          <div>
+            <div class="rank-name">녹색너트 BSP 3/4 → 4/7mm 직결형</div>
+            <div class="rank-sub">보고자 추천 · GPT 교차 검증 1위 · 즉시 구매 권장 (2개)</div>
+          </div>
+          <div class="rank-score-wrap">
+            <div class="rank-score">95</div>
+            <div class="rank-score-label">점</div>
+          </div>
+        </div>
+        <div class="ranking-row">
+          <div class="rank-medal">🥈</div>
+          <div>
+            <div class="rank-name">BSP 암나사 + 바브 규격 세트</div>
+            <div class="rank-sub">6.4mm / 8mm 병행 테스트 · 샘플 구매 적합</div>
+          </div>
+          <div class="rank-score-wrap">
+            <div class="rank-score" style="color:var(--amber)">90</div>
+            <div class="rank-score-label">점</div>
+          </div>
+        </div>
+        <div class="ranking-row">
+          <div class="rank-medal">🥉</div>
+          <div>
+            <div class="rank-name">전용호스 절단 + 바브 연결</div>
+            <div class="rank-sub">가공 공수 발생 · 차선 후보</div>
+          </div>
+          <div class="rank-score-wrap">
+            <div class="rank-score" style="color:var(--steel)">85</div>
+            <div class="rank-score-label">점</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 다음 단계 -->
+    <section class="section">
+      <div class="section-title">향후 진행 계획</div>
+      <div class="next-card">
+        <div class="next-card-header">Next Steps</div>
+        <div class="next-card-body">
+          <div class="next-steps">
+            <div class="next-step">
+              <div class="next-step-icon">01</div>
+              <div class="next-step-content">
+                <strong>자재 입고</strong><br>
+                <span>1위 후보 (녹색너트 BSP 3/4) 우선 구매 · 2위 후보 규격 세트 병행 입고</span>
+              </div>
+            </div>
+            <div class="next-step">
+              <div class="next-step-icon">02</div>
+              <div class="next-step-content">
+                <strong>사전작업 · 연결 구성 준비</strong><br>
+                <span>T피팅 / 볼밸브 / 체크밸브 / PE호스 조합 배관 레이아웃 구성</span>
+              </div>
+            </div>
+            <div class="next-step">
+              <div class="next-step-icon">03</div>
+              <div class="next-step-content">
+                <strong>가동테스트</strong><br>
+                <span>정수기 라인 연결 후 누수 여부 · 수압 · 체결 안정성 실측 검증</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /tab-material -->
+
+  <footer class="report-footer">
+    <span>정수기라인 활용 직수공급 자재선정 보고 · 엄마감동팀 심우승 SQ</span>
+    <span>2026.06.16 기준 · 시료 #1</span>
+  </footer>
+
+</div>
+
+<script>
+function switchTab(id, btn) {
+  if (btn.classList.contains('disabled')) return;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  const panel = document.getElementById('tab-' + id);
+  if (panel) panel.classList.add('active');
+}
+</script>
+</body>
+</html>

@@ -310,7 +310,7 @@ body {
     box-shadow: 0 1px 1px rgba(0,0,0,0.04);
 }
 .bubble-text {
-    white-space: pre-wrap;
+    white-space: normal;
     word-break: break-word;
 }
 
@@ -667,6 +667,70 @@ body {
 }
 .reply-toggle-btn:hover { opacity: 1; color: #2b5fad; }
 .reply-toggle-btn.active { opacity: 1; color: #2b5fad; }
+
+/* ── 필터/검색 바 ── */
+.filter-bar {
+    background: #a0b8cc;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    padding: 7px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+.filter-bar input[type="text"],
+.filter-bar input[type="date"],
+.filter-bar select {
+    padding: 4px 8px;
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: inherit;
+    background: rgba(255,255,255,0.85);
+    color: #222;
+}
+.filter-bar input[type="text"] { width: 130px; }
+.filter-bar input[type="date"] { width: 120px; }
+.filter-bar select { width: 90px; }
+.filter-bar label { font-size: 11px; color: #3a4a55; font-weight: 600; }
+.filter-reset {
+    margin-left: auto;
+    font-size: 11px;
+    color: #3a4a55;
+    cursor: pointer;
+    padding: 3px 8px;
+    border-radius: 5px;
+    background: rgba(255,255,255,0.5);
+    border: 1px solid rgba(0,0,0,0.12);
+}
+.filter-reset:hover { background: rgba(255,255,255,0.8); }
+.filter-active-count {
+    font-size: 11px;
+    color: #1a4fa0;
+    font-weight: 700;
+    background: rgba(255,255,255,0.7);
+    padding: 2px 7px;
+    border-radius: 10px;
+    display: none;
+}
+/* 더보기 버튼 */
+.load-more-btn {
+    display: block;
+    width: 100%;
+    padding: 8px 0;
+    text-align: center;
+    background: rgba(255,255,255,0.5);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 8px;
+    font-size: 12px;
+    color: #3a4a55;
+    cursor: pointer;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+.load-more-btn:hover { background: rgba(255,255,255,0.8); }
+/* 검색 하이라이트 */
+.highlight { background: #ffe066; border-radius: 2px; padding: 0 1px; }
 </style>
 </head>
 <body>
@@ -695,6 +759,27 @@ body {
         <button type="button" id="alarmToggle">🔔 알림 ON</button>
     </div>
 
+    <!-- 필터/검색 바 -->
+    <div class="filter-bar" id="filterBar">
+        <span style="font-size:12px;font-weight:700;color:#1a3a55;margin-right:2px;">🔽 필터</span>
+        <label>이름</label>
+        <input type="text" id="fName" placeholder="작성자 이름" oninput="applyFilter()">
+        <label>날짜</label>
+        <input type="date" id="fDateFrom" oninput="applyFilter()">
+        <span style="font-size:11px;color:#3a4a55;">~</span>
+        <input type="date" id="fDateTo" oninput="applyFilter()">
+        <label>답글</label>
+        <select id="fReply" onchange="applyFilter()">
+            <option value="">전체</option>
+            <option value="yes">있음</option>
+            <option value="no">없음</option>
+        </select>
+        <label>🔍</label>
+        <input type="text" id="fKeyword" placeholder="키워드 검색" oninput="applyFilter()" style="width:260px;">
+        <span class="filter-active-count" id="filterCount"></span>
+        <span class="filter-reset" onclick="resetFilter()">초기화</span>
+    </div>
+
     <div id="chat" class="chat-box"></div>
 
     <div class="bottom-area">
@@ -706,7 +791,7 @@ body {
         <div class="input-row">
             <button type="button" class="attach-btn" onclick="document.getElementById('fileInput').click()" title="파일 첨부">📎</button>
             <input type="file" id="fileInput" accept="image/*,video/*" style="display:none" onchange="onFileSelected(this)">
-            <textarea id="msg" placeholder="메시지 입력"></textarea>
+            <textarea id="msg" placeholder="메시지 입력&#13;&#10;(Shift+Enter: 줄바꿈)" onkeydown="handleMsgKey(event)"></textarea>
             <button type="button" id="sendBtn" onclick="send()">전송</button>
         </div>
     </div>
@@ -820,11 +905,10 @@ function renderMessage(text) {
         return `<video class="chat-video" src="${escapeHtml(url)}" controls></video>`;
     }
 
-    // 일반 텍스트 - URL 링크 변환
-    return escapeHtml(str).replace(
-        /(https?:\/\/[^\s&]+)/g,
-        '<a href="$1" target="_blank" rel="noopener">$1</a>'
-    );
+    // 일반 텍스트 - 줄바꿈 + URL 링크 변환
+    return escapeHtml(str)
+        .replace(/\n/g, '<br>')
+        .replace(/(https?:\/\/[^\s&]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
 }
 
 // ===== 파일 첨부 =====
@@ -907,7 +991,7 @@ function normalizeCheckedByText(value) {
 const _renderedIds = new Set();   // 이미 렌더된 메시지 id
 let   _initialLoaded = false;     // 최초 전체 로딩 완료 여부
 
-function buildMsgHtml(d) {
+function buildMsgHtml(d, keyword) {
     const isMe       = (d.name || "").trim() === getFullName();
     const checkedBy  = normalizeCheckedByText(d.checked_by || "");
     const checkedClass = checkedBy ? "checked" : "";
@@ -916,14 +1000,14 @@ function buildMsgHtml(d) {
         ? '<div class="chat-replies">' + d.chat_replies.map(rep =>
             '<div class="chat-reply-item"><div class="chat-reply-meta">'
             + escapeHtml(rep.name) + ' · ' + escapeHtml(rep.time)
-            + '</div><div>' + escapeHtml(rep.text) + '</div></div>'
+            + '</div><div>' + escapeHtml(rep.text).replace(/\n/g,'<br>') + '</div></div>'
           ).join('') + '</div>'
         : '';
     return `<div class="msg-row ${isMe ? 'me' : 'other'}" data-id="${d.id}">
         <div class="msg-wrap">
             <div class="name">${escapeHtml(d.name || "")}</div>
             <div class="bubble-line">
-                <div class="bubble"><div class="bubble-text">${renderMessage(d.message || "")}</div>${repliesHtml}<div class="chat-reply-input" id="cri_${d.id}"><input type="text" placeholder="답글…" id="cr_${d.id}" onkeydown="if(event.key==='Enter')chatReply(${d.id})"><button onclick="chatReply(${d.id})">↩</button></div></div>
+                <div class="bubble"><div class="bubble-text">${renderMessage(d.message || "")}</div>${repliesHtml}<div class="chat-reply-input" id="cri_${d.id}"><textarea placeholder="답글… (Shift+Enter: 줄바꿈)" id="cr_${d.id}" rows="1" style="resize:none;overflow:hidden;min-height:28px;padding:4px 7px;font-family:inherit;font-size:12px;flex:1;border:1px solid rgba(0,0,0,0.15);border-radius:6px;background:rgba(255,255,255,0.7);" onkeydown="handleReplyKey(event,${d.id})" oninput="autoResize(this)"></textarea><button onclick="chatReply(${d.id})">↩</button></div></div>
                 <div class="delete-btn" title="삭제" onclick="deleteMsg(${d.id})">🗑</div>
                 <div class="reply-toggle-btn" title="답글" onclick="toggleReplyInput(${d.id})">💬</div>
             </div>
@@ -932,16 +1016,25 @@ function buildMsgHtml(d) {
     </div>`;
 }
 
-function render(data) {
+function render(data, hasMore = false) {
     const chat = document.getElementById("chat");
-    const list = [...data].slice(0, 100).reverse();
+    const list = [...data];  // 이미 필터링/페이지된 데이터
     const isNearBottom = (chat.scrollHeight - chat.scrollTop - chat.clientHeight) <= 40;
 
     // ── 최초 1회: 전체 렌더 후 맨 아래로 ──
     if (!_initialLoaded) {
-        chat.innerHTML = list.map(buildMsgHtml).join("");
+        // 더보기 버튼
+        const moreHtml = hasMore
+            ? `<button class="load-more-btn" onclick="loadMoreMessages()">⬆ 이전 대화 더 보기</button>`
+            : '';
+        chat.innerHTML = moreHtml + list.map(d => buildMsgHtml(d, _filterKeyword)).join("");
         _renderedIds.clear();
-        list.forEach(d => _renderedIds.add(String(d.id)));
+        list.forEach(d => {
+            const sid = String(d.id);
+            _renderedIds.add(sid);
+            // 최초 로딩 시 현재 답글 수 기록 → 이후 증가분만 알림
+            _replyCount[sid] = (d.chat_replies || []).length;
+        });
         _initialLoaded = true;
         chat.scrollTop = chat.scrollHeight;
         return;
@@ -964,7 +1057,7 @@ function render(data) {
 
         if (!existing) {
             // 신규 메시지 추가
-            chat.insertAdjacentHTML('beforeend', buildMsgHtml(d));
+            chat.insertAdjacentHTML('beforeend', buildMsgHtml(d, _filterKeyword));
             _renderedIds.add(sid);
             appended = true;
         } else {
@@ -975,16 +1068,29 @@ function render(data) {
                     + d.chat_replies.map(rep =>
                         '<div class="chat-reply-item"><div class="chat-reply-meta">'
                         + escapeHtml(rep.name) + ' · ' + escapeHtml(rep.time)
-                        + '</div><div>' + escapeHtml(rep.text) + '</div></div>'
+                        + '</div><div>' + escapeHtml(rep.text).replace(/\n/g,'<br>') + '</div></div>'
                       ).join('') + '</div>';
                 const cr = bubble.querySelector('.chat-replies');
+                const prevCnt = _replyCount[sid] || 0;
+                const currCnt = d.chat_replies.length;
                 if (!cr) {
                     bubble.querySelector('.chat-reply-input')
                           .insertAdjacentHTML('beforebegin', newRepliesHtml);
-                } else if (cr.children.length !== d.chat_replies.length) {
-                    // 답글 수 바뀔 때만 교체
+                } else if (cr.children.length !== currCnt) {
                     cr.outerHTML = newRepliesHtml;
                 }
+                // 새 답글 알림: 내 메시지에 달린 경우만
+                if (currCnt > prevCnt && _initialLoaded) {
+                    const isMyMsg = String(d.name || '').trim() === getFullName();
+                    if (isMyMsg && alarmEnabled && getFullName()) {
+                        const newRep = d.chat_replies[d.chat_replies.length - 1];
+                        const repName = newRep ? newRep.name : '누군가';
+                        const repText = newRep ? newRep.text : '';
+                        showToast(repName, `↩ ${repText}`);
+                        showBrowserNotification(repName, `내 메시지에 답글: ${repText}`);
+                    }
+                }
+                _replyCount[sid] = currCnt;
             }
             // V체크 상태 갱신
             const checkedBy = normalizeCheckedByText(d.checked_by || "");
@@ -1124,11 +1230,158 @@ async function load() {
         }
 
         checkNewIncomingMessage(data);
-        render(data);
+        _allMessages = data;
+        renderFiltered();
     } catch (e) {
         console.log("불러오기 실패", e);
     }
 }
+
+
+/* ════════════════════════════════════════════
+   전체 데이터 캐시 + 페이지네이션
+════════════════════════════════════════════ */
+let _allMessages  = [];     // 서버에서 받은 전체 메시지
+let _displayPage  = 1;      // 현재 표시 페이지 (1페이지 = 최신 100개)
+const PAGE_SIZE   = 100;
+
+/* ════════════════════════════════════════════
+   엔터 전송 / Shift+Enter 줄바꿈
+════════════════════════════════════════════ */
+function handleMsgKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        send();
+    }
+}
+window.handleMsgKey = handleMsgKey;
+
+// CS채팅 답글 엔터
+function handleReplyKey(e, id) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        chatReply(id);
+    }
+}
+window.handleReplyKey = handleReplyKey;
+
+// 게시판 답글 엔터
+function handleRbReplyKey(e, id) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        rbReply(id);
+    }
+}
+window.handleRbReplyKey = handleRbReplyKey;
+
+// textarea 자동 높이
+function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+}
+window.autoResize = autoResize;
+
+/* ════════════════════════════════════════════
+   필터 상태
+════════════════════════════════════════════ */
+let _filterName    = '';
+let _filterDateFrom = '';
+let _filterDateTo   = '';
+let _filterReply   = '';
+let _filterKeyword = '';
+
+function applyFilter() {
+    _filterName     = (document.getElementById('fName')?.value    || '').trim().toLowerCase();
+    _filterDateFrom = document.getElementById('fDateFrom')?.value || '';
+    _filterDateTo   = document.getElementById('fDateTo')?.value   || '';
+    _filterReply    = document.getElementById('fReply')?.value    || '';
+    _filterKeyword  = (document.getElementById('fKeyword')?.value || '').trim().toLowerCase();
+
+    // 필터 적용 시 1페이지로 리셋
+    _displayPage    = 1;
+    _initialLoaded  = false;
+    _renderedIds.clear();
+
+    renderFiltered();
+}
+
+function resetFilter() {
+    ['fName','fKeyword'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+    ['fDateFrom','fDateTo'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+    const fr = document.getElementById('fReply'); if(fr) fr.value='';
+    _filterName = _filterDateFrom = _filterDateTo = _filterReply = _filterKeyword = '';
+    _displayPage = 1;
+    _initialLoaded = false;
+    _renderedIds.clear();
+    renderFiltered();
+}
+
+function filterMessages(msgs) {
+    return msgs.filter(d => {
+        // 이름 필터
+        if (_filterName && !(d.name||'').toLowerCase().includes(_filterName)) return false;
+        // 날짜 필터
+        if (_filterDateFrom || _filterDateTo) {
+            const dt = (d.created_at || '').slice(0,10).replace(/\//g,'-');
+            if (_filterDateFrom && dt < _filterDateFrom) return false;
+            if (_filterDateTo   && dt > _filterDateTo)   return false;
+        }
+        // 답글 여부
+        if (_filterReply === 'yes' && !(d.chat_replies && d.chat_replies.length > 0)) return false;
+        if (_filterReply === 'no'  &&  (d.chat_replies && d.chat_replies.length > 0)) return false;
+        // 키워드
+        if (_filterKeyword && !(d.message||'').toLowerCase().includes(_filterKeyword)) return false;
+        return true;
+    });
+}
+
+function highlightKeyword(text, keyword) {
+    if (!keyword) return text;
+    const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return text.replace(new RegExp(escaped, 'gi'), m => `<span class="highlight">${m}</span>`);
+}
+
+function renderFiltered() {
+    const filtered  = filterMessages(_allMessages);
+    // 최신순 → 역순(오래된것 위)으로 표시
+    // _allMessages는 최신순(index 0 = 최신)
+    // 화면에는 오래된것 위, 최신 아래로 표시
+    // 더보기: 더 오래된 메시지 추가
+    const total    = filtered.length;
+    const endIdx   = total;  // 최신 끝
+    const startIdx = Math.max(0, total - _displayPage * PAGE_SIZE);
+    // slice: 오래된것→최신 순서로 잘라서 역순으로 뒤집기
+    const pageData = filtered.slice(startIdx, endIdx).reverse();
+
+    // 필터 카운트 표시
+    const countEl = document.getElementById('filterCount');
+    const hasFilter = _filterName || _filterDateFrom || _filterDateTo || _filterReply || _filterKeyword;
+    if (countEl) {
+        countEl.style.display = hasFilter ? 'inline' : 'none';
+        countEl.textContent   = `${pageData.length}건`;
+    }
+
+    render(pageData, startIdx > 0);
+}
+
+/* ════════════════════════════════════════════
+   더보기 버튼
+════════════════════════════════════════════ */
+function loadMoreMessages() {
+    _displayPage++;
+    _initialLoaded = false;
+    _renderedIds.clear();
+    renderFiltered();
+    // 맨 위로 스크롤
+    setTimeout(() => { document.getElementById('chat').scrollTop = 0; }, 50);
+}
+window.loadMoreMessages = loadMoreMessages;
+
+// 전송 중복 방지
+let _lastSentText  = '';
+let _lastSentTime  = 0;
+const _replyCount  = {};  // { msgId: 답글수 } — 답글 알림 감지용
+const _lastReply   = {};  // { msgId: {text, time} } — 답글 중복방지용
 
 window.send = async function () {
     const team = document.getElementById("team").value.trim();
@@ -1144,6 +1397,11 @@ window.send = async function () {
     }
 
     if (!msg && !pendingFile) return;
+
+    // 중복 전송 방지: 동일 내용 7초 이내 재전송 차단
+    const _now = Date.now();
+    if (msg && msg === _lastSentText && _now - _lastSentTime < 7000) return;
+    if (msg) { _lastSentText = msg; _lastSentTime = _now; }
 
     sendBtn.disabled = true;
 
@@ -1201,10 +1459,11 @@ window.send = async function () {
 window.deleteMsg = async function(id) {
     if (!confirm('이 대화를 삭제하겠습니까?')) return;
 
-    // 1. DOM에서 즉시 제거 (빠른 피드백)
+    // 1. DOM + 캐시에서 즉시 제거 (빠른 피드백)
     const el = document.querySelector(`[data-id="${id}"]`);
     if (el) el.remove();
     _renderedIds.delete(String(id));
+    _allMessages = _allMessages.filter(m => String(m.id) !== String(id));
 
     // 2. GAS에 deleted 표식 기록
     try {
@@ -1325,7 +1584,7 @@ function buildRbCardHtml(r, isAdmin) {
         <div class="rb-content">${escapeHtml(r.content)}</div>
         ${replies ? `<div class="rb-replies">${replies}</div>` : ''}
         <div class="rb-reply-input">
-            <input type="text" placeholder="답글 입력…" id="rr_${r.id}">
+            <textarea placeholder="답글 입력… (Shift+Enter: 줄바꿈)" id="rr_${r.id}" rows="1" style="resize:none;overflow:hidden;min-height:28px;padding:4px 7px;font-family:inherit;font-size:12px;flex:1;" onkeydown="handleRbReplyKey(event,'${r.id}')" oninput="autoResize(this)"></textarea>
             <button onclick="rbReply('${r.id}')">답글</button>
         </div>
     </div>`;
@@ -1422,6 +1681,11 @@ async function rbReply(id) {
     if (!el) { alert('입력창을 찾을 수 없습니다'); return; }
     const text = el.value.trim();
     if (!text) { el.focus(); return; }
+    // 중복 방지: 동일 내용 7초 이내 재전송 차단
+    const _rbNow = Date.now();
+    const _rbLast = _lastReply['rb_' + id] || {};
+    if (text === _rbLast.text && _rbNow - (_rbLast.time||0) < 7000) return;
+    _lastReply['rb_' + id] = { text, time: _rbNow };
     const rawName = (localStorage.getItem('cs_team') || '') + ' ' + (localStorage.getItem('cs_name') || '');
     const name = rawName.trim() || '익명';
     const btn = el.nextElementSibling;
@@ -1435,6 +1699,7 @@ async function rbReply(id) {
         const data = await res.json();
         if (!data.ok) throw new Error(data.msg || '실패');
         el.value = '';
+        if (el.tagName === 'TEXTAREA') el.style.height = 'auto';
         await rbLoad();
     } catch(e) {
         alert('답글 실패: ' + e.message);
@@ -1484,6 +1749,11 @@ async function chatReply(msgId) {
     if (!el) return;
     const text = el.value.trim();
     if (!text) { el.focus(); return; }
+    // 중복 방지: 동일 내용 7초 이내 재전송 차단
+    const _crNow = Date.now();
+    const _crLast = _lastReply['cr_' + msgId] || {};
+    if (text === _crLast.text && _crNow - (_crLast.time||0) < 7000) return;
+    _lastReply['cr_' + msgId] = { text, time: _crNow };
     const name = getFullName() || '익명';
     const btn = el.nextElementSibling;
     if (btn) { btn.disabled = true; btn.textContent = '…'; }
@@ -1496,6 +1766,7 @@ async function chatReply(msgId) {
         const data = await res.json();
         if (data.status !== 'ok') throw new Error(data.msg || '실패');
         el.value = '';
+        el.style.height = 'auto';
         // 답글 전송 후 입력창 닫기
         const box2 = document.getElementById('cri_' + msgId);
         if (box2) box2.classList.remove('open');

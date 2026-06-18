@@ -79,7 +79,22 @@
     pointer-events: none;
   }
   .cover-left { flex: 1; min-width: 0; position: relative; z-index: 1; }
-  .cover-right { flex-shrink: 0; position: relative; z-index: 1; }
+  .cover-right { flex-shrink: 0; position: relative; z-index: 1; display: flex; flex-direction: row; gap: 12px; align-items: center; }
+  .fw-link-btn { width: 190px; }
+  .fw-label-seq {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: rgba(201,168,76,0.9);
+    border: 1px solid rgba(201,168,76,0.4);
+    border-radius: 20px;
+    padding: 2px 10px;
+    margin-top: -4px;
+  }
+  .fw-label-seq-2 {
+    color: rgba(160,200,255,0.9);
+    border-color: rgba(160,200,255,0.4);
+  }
 
   /* ─── 펌웨어 요청서 바로가기 버튼 ─── */
   .fw-link-btn {
@@ -553,6 +568,15 @@
         <div class="fw-label-top">관련 문서 바로가기</div>
         <div class="fw-label-main">제조사 펌웨어<br>수정 요청서</div>
         <div class="fw-label-sub">세척 공정 샘플 10종<br>물용량 · 시간 조합표</div>
+        <div class="fw-label-seq">1차 요청</div>
+        <div class="fw-arrow">↗</div>
+      </a>
+      <a class="fw-link-btn" href="https://ggumbi-cs.github.io/dashboard/report/once/firmware_simple_1200.html" target="_blank">
+        <div class="fw-icon">📝</div>
+        <div class="fw-label-top">관련 문서 바로가기</div>
+        <div class="fw-label-main">제조사 펌웨어<br>수정 요청서</div>
+        <div class="fw-label-sub">조건 변경 재요청<br>1,200cc 버전</div>
+        <div class="fw-label-seq fw-label-seq-2">2차 요청</div>
         <div class="fw-arrow">↗</div>
       </a>
     </div>

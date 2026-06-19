@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스마트스토어 리뷰 분석</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --surface: #ffffff;
+    --surface2: #f0f3f9;
+    --border: #dde3ef;
+    --accent: #4470e8;
+    --accent2: #7c5cdb;
+    --accent-low: #4470e812;
+    --green: #0d9e6e;
+    --green-low: #0d9e6e12;
+    --yellow: #d97706;
+    --yellow-low: #d9770612;
+    --red: #dc3545;
+    --red-low: #dc354512;
+    --text: #1a1f2e;
+    --text2: #4a5568;
+    --text3: #9aa5b4;
+    --star: #f59e0b;
+    --radius: 10px;
+    --font: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 14px; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+
+  /* ── 헤더 ── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 8px rgba(0,0,0,.07);
+    padding: 16px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-logo {
+    font-size: 18px; font-weight: 700; color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+  .header-sub { font-size: 12px; color: var(--text3); }
+  .data-status {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text2);
+  }
+  .dot { width:7px; height:7px; border-radius:50%; background:var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* ── 탭 ── */
+  .tabs {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex; gap: 0;
+  }
+  .tab-btn {
+    padding: 14px 20px; border: none; background: none; cursor: pointer;
+    font-family: var(--font); font-size: 13px; font-weight: 500;
+    color: var(--text3); border-bottom: 2px solid transparent;
+    transition: all .2s; white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--text2); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-icon { margin-right: 6px; }
+
+  /* ── 콘텐츠 ── */
+  .content { padding: 24px; max-width: 1400px; margin: 0 auto; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── 요약 카드 ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px; margin-bottom: 24px;
+  }
+  .summary-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 20px;
+  }
+  .summary-card .label { font-size: 11px; color: var(--text3); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .6px; }
+  .summary-card .value { font-size: 28px; font-weight: 700; font-family: var(--mono); color: var(--text); line-height: 1; }
+  .summary-card .sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .summary-card.accent-green { border-color: #0d9e6e; background: linear-gradient(135deg, #ffffff, #edfaf5); }
+  .summary-card.accent-green .value { color: var(--green); }
+  .summary-card.accent-yellow { border-color: #d97706; background: linear-gradient(135deg, #ffffff, #fef9ed); }
+  .summary-card.accent-yellow .value { color: var(--yellow); }
+  .summary-card.accent-red { border-color: #dc3545; background: linear-gradient(135deg, #ffffff, #fef2f2); }
+  .summary-card.accent-red .value { color: var(--red); }
+  .summary-card.accent-blue { border-color: #4470e8; background: linear-gradient(135deg, #ffffff, #eef2fd); }
+  .summary-card.accent-blue .value { color: var(--accent); }
+
+  /* ── 필터 바 ── */
+  .filter-bar {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 20px;
+    display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+    margin-bottom: 16px;
+  }
+  .filter-bar input, .filter-bar select {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px 12px;
+    color: var(--text); font-family: var(--font); font-size: 13px;
+    outline: none; transition: border-color .2s;
+  }
+  .filter-bar input:focus, .filter-bar select:focus { border-color: var(--accent); }
+  .filter-bar input { min-width: 220px; }
+  .filter-bar select option { background: var(--surface); }
+  .filter-count { font-size: 12px; color: var(--text3); margin-left: auto; }
+  .btn-reset {
+    background: none; border: 1px solid var(--border); border-radius: 6px;
+    padding: 8px 14px; color: var(--text2); cursor: pointer;
+    font-family: var(--font); font-size: 12px; transition: all .2s;
+  }
+  .btn-reset:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── 리뷰 카드 ── */
+  .review-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 14px;
+  }
+  .review-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px;
+    transition: border-color .2s, transform .15s, box-shadow .2s;
+    display: flex; flex-direction: column; gap: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+  }
+  .review-card:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(68,112,232,.1); }
+  .review-card.low-rating { border-left: 3px solid var(--red); }
+  .review-card.best { border-left: 3px solid var(--yellow); }
+
+  .review-header { display: flex; align-items: flex-start; gap: 10px; }
+  .product-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--accent-low); border: 1px solid var(--accent);
+    border-radius: 4px; padding: 3px 8px;
+    font-size: 11px; color: var(--accent); font-weight: 600;
+    flex-shrink: 0; max-width: 200px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .brand-꿈비 { background: #eef2fd; border-color: #4470e8; color: #2a55d0; }
+  .brand-리코코 { background: #edfaf5; border-color: #0d9e6e; color: #0a7d57; }
+  .brand-바바디토 { background: #f3f0fd; border-color: #7c5cdb; color: #6040c0; }
+  .brand-기타 { background: #fef9ed; border-color: #d97706; color: #b45309; }
+
+  .review-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+  .stars { color: var(--star); font-size: 13px; letter-spacing: -1px; }
+  .stars .empty { color: var(--text3); }
+  .type-badge {
+    font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600;
+  }
+  .type-일반 { background: var(--surface2); color: var(--text2); }
+  .type-한달사용 { background: #eef2fd; color: #2a55d0; border: 1px solid #4470e840; }
+
+  .review-product-name {
+    font-size: 12px; color: var(--text2); line-height: 1.5;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .review-content {
+    font-size: 13px; color: var(--text); line-height: 1.7;
+    flex: 1;
+  }
+  .review-content.related {
+    font-size: 12px; color: var(--text2); padding: 10px 12px;
+    background: var(--surface2); border-radius: 6px; border-left: 2px solid var(--border);
+    margin-top: 6px;
+  }
+  .review-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 10px; border-top: 1px solid var(--border);
+  }
+  .review-date { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+  .review-user { font-size: 11px; color: var(--text3); }
+  .help-badge {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 11px; color: var(--yellow); background: var(--yellow-low);
+    padding: 2px 8px; border-radius: 10px; border: 1px solid #fbbf2440;
+  }
+
+  /* ── 포토 썸네일 ── */
+  .photo-wrap {
+    position: relative; display: inline-block;
+    margin-right: 6px; margin-bottom: 4px;
+  }
+  .photo-thumb {
+    width: 36px; height: 36px; border-radius: 4px;
+    object-fit: cover; border: 1px solid var(--border);
+    cursor: pointer; transition: opacity .2s;
+    display: block;
+  }
+  .photo-thumb:hover { opacity: .8; }
+  .photo-preview {
+    display: none;
+    position: fixed; z-index: 999;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 4px;
+    box-shadow: 0 16px 48px #00000080;
+    pointer-events: none;
+  }
+  .photo-preview img {
+    width: 220px; height: 220px; object-fit: cover; border-radius: 6px;
+    display: block;
+  }
+  .photo-wrap:hover .photo-preview { display: block; }
+  .photos-row { display: flex; flex-wrap: wrap; align-items: center; }
+
+  /* ── 대시보드 차트 ── */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px; margin-bottom: 24px;
+  }
+  @media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } }
+
+  .chart-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+  }
+  .chart-title { font-size: 12px; color: var(--text3); margin-bottom: 16px; text-transform: uppercase; letter-spacing: .6px; }
+  
+  /* 평점 바 */
+  .rating-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .rating-bar-label { font-size: 12px; color: var(--text2); width: 30px; text-align: right; flex-shrink: 0; }
+  .rating-bar-track { flex: 1; background: var(--surface2); border-radius: 4px; height: 8px; overflow: hidden; }
+  .rating-bar-fill { height: 100%; border-radius: 4px; transition: width .6s ease; }
+  .rating-bar-count { font-size: 11px; color: var(--text3); width: 30px; font-family: var(--mono); }
+
+  /* 상품별 바 */
+  .product-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .product-bar-name { font-size: 11px; color: var(--text2); width: 140px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .product-bar-track { flex: 1; background: var(--surface2); border-radius: 4px; height: 12px; overflow: hidden; cursor: pointer; }
+  .product-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .6s ease; }
+  .product-bar-count { font-size: 11px; color: var(--text3); width: 24px; font-family: var(--mono); }
+
+  /* 월별 트렌드 */
+  .trend-chart { display: flex; align-items: flex-end; gap: 6px; height: 100px; padding-top: 8px; }
+  .trend-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .trend-bar { width: 100%; border-radius: 3px 3px 0 0; background: var(--accent); transition: height .6s ease; min-height: 2px; }
+  .trend-bar:hover { background: var(--accent2); }
+  .trend-label { font-size: 9px; color: var(--text3); }
+  .trend-count { font-size: 10px; color: var(--text2); font-family: var(--mono); }
+
+  /* 브랜드 도넛 */
+  .brand-legend { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .brand-legend-item { display: flex; align-items: center; gap: 8px; }
+  .brand-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .brand-legend-name { font-size: 12px; color: var(--text2); flex: 1; }
+  .brand-legend-pct { font-size: 12px; color: var(--text); font-family: var(--mono); }
+
+  /* ── 저평점 탭 ── */
+  .alert-banner {
+    background: var(--red-low); border: 1px solid var(--red);
+    border-radius: var(--radius); padding: 14px 18px; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--red);
+  }
+
+  /* ── 상품분석 탭 ── */
+  .product-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px;
+  }
+  .product-analysis-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; cursor: pointer;
+    transition: all .2s;
+  }
+  .product-analysis-card:hover { border-color: var(--accent); }
+  .product-analysis-card.selected { border-color: var(--accent); background: var(--accent-low); }
+  .pa-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; line-height: 1.4; }
+  .pa-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+  .pa-stat { font-size: 11px; color: var(--text2); }
+  .pa-stat span { font-family: var(--mono); color: var(--text); }
+
+  /* 선택된 상품 리뷰 패널 */
+  .product-detail-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px; margin-top: 16px;
+  }
+  .product-detail-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .product-detail-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .avg-rating-big { font-size: 28px; font-weight: 700; font-family: var(--mono); color: var(--yellow); }
+
+  /* ── 로딩 ── */
+  .loading {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 80px 20px; gap: 16px; color: var(--text2);
+  }
+  .spinner {
+    width: 32px; height: 32px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--text3);
+  }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+
+  /* 스크롤바 */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+</style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">📊 리뷰 분석</div>
+    <div class="header-sub">스마트스토어 · 꿈비 / 리코코 / 바바디토</div>
+  </div>
+  <div class="data-status">
+    <div class="dot"></div>
+    <span id="dataStatus">데이터 로딩 중...</span>
+  </div>
+</div>
+
+<!-- 탭 -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('dashboard')">
+    <span class="tab-icon">📈</span>대시보드
+  </button>
+  <button class="tab-btn" onclick="switchTab('feed')">
+    <span class="tab-icon">💬</span>리뷰 피드
+  </button>
+  <button class="tab-btn" onclick="switchTab('product')">
+    <span class="tab-icon">📦</span>상품별 분석
+  </button>
+  <button class="tab-btn" onclick="switchTab('lowrating')">
+    <span class="tab-icon">⚠️</span>저평점 모니터링
+    <span id="lowBadge" style="display:none; margin-left:6px; background:var(--red); color:#fff; border-radius:10px; padding:1px 7px; font-size:11px;"></span>
+  </button>
+</div>
+
+<!-- 콘텐츠 -->
+<div class="content">
+
+  <!-- ① 대시보드 탭 -->
+  <div id="tab-dashboard" class="tab-panel active">
+    <div id="summaryCards" class="summary-grid">
+      <div class="summary-card"><div class="label">로딩중</div><div class="value">—</div></div>
+    </div>
+    <div class="dashboard-grid">
+      <div class="chart-card">
+        <div class="chart-title">⭐ 평점 분포</div>
+        <div id="ratingBars"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">🏷 브랜드별 리뷰 비중</div>
+        <canvas id="brandCanvas" width="220" height="220" style="display:block; margin:0 auto;"></canvas>
+        <div id="brandLegend" class="brand-legend" style="margin-top:16px;"></div>
+      </div>
+      <div class="chart-card" style="grid-column:1/-1;">
+        <div class="chart-title">📅 월별 리뷰 추이</div>
+        <div id="trendChart" class="trend-chart"></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">📦 리뷰 많은 상품 TOP 20</div>
+      <div id="productBars" style="margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <!-- ② 리뷰 피드 탭 -->
+  <div id="tab-feed" class="tab-panel">
+    <div class="filter-bar">
+      <input id="searchInput" type="text" placeholder="🔍  상품명 · 리뷰 내용 검색..." oninput="applyFilters()">
+      <select id="brandFilter" onchange="applyFilters()">
+        <option value="">브랜드 전체</option>
+        <option value="꿈비">꿈비</option>
+        <option value="리코코">리코코</option>
+        <option value="바바디토">바바디토</option>
+        <option value="기타">기타</option>
+      </select>
+      <select id="typeFilter" onchange="applyFilters()">
+        <option value="">구분 전체</option>
+        <option value="일반">일반</option>
+        <option value="한달사용">한달사용</option>
+      </select>
+      <select id="ratingFilter" onchange="applyFilters()">
+        <option value="">평점 전체</option>
+        <option value="5">⭐⭐⭐⭐⭐ 5점</option>
+        <option value="4">⭐⭐⭐⭐ 4점</option>
+        <option value="3">⭐⭐⭐ 3점</option>
+        <option value="2">⭐⭐ 2점</option>
+        <option value="1">⭐ 1점</option>
+      </select>
+      <select id="photoFilter" onchange="applyFilters()">
+        <option value="">사진 전체</option>
+        <option value="photo">📸 포토/영상 있음</option>
+        <option value="noPhoto">텍스트만</option>
+      </select>
+      <select id="sortSelect" onchange="applyFilters()">
+        <option value="date_desc">최신순</option>
+        <option value="date_asc">오래된순</option>
+        <option value="rating_desc">평점 높은순</option>
+        <option value="rating_asc">평점 낮은순</option>
+        <option value="help_desc">도움수 높은순</option>
+        <option value="product_asc">상품명순</option>
+      </select>
+      <button class="btn-reset" onclick="resetFilters()">✕ 초기화</button>
+      <div class="filter-count" id="filterCount"></div>
+    </div>
+    <div id="reviewGrid" class="review-grid"></div>
+    <div id="feedEmpty" class="empty-state" style="display:none;">
+      <div class="icon">🔍</div>
+      <div>검색 결과가 없습니다</div>
+    </div>
+  </div>
+
+  <!-- ③ 상품별 분석 탭 -->
+  <div id="tab-product" class="tab-panel">
+    <div class="filter-bar" style="margin-bottom:16px;">
+      <input id="productSearch" type="text" placeholder="🔍  상품명 검색..." oninput="filterProductCards()">
+      <select id="productBrandFilter" onchange="filterProductCards()">
+        <option value="">브랜드 전체</option>
+        <option value="꿈비">꿈비</option>
+        <option value="리코코">리코코</option>
+        <option value="바바디토">바바디토</option>
+        <option value="기타">기타</option>
+      </select>
+      <select id="productSortFilter" onchange="filterProductCards()">
+        <option value="reviews_desc">리뷰 많은순</option>
+        <option value="rating_desc">평점 높은순</option>
+        <option value="rating_asc">평점 낮은순</option>
+        <option value="name_asc">상품명순</option>
+      </select>
+    </div>
+    <div id="productGrid" class="product-grid"></div>
+    <div id="productDetailPanel" class="product-detail-panel" style="display:none;"></div>
+  </div>
+
+  <!-- ④ 저평점 모니터링 탭 -->
+  <div id="tab-lowrating" class="tab-panel">
+    <div id="alertBanner" class="alert-banner" style="display:none;"></div>
+    <div class="filter-bar">
+      <select id="lowRatingThreshold" onchange="renderLowRating()">
+        <option value="3">3점 이하</option>
+        <option value="2">2점 이하</option>
+        <option value="1">1점만</option>
+      </select>
+      <select id="lowSortSelect" onchange="renderLowRating()">
+        <option value="date_desc">최신순</option>
+        <option value="rating_asc">평점 낮은순</option>
+        <option value="help_desc">도움수 높은순</option>
+      </select>
+    </div>
+    <div id="lowRatingGrid" class="review-grid"></div>
+    <div id="lowEmpty" class="empty-state" style="display:none;">
+      <div class="icon">✅</div>
+      <div>해당 조건의 저평점 리뷰가 없습니다</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 포토 프리뷰 전역 레이어 -->
+<div id="photoPreviewGlobal" style="display:none; position:fixed; z-index:9999; pointer-events:none; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:4px; box-shadow:0 16px 48px #00000080;">
+  <img id="photoPreviewImg" width="220" height="220" style="object-fit:cover; border-radius:6px; display:block;">
+</div>
+
+<script>
+// ============================================================
+// 상품명 매핑 테이블
+// ============================================================
+const NAME_MAP = {
+  '꿈비 하이가드 베이비룸 아기울타리 신생아 영유아 가드 200x140 (10p)':'하이가드 베이비룸 200x140',
+  '꿈비 하이가드 베이비룸 아기울타리 200x140 (10p)':'하이가드 베이비룸 200x140',
+  '꿈비 하이가드 베이비룸 가드 단품':'하이가드 가드 단품',
+  '[꿈비] 하이가드 범퍼침대 아기침대 대형 크림화이트':'하이가드 범퍼침대 대형',
+  '[꿈비] 하이가드 범퍼침대 아기침대 대형 크림화이트 + 논슬립 미니써클 3p 증정':'범퍼침대 대형+논슬립 세트',
+  '[꿈비]하이가드 범퍼침대 전용 논슬립 순면패드':'범퍼침대 논슬립 패드',
+  '꿈비 하이가드 범퍼침대 + 포시즌 낮잠이불 세트 [길이조절 옷걸이 10개 증정]':'범퍼침대+낮잠이불 세트',
+  '[꿈비] 더블 세이프 안전문 S (61-68cm) 아기 유아 강아지 고양이 현관 울타리':'더블 세이프 안전문 S',
+  '꿈비 베이비룸 전용 세이프 쿠션가드 코튼':'베이비룸 쿠션가드',
+  '[꿈비] 베이비룸 고정밴드+버클 1set':'베이비룸 고정밴드+버클',
+  '꿈비 원목 베이비룸 아기안전가드 안전문 252x200 (14p)':'원목 베이비룸 252x200',
+  '꿈비 원목 베이비룸 가드 단품 유아 아기 안전 울타리 700, 너도밤나무 도어':'원목 베이비룸 가드 700',
+  '꿈비 원목 베이비룸 가드 단품 유아 아기 안전 울타리 600, 너도밤나무':'원목 베이비룸 가드 600',
+  '꿈비 원목 베이비룸 가드 단품 유아 아기 안전 울타리 800, 너도밤나무':'원목 베이비룸 가드 800',
+  '[꿈비] 올스타 신생아 기저귀 교환대 갈이대':'기저귀 교환대 올스타',
+  '[꿈비] 올스타 신생아 기저귀 교환대 갈이대 전용 패드 42x64cm':'교환대 전용 패드',
+  '꿈비 기저귀 휴지통 냄새차단 리필 봉투 2롤 (40개)':'기저귀 휴지통 리필',
+  '꿈비 휴대용 분유포트 100도가열 무선 전기포트 500ml 여행용':'휴대용 분유포트 500ml',
+  '꿈비 휴대용 분유포트 100도가열 무선 전기포트 500ml':'휴대용 분유포트 500ml',
+  '꿈비 휴대용 분유포트 500ml 무선 전기포트 여행용 100도가열':'휴대용 분유포트 500ml',
+  '꿈비 휴대용 분유포트 100도가열 무선 전기포트 500ml 여행용 + 논슬립 슬리브':'휴대용 분유포트 500ml+슬리브',
+  '꿈비 분리형 휴대용 분유포트 100도가열 무선 전기포트 500ml 여행용':'분리형 분유포트 500ml',
+  '꿈비 분리형 휴대용 분유포트 100도가열 무선 전기포트 500ml 여행용 배터리 2개':'분리형 분유포트 500ml (배터리2개)',
+  '꿈비 자동 출수형 분유포트 분리세척 2.5L':'자동 출수형 분유포트 2.5L',
+  '꿈비 휴대용 무선 분유포트 전용 논슬립 슬리브 아이보리':'분유포트 전용 슬리브',
+  '꿈비 분유쉐이커 휴대용 분유 제조기 LED 믹서기 수유등':'분유쉐이커 LED',
+  '꿈비 분유쉐이커 휴대용 분유 제조기 믹서기':'분유쉐이커',
+  '꿈비 휴대용 분유쉐이커 + 휴대용 분유포트 500ml [미니구름 수유등 1개 증정]':'분유쉐이커+포트 세트',
+  '꿈비 휴대용 분유쉐이커 + 휴대용 분유포트 500ml [미니수유등 증정]':'분유쉐이커+포트 세트',
+  '꿈비 휴대용 분유쉐이커 + 휴대용 분유포트 500ml':'분유쉐이커+포트 세트',
+  '꿈비 LED 휴대용 분유쉐이커 + 휴대용 분유포트 500ml [미니구름 수유등 1개 증정]':'LED 분유쉐이커+포트 세트',
+  '꿈비 LED 휴대용 분유쉐이커 + 휴대용 분유포트 500ml [미니수유등 증정]':'LED 분유쉐이커+포트 세트',
+  '꿈비 젖병세척기 UV PRO 크림':'젖병세척기 UV PRO',
+  '꿈비 젖병세척기 UV PRO 스테인리스 단품':'젖병세척기 UV PRO 스테인리스',
+  '꿈비 젖병세척기 스팀플러스 온수세척 스팀 소독 건조 신생아 임산부 젖병소독기':'젖병세척기 스팀플러스',
+  '꿈비 올인원 젖병세척기 UV 살균 소독 세척 보관 건조 크림':'올인원 젖병세척기 UV 크림',
+  '[멤버십 공동구매] 꿈비 올인원 젖병세척기 UV 살균 소독 세척 보관 건조 크림':'올인원 젖병세척기 UV 크림',
+  '꿈비 올인원 젖병세척기 UV 살균 소독 세척 보관 건조 스테인리스':'올인원 젖병세척기 UV 스테인리스',
+  '꿈비 올인원 젖병세척기 UV 살균 소독 세척 보관 건조':'올인원 젖병세척기 UV',
+  '꿈비 아기 젖병 스팀 열탕 살균 소독기 건조 보관':'젖병 스팀 소독기',
+  '꿈비 스테인리스 트레이 올인원 젖병세척기 전용 올스텐 6핏':'올인원 세척기 스테인리스 트레이',
+  '[세제 100정] 꿈비 젖병세척기 UV PRO 맘마존 세트':'젖병세척기 UV PRO 맘마존 세트',
+  '꿈비 아이스허그 아기띠 통풍 쿨시트 쿨링 힙시트 커버 어반샌드':'아이스허그 아기띠 쿨커버 어반샌드',
+  '꿈비 아이스허그 아기띠 통풍시트 쿨시트 쿨링 커버 아이보리':'아이스허그 아기띠 쿨커버 아이보리',
+  '꿈비 아이스허그 아기띠 통풍시트 쿨시트 쿨링 커버 어반샌드':'아이스허그 아기띠 쿨커버 어반샌드',
+  '꿈비 아이스허그 아기띠 쿨링커버 + 유모차 쿨시트 2.0':'아이스허그 아기띠+쿨시트 세트',
+  '꿈비 아이스허그 듀얼팬 쿨시트 2.0 카시트 통풍 유모차 라이너 테디베어':'아이스허그 듀얼팬 쿨시트 테디베어',
+  '꿈비 아이스허그 듀얼팬 쿨시트 2.0 카시트 통풍 유모차 라이너 베이지':'아이스허그 듀얼팬 쿨시트 베이지',
+  '꿈비 아이스허그 듀얼팬 쿨시트 2.0 베이지':'아이스허그 듀얼팬 쿨시트 베이지',
+  '꿈비 아이스허그 듀얼팬 쿨시트 2.0 테디베어 2p':'아이스허그 듀얼팬 쿨시트 2p',
+  '꿈비 아이스허그 듀얼팬 쿨시트 2.0 아이스패밀리':'아이스허그 듀얼팬 쿨시트 아이스패밀리',
+  '[송엘라×꿈비 공동구매] 아이스허그 듀얼팬 쿨시트 2.0 카시트 통풍 유모차 라이너':'아이스허그 듀얼팬 쿨시트 (공동구매)',
+  '[꿈비] 듀라론 신생아 아이스허그 아기 쿨매트 헬로베어 100x140cm':'신생아 아이스허그 쿨매트',
+  '꿈비 유모차선풍기 휴대용 아기 집게 아이스쿨팩 냉매 선풍기':'유모차선풍기 (쿨팩)',
+  '꿈비 유모차선풍기 전용 집게':'유모차선풍기 전용 집게',
+  '꿈비 웜라이너 유아 유모차 온열 발열 라이너':'웜라이너 유모차',
+  '[꿈비]밥솥칸막이 이유식마스터기 중기이유식 스테인리스 내솥':'이유식마스터기',
+  '[꿈비] 아기 부스터 식탁 의자 휴대용 식당 외출 이유식':'아기 부스터 식탁의자',
+  '[꿈비] 유아 와이드 2단 DIY 책장 교구장 아기 낮은 장난감정리장':'유아 2단 교구장',
+  '[꿈비] 유아 하이체어 아기 식탁의자 이유식의자 등받이 각도 조절':'유아 하이체어',
+  '꿈비 퀵폴딩 목욕 샤워가드 아기 비데 크림 (목욕의자 포함)':'목욕 샤워가드 (비데형)',
+  '꿈비 샤워 핸들 퀵폴딩 목욕 샤워가드 아기비데 크림(목욕의자 포함)':'목욕 샤워가드 핸들형',
+  '꿈비 아기 신생아 접이식 욕조 등받이 목욕통':'신생아 접이식 욕조',
+  '꿈비 아기 필터 샤워기 여행용 헤드':'여행용 필터 샤워기',
+  '꿈비 끼임방지 침대가드 아기 침대 패밀리 안전 가드 110cm':'끼임방지 침대가드 110cm',
+  '꿈비 끼임방지 침대가드 아기 침대 패밀리 안전 가드 110cm + 미니구름 수유등':'끼임방지 침대가드+수유등',
+  '[꿈비] 끼임방지 침대가드 코너커넥터 1SET(2p)':'침대가드 코너커넥터',
+  '꿈비 클린 변신 범퍼침대 유아 가드 아기 침대 월드스타':'클린 변신 범퍼침대',
+  '[꿈비] 미미루 토퍼':'미미루 토퍼',
+  '꿈비 메모리폼 침대 매트리스 SS(슈퍼싱글), 소프트':'메모리폼 매트리스 SS',
+  '꿈비 메모리폼 침대 매트리스 Q(퀸), 소프트':'메모리폼 매트리스 Q',
+  '꿈비 뒤집기방지쿠션 아기바디필로우 아기베개 (베개+커버)':'뒤집기방지쿠션',
+  '꿈비 역류방지쿠션 신생아 수유쿠션 바디필로우 (순면시트, 스트랩 포함)':'역류방지 수유쿠션',
+  '꿈비 신생아 두상베개 라텍스 아기 모로반사 옆잠 짱구 아기 베개':'신생아 두상베개',
+  '꿈비 방수패드 아기 방수요 양면 매트 100x140cm':'방수패드 100x140',
+  '꿈비 아기블랭킷 아기이불 1P 세트 면 거즈 신생아 유아 이불 담요 카멜베어':'아기블랭킷 카멜베어',
+  '꿈비 어린이집 낮잠이불 세트 사계절 모달 인견 양면 이불 카멜베어':'낮잠이불 세트 카멜베어',
+  '꿈비 어린이집 낮잠이불 세트 사계절 모달 인견 양면 이불 민트래빗':'낮잠이불 세트 민트래빗',
+  '꿈비 미미루 뱀부 쿨 에어메쉬 패드_화이트 /패드 아기 유아 낮잠이불':'미미루 쿨 에어메쉬 패드',
+  '꿈비 이지핏 임산부 손목 보호대 2p 출산선물 산후 산모':'임산부 손목 보호대',
+  '꿈비 썸머패치 어린이 유아 열냉각시트 해열 패치 모음전':'썸머패치 해열패치',
+  '꿈비 썸머패치 어린이 유아 천연아로마 캐릭터 스티커 (30매입x3)':'썸머패치 아로마 스티커 3팩',
+  '꿈비 썸머패치 어린이 유아 천연아로마 캐릭터 스티커 (30매입)':'썸머패치 아로마 스티커',
+  '꿈비 아이스겔 밴드 18매입 썸머패치 어린이 유아 캐릭터 스티커':'아이스겔 썸머패치',
+  '꿈비 아기 모기장 접이식 원터치 폴딩 모기장':'접이식 아기 모기장',
+  '꿈비 아기 신생아 미니 휴대용 수면등 수유등 무드등 구름디자인':'미니 수유등 (구름)',
+  '꿈비 아기 신생아 백색소음기 꿀잠 수면교육 자장가 무드등 수유등 애기라이트':'백색소음기 수유등',
+  '꿈비 토이 아기 스마트폰 핸드폰 6개월 장난감 백색소음기 전화기':'아기 스마트폰 장난감',
+  '꿈비 착착블럭 176PCS 자석 블럭 유아 교구 장난감':'착착블럭 176PCS',
+  '꿈비 동급최대용량 장난감정리함 UV-C 장난감 수납 살균기 소독기 60L':'장난감 살균기 UV-C 60L',
+  '꿈비 UV-C 플러스 장난감 살균기 60L+15L 세트 동급최대용량 장난감 수납 정리함 소독기':'장난감 살균기 60L+15L 세트',
+  '꿈비 장난감살균기 전용 보조배터리 케이블 1.2m':'살균기 전용 케이블',
+  '꿈비 스마트 가정용 홈카메라 홈캠 CCTV 온습도감지':'홈카메라 CCTV',
+  '꿈비 베이비 점퍼 아기 점퍼루 그네 걸음마보조기':'아기 점퍼루 그네',
+  '꿈비 자이언트 TPU 퍼즐매트 층간소음 거실 아기 놀이방 매트':'자이언트 TPU 퍼즐매트',
+  '꿈비 길이조절 신생아 유아 아기 옷걸이 5P':'신생아 옷걸이 5P',
+  '꿈비 아기 일회용 턱받이 1박스 (20매입)':'일회용 턱받이 20매',
+  '꿈비 신생아 손톱깎이 네일케어 4종 세트':'신생아 네일케어 세트',
+  '꿈비 신생아 아기 밤부 목욕 타올 수건 400g 2장 세트':'밤부 목욕 타올 2장',
+  '꿈비 신생아 아기 면봉 300P 라운드&엠보':'신생아 면봉 300P',
+  '[꿈비] 클린롤매트 놀이방매트 거실 층간소음 항균코팅 매트 아이보리 길이 200 폭 70':'클린롤매트 200x70',
+  '[꿈비] 클린롤매트 놀이방매트 거실 층간소음 매트 252x140':'클린롤매트 252x140',
+  '[꿈비] 항균코팅 더블원피스매트 거실 층간소음매트 252x252':'항균코팅 더블원피스 252x252',
+  '[꿈비] 항균코팅 클린롤매트 자이언트 거실 층간소음 매트 252x200':'항균코팅 클린롤 252x200',
+  '[꿈비] 252x200x4cm 프리미엄 양면2중코팅 클린롤매트 자이언트':'프리미엄 클린롤 252x200',
+  '[꿈비] 올스타 원목 베이비룸 안전홀더 4p 1set':'원목 베이비룸 안전홀더 4p',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 더블원피스 폴더 매트 252x200':'폴더매트 252x200',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 더블원피스 폴더 매트 252x200 + 논슬립 미니써클 3p':'폴더매트 252x200+논슬립',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 더블원피스 폴더 매트 292x200':'폴더매트 292x200',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 더블원피스 매트 252x200x4cm':'더블원피스 252x200',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 더블원피스 매트 292x200':'더블원피스 292x200',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 트리플원피스 매트 323x400x4cm':'트리플원피스 323x400',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 트리플원피스 매트 323x400x4cm + 논슬립 미니써클 3p':'트리플원피스 323x400+논슬립',
+  '리코코 층간소음매트 양면이중코팅 트리플원피스 252x400x4cm 유아 놀이방매트':'트리플원피스 252x400',
+  '리코코 양면이중코팅 유아 어린이 폴더 층간소음 매트 + 베이비룸 세트 252x200':'폴더매트+베이비룸 세트',
+  '리코코 클린 롤매트 아기 거실 유아 놀이방 양면이중코팅 층간소음 매트 252x200x4cm':'클린롤매트 252x200',
+  '리코코 클린 롤매트 아기 거실 유아 놀이방 양면이중코팅 층간소음 매트 252x200x4cm, 크림화이트':'클린롤매트 252x200 크림',
+  '리코코 클린 롤매트 아기 거실 유아 놀이방 양면이중코팅 층간소음매트 252x200x4cm':'클린롤매트 252x200',
+  '리코코 클린 롤매트 아기 거실 유아 놀이방 양면이중코팅 층간소음매트 252x200x4cm, 크림화이트':'클린롤매트 252x200 크림',
+  '리코코 클린 롤매트 아기 거실 유아 놀이방 양면이중코팅 층간소음매트 252x200x4cm + 논슬립 미니써클 3p':'클린롤매트 252x200+논슬립',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 252x200x4cm':'클린롤폴더 252x200',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 252x200':'클린롤폴더 252x200',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린폴더 매트 252x200x4cm':'클린폴더 252x200',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 양면이중코팅 252x200x4cm, 크림화이트':'클린롤폴더 252x200 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 292x200x4cm, 크림화이트':'클린롤폴더 292x200 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 양면이중코팅 292x200x4cm':'클린롤폴더 292x200',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 양면이중코팅 323x200x4cm, 크림화이트':'클린롤폴더 323x200 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 양면이중코팅 323x140x4cm, 크림화이트':'클린롤폴더 323x140 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 양면이중코팅 252x140x4cm, 크림화이트':'클린롤폴더 252x140 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 252x140x4cm, 크림화이트':'클린롤폴더 252x140 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 양면이중코팅 252x120x4cm, 크림화이트':'클린롤폴더 252x120 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 양면이중코팅 252x110x4cm, 크림화이트':'클린롤폴더 252x110 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 양면이중코팅 292x140x4cm, 크림화이트':'클린롤폴더 292x140 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 양면이중코팅 292x110x4cm, 크림화이트':'클린롤폴더 292x110 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 양면이중코팅 382x140x4cm, 크림화이트':'클린롤폴더 382x140 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 양면이중코팅 382x110x4cm, 크림화이트':'클린롤폴더 382x110 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 양면이중코팅 252x140x4cm, 크림화이트 (2)':'클린롤폴더 252x140 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 200x140x4cm, 크림화이트':'클린롤폴더 200x140 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 200x110x4cm, 크림화이트':'클린롤폴더 200x110 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 252x110x4cm, 크림화이트':'클린롤폴더 252x110 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 323x230x4cm, 크림화이트':'클린롤폴더 323x230 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 252x120x4cm, 크림화이트':'클린롤폴더 252x120 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 292x200x4cm, 크림화이트':'클린롤폴더 292x200 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 252x200x4cm, 크림화이트':'클린롤폴더 252x200 크림',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 292x140x4cm':'클린롤폴더 292x140',
+  '리코코 층간소음매트 양면이중코팅 더블원피스 252x200x4cm 유아 놀이방매트':'양면코팅 더블원피스 252x200',
+  '리코코 층간소음매트 논슬립 텍스처 더블원피스 252x200 놀이방매트':'논슬립 텍스처 더블원피스',
+  '리코코 층간소음매트 양면이중코팅 클린롤 자이언트 252x200x4cm 유아 놀이방매트':'클린롤 자이언트 252x200',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 틈새채움 매트 252x20x4cm':'틈새채움 매트 252x20',
+  '[리코코] 틈새채움매트 자투리 폴더매트 252x20x4cm':'틈새채움 자투리 252x20',
+  '리코코 층간소음매트 시공 거실 퍼즐 매트 황변방지 자이언트 TPU 100x100x2.0cm':'자이언트 TPU 퍼즐매트 100x100',
+  '리코코 층간소음매트 시공 거실 퍼즐 매트 황변방지 자이언트 TPU 100x100x2.0cm  전문가 시공 예약':'TPU 퍼즐매트 전문가시공',
+  '[리코코] 323x252x4cm 일반코팅 더블 원피스매트 /층간소음 거실 놀이방 매트':'일반코팅 더블원피스 323x252',
+  '[리코코] 292x252x4cm 일반코팅 더블 원피스매트 /층간소음 거실 놀이방 매트':'일반코팅 더블원피스 292x252',
+  '[리코코] 382x282x4cm 일반코팅 더블 원피스매트 /층간소음 거실 놀이방 매트':'일반코팅 더블원피스 382x282',
+  '[리코코] 382x110x4cm 더블원피스 복도 틈새 제로 층간소음 놀이방매트':'복도 틈새매트 382x110',
+  '리코코 거실 롤매트 층간소음 셀프 시공 놀이 매트 PVC 500x110x2.3cm':'거실 롤매트 PVC 500x110',
+  '[리코코] 셀프 시공 롤 매트용 픽스 매트테이프 30m 무광 고정테이프 이음새 틈새':'매트테이프 30m',
+  '리코코 클립 층간소음매트 셀프 시공 유아 거실 퍼즐 60x60x2.5cm 모던갤럭시, 센터':'클립 퍼즐매트 60x60',
+  '[도현맘 단독공동구매] 리코코 클립 층간소음매트 셀프 시공 유아 거실 퍼즐 60x60x2.5cm 모던갤럭시, 센터':'클립 퍼즐매트 60x60 (공동구매)',
+  '[쀼맘 단독공동구매] 리코코 클립 층간소음매트 셀프 시공 유아 거실 퍼즐 60x60x2.5cm 모던갤럭시, 센터':'클립 퍼즐매트 60x60 (공동구매)',
+  '[워킹대디 공동구매] 리코코 양면이중코팅 더블원피스매트 클린롤매트':'양면이중코팅 더블원피스+클린롤 (공동구매)',
+  '리코코 황변방지 자이언트 TPU 퍼즐매트 1000 층간소음매트':'TPU 퍼즐매트 1000',
+  '리코코 황변방지 TPU 퍼즐매트 황변방지 TPU 60x60x2.5cm 그라운드, 코너':'TPU 퍼즐매트 60x60',
+  '리코코 황변방지 TPU 퍼즐매트 600 층간소음매트':'TPU 퍼즐매트 600',
+  '리코코 TPU 퍼즐매트 층간소음 거실 아기 놀이방 매트 2cm 두께':'TPU 퍼즐매트 2cm',
+  '리코코 와플 TPU 퍼즐매트 50x50x1.0cm':'와플 TPU 퍼즐매트',
+  '리코코 시공 편한 PU 퍼즐매트 120x120x2.3cm 층간소음매트':'PU 퍼즐매트 120x120',
+  '리코코 층간소음 셀프 시공매트 롤매트 거실 PVC 500x110x2.3cm':'셀프시공 롤매트 PVC',
+  '리코코 층간소음매트 NON PVC 셀프시공 롤매트':'NON PVC 셀프시공 롤매트',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 252x140x4cm':'클린롤폴더 252x140',
+  '[리코코] 올스타 5단 클린매트 194x120x4cm':'올스타 5단 클린매트',
+  '[리코코] 빅스퀘어 논슬립 패드 1P 미끄럼 방지 패드':'빅스퀘어 논슬립 패드',
+  '[리코코] 미니써클 3P 논슬립 패드 베이비룸 미끄럼 방지 패드':'미니써클 논슬립 패드 3P',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 클린롤 폴더 매트 292x200x4cm':'클린롤폴더 292x200',
+  '리코코 층간소음매트 아기 거실 유아 놀이방 더블원피스 매트 252x200x4cm':'더블원피스 252x200',
+  '더블스마트 퍼즐매트':'더블스마트 퍼즐매트',
+  '리코코 제로 원피스매트 거실 층간소음매트 놀이방매트':'제로 원피스매트',
+  '리코코  양면 원피스매트 거실 층간소음매트 놀이방매트 252x140x4cm':'양면 원피스매트 252x140',
+  '바바디토 젖병&식기세척기 세제 올인원 타블릿 타블렛 세제 2g 100정':'세척 타블릿 2g 100정',
+  '바바디토 젖병 세척기 세제 (2g 100정)':'젖병 세척기 세제 2g',
+  '바바디토 식기 세척기 세제 (4g 100정)':'식기세척기 세제 4g',
+  '[바바디토] 식기세척기 식세기 린스 올인원 세제 2g 100개':'식세기 린스 2g 100개',
+  '[바바디토] 식기세척기 식세기 린스 올인원 세제 100개':'식세기 린스 100개',
+  '[바바디토] 식기세척기 젖병세척기 식세기 린스 올인원 세제 100개':'식세기 린스 100개',
+  '[바바디토] 식기세척기 식세기 린스 올인원 세제 4g 100개':'식세기 린스 4g 100개',
+  '바바디토 탄산버블 분유포트 클리너 4g 70정':'분유포트 클리너 4g',
+  '바바디토 분유포트 클리너 (4g 70정)':'분유포트 클리너 4g',
+  '[바바디토] 깨끗한 유아 아기 신생아 세탁세제 코튼블랑향':'유아 세탁세제',
+  '[바바디토] 깨끗한 유아 아기 신생아 섬유유연제 코튼블랑향':'유아 섬유유연제',
+  '[바바디토] 스타일러 섬유유연제 건조기 시트 40매 코튼블랑향 스위트가든향':'건조기 시트 40매',
+  '바바디토 신생아 아기 유아 세제 깨끗한 세탁세제 코튼블랑향 1.2L':'유아 세탁세제 1.2L',
+};
+
+function shortName(orig) {
+  if (!orig) return '상품명 없음';
+  return NAME_MAP[orig] || orig;
+}
+
+function getBrand(name) {
+  if (!name) return '기타';
+  const n = name.trim();
+  if (n.startsWith('꿈비') || n.startsWith('[꿈비]') || n.includes('×꿈비') || n.includes('꿈비')) return '꿈비';
+  if (n.startsWith('리코코') || n.startsWith('[리코코]') || n.includes('리코코')) return '리코코';
+  if (n.startsWith('바바디토') || n.startsWith('[바바디토]') || n.includes('바바디토')) return '바바디토';
+  return '기타';
+}
+
+function parseDate(str) {
+  if (!str) return null;
+  const m = String(str).match(/(\d{4})\.(\d{2})\.(\d{2})/);
+  if (m) return new Date(m[1], m[2]-1, m[3]);
+  return null;
+}
+
+function starsHTML(n) {
+  let s = '';
+  for (let i = 1; i <= 5; i++) {
+    s += `<span class="${i <= n ? '' : 'empty'}">★</span>`;
+  }
+  return s;
+}
+
+function ratingColor(n) {
+  if (n >= 5) return 'var(--green)';
+  if (n >= 4) return 'var(--yellow)';
+  if (n >= 3) return 'var(--accent)';
+  return 'var(--red)';
+}
+
+// ============================================================
+// 데이터 로드
+// ============================================================
+let allReviews = [];
+
+async function loadData() {
+  // GitHub raw URL로 xlsx 읽기 (배포 후 활성화)
+  const GITHUB_URL = 'https://raw.githubusercontent.com/your-org/your-repo/main/data/smtstore_review.xlsx';
+  
+  try {
+    // 개발/로컬 환경: 페이지 옆에 파일 있으면 바로 로드
+    // 배포 시 위 GITHUB_URL 사용
+    let wb;
+    
+    try {
+      const res = await fetch('./data/smtstore_review.xlsx');
+      if (!res.ok) throw new Error('local not found');
+      const buf = await res.arrayBuffer();
+      wb = XLSX.read(buf, {type:'array'});
+    } catch {
+      // GitHub fallback (배포시 URL 수정)
+      const res = await fetch(GITHUB_URL);
+      const buf = await res.arrayBuffer();
+      wb = XLSX.read(buf, {type:'array'});
+    }
+
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1});
+    const header = rows[0];
+    
+    const idx = {
+      prodNo: header.indexOf('상품번호'),
+      prodName: header.indexOf('상품명'),
+      type: header.indexOf('리뷰구분'),
+      rating: header.indexOf('구매자평점'),
+      photo: header.indexOf('포토/영상'),
+      content: header.indexOf('리뷰상세내용'),
+      help: header.indexOf('리뷰도움수'),
+      user: header.indexOf('등록자'),
+      date: header.indexOf('리뷰등록일'),
+      relContent: header.indexOf('관련리뷰상세내용'),
+      state: header.indexOf('전시상태'),
+      best: header.indexOf('베스트리뷰'),
+    };
+
+    allReviews = rows.slice(1).map(r => ({
+      prodNo: r[idx.prodNo] || '',
+      prodName: String(r[idx.prodName] || ''),
+      shortName: shortName(r[idx.prodName]),
+      brand: getBrand(r[idx.prodName]),
+      type: r[idx.type] || '일반',
+      rating: Number(r[idx.rating]) || 0,
+      photo: r[idx.photo] || '',
+      content: r[idx.content] || '',
+      help: Number(r[idx.help]) || 0,
+      user: r[idx.user] || '',
+      date: r[idx.date] || '',
+      dateObj: parseDate(r[idx.date]),
+      relContent: r[idx.relContent] || '',
+      best: r[idx.best] === 'Y',
+    })).filter(r => r.prodName);
+
+    const total = allReviews.length;
+    const latest = allReviews.map(r=>r.dateObj).filter(Boolean).sort((a,b)=>b-a)[0];
+    document.getElementById('dataStatus').textContent = 
+      `${total.toLocaleString()}건 · 최신 ${latest ? latest.toLocaleDateString('ko') : '-'}`;
+
+    renderDashboard();
+    applyFilters();
+    renderProductGrid();
+    renderLowRating();
+
+  } catch(e) {
+    console.error(e);
+    document.getElementById('dataStatus').textContent = '⚠ 데이터 로드 실패';
+    document.getElementById('summaryCards').innerHTML = 
+      `<div class="summary-card"><div class="label">오류</div><div class="value" style="font-size:14px; color:var(--red)">data/ 폴더에 xlsx 파일을 넣어주세요</div></div>`;
+    // 데모용 샘플 로드
+    loadSampleData();
+  }
+}
+
+function loadSampleData() {
+  // 파일 로드 실패시 30행 샘플 데이터 시뮬레이션
+  const sampleRows = [
+    ['8155433264','꿈비 하이가드 베이비룸 아기울타리 신생아 영유아 가드 200x140 (10p)','일반',5,'','허접하지 않아서 좋아요',0,'lady*******','2026.06.19'],
+    ['5359384909','리코코 층간소음매트 아기 거실 유아 놀이방 더블원피스 폴더 매트 252x200','일반',5,'','매트끼우기가 힘들었는데 푹신하니 좋네요',0,'scvz*****','2026.06.19'],
+    ['12052556394','꿈비 휴대용 분유포트 100도가열 무선 전기포트 500ml 여행용','한달사용',5,'https://phinf.pstatic.net/checkout.phinf/20260619_16/1781848758051XaXyr_JPEG/image.jpg','완분아기 외출템 필수입니다!',0,'k266****','2026.06.19'],
+    ['13274393395','리코코 양면이중코팅 유아 어린이 폴더 층간소음 매트 + 베이비룸 세트 252x200','한달사용',5,'https://phinf.pstatic.net/checkout.phinf/20260619_137/1781848568985UN0qe_JPEG/1000025471.jpg','매트가 탄탄하며 아이 놀기에도 좋아요',0,'dksc******','2026.06.19'],
+    ['13393501756','꿈비 아이스허그 아기띠 통풍 쿨시트 쿨링 힙시트 커버 어반샌드','한달사용',5,'https://phinf.pstatic.net/checkout.phinf/20260619_80/17818458683732UuHa_JPEG/ECBAA1ECB298.JPG','배송도 빠르고 제품도 좋아요',0,'bs03***','2026.06.19'],
+    ['8231836037','꿈비 아이스허그 듀얼팬 쿨시트 2.0 카시트 통풍 유모차 라이너 테디베어','일반',2,'https://phinf.pstatic.net/checkout.phinf/20260619_172/1781845732171CoQVf_JPEG/image.jpg','그냥 쓸만한거갘은데 모르겎어요',0,'pupp*******','2026.06.19'],
+    ['5359384909','리코코 층간소음매트 아기 거실 유아 놀이방 더블원피스 폴더 매트 252x200','한달사용',5,'https://phinf.pstatic.net/checkout.phinf/20260619_182/1781844863080BEBAC_JPEG/IMG_0135.jpeg','친구출산선물로 보냈는데 아주 흡족해하네요',0,'love*****','2026.06.19'],
+    ['10284831049','바바디토 젖병&식기세척기 세제 올인원 타블릿 타블렛 세제 2g 100정','일반',5,'https://phinf.pstatic.net/checkout.phinf/20260619_190/1781843878379yNkEm_JPEG/1781843866496.jpg','세정제가 이렇게 귀여울일인지 ㅎ  세척 잘되고 좋아요!',0,'dusd*****','2026.06.19'],
+    ['13430354410','꿈비 아이스허그 아기띠 쿨링커버 + 유모차 쿨시트 2.0','일반',1,'https://phinf.pstatic.net/image.nmv/shopnbuyer_2026_06_19_3535/mgURYNvkiN_03.jpg','보조배터리에 따라 계속 꺼지네요 돈은 돈대로 쓰고 사용할때마다 화나요!!',0,'kim6*****','2026.06.19'],
+    ['13398029227','꿈비 분리형 휴대용 분유포트 100도가열 무선 전기포트 500ml 여행용','한달사용',4,'https://phinf.pstatic.net/checkout.phinf/20260619_208/1781841338786cGioT_JPEG/1781841327227.jpg','좋아요 잘됩니다 다만 무거움 기내가능좋음',1,'jyj0***','2026.06.19'],
+  ];
+  allReviews = sampleRows.map(r => ({
+    prodNo: r[0],
+    prodName: r[1],
+    shortName: shortName(r[1]),
+    brand: getBrand(r[1]),
+    type: r[2],
+    rating: r[3],
+    photo: r[4],
+    content: r[5],
+    help: r[6],
+    user: r[7],
+    date: r[8] + '. 00:00:00',
+    dateObj: parseDate(r[8]),
+    relContent: '',
+    best: false,
+  }));
+  
+  document.getElementById('dataStatus').textContent = `샘플 ${allReviews.length}건 표시중 (실제 파일 연결 필요)`;
+  renderDashboard();
+  applyFilters();
+  renderProductGrid();
+  renderLowRating();
+}
+
+// ============================================================
+// 탭 전환
+// ============================================================
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['dashboard','feed','product','lowrating'][i] === name);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// ============================================================
+// 대시보드
+// ============================================================
+function renderDashboard() {
+  const total = allReviews.length;
+  const avg = (allReviews.reduce((s,r)=>s+r.rating,0)/total).toFixed(2);
+  const photoCount = allReviews.filter(r=>r.photo).length;
+  const lowCount = allReviews.filter(r=>r.rating<=3).length;
+  const monthlyCount = allReviews.filter(r=>{
+    const d = r.dateObj; if(!d) return false;
+    const now = new Date(); return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+  }).length;
+
+  document.getElementById('summaryCards').innerHTML = `
+    <div class="summary-card accent-blue">
+      <div class="label">총 리뷰</div>
+      <div class="value">${total.toLocaleString()}</div>
+      <div class="sub">2026년 1월~</div>
+    </div>
+    <div class="summary-card accent-yellow">
+      <div class="label">평균 평점</div>
+      <div class="value">${avg}</div>
+      <div class="sub">/ 5.00</div>
+    </div>
+    <div class="summary-card accent-green">
+      <div class="label">포토/영상 리뷰</div>
+      <div class="value">${photoCount.toLocaleString()}</div>
+      <div class="sub">${total ? Math.round(photoCount/total*100) : 0}% 비율</div>
+    </div>
+    <div class="summary-card accent-red">
+      <div class="label">저평점 (3점 이하)</div>
+      <div class="value">${lowCount}</div>
+      <div class="sub">전체 대비 ${total ? Math.round(lowCount/total*100) : 0}%</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">이번달 리뷰</div>
+      <div class="value">${monthlyCount.toLocaleString()}</div>
+      <div class="sub">${new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long'})}</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">한달사용 리뷰</div>
+      <div class="value">${allReviews.filter(r=>r.type==='한달사용').length}</div>
+      <div class="sub">일반 ${allReviews.filter(r=>r.type==='일반').length}건</div>
+    </div>
+  `;
+
+  // 저평점 배지
+  if(lowCount > 0) {
+    const b = document.getElementById('lowBadge');
+    b.textContent = lowCount; b.style.display = 'inline';
+  }
+
+  // 평점 분포 바
+  const ratingDist = {1:0,2:0,3:0,4:0,5:0};
+  allReviews.forEach(r => { if(ratingDist[r.rating]!==undefined) ratingDist[r.rating]++; });
+  const maxR = Math.max(...Object.values(ratingDist));
+  const colors = {5:'#0d9e6e',4:'#38a169',3:'#d97706',2:'#e05a1a',1:'#dc3545'};
+  document.getElementById('ratingBars').innerHTML = [5,4,3,2,1].map(n => `
+    <div class="rating-bar-row">
+      <div class="rating-bar-label" style="color:${colors[n]}">★ ${n}</div>
+      <div class="rating-bar-track">
+        <div class="rating-bar-fill" style="width:${maxR?ratingDist[n]/maxR*100:0}%; background:${colors[n]};"></div>
+      </div>
+      <div class="rating-bar-count">${ratingDist[n]}</div>
+    </div>
+  `).join('');
+
+  // 브랜드 도넛
+  const brands = ['꿈비','리코코','바바디토','기타'];
+  const brandColors = ['#4470e8','#0d9e6e','#7c5cdb','#d97706'];
+  const brandCounts = {};
+  brands.forEach(b => brandCounts[b] = allReviews.filter(r=>r.brand===b).length);
+  drawDonut(brandCounts, brands, brandColors);
+  document.getElementById('brandLegend').innerHTML = brands.map((b,i) => `
+    <div class="brand-legend-item">
+      <div class="brand-dot" style="background:${brandColors[i]}"></div>
+      <div class="brand-legend-name">${b}</div>
+      <div class="brand-legend-pct">${brandCounts[b]} (${total?Math.round(brandCounts[b]/total*100):0}%)</div>
+    </div>
+  `).join('');
+
+  // 월별 트렌드
+  const monthly = {};
+  allReviews.forEach(r => {
+    if(!r.dateObj) return;
+    const key = `${r.dateObj.getFullYear()}.${String(r.dateObj.getMonth()+1).padStart(2,'0')}`;
+    monthly[key] = (monthly[key]||0)+1;
+  });
+  const sortedMonths = Object.keys(monthly).sort();
+  const maxM = Math.max(...Object.values(monthly));
+  document.getElementById('trendChart').innerHTML = sortedMonths.map(m => `
+    <div class="trend-bar-wrap" title="${m}: ${monthly[m]}건">
+      <div class="trend-count">${monthly[m]}</div>
+      <div class="trend-bar" style="height:${maxM?monthly[m]/maxM*80:0}px;"></div>
+      <div class="trend-label">${m.slice(5)}</div>
+    </div>
+  `).join('');
+
+  // 상품별 TOP 20
+  const prodCount = {};
+  allReviews.forEach(r => { prodCount[r.shortName] = (prodCount[r.shortName]||0)+1; });
+  const top20 = Object.entries(prodCount).sort((a,b)=>b[1]-a[1]).slice(0,20);
+  const maxP = top20[0]?.[1] || 1;
+  document.getElementById('productBars').innerHTML = top20.map(([name,count]) => `
+    <div class="product-bar-row">
+      <div class="product-bar-name" title="${name}">${name}</div>
+      <div class="product-bar-track" onclick="filterByProduct('${name.replace(/'/g,"\\'")}')">
+        <div class="product-bar-fill" style="width:${count/maxP*100}%;"></div>
+      </div>
+      <div class="product-bar-count">${count}</div>
+    </div>
+  `).join('');
+}
+
+function filterByProduct(name) {
+  switchTab('product');
+  document.getElementById('productSearch').value = name;
+  filterProductCards();
+}
+
+function drawDonut(counts, labels, colors) {
+  const canvas = document.getElementById('brandCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const cx=110, cy=110, r=80, ir=50;
+  const total = Object.values(counts).reduce((s,v)=>s+v,0);
+  ctx.clearRect(0,0,220,220);
+  let angle = -Math.PI/2;
+  labels.forEach((l,i) => {
+    const slice = (counts[l]||0)/total * Math.PI*2;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,angle,angle+slice);
+    ctx.closePath();
+    ctx.fillStyle = colors[i];
+    ctx.fill();
+    angle += slice;
+  });
+  // 가운데 구멍
+  ctx.beginPath();
+  ctx.arc(cx,cy,ir,0,Math.PI*2);
+  ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--surface').trim() || '#ffffff';
+  ctx.fill();
+  // 중앙 텍스트
+  ctx.fillStyle = '#1a1f2e';
+  ctx.font = 'bold 18px JetBrains Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(total.toLocaleString(), cx, cy-8);
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#4a5568';
+  ctx.fillText('total', cx, cy+12);
+}
+
+// ============================================================
+// 리뷰 피드
+// ============================================================
+function makePhotoHTML(url) {
+  if(!url) return '';
+  return `
+    <div class="photo-wrap">
+      <img class="photo-thumb" src="${url}" loading="lazy"
+        onmouseenter="showPreview(event,'${url}')"
+        onmouseleave="hidePreview()"
+        onerror="this.style.display='none'">
+    </div>`;
+}
+
+function showPreview(e, url) {
+  const p = document.getElementById('photoPreviewGlobal');
+  document.getElementById('photoPreviewImg').src = url;
+  p.style.display = 'block';
+  movePreview(e);
+}
+function movePreview(e) {
+  const p = document.getElementById('photoPreviewGlobal');
+  let x = e.clientX + 16, y = e.clientY - 110;
+  if(x + 230 > window.innerWidth) x = e.clientX - 246;
+  if(y < 0) y = 0;
+  p.style.left = x+'px'; p.style.top = y+'px';
+}
+function hidePreview() {
+  document.getElementById('photoPreviewGlobal').style.display = 'none';
+}
+document.addEventListener('mousemove', e => {
+  if(document.getElementById('photoPreviewGlobal').style.display !== 'none') movePreview(e);
+});
+
+function makeReviewCard(r) {
+  const lowClass = r.rating <= 3 ? 'low-rating' : '';
+  const bestClass = r.best ? 'best' : '';
+  const dateStr = r.date.split('.').slice(0,3).join('.');
+  
+  return `
+    <div class="review-card ${lowClass} ${bestClass}">
+      <div class="review-header">
+        <span class="product-badge brand-${r.brand}" title="${r.prodName}">${r.shortName}</span>
+        <div class="review-meta">
+          <span class="stars">${starsHTML(r.rating)}</span>
+          <span class="type-badge type-${r.type}">${r.type}</span>
+        </div>
+      </div>
+      ${r.photo ? `<div class="photos-row">${makePhotoHTML(r.photo)}</div>` : ''}
+      <div class="review-content">${r.content || '(내용 없음)'}</div>
+      ${r.relContent ? `<div class="review-content related">💬 ${r.relContent}</div>` : ''}
+      <div class="review-footer">
+        <div style="display:flex; gap:8px; align-items:center;">
+          <span class="review-date">${dateStr}</span>
+          <span class="review-user">${r.user}</span>
+        </div>
+        ${r.help > 0 ? `<div class="help-badge">👍 ${r.help}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+function sortReviews(arr, by) {
+  const a = [...arr];
+  if(by==='date_desc') a.sort((x,y)=>(y.dateObj||0)-(x.dateObj||0));
+  else if(by==='date_asc') a.sort((x,y)=>(x.dateObj||0)-(y.dateObj||0));
+  else if(by==='rating_desc') a.sort((x,y)=>y.rating-x.rating);
+  else if(by==='rating_asc') a.sort((x,y)=>x.rating-y.rating);
+  else if(by==='help_desc') a.sort((x,y)=>y.help-x.help);
+  else if(by==='product_asc') a.sort((x,y)=>x.shortName.localeCompare(y.shortName,'ko'));
+  return a;
+}
+
+function applyFilters() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const brand = document.getElementById('brandFilter').value;
+  const type = document.getElementById('typeFilter').value;
+  const rating = document.getElementById('ratingFilter').value;
+  const photo = document.getElementById('photoFilter').value;
+  const sort = document.getElementById('sortSelect').value;
+
+  let filtered = allReviews.filter(r => {
+    if(q && !r.prodName.toLowerCase().includes(q) && !r.shortName.toLowerCase().includes(q) && !r.content.toLowerCase().includes(q)) return false;
+    if(brand && r.brand !== brand) return false;
+    if(type && r.type !== type) return false;
+    if(rating && r.rating !== Number(rating)) return false;
+    if(photo === 'photo' && !r.photo) return false;
+    if(photo === 'noPhoto' && r.photo) return false;
+    return true;
+  });
+
+  filtered = sortReviews(filtered, sort);
+  document.getElementById('filterCount').textContent = `${filtered.length.toLocaleString()} / ${allReviews.length.toLocaleString()}건`;
+  
+  const grid = document.getElementById('reviewGrid');
+  const empty = document.getElementById('feedEmpty');
+  if(filtered.length === 0) {
+    grid.innerHTML = ''; empty.style.display = 'block';
+  } else {
+    grid.innerHTML = filtered.map(makeReviewCard).join('');
+    empty.style.display = 'none';
+  }
+}
+
+function resetFilters() {
+  ['searchInput','brandFilter','typeFilter','ratingFilter','photoFilter'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = '';
+  });
+  document.getElementById('sortSelect').value = 'date_desc';
+  applyFilters();
+}
+
+// ============================================================
+// 상품별 분석
+// ============================================================
+let selectedProduct = null;
+
+function buildProductStats() {
+  const map = {};
+  allReviews.forEach(r => {
+    const key = r.shortName;
+    if(!map[key]) map[key] = { name: key, origName: r.prodName, brand: r.brand, reviews: [], totalRating: 0 };
+    map[key].reviews.push(r);
+    map[key].totalRating += r.rating;
+  });
+  return Object.values(map).map(p => ({
+    ...p,
+    count: p.reviews.length,
+    avgRating: p.totalRating / p.reviews.length,
+    photoCount: p.reviews.filter(r=>r.photo).length,
+    lowCount: p.reviews.filter(r=>r.rating<=3).length,
+  }));
+}
+
+function filterProductCards() {
+  const q = document.getElementById('productSearch').value.trim().toLowerCase();
+  const brand = document.getElementById('productBrandFilter').value;
+  const sort = document.getElementById('productSortFilter').value;
+
+  let stats = buildProductStats().filter(p => {
+    if(q && !p.name.toLowerCase().includes(q)) return false;
+    if(brand && p.brand !== brand) return false;
+    return true;
+  });
+
+  if(sort==='reviews_desc') stats.sort((a,b)=>b.count-a.count);
+  else if(sort==='rating_desc') stats.sort((a,b)=>b.avgRating-a.avgRating);
+  else if(sort==='rating_asc') stats.sort((a,b)=>a.avgRating-b.avgRating);
+  else if(sort==='name_asc') stats.sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+
+  const grid = document.getElementById('productGrid');
+  grid.innerHTML = stats.map(p => `
+    <div class="product-analysis-card ${selectedProduct===p.name?'selected':''}" onclick="selectProduct('${p.name.replace(/'/g,"\\'")}')">
+      <div class="pa-name">${p.name}</div>
+      <div class="pa-stats">
+        <span class="pa-stat">리뷰 <span>${p.count}</span></span>
+        <span class="pa-stat">평점 <span style="color:${ratingColor(p.avgRating)}">${p.avgRating.toFixed(1)}★</span></span>
+        <span class="pa-stat">포토 <span>${p.photoCount}</span></span>
+        ${p.lowCount>0 ? `<span class="pa-stat">⚠ 저평점 <span style="color:var(--red)">${p.lowCount}</span></span>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectProduct(name) {
+  selectedProduct = name;
+  filterProductCards();
+  const p = buildProductStats().find(x=>x.name===name);
+  if(!p) return;
+  
+  const panel = document.getElementById('productDetailPanel');
+  panel.style.display = 'block';
+  
+  const sorted = sortReviews(p.reviews, 'date_desc');
+  const ratingDist = {1:0,2:0,3:0,4:0,5:0};
+  p.reviews.forEach(r => { if(ratingDist[r.rating]!==undefined) ratingDist[r.rating]++; });
+  const maxR = Math.max(...Object.values(ratingDist));
+  const colors = {5:'#0d9e6e',4:'#38a169',3:'#d97706',2:'#e05a1a',1:'#dc3545'};
+  
+  panel.innerHTML = `
+    <div class="product-detail-header">
+      <span class="product-badge brand-${p.brand}" style="font-size:13px; padding:5px 12px;">${p.brand}</span>
+      <div>
+        <div class="product-detail-title">${p.name}</div>
+        <div style="font-size:11px; color:var(--text3); margin-top:2px;">${p.origName}</div>
+      </div>
+      <div style="margin-left:auto; text-align:right;">
+        <div class="avg-rating-big">${p.avgRating.toFixed(2)}★</div>
+        <div style="font-size:11px; color:var(--text3);">리뷰 ${p.count}건</div>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:200px 1fr; gap:20px; margin-bottom:20px; align-items:start;">
+      <div>
+        ${[5,4,3,2,1].map(n=>`
+          <div class="rating-bar-row" style="margin-bottom:5px;">
+            <div class="rating-bar-label" style="color:${colors[n]}">★${n}</div>
+            <div class="rating-bar-track"><div class="rating-bar-fill" style="width:${maxR?ratingDist[n]/maxR*100:0}%; background:${colors[n]};"></div></div>
+            <div class="rating-bar-count">${ratingDist[n]}</div>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex; gap:16px; flex-wrap:wrap;">
+        <div class="summary-card" style="flex:1; min-width:100px;">
+          <div class="label">포토/영상</div>
+          <div class="value" style="font-size:20px;">${p.photoCount}</div>
+          <div class="sub">${Math.round(p.photoCount/p.count*100)}%</div>
+        </div>
+        <div class="summary-card" style="flex:1; min-width:100px;">
+          <div class="label">한달사용</div>
+          <div class="value" style="font-size:20px;">${p.reviews.filter(r=>r.type==='한달사용').length}</div>
+        </div>
+        ${p.lowCount>0?`
+        <div class="summary-card accent-red" style="flex:1; min-width:100px;">
+          <div class="label">저평점</div>
+          <div class="value" style="font-size:20px;">${p.lowCount}</div>
+        </div>`:''}
+      </div>
+    </div>
+    <div style="font-size:12px; color:var(--text3); margin-bottom:12px;">최근 ${sorted.length}건 리뷰</div>
+    <div class="review-grid">${sorted.map(makeReviewCard).join('')}</div>
+  `;
+  
+  panel.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ============================================================
+// 저평점 모니터링
+// ============================================================
+function renderLowRating() {
+  const threshold = Number(document.getElementById('lowRatingThreshold').value);
+  const sort = document.getElementById('lowSortSelect').value;
+  
+  let filtered = allReviews.filter(r => r.rating <= threshold);
+  filtered = sortReviews(filtered, sort);
+  
+  const banner = document.getElementById('alertBanner');
+  if(filtered.length > 0) {
+    banner.style.display = 'flex';
+    banner.innerHTML = `⚠️&nbsp;<strong>${filtered.length}건</strong>의 저평점 리뷰가 있습니다. 빠른 확인과 대응이 필요합니다.`;
+  } else {
+    banner.style.display = 'none';
+  }
+  
+  const grid = document.getElementById('lowRatingGrid');
+  const empty = document.getElementById('lowEmpty');
+  if(filtered.length === 0) {
+    grid.innerHTML = ''; empty.style.display = 'block';
+  } else {
+    grid.innerHTML = filtered.map(makeReviewCard).join('');
+    empty.style.display = 'none';
+  }
+}
+
+// ============================================================
+// 초기화
+// ============================================================
+loadData();
+</script>
+</body>
+</html>

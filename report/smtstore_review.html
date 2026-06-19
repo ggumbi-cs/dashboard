@@ -171,9 +171,9 @@
     flex: 1;
   }
   .review-content.related {
-    font-size: 12px; color: var(--text2); padding: 10px 12px;
-    background: var(--surface2); border-radius: 6px; border-left: 2px solid var(--border);
-    margin-top: 6px;
+    font-size: 11px; color: var(--text3); padding: 8px 12px;
+    background: var(--surface2); border-radius: 6px; border-top: 1px dashed var(--border);
+    margin-top: 4px; font-style: italic;
   }
   .review-footer {
     display: flex; align-items: center; justify-content: space-between;
@@ -243,12 +243,14 @@
   .product-bar-count { font-size: 11px; color: var(--text3); width: 24px; font-family: var(--mono); }
 
   /* 월별 트렌드 */
-  .trend-chart { display: flex; align-items: flex-end; gap: 6px; height: 100px; padding-top: 8px; }
+  .trend-chart-wrap { position: relative; width: 100%; }
+  .trend-chart { display: flex; align-items: flex-end; gap: 8px; height: 155px; padding-top: 40px; width: 100%; }
   .trend-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
-  .trend-bar { width: 100%; border-radius: 3px 3px 0 0; background: var(--accent); transition: height .6s ease; min-height: 2px; }
-  .trend-bar:hover { background: var(--accent2); }
+  .trend-bar { width: 100%; max-width: 40px; border-radius: 3px 3px 0 0; background: var(--accent); transition: height .6s ease; min-height: 2px; opacity: 0.72; }
+  .trend-bar:hover { background: var(--accent2); opacity:.85; }
   .trend-label { font-size: 9px; color: var(--text3); }
-  .trend-count { font-size: 10px; color: var(--text2); font-family: var(--mono); }
+  .trend-count { font-size: 11px; font-weight: 700; color: var(--text2); font-family: var(--mono); margin-top: 3px; }
+  .trend-line-svg { position: absolute; top: 0; left: 0; width: 100%; pointer-events: none; }
 
   /* 브랜드 도넛 */
   .brand-legend { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
@@ -353,24 +355,45 @@
     <div id="summaryCards" class="summary-grid">
       <div class="summary-card"><div class="label">로딩중</div><div class="value">—</div></div>
     </div>
+    <!-- 상단 2열: 평점분포+월별추이 / 브랜드도넛 -->
     <div class="dashboard-grid">
-      <div class="chart-card">
-        <div class="chart-title">⭐ 평점 분포</div>
-        <div id="ratingBars"></div>
+      <!-- 열1: 평점분포 + 월별추이 -->
+      <div style="display:flex; flex-direction:column; gap:16px; align-self:stretch;">
+        <div class="chart-card">
+          <div class="chart-title">⭐ 평점 분포</div>
+          <div id="ratingBars"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">📅 월별 리뷰 추이</div>
+          <div class="trend-chart-wrap">
+            <svg id="trendLineSvg" class="trend-line-svg"></svg>
+            <div id="trendChart" class="trend-chart"></div>
+          </div>
+        </div>
       </div>
-      <div class="chart-card">
+      <!-- 열2: 브랜드 도넛 -->
+      <div class="chart-card" style="display:flex; flex-direction:column; justify-content:center;">
         <div class="chart-title">🏷 브랜드별 리뷰 비중</div>
         <canvas id="brandCanvas" width="220" height="220" style="display:block; margin:0 auto;"></canvas>
         <div id="brandLegend" class="brand-legend" style="margin-top:16px;"></div>
       </div>
-      <div class="chart-card" style="grid-column:1/-1;">
-        <div class="chart-title">📅 월별 리뷰 추이</div>
-        <div id="trendChart" class="trend-chart"></div>
-      </div>
     </div>
-    <div class="chart-card">
-      <div class="chart-title">📦 리뷰 많은 상품 TOP 20</div>
-      <div id="productBars" style="margin-top:8px;"></div>
+    <!-- 하단 2열: TOP20 / 긍부정 2행 -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+      <div class="chart-card">
+        <div class="chart-title">📦 리뷰 많은 상품 TOP 20</div>
+        <div id="productBars" style="margin-top:8px;"></div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div class="chart-card">
+          <div class="chart-title" style="color:#0a7d57;">👍 긍정 TOP 3</div>
+          <div id="spotlightPos"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title" style="color:#dc3545;">👎 부정 TOP 3</div>
+          <div id="spotlightNeg"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -714,7 +737,7 @@ let allReviews = [];
 
 async function loadData() {
   // GitHub raw URL로 xlsx 읽기 (배포 후 활성화)
-  const GITHUB_URL = 'https://raw.githubusercontent.com/your-org/your-repo/main/data/smtstore_review.xlsx';
+  const GITHUB_URL = 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/data/smtstore_review.xlsx';
   
   try {
     // 개발/로컬 환경: 페이지 옆에 파일 있으면 바로 로드
@@ -770,62 +793,21 @@ async function loadData() {
     })).filter(r => r.prodName);
 
     const total = allReviews.length;
-    const latest = allReviews.map(r=>r.dateObj).filter(Boolean).sort((a,b)=>b-a)[0];
-    document.getElementById('dataStatus').textContent = 
-      `${total.toLocaleString()}건 · 최신 ${latest ? latest.toLocaleDateString('ko') : '-'}`;
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0'); const timeStr = `${now.getFullYear()}.${pad(now.getMonth()+1)}.${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    document.getElementById('dataStatus').textContent = `${total.toLocaleString()}건 · ${timeStr} 불러오기 완료`;
 
     renderDashboard();
     applyFilters();
-    renderProductGrid();
+    filterProductCards();
     renderLowRating();
 
   } catch(e) {
     console.error(e);
-    document.getElementById('dataStatus').textContent = '⚠ 데이터 로드 실패';
-    document.getElementById('summaryCards').innerHTML = 
-      `<div class="summary-card"><div class="label">오류</div><div class="value" style="font-size:14px; color:var(--red)">data/ 폴더에 xlsx 파일을 넣어주세요</div></div>`;
-    // 데모용 샘플 로드
-    loadSampleData();
+    document.getElementById('dataStatus').textContent = '⚠ 데이터 로드 실패 — 콘솔 확인';
   }
 }
 
-function loadSampleData() {
-  // 파일 로드 실패시 30행 샘플 데이터 시뮬레이션
-  const sampleRows = [
-    ['8155433264','꿈비 하이가드 베이비룸 아기울타리 신생아 영유아 가드 200x140 (10p)','일반',5,'','허접하지 않아서 좋아요',0,'lady*******','2026.06.19'],
-    ['5359384909','리코코 층간소음매트 아기 거실 유아 놀이방 더블원피스 폴더 매트 252x200','일반',5,'','매트끼우기가 힘들었는데 푹신하니 좋네요',0,'scvz*****','2026.06.19'],
-    ['12052556394','꿈비 휴대용 분유포트 100도가열 무선 전기포트 500ml 여행용','한달사용',5,'https://phinf.pstatic.net/checkout.phinf/20260619_16/1781848758051XaXyr_JPEG/image.jpg','완분아기 외출템 필수입니다!',0,'k266****','2026.06.19'],
-    ['13274393395','리코코 양면이중코팅 유아 어린이 폴더 층간소음 매트 + 베이비룸 세트 252x200','한달사용',5,'https://phinf.pstatic.net/checkout.phinf/20260619_137/1781848568985UN0qe_JPEG/1000025471.jpg','매트가 탄탄하며 아이 놀기에도 좋아요',0,'dksc******','2026.06.19'],
-    ['13393501756','꿈비 아이스허그 아기띠 통풍 쿨시트 쿨링 힙시트 커버 어반샌드','한달사용',5,'https://phinf.pstatic.net/checkout.phinf/20260619_80/17818458683732UuHa_JPEG/ECBAA1ECB298.JPG','배송도 빠르고 제품도 좋아요',0,'bs03***','2026.06.19'],
-    ['8231836037','꿈비 아이스허그 듀얼팬 쿨시트 2.0 카시트 통풍 유모차 라이너 테디베어','일반',2,'https://phinf.pstatic.net/checkout.phinf/20260619_172/1781845732171CoQVf_JPEG/image.jpg','그냥 쓸만한거갘은데 모르겎어요',0,'pupp*******','2026.06.19'],
-    ['5359384909','리코코 층간소음매트 아기 거실 유아 놀이방 더블원피스 폴더 매트 252x200','한달사용',5,'https://phinf.pstatic.net/checkout.phinf/20260619_182/1781844863080BEBAC_JPEG/IMG_0135.jpeg','친구출산선물로 보냈는데 아주 흡족해하네요',0,'love*****','2026.06.19'],
-    ['10284831049','바바디토 젖병&식기세척기 세제 올인원 타블릿 타블렛 세제 2g 100정','일반',5,'https://phinf.pstatic.net/checkout.phinf/20260619_190/1781843878379yNkEm_JPEG/1781843866496.jpg','세정제가 이렇게 귀여울일인지 ㅎ  세척 잘되고 좋아요!',0,'dusd*****','2026.06.19'],
-    ['13430354410','꿈비 아이스허그 아기띠 쿨링커버 + 유모차 쿨시트 2.0','일반',1,'https://phinf.pstatic.net/image.nmv/shopnbuyer_2026_06_19_3535/mgURYNvkiN_03.jpg','보조배터리에 따라 계속 꺼지네요 돈은 돈대로 쓰고 사용할때마다 화나요!!',0,'kim6*****','2026.06.19'],
-    ['13398029227','꿈비 분리형 휴대용 분유포트 100도가열 무선 전기포트 500ml 여행용','한달사용',4,'https://phinf.pstatic.net/checkout.phinf/20260619_208/1781841338786cGioT_JPEG/1781841327227.jpg','좋아요 잘됩니다 다만 무거움 기내가능좋음',1,'jyj0***','2026.06.19'],
-  ];
-  allReviews = sampleRows.map(r => ({
-    prodNo: r[0],
-    prodName: r[1],
-    shortName: shortName(r[1]),
-    brand: getBrand(r[1]),
-    type: r[2],
-    rating: r[3],
-    photo: r[4],
-    content: r[5],
-    help: r[6],
-    user: r[7],
-    date: r[8] + '. 00:00:00',
-    dateObj: parseDate(r[8]),
-    relContent: '',
-    best: false,
-  }));
-  
-  document.getElementById('dataStatus').textContent = `샘플 ${allReviews.length}건 표시중 (실제 파일 연결 필요)`;
-  renderDashboard();
-  applyFilters();
-  renderProductGrid();
-  renderLowRating();
-}
 
 // ============================================================
 // 탭 전환
@@ -928,13 +910,66 @@ function renderDashboard() {
   });
   const sortedMonths = Object.keys(monthly).sort();
   const maxM = Math.max(...Object.values(monthly));
+
+  // 월별 평균 평점 계산
+  const monthlyRating = {};
+  allReviews.forEach(r => {
+    if(!r.dateObj) return;
+    const key = `${r.dateObj.getFullYear()}.${String(r.dateObj.getMonth()+1).padStart(2,'0')}`;
+    if(!monthlyRating[key]) monthlyRating[key] = {sum:0, cnt:0};
+    monthlyRating[key].sum += r.rating;
+    monthlyRating[key].cnt++;
+  });
+
   document.getElementById('trendChart').innerHTML = sortedMonths.map(m => `
-    <div class="trend-bar-wrap" title="${m}: ${monthly[m]}건">
-      <div class="trend-count">${monthly[m]}</div>
-      <div class="trend-bar" style="height:${maxM?monthly[m]/maxM*80:0}px;"></div>
+    <div class="trend-bar-wrap" title="${m}: ${monthly[m]}건 / 평균 ${monthlyRating[m]?(monthlyRating[m].sum/monthlyRating[m].cnt).toFixed(2):''}★">
+      <div class="trend-count">${monthly[m].toLocaleString()}</div>
+      <div class="trend-bar" style="height:${maxM?monthly[m]/maxM*88:0}px;"></div>
       <div class="trend-label">${m.slice(5)}</div>
     </div>
   `).join('');
+
+  // 평점 꺾은선 SVG (렌더링 후 DOM 기반으로 좌표 계산)
+  requestAnimationFrame(() => {
+    const wrap = document.querySelector('.trend-chart-wrap');
+    const svg = document.getElementById('trendLineSvg');
+    const bars = document.querySelectorAll('#trendChart .trend-bar-wrap');
+    if(!wrap || !svg || !bars.length) return;
+    const wW = wrap.offsetWidth, wH = wrap.offsetHeight;
+    svg.setAttribute('viewBox', `0 0 ${wW} ${wH}`);
+
+    const minR = 4.0, maxR = 5.0;
+    const points = sortedMonths.map((m, i) => {
+      const bar = bars[i];
+      if(!bar) return null;
+      const rect = bar.getBoundingClientRect();
+      const wRect = wrap.getBoundingClientRect();
+      const cx = rect.left - wRect.left + rect.width / 2;
+      const avg = monthlyRating[m] ? monthlyRating[m].sum / monthlyRating[m].cnt : 4.5;
+      const norm = Math.max(0, Math.min(1, (avg - minR) / (maxR - minR)));
+      const topMargin = 14; const lineRange = wH * 0.28;
+      const cy = topMargin + (1 - norm) * lineRange;
+      return {cx, cy, avg};
+    }).filter(Boolean);
+
+    if(points.length < 2) return;
+
+    // 부드러운 곡선 path
+    let d = `M ${points[0].cx} ${points[0].cy}`;
+    for(let i = 1; i < points.length; i++) {
+      const prev = points[i-1], curr = points[i];
+      const cpx = (prev.cx + curr.cx) / 2;
+      d += ` C ${cpx} ${prev.cy}, ${cpx} ${curr.cy}, ${curr.cx} ${curr.cy}`;
+    }
+
+    svg.innerHTML = `
+      <path d="${d}" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linejoin="round" opacity="0.85"/>
+      ${points.map(p => `
+        <circle cx="${p.cx}" cy="${p.cy}" r="3.5" fill="#f59e0b" stroke="white" stroke-width="1.5"/>
+        <text x="${p.cx}" y="${p.cy - 9}" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e" font-family="JetBrains Mono, monospace">${p.avg.toFixed(2)}</text>
+      `).join('')}
+    `;
+  });
 
   // 상품별 TOP 20
   const prodCount = {};
@@ -950,6 +985,37 @@ function renderDashboard() {
       <div class="product-bar-count">${count}</div>
     </div>
   `).join('');
+
+  // ── 긍정 / 부정 TOP 3 ──
+  const prodStats = {};
+  allReviews.forEach(r => {
+    if(!prodStats[r.shortName]) prodStats[r.shortName] = {name:r.shortName, total:0, sum:0, low:0};
+    prodStats[r.shortName].total++;
+    prodStats[r.shortName].sum += r.rating;
+    if(r.rating <= 3) prodStats[r.shortName].low++;
+  });
+  const qualProd = Object.values(prodStats)
+    .filter(p => p.total >= 3)
+    .map(p => ({...p, avg: p.sum / p.total, lowRate: p.low / p.total}));
+  const top3pos = [...qualProd].sort((a,b) => b.avg - a.avg || b.total - a.total).slice(0,3);
+  const top3neg = [...qualProd].filter(p => p.low > 0).sort((a,b) => b.lowRate - a.lowRate || b.low - a.low).slice(0,3);
+  const makeSpotRow = (p, i, isNeg) => {
+    const score = isNeg
+      ? '저평점 ' + p.low + '건 · ' + Math.round(p.lowRate*100) + '%'
+      : '평균 ' + p.avg.toFixed(2) + '★ · ' + p.total + '건';
+    const color = isNeg ? 'var(--red)' : 'var(--green)';
+    const bg    = isNeg ? '#fef2f2' : '#edfaf5';
+    return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;' + (i<2?'border-bottom:1px solid var(--border);':'') + '">'
+      + '<div style="width:24px;height:24px;border-radius:50%;background:' + bg + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:' + color + ';flex-shrink:0;">' + (i+1) + '</div>'
+      + '<div style="flex:1;min-width:0;">'
+      + '<div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + p.name + '</div>'
+      + '<div style="font-size:11px;color:' + color + ';margin-top:3px;">' + score + '</div>'
+      + '</div></div>';
+  };
+  const elPos = document.getElementById('spotlightPos');
+  const elNeg = document.getElementById('spotlightNeg');
+  if(elPos) elPos.innerHTML = top3pos.length ? top3pos.map((p,i)=>makeSpotRow(p,i,false)).join('') : '<div style="color:var(--text3);font-size:12px;padding:10px 0;">데이터 없음</div>';
+  if(elNeg) elNeg.innerHTML = top3neg.length ? top3neg.map((p,i)=>makeSpotRow(p,i,true)).join('') : '<div style="color:var(--text3);font-size:12px;padding:10px 0;">해당 없음 ✅</div>';
 }
 
 function filterByProduct(name) {
@@ -1042,7 +1108,7 @@ function makeReviewCard(r) {
       </div>
       ${r.photo ? `<div class="photos-row">${makePhotoHTML(r.photo)}</div>` : ''}
       <div class="review-content">${r.content || '(내용 없음)'}</div>
-      ${r.relContent ? `<div class="review-content related">💬 ${r.relContent}</div>` : ''}
+      ${r.relContent ? `<div class="review-content related">이전 리뷰 · ${r.relContent}</div>` : ''}
       <div class="review-footer">
         <div style="display:flex; gap:8px; align-items:center;">
           <span class="review-date">${dateStr}</span>
@@ -1209,11 +1275,18 @@ function selectProduct(name) {
         </div>`:''}
       </div>
     </div>
-    <div style="font-size:12px; color:var(--text3); margin-bottom:12px;">최근 ${sorted.length}건 리뷰</div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+      <div style="font-size:12px; color:var(--text3);">총 ${sorted.length}건 리뷰</div>
+      <button onclick="scrollToProductGrid()" style="background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:5px 12px; font-size:11px; color:var(--text2); cursor:pointer; font-family:var(--font);">▲ 상품 목록으로</button>
+    </div>
     <div class="review-grid">${sorted.map(makeReviewCard).join('')}</div>
   `;
   
   panel.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function scrollToProductGrid() {
+  document.getElementById('productGrid').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 // ============================================================

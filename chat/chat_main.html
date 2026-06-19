@@ -1465,6 +1465,8 @@ window.deleteMsg = async function(id) {
     if (el) el.remove();
     _renderedIds.delete(String(id));
     _allMessages = _allMessages.filter(m => String(m.id) !== String(id));
+    // 삭제 후 전체 재렌더 트리거 — 슬라이싱 기준 재계산
+    _initialLoaded = false;
 
     // 2. GAS에 deleted 표식 기록
     try {

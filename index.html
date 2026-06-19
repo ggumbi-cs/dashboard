@@ -93,6 +93,13 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
   cursor: pointer; font-family: inherit; white-space: nowrap; transition: background 0.15s;
 }
 .test-server-btn:hover { background: #256032; }
+.nav-logout-btn {
+  height: 26px; display: flex; align-items: center; gap: 6px;
+  background: #1a2e4a; border: 1px solid #2a4060; color: #a8c4df;
+  padding: 0 12px; border-radius: 4px; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: inherit; white-space: nowrap; transition: background 0.15s;
+}
+.nav-logout-btn:hover { background: #223650; color: #e0eefc; }
 
 .main { display: flex; flex: 1; overflow: hidden; }
 
@@ -440,7 +447,7 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
         <button class="vis-btn" data-tab="주요kpi" onclick="openVisModal(event,'주요kpi')">⚙</button>
       </div>
       <div class="nav-item" data-tab="스마트스토어" onclick="switchTab(this)">
-        <span class="nav-item-label">스마트스토어 <span style="font-size:11px;color:#4fc3f7;" title="스마트스토어 API 연동">🔗</span></span>
+        <span class="nav-item-label">스마트스토어</span>
         <button class="vis-btn" data-tab="스마트스토어" onclick="openVisModal(event,'스마트스토어')">⚙</button>
       </div>
       <div class="nav-item" data-tab="상담분석" onclick="switchTab(this)">
@@ -499,6 +506,7 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
     <button class="test-server-btn" onclick="openTestServer()">
       <span style="font-size:14px;">🖥</span> 테스트서버
     </button>
+    <button class="nav-logout-btn logout-btn" onclick="doLogout()">🔒 로그아웃</button>
   </div>
 </nav>
 
@@ -557,6 +565,11 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
       <div class="sb-item" onclick="onceNav('report/once/올스테인레스_직수.html', this)">세척기 (직수관)</div>
     </div>
 
+    <div id="smtSidebar" style="display:none;">
+      <div class="sb-label">스마트스토어</div>
+      <div class="sb-item" onclick="smtNav('report/smtstore_review.html', this)">리뷰관리</div>
+    </div>
+
     <div id="toolSidebar" style="display:none;">
       <div class="sb-label">팀 Tool</div>
       <div class="sb-item" onclick="openCodingRequest(this)" style="color:#4fc3f7;font-weight:600;">✏ 코딩요청</div>
@@ -588,9 +601,7 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
       <div class="sb-item" onclick="toolNav('tool/user/정지영.html', this)">정지영</div>
     </div>
 
-    <div class="sb-logout">
-      <button class="logout-btn" onclick="doLogout()">🔒 로그아웃</button>
-    </div>
+
 
   </div>
 
@@ -618,7 +629,7 @@ const TAB_MAP = {
   '건별보고':   'report/once/allstain.html',
   'AI보고':     'report/ai보고.html',
   '상담분석':   'report/채널톡보고.html',
-  '스마트스토어': 'report/smtstore.html',
+  '스마트스토어': 'report/smtstore_review.html',
   '팀Tool':     'report/팀Tool.html',
   '개발자':     'developer/account.html',
 };
@@ -1005,6 +1016,7 @@ function _applyTab(tabName, role) {
   const isKpiTab   = tabName === '주요kpi';
   const isOnceTab  = tabName === '건별보고';
   const isIssueTab = tabName === '건별Issue';
+  const isSmtTab   = tabName === '스마트스토어';
 
   if (isIssueTab) {
     // 사이드바 첫 번째 아이템을 기본으로 열기
@@ -1017,6 +1029,9 @@ function _applyTab(tabName, role) {
   } else if (isToolTab) {
     openCodingRequest(null);   // 팀Tool 진입 시 코딩요청 카드 기본 표시
     setTimeout(() => loadAndBroadcastCSV(false), 0);
+  } else if (isSmtTab) {
+    const firstItem = document.querySelector('#smtSidebar .sb-item');
+    if (firstItem) smtNav(firstItem.getAttribute('onclick').match(/'([^']+)'/)[1], firstItem);
   } else {
     const isKpi = tabName === '주요kpi';
     if (isKpi) {
@@ -1056,11 +1071,13 @@ function _switchSidebar(tabName) {
   const isDevTab   = tabName === '개발자';
   const isOnceTab  = tabName === '건별보고';
   const isIssueTab = tabName === '건별Issue';
-  document.getElementById('dashSidebar').style.display  = (isToolTab || isOnceTab || isIssueTab || isDevTab) ? 'none' : 'block';
+  const isSmtTab   = tabName === '스마트스토어';
+  document.getElementById('dashSidebar').style.display  = (isToolTab || isOnceTab || isIssueTab || isDevTab || isSmtTab) ? 'none' : 'block';
   document.getElementById('toolSidebar').style.display  = isToolTab  ? 'block' : 'none';
   document.getElementById('onceSidebar').style.display  = isOnceTab  ? 'block' : 'none';
   document.getElementById('issueSidebar').style.display = isIssueTab ? 'block' : 'none';
   document.getElementById('devSidebar').style.display   = isDevTab   ? 'block' : 'none';
+  document.getElementById('smtSidebar').style.display   = isSmtTab   ? 'block' : 'none';
 }
 
 function showNoPermission(tabName) {
@@ -1101,6 +1118,10 @@ function devNav(path, el) {
 }
 function onceNav(path, el) {
   if (el) { document.querySelectorAll('#onceSidebar .sb-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); }
+  document.getElementById('mainFrame').src = path;
+}
+function smtNav(path, el) {
+  if (el) { document.querySelectorAll('#smtSidebar .sb-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); }
   document.getElementById('mainFrame').src = path;
 }
 function toolNav(path, el) {

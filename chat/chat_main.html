@@ -1348,10 +1348,11 @@ function renderFiltered() {
     // 화면에는 오래된것 위, 최신 아래로 표시
     // 더보기: 더 오래된 메시지 추가
     const total    = filtered.length;
-    const endIdx   = total;  // 최신 끝
-    const startIdx = Math.max(0, total - _displayPage * PAGE_SIZE);
-    // slice: 오래된것→최신 순서로 잘라서 역순으로 뒤집기
-    const pageData = filtered.slice(startIdx, endIdx).reverse();
+    // _allMessages = [최신(0), ..., 오래된(n)]
+    // 최신 PAGE_SIZE개 = index 0 ~ PAGE_SIZE-1
+    // 더보기 누를수록 더 오래된것 포함
+    const endIdx   = Math.min(total, _displayPage * PAGE_SIZE);
+    const pageData = filtered.slice(0, endIdx).reverse();  // 역순 → 오래된것 위, 최신 아래
 
     // 필터 카운트 표시
     const countEl = document.getElementById('filterCount');
@@ -1361,7 +1362,7 @@ function renderFiltered() {
         countEl.textContent   = `${pageData.length}건`;
     }
 
-    render(pageData, startIdx > 0);
+    render(pageData, endIdx < total);  // 더 오래된 메시지가 있으면 더보기 표시
 }
 
 /* ════════════════════════════════════════════

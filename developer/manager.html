@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>시스템 관리 매뉴얼 — 엄마감동팀</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── 리셋 & 베이스 ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0d1117;
+  --surface:  #161b22;
+  --surface2: #1c2128;
+  --border:   #30363d;
+  --border2:  #21262d;
+  --text:     #e6edf3;
+  --text2:    #8b949e;
+  --text3:    #6e7681;
+  --blue:     #388bfd;
+  --blue-dim: #1f3a5f;
+  --green:    #3fb950;
+  --green-dim:#1a3a22;
+  --yellow:   #d29922;
+  --yellow-dim:#2d2208;
+  --red:      #f85149;
+  --red-dim:  #3d1c1a;
+  --purple:   #bc8cff;
+  --purple-dim:#2a1f42;
+  --mono:     'JetBrains Mono', monospace;
+  --sans:     'Noto Sans KR', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── 레이아웃 ── */
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── 사이드 TOC ── */
+.toc {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 24px 0;
+}
+.toc-logo {
+  padding: 0 16px 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+.toc-logo .badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  background: var(--blue-dim);
+  color: var(--blue);
+  padding: 2px 7px;
+  border-radius: 10px;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+.toc-logo h1 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+}
+.toc-logo .sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+.toc-section { margin-bottom: 4px; }
+.toc-group {
+  padding: 4px 16px 2px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 10px;
+}
+.toc a {
+  display: block;
+  padding: 5px 16px 5px 24px;
+  font-size: 12px;
+  color: var(--text2);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all 0.12s;
+}
+.toc a:hover { color: var(--text); background: var(--surface2); }
+.toc a.active { color: var(--blue); border-left-color: var(--blue); background: var(--blue-dim); }
+.toc a.sub { padding-left: 36px; font-size: 11px; }
+
+/* ── 메인 콘텐츠 ── */
+.main {
+  flex: 1;
+  max-width: 960px;
+  padding: 40px 48px;
+  min-width: 0;
+}
+
+/* ── 섹션 ── */
+.section {
+  margin-bottom: 60px;
+  scroll-margin-top: 24px;
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.section-icon {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+.section-desc {
+  font-size: 12px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+
+/* ── 파일 카드 ── */
+.file-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: border-color 0.12s;
+}
+.file-card:hover { border-color: var(--border2); }
+.file-card.deprecated { opacity: 0.55; }
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+  background: var(--surface2);
+}
+.card-header:hover { background: var(--surface); }
+
+.file-path {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--blue);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file-role {
+  font-size: 12px;
+  color: var(--text2);
+  flex: 2;
+  min-width: 0;
+}
+.tag {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.tag-gas    { background: var(--green-dim); color: var(--green); }
+.tag-csv    { background: var(--yellow-dim); color: var(--yellow); }
+.tag-static { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+.tag-unused { background: var(--red-dim); color: var(--red); }
+.tag-lib    { background: var(--purple-dim); color: var(--purple); }
+
+.chevron {
+  font-size: 10px;
+  color: var(--text3);
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+.card-header.open .chevron { transform: rotate(90deg); }
+
+.card-body {
+  display: none;
+  padding: 14px 16px 16px;
+  border-top: 1px solid var(--border);
+}
+.card-body.open { display: block; }
+
+/* ── 카드 내부 그리드 ── */
+.info-grid {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 6px 12px;
+  margin-bottom: 10px;
+}
+.info-label {
+  font-size: 11px;
+  color: var(--text3);
+  font-weight: 500;
+  padding-top: 1px;
+}
+.info-val {
+  font-size: 12px;
+  color: var(--text2);
+}
+.info-val code {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--surface2);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--yellow);
+}
+
+/* ── 액션 테이블 ── */
+.action-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+  margin-top: 8px;
+}
+.action-table th {
+  background: var(--surface2);
+  color: var(--text3);
+  font-weight: 600;
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.action-table td {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border2);
+  color: var(--text2);
+  vertical-align: top;
+}
+.action-table tr:last-child td { border-bottom: none; }
+.action-table code {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--green);
+}
+
+/* ── 시트 뱃지 목록 ── */
+.sheet-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.sheet-badge {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  cursor: default;
+}
+
+/* ── 노트 박스 ── */
+.notes {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--yellow-dim);
+  border-left: 3px solid var(--yellow);
+  border-radius: 0 4px 4px 0;
+}
+.notes li {
+  font-size: 11.5px;
+  color: var(--text2);
+  margin-bottom: 3px;
+  list-style: none;
+  padding-left: 4px;
+}
+.notes li:last-child { margin-bottom: 0; }
+
+/* ── 관계 테이블 ── */
+.rel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.rel-table th {
+  background: var(--surface2);
+  color: var(--text3);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 7px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.rel-table td {
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--border2);
+  vertical-align: top;
+  color: var(--text2);
+}
+.rel-table td:first-child { font-family: var(--mono); font-size: 11px; color: var(--blue); white-space: nowrap; }
+.rel-table td:nth-child(2) { font-family: var(--mono); font-size: 11px; color: var(--green); }
+.rel-table td:nth-child(3) { font-size: 11.5px; color: var(--text2); }
+.rel-table tr:last-child td { border-bottom: none; }
+
+/* ── 시트 전체 목록 ── */
+.sheet-full-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.sheet-full-table th {
+  background: var(--surface2);
+  color: var(--text3);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 7px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.sheet-full-table td {
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--border2);
+  vertical-align: top;
+}
+.sheet-full-table td:first-child { font-family: var(--mono); font-size: 11.5px; color: var(--yellow); }
+.sheet-full-table td:last-child { font-size: 11.5px; color: var(--text2); }
+.sheet-full-table tr:last-child td { border-bottom: none; }
+
+/* ── 폴더 트리 ── */
+.tree {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 2;
+  overflow-x: auto;
+}
+.tree .folder { color: var(--yellow); }
+.tree .file   { color: var(--text2); }
+.tree .file-main { color: var(--blue); font-weight: 500; }
+.tree .file-gas  { color: var(--green); }
+.tree .note   { color: var(--text3); font-size: 11px; margin-left: 8px; }
+.tree .unused { color: var(--red); opacity: 0.6; }
+
+/* ── 메타 헤더 ── */
+.meta-header {
+  margin-bottom: 40px;
+  padding: 24px 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.meta-item .label {
+  font-size: 10px;
+  color: var(--text3);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.meta-item .val {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+}
+.meta-item .val.url { color: var(--blue); }
+
+/* ── 검색 ── */
+.search-wrap {
+  margin-bottom: 28px;
+  position: relative;
+}
+.search-wrap input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 9px 14px 9px 36px;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.12s;
+}
+.search-wrap input:focus { border-color: var(--blue); }
+.search-wrap input::placeholder { color: var(--text3); }
+.search-icon {
+  position: absolute;
+  left: 12px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--text3);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* ── 스크롤바 ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── 업데이트 안내 배너 ── */
+.update-banner {
+  background: var(--blue-dim);
+  border: 1px solid var(--blue);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 28px;
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+.update-banner strong { color: var(--blue); }
+
+@media (max-width: 768px) {
+  .toc { display: none; }
+  .main { padding: 24px 20px; }
+  .meta-header { gap: 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- ══ TOC ══ -->
+<nav class="toc" id="toc">
+  <div class="toc-logo">
+    <div class="badge">ggumbi-cs/dashboard</div>
+    <h1>관리 매뉴얼</h1>
+    <div class="sub">엄마감동팀 · 2026-06-18</div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-group">개요</div>
+    <a href="#overview">시스템 개요</a>
+    <a href="#tree">폴더 구조</a>
+    <a href="#sheets">구글 시트 목록</a>
+    <a href="#relations">파일 간 연관성</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-group">GAS 서버</div>
+    <a href="#gas">GAS 파일</a>
+    <a href="#gas" class="sub">action.gs</a>
+    <a href="#gas" class="sub">code.gs</a>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-group">프론트엔드</div>
+    <a href="#root">루트 (index.html)</a>
+    <a href="#chat">chat/</a>
+    <a href="#tool">tool/</a>
+    <a href="#tool-user" class="sub">tool/user/</a>
+    <a href="#report">report/</a>
+    <a href="#report-issue" class="sub">report/issue/</a>
+    <a href="#report-once" class="sub">report/once/</a>
+    <a href="#report-week" class="sub">report/week/</a>
+  </div>
+</nav>
+
+<!-- ══ MAIN ══ -->
+<main class="main">
+
+<!-- 업데이트 안내 -->
+<div class="update-banner">
+  <strong>★ 유지보수 원칙</strong> — 파일 추가·변경·삭제 시 반드시 <code style="font-family:var(--mono);font-size:11px;background:rgba(56,139,253,0.15);padding:1px 5px;border-radius:3px;">manager/manager.js</code>를 함께 업데이트하세요. 이 페이지는 해당 파일을 참조하여 자동 구성됩니다.
+</div>
+
+<!-- ══ 검색 ══ -->
+<div class="search-wrap">
+  <span class="search-icon">🔍</span>
+  <input type="text" id="searchInput" placeholder="파일명, 역할, 시트명으로 검색…">
+</div>
+
+<!-- ══ 개요 ══ -->
+<section class="section" id="overview">
+  <div class="section-header">
+    <div class="section-icon" style="background:#1f3a5f;">🏗</div>
+    <div>
+      <div class="section-title">시스템 개요</div>
+      <div class="section-desc">엄마감동팀 내부 운영 시스템 전체 구성</div>
+    </div>
+  </div>
+
+  <div class="meta-header">
+    <div class="meta-item">
+      <div class="label">GitHub Pages</div>
+      <div class="val url">ggumbi-cs.github.io/dashboard/</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">GAS 메인</div>
+      <div class="val" style="font-size:10px;color:var(--green);">AKfycbymKpZX… (action.gs)</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">GAS 개인설정</div>
+      <div class="val" style="font-size:10px;color:var(--green);">AKfycbx8mYZB… (code.gs)</div>
+    </div>
+    <div class="meta-item">
+      <div class="label">마지막 업데이트</div>
+      <div class="val" id="lastUpdated">2026-06-18</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+      <div style="font-size:22px;font-weight:700;color:var(--blue);" id="cnt-files">—</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">HTML 파일</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+      <div style="font-size:22px;font-weight:700;color:var(--green);" id="cnt-sheets">—</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">구글 시트</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+      <div style="font-size:22px;font-weight:700;color:var(--yellow);" id="cnt-relations">—</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">파일 간 연결</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 폴더 구조 ══ -->
+<section class="section" id="tree">
+  <div class="section-header">
+    <div class="section-icon" style="background:#2d2208;">📁</div>
+    <div>
+      <div class="section-title">폴더 구조</div>
+      <div class="section-desc">GitHub 경로 기준 전체 파일 트리 — 클릭하여 폴더 열기/닫기</div>
+    </div>
+  </div>
+
+  <style>
+  /* ── 시각 트리 ── */
+  .vtree { display: flex; flex-direction: column; gap: 3px; }
+
+  /* 루트 배지 */
+  .vtree-root-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 14px; margin-bottom: 10px;
+    font-family: var(--mono); font-size: 12px; color: var(--yellow);
+  }
+  .vtree-root-badge .root-url {
+    font-size: 11px; color: var(--text3); font-family: var(--sans);
+  }
+
+  /* 폴더 그룹 */
+  .vfolder { margin-bottom: 4px; }
+
+  .vfolder-header {
+    display: flex; align-items: center; gap: 0;
+    cursor: pointer; user-select: none;
+    border-radius: 6px; padding: 2px 0;
+    transition: background 0.1s;
+  }
+  .vfolder-header:hover { background: rgba(255,255,255,0.03); }
+
+  .vfolder-indent {
+    flex-shrink: 0;
+    display: flex; align-items: stretch;
+  }
+  .vfolder-indent .vline {
+    width: 1px; background: var(--border);
+    margin: 0 16px;
+  }
+
+  .vfolder-toggle {
+    width: 18px; height: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: var(--text3);
+    flex-shrink: 0;
+    transition: transform 0.15s;
+  }
+  .vfolder-toggle.open { transform: rotate(90deg); }
+
+  .vfolder-label {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 8px 5px 4px;
+    flex: 1;
+  }
+  .vfolder-icon { font-size: 13px; flex-shrink: 0; }
+  .vfolder-name {
+    font-family: var(--mono); font-size: 12.5px;
+    font-weight: 600; color: var(--yellow);
+  }
+  .vfolder-desc { font-size: 11px; color: var(--text3); }
+  .vfolder-count {
+    font-size: 10px; color: var(--text3);
+    background: var(--surface2); border: 1px solid var(--border2);
+    padding: 1px 6px; border-radius: 8px;
+    margin-left: auto; margin-right: 8px;
+    white-space: nowrap;
+  }
+
+  .vfolder-body { display: none; }
+  .vfolder-body.open { display: block; }
+  .vfolder-children {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 4px 0 4px 0;
+  }
+
+  /* 파일 행 */
+  .vfile {
+    display: flex; align-items: center; gap: 0;
+    border-radius: 5px;
+    transition: background 0.1s;
+  }
+  .vfile:hover { background: var(--surface2); }
+
+  .vfile-label {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 8px 5px 4px; flex: 1; min-width: 0;
+  }
+
+  .vfile-icon { font-size: 12px; flex-shrink: 0; }
+
+  .vfile-name {
+    font-family: var(--mono); font-size: 12px;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .vfile-name.f-hub    { color: var(--blue); font-weight: 600; }
+  .vfile-name.f-gas    { color: var(--green); }
+  .vfile-name.f-js     { color: var(--yellow); }
+  .vfile-name.f-normal { color: var(--text2); }
+  .vfile-name.f-unused { color: var(--red); opacity: 0.65; }
+
+  .vfile-desc {
+    font-size: 11px; color: var(--text3);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    min-width: 0;
+  }
+  .vfile-tags { display: flex; gap: 4px; margin-left: auto; padding-right: 8px; flex-shrink: 0; }
+  .vtag {
+    font-size: 9.5px; padding: 1px 6px; border-radius: 8px;
+    white-space: nowrap;
+  }
+  .vtag-gas    { background: var(--green-dim); color: var(--green); }
+  .vtag-csv    { background: var(--yellow-dim); color: var(--yellow); }
+  .vtag-hub    { background: var(--blue-dim); color: var(--blue); }
+  .vtag-lib    { background: var(--purple-dim); color: var(--purple); }
+  .vtag-unused { background: var(--red-dim); color: var(--red); }
+  .vtag-drive  { background: #1f2a1a; color: #7cc96f; }
+
+  /* 인덴트 레벨별 왼쪽 여백 */
+  .vfile .vindent, .vfolder .vfolder-indent-wrap { display: flex; align-items: stretch; flex-shrink: 0; }
+  .vline-spacer { width: 33px; flex-shrink: 0; display: flex; justify-content: center; }
+  .vline-spacer .vl { width: 1px; background: var(--border2); }
+  </style>
+
+  <div class="vtree" id="vtree-root"></div>
+</section>
+
+<!-- ══ GAS ══ -->
+<section class="section" id="gas">
+  <div class="section-header">
+    <div class="section-icon" style="background:var(--green-dim);">⚙️</div>
+    <div>
+      <div class="section-title">GAS 서버 파일</div>
+      <div class="section-desc">Google Apps Script — 백엔드 전체 로직</div>
+    </div>
+  </div>
+  <div id="gas-cards"></div>
+</section>
+
+<!-- ══ 루트 ══ -->
+<section class="section" id="root">
+  <div class="section-header">
+    <div class="section-icon" style="background:var(--blue-dim);">🏠</div>
+    <div>
+      <div class="section-title">루트 — index.html</div>
+      <div class="section-desc">시스템 진입점 · 전체 허브</div>
+    </div>
+  </div>
+  <div id="root-cards"></div>
+</section>
+
+<!-- ══ chat ══ -->
+<section class="section" id="chat">
+  <div class="section-header">
+    <div class="section-icon" style="background:#1a2e40;">💬</div>
+    <div>
+      <div class="section-title">chat/</div>
+      <div class="section-desc">CS 소통챗 시스템</div>
+    </div>
+  </div>
+  <div id="chat-cards"></div>
+</section>
+
+<!-- ══ tool ══ -->
+<section class="section" id="tool">
+  <div class="section-header">
+    <div class="section-icon" style="background:#2a1f42;">🔧</div>
+    <div>
+      <div class="section-title">tool/</div>
+      <div class="section-desc">업무 지원 도구 모음</div>
+    </div>
+  </div>
+  <div id="tool-cards"></div>
+  <div style="margin-top:28px;" id="tool-user">
+    <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border2);">tool/user/ — 팀원 개인설정</div>
+    <div id="user-cards"></div>
+  </div>
+</section>
+
+<!-- ══ report ══ -->
+<section class="section" id="report">
+  <div class="section-header">
+    <div class="section-icon" style="background:#1a2e1a;">📊</div>
+    <div>
+      <div class="section-title">report/</div>
+      <div class="section-desc">대시보드 및 보고서 페이지</div>
+    </div>
+  </div>
+  <div id="report-cards"></div>
+
+  <div style="margin-top:28px;" id="report-issue">
+    <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border2);">report/issue/ — 이슈 보고서</div>
+    <div id="issue-cards"></div>
+  </div>
+
+  <div style="margin-top:28px;" id="report-once">
+    <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border2);">report/once/ — 건별 보고서</div>
+    <div id="once-cards"></div>
+  </div>
+
+  <div style="margin-top:28px;" id="report-week">
+    <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border2);">report/week/ — 주간 회의자료</div>
+    <div id="week-cards"></div>
+  </div>
+</section>
+
+<!-- ══ 시트 목록 ══ -->
+<section class="section" id="sheets">
+  <div class="section-header">
+    <div class="section-icon" style="background:#2d2208;">📋</div>
+    <div>
+      <div class="section-title">구글 시트 전체 목록</div>
+      <div class="section-desc">GAS가 읽고 쓰는 모든 시트</div>
+    </div>
+  </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+    <table class="sheet-full-table" id="sheet-table">
+      <thead><tr><th>시트명</th><th>사용 파일</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══ 연관성 ══ -->
+<section class="section" id="relations">
+  <div class="section-header">
+    <div class="section-icon" style="background:#2a1f42;">🔗</div>
+    <div>
+      <div class="section-title">파일 간 연관성</div>
+      <div class="section-desc">어떤 파일이 어떤 파일과 연결되는지, 어떤 신호를 주고받는지</div>
+    </div>
+  </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+    <table class="rel-table" id="rel-table">
+      <thead><tr><th>From</th><th>To</th><th>신호 / 방식</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+// ── manifest 인라인 (manager.js와 동기화 유지) ──
+// manager.js를 script src로 불러올 수도 있으나
+// GitHub Pages 오프라인 호환을 위해 인라인 처리.
+// 수정 시 manager.js도 반드시 동일하게 업데이트하세요.
+
+const M = {
+  meta: {
+    repo: 'ggumbi-cs/dashboard',
+    baseUrl: 'https://ggumbi-cs.github.io/dashboard/',
+    gasMain: 'AKfycbymKpZX… (action.gs)',
+    gasPersonal: 'AKfycbx8mYZB… (code.gs)',
+    lastUpdated: '2026-06-18',
+  },
+  gas: [
+    {
+      id:'gas-action', path:'action.gs', name:'action.gs',
+      role:'메인 GAS 백엔드 — doGet/doPost 라우터 및 모든 기능 통합',
+      summary:'시스템의 핵심 서버 파일. doGet/doPost에서 action 파라미터로 분기하여 전 기능을 처리한다.',
+      type:'gas',
+      sheets:['액션현황판','AI종합분석','품질즐겨찾기','분析용요약','프롬프트','csv다운로더','수리내역서','소통챗','개선요청게시판','채널톡만족도','간식추첨','팀tool_개인설정','페이지열람권한','사이드바','채널톡응답기준'],
+      actions:{
+        GET:['repairList','rbList','getSnackItems/saveSnackItems','channelTalk','as7Load/as7Save','saveCsvLinks/getCsvLinks','getMessages/send/check','getAS5','getVisSettings/saveVisSettings','getSidebar/getSidebarAll','type=insight/qualFav/summary/prompts'],
+        POST:['save(수리내역서)','deleteChat','rbInsert/rbUpdateStatus/rbReply','uploadFile/chatReply','event=push(웹훅)','saveSnackItems','as7Save','saveCsvLinks','ai(Gemini)','saveInsight','saveAll/upsert/delete','saveSummary','savePrompts','saveAS5','saveVisSettings'],
+      },
+      externalAPIs:['Gemini API (gemini-2.5-flash)','Channel Talk API v5','Google Drive (수리사진, 소통챗 파일)'],
+      notes:['★ 삭제: 소통챗은 __deleted__ 마커 (행 삭제 없음)','★ GAS 핸들러 순서: getSnackItems/saveSnackItems는 catch-all 앞에 위치','★ 채널톡 CSAT: 웹훅 수신 후 10초 sleep 후 API 조회','★ 수리내역서 채번: REP-YYYYMMDD-NNN, 전체 최대 순번 기준'],
+    },
+    {
+      id:'gas-code', path:'code.gs', name:'code.gs',
+      role:'팀tool 개인설정 전용 GAS — action.gs에서 라우팅됨',
+      summary:'팀tool_개인설정 시트에서 이름(name)으로 행을 찾아 개인 설정값을 읽고 쓴다. doGet/doPost 없음.',
+      type:'gas',
+      sheets:['팀tool_개인설정'],
+      actions:{ GET:['as7Load (name 파라미터 조회)'], POST:['as7Save (name 기준 upsert)'] },
+      externalAPIs:[],
+      notes:['★ Secondary GAS 엔드포인트(AKfycbx8...) — action.gs와 다른 URL','★ 신규 팀원 추가 시 시트에 행 수동 추가 필요'],
+    },
+  ],
+  root: [
+    {
+      id:'root-index', path:'index.html', name:'index.html',
+      role:'시스템 허브 — 전체 페이지 진입점 및 사이드바 네비게이션',
+      summary:'좌측 사이드바 + 우측 iframe 구조. 로그인/역할 기반 접근 제어, CSV 로드 후 자식 iframe에 전달, GAS URL 주입.',
+      type:'root',
+      loads:['chat/chat_main.html','report/*.html','tool/tool_main.html','tool/downloader.html','tool/as5~as7.html','tool/팀간식룰렛.html','tool/user/[이름].html'],
+      features:['역할 기반 접근: admin / leader / ggumbi / affiliate','사이드바 GAS 동적 로드','건별보고 팝업 (보고서/Issue 서브탭)','어드민: 페이지열람권한·사이드바 편집','CSV 5분 폴링 → 자식 iframe BroadcastChannel 중계'],
+    },
+  ],
+  chat: [
+    { id:'chat-main', path:'chat/chat_main.html', name:'chat_main.html', role:'CS 소통챗 메인 UI', summary:'메시지 전송/수신/체크/삭제/답글/파일 업로드. 2초 폴링, 증분 DOM 갱신, 1040px 와이드.', type:'gas', refs:'gasMain (getMessages/send/check/deleteChat/uploadFile/chatReply), Drive: CS_소통챗' },
+    { id:'chat-wrapper', path:'chat/chat.html', name:'chat.html', role:'채팅 레이아웃 래퍼', summary:'chat_main.html + chatchat_unchecked.html을 나란히 배치하는 컨테이너.', type:'static', refs:'iframe → chat/chatchat_unchecked.html' },
+    { id:'chat-unchecked', path:'chat/chatchat_unchecked.html', name:'chatchat_unchecked.html', role:'V 미체크 메시지 모아보기', summary:'체크 안 된 채팅만 필터링 표시. 현재 미사용.', type:'unused', refs:'gasMain (getMessages/check)' },
+  ],
+  tool: [
+    { id:'tool-main',       path:'tool/tool_main.html',   name:'tool_main.html',   role:'업무Tool 코딩 — AS1~AS10 슬롯 컨테이너', summary:'10개 슬롯에 AS 툴을 iframe으로 로드. 툴간 BroadcastChannel 연동(AS1→AS3). 5분 CSV 폴링.', type:'lib', refs:'tool/as*.html 로드, BroadcastChannel: as-tool-channel-v1, CSV: 가전마감.csv' },
+    { id:'tool-appjs',      path:'tool/tool_app.js',      name:'tool_app.js',      role:'AS 툴 공통 JS 라이브러리', summary:'CSV 파싱, 날짜 파싱, BroadcastChannel publish/subscribe, AS1(기술진단) 모듈 초기화.', type:'lib', refs:'as.html, as3.html에서 script src로 로드' },
+    { id:'tool-as1',        path:'tool/as.html',          name:'as.html',          role:'AS1 — 기술진단 어시스턴트', summary:'가전마감.csv 분석(제품×증상→부품빈도). 결과를 BroadcastChannel로 AS3 전달.', type:'gas', refs:'tool_app.js, 가전마감.csv, BroadcastChannel → AS3' },
+    { id:'tool-as2',        path:'tool/as2.html',         name:'as2.html',         role:'AS2 — 회수접수도우미', summary:'제품명·회수사유·증상으로 접수 메모 문구 자동 생성. GAS/CSV 연동 없는 순수 로컬.', type:'static', refs:'없음 (독립 로컬)' },
+    { id:'tool-as3',        path:'tool/as3.html',         name:'as3.html',         role:'AS3 — 부품별 원인 및 관리방법', summary:'AS1 결과 수신 후 자동 추천. 불량부품원인.csv에서 엔지니어 가이드 팝업.', type:'gas', refs:'tool_app.js, 불량부품원인.csv, BroadcastChannel ← AS1' },
+    { id:'tool-as4',        path:'tool/as4.html',         name:'as4.html',         role:'AS4 — 유상견적 산출기', summary:'유상처리단가.csv에서 부품 단가·공임 읽어 최대 4개 부품 견적 자동 계산.', type:'csv', refs:'../data/유상처리단가.csv, PapaParse 5.3.0' },
+    { id:'tool-as5',        path:'tool/as5.html',         name:'as5.html',         role:'AS5 — 어드민 패턴 분류기', summary:'반품 타입·제품명 목록을 GAS에서 로드. xlsx 라이브러리로 파일 처리.', type:'gas', refs:'gasMain (getAS5/saveAS5 — as5_어드민자동화 시트), xlsx 0.18.5' },
+    { id:'tool-as6',        path:'tool/as6.html',         name:'as6.html',         role:'AS6 — 이미지 → PDF 변환기', summary:'이미지를 A4 PDF로 변환 다운로드. 완전 클라이언트 사이드.', type:'static', refs:'jsPDF 2.5.1 (cdnjs)' },
+    { id:'tool-as7',        path:'tool/as7.html',         name:'as7.html',         role:'AS7 — 이중압축 해제기', summary:'ZIP 안 ZIP 이중압축 브라우저 해제. GAS에 개인별 링크/매핑 저장.', type:'gas', refs:'gasMain (as7Load/as7Save — 팀tool_개인설정 시트 행21~), JSZip 3.10.1' },
+    { id:'tool-downloader', path:'tool/downloader.html',  name:'downloader.html',  role:'CSV 다운로더', summary:'최대 20개 CSV URL을 GAS에 저장하고 일괄 다운로드.', type:'gas', refs:'gasMain (saveCsvLinks/getCsvLinks — csv다운로더 시트), JSZip 3.10.1' },
+    { id:'tool-repair',     path:'tool/수리내역서.html',  name:'수리내역서.html',  role:'수리내역서 — A4 출력용 수리 이력 관리', summary:'REP-YYYYMMDD-NNN 채번. GAS 저장, Drive 사진 3장, 이력 조회, 자동저장(debounce). 접수불량/사용부품은 참고용만.', type:'gas', refs:'gasMain (repairList/save — 수리내역서 시트), Drive: 수리내역서_사진' },
+    { id:'tool-snack',      path:'tool/팀간식룰렛.html', name:'팀간식룰렛.html', role:'팀 간식 추첨 — 룰렛 + 낚시 미니게임', summary:'항목·투표권을 GAS 시트에서 로드. 당첨자는 애니메이션 종료 후 실제 각도 역산 감지.', type:'gas', refs:'gasMain (getSnackItems/saveSnackItems — 간식추첨 시트)' },
+  ],
+  user: [
+    { id:'tool-user', path:'tool/user/[이름].html', name:'[이름].html × 8', role:'팀원 개인설정 — 이름만 다르고 구조 동일', summary:'팀원별 개인 슬롯 레이아웃. Secondary GAS(code.gs)에서 개인설정 로드/저장.', type:'gas', refs:'Secondary GAS AKfycbx8… (팀tool_개인설정 시트, 이름 기준)', members:['권미숙','심우승','이대훈','강민성','박수진','장진영','정지현','조승연'] },
+  ],
+  report: [
+    { id:'report-ai',      path:'report/ai보고.html',     name:'ai보고.html',     role:'AI 종합 보고 — 월별 AI 분석 보고서 뷰어 + 프롬프트 관리', summary:'GAS에서 프롬프트·인사이트 로드. report/month/ 파일 iframe 표시. 어드민: 페이지열람권한(7개 메뉴 자동 번호 재정렬).', type:'gas', refs:'gasMain (getVisSettings/saveVisSettings/prompts/saveInsight), iframe → report/month/*.html, index postMessage 주입' },
+    { id:'report-meeting', path:'report/ai회의자료.html', name:'ai회의자료.html', role:'AI 회의자료 — 정적 보고 페이지', summary:'외부 연동 없는 정적 HTML.', type:'static', refs:'없음' },
+    { id:'report-kpi',     path:'report/kpi.html',        name:'kpi.html',        role:'주요 KPI 대시보드', summary:'클로드_kpi.csv에서 KPI 지표 시각화.', type:'csv', refs:'../data/클로드_kpi.csv' },
+    { id:'report-return',  path:'report/반품현황.html',   name:'반품현황.html',   role:'반품현황 대시보드', summary:'GitHub raw에서 반품 CSV 2종 로드. GAS는 index postMessage 주입.', type:'gas', refs:'raw.github/.../클로드_반품관리.csv + 클로드_반품율.csv, gasMain(saveSummary)' },
+    { id:'report-consult', path:'report/상담실적.html',   name:'상담실적.html',   role:'상담실적 대시보드', summary:'../data/에서 CSV 5종 로드. GAS index 주입.', type:'gas', refs:'../data/ × 5종 CSV, gasMain(saveSummary)' },
+    { id:'report-channel', path:'report/채널톡보고.html', name:'채널톡보고.html', role:'채널톡 상담 분석 대시보드', summary:'GAS channelTalk 프록시 → Channel Talk API v5 집계. CSAT는 채널톡만족도 시트 별도 조회.', type:'gas', refs:'gasMain(channelTalk) → Channel Talk API v5, 채널톡만족도 시트' },
+    { id:'report-process', path:'report/처리현황.html',   name:'처리현황.html',   role:'처리현황 대시보드', summary:'가전마감/가전외마감 CSV 2종 로드. GAS index 주입.', type:'gas', refs:'../data/클로드_가전마감.csv + 가전외마감.csv, gasMain' },
+    { id:'report-quality', path:'report/품질관리.html',   name:'품질관리.html',   role:'품질관리 대시보드', summary:'가전마감/개선품질 CSV 로드. 로컬/GitHub 경로 분기.', type:'gas', refs:'클로드_가전마감.csv + 개선품질.csv, gasMain(saveFav/saveInsight)' },
+    { id:'report-wolpimi', path:'report/월피미(미사용).html', name:'월피미(미사용).html', role:'구버전 월간 보고 (미사용)', summary:'xlsx 기반 구버전. 현재 미사용.', type:'unused', refs:'' },
+  ],
+  reportIssue: [
+    { id:'issue-0616', path:'report/issue/0616휴대용분유포트.html', name:'0616휴대용분유포트.html', role:'이슈 보고서 — 휴대용 분유포트 누수', summary:'SVG 도넛 차트, 불량률 섹션, 안전사고 카드(Notion 링크), 이중 차트 레이아웃.', type:'static', refs:'Notion 링크' },
+  ],
+  reportOnce: [
+    { id:'once-allstain',  path:'report/once/올스테인레스_직수.html', name:'올스테인레스_직수.html', role:'소재 선정 보고서 — 올스테인레스 직수 세척기', summary:'탭 구조(소재개요/소재카드/후보평가/GPT평가). 게이지 바, 후보 평가표. image/ 폴더 이미지 참조. 사전작업/가동테스트 탭 미완성.', type:'static', refs:'image/image.png ~ image 8.png, Noto Sans KR + JetBrains Mono' },
+    { id:'once-allstain2', path:'report/once/allstain.html', name:'allstain.html', role:'펌웨어 요청 연결 페이지', summary:'1차/2차(1200cc) 펌웨어 요청서 버튼 제공.', type:'static', refs:'firmware_sample_request.html, firmware_simple_1200.html' },
+    { id:'once-fw1',       path:'report/once/firmware_sample_request.html', name:'firmware_sample_request.html', role:'펌웨어 1차 샘플 요청서', summary:'정적 요청서.', type:'static', refs:'없음' },
+    { id:'once-fw2',       path:'report/once/firmware_simple_1200.html', name:'firmware_simple_1200.html', role:'펌웨어 2차 요청서 (1200cc)', summary:'정적 요청서.', type:'static', refs:'없음' },
+  ],
+  reportWeek: [
+    { id:'week-260529', path:'report/week/260529.html', name:'260529.html', role:'주간 회의자료 2026-05-29', summary:'정적 주간 회의자료.', type:'static', refs:'없음' },
+    { id:'week-260605', path:'report/week/260605.html', name:'260605.html', role:'주간 회의자료 2026-06-05', summary:'정적 주간 회의자료.', type:'static', refs:'없음' },
+    { id:'week-260612', path:'report/week/260612.html', name:'260612.html', role:'주간 회의자료 2026-06-12', summary:'정적 주간 회의자료.', type:'static', refs:'없음' },
+  ],
+  sheets: [
+    { name:'액션현황판',       usedBy:'report 페이지들 (과제 CRUD)' },
+    { name:'AI종합분석',       usedBy:'report/ai보고.html' },
+    { name:'품질즐겨찾기',     usedBy:'report/품질관리.html' },
+    { name:'분析용요약',       usedBy:'report/*.html (마감회차 데이터 백업)' },
+    { name:'프롬프트',         usedBy:'report/ai보고.html' },
+    { name:'csv다운로더',      usedBy:'tool/downloader.html' },
+    { name:'수리내역서',       usedBy:'tool/수리내역서.html' },
+    { name:'소통챗',           usedBy:'chat/chat_main.html, chatchat_unchecked.html' },
+    { name:'개선요청게시판',   usedBy:'chat/chat_main.html (개선요청 탭)' },
+    { name:'채널톡만족도',     usedBy:'action.gs 웹훅 수신 → report/채널톡보고.html' },
+    { name:'간식추첨',         usedBy:'tool/팀간식룰렛.html' },
+    { name:'팀tool_개인설정',  usedBy:'tool/user/[이름].html, tool/as7.html (행21~)' },
+    { name:'페이지열람권한',   usedBy:'report/ai보고.html (어드민), index.html' },
+    { name:'사이드바',         usedBy:'index.html (동적 메뉴)' },
+    { name:'채널톡응답기준',   usedBy:'action.gs (팀 평균 응답시간 주차별 집계)' },
+    { name:'as5_어드민자동화', usedBy:'tool/as5.html' },
+  ],
+  relations: [
+    { from:'index.html', to:'모든 report/*.html, chat/chat_main.html, tool/*.html', signal:'iframe src 설정 + SCRIPT_URL postMessage + CSV BroadcastChannel 중계' },
+    { from:'index.html', to:'action.gs (gasMain)', signal:'SCRIPT_URL을 자식 iframe에 postMessage 주입 — report 페이지들이 사용' },
+    { from:'report/ai보고.html', to:'report/month/*.html', signal:'iframe 동적 로드 (회차별 월간 보고서)' },
+    { from:'tool/tool_main.html', to:'tool/as*.html', signal:'iframe 슬롯 로드 + postMessage / BroadcastChannel 중계' },
+    { from:'tool/as.html (AS1)', to:'tool/as3.html (AS3)', signal:'BroadcastChannel(as-tool-channel-v1) — 부품 분석 결과(memo, rankedParts) 전달' },
+    { from:'tool/as.html, as3.html', to:'tool/tool_app.js', signal:'script src — CSV파싱·subscribeSharedMemo() 공유' },
+    { from:'chat/chat.html', to:'chat/chatchat_unchecked.html', signal:'iframe src' },
+    { from:'tool/수리내역서.html', to:'action.gs → 수리내역서 시트 + Drive', signal:'POST save / GET repairList, Drive 사진 최대 3장 업로드' },
+    { from:'tool/팀간식룰렛.html', to:'action.gs → 간식추첨 시트', signal:'GET getSnackItems / GET(POST) saveSnackItems' },
+    { from:'tool/as7.html', to:'action.gs → 팀tool_개인설정 시트', signal:'GET as7Load / GET as7Save (개인별 링크·매핑 저장)' },
+    { from:'tool/downloader.html', to:'action.gs → csv다운로더 시트', signal:'GET saveCsvLinks / getCsvLinks' },
+    { from:'tool/user/[이름].html', to:'code.gs → 팀tool_개인설정 시트', signal:'Secondary GAS personalGet(GET) / personalPost(POST) — 이름 기준 조회' },
+    { from:'report/채널톡보고.html', to:'action.gs → Channel Talk API v5', signal:'GET channelTalk 프록시 — 상담·CSAT·매니저 데이터 집계' },
+    { from:'action.gs (웹훅 수신)', to:'채널톡만족도 시트', signal:'Channel Talk endWorkflow 웹훅 → 10초 sleep → CSAT API 조회 → 시트 append' },
+    { from:'report/*.html', to:'action.gs → 분析용요약 시트', signal:'POST saveSummary — 마감회차 집계 데이터 JSON 백업' },
+    { from:'report/ai보고.html', to:'action.gs → 페이지열람권한 시트', signal:'GET getVisSettings / GET saveVisSettings — 탭별 역할 접근 제어' },
+  ],
+};
+
+// ══════════════════════════════════════════
+// 시각 트리 렌더링
+// ══════════════════════════════════════════
+const TREE_DATA = {
+  name: 'dashboard/',
+  url: 'ggumbi-cs.github.io/dashboard/',
+  children: [
+    { name:'index.html',  desc:'허브 · 사이드바 + iframe 레이아웃 · 역할 기반 접근 제어', type:'hub',    tags:['허브','GAS'] },
+    { name:'action.gs',   desc:'메인 GAS 백엔드 (doGet/doPost 라우터)',                   type:'gas',    tags:['GAS','Drive'] },
+    { name:'code.gs',     desc:'팀tool 개인설정 GAS (action.gs에서 라우팅)',               type:'gas',    tags:['GAS'] },
+    {
+      name:'chat/', icon:'💬', desc:'CS 소통챗 시스템',
+      children: [
+        { name:'chat_main.html',            desc:'CS 소통챗 메인 UI',                type:'hub',    tags:['GAS','Drive'] },
+        { name:'chat.html',                 desc:'래퍼 (chat_main + unchecked iframe)',type:'normal', tags:[] },
+        { name:'chatchat_unchecked.html',   desc:'미체크 모아보기 (미사용)',          type:'unused', tags:['미사용'] },
+      ]
+    },
+    {
+      name:'tool/', icon:'🔧', desc:'업무 지원 도구 모음',
+      children: [
+        { name:'tool_main.html', desc:'업무Tool 코딩 · AS1~AS10 슬롯 컨테이너',  type:'hub',    tags:['허브'] },
+        { name:'tool_app.js',    desc:'공통 JS · CSV파싱 · BroadcastChannel',     type:'js',     tags:['라이브러리'] },
+        { name:'as.html',        desc:'AS1 — 기술진단 어시스턴트',                type:'normal', tags:['CSV'] },
+        { name:'as2.html',       desc:'AS2 — 회수접수도우미 (독립 로컬)',          type:'normal', tags:[] },
+        { name:'as3.html',       desc:'AS3 — 부품별 원인 및 관리방법',            type:'normal', tags:['CSV'] },
+        { name:'as4.html',       desc:'AS4 — 유상견적 산출기',                    type:'normal', tags:['CSV'] },
+        { name:'as5.html',       desc:'AS5 — 어드민 패턴 분류기',                 type:'normal', tags:['GAS'] },
+        { name:'as6.html',       desc:'AS6 — 이미지→PDF 변환기 (로컬)',            type:'normal', tags:[] },
+        { name:'as7.html',       desc:'AS7 — 이중압축 해제기',                    type:'normal', tags:['GAS'] },
+        { name:'downloader.html',desc:'CSV 다운로더',                             type:'normal', tags:['GAS'] },
+        { name:'수리내역서.html', desc:'수리내역서 (REP-YYYYMMDD-NNN)',            type:'normal', tags:['GAS','Drive'] },
+        { name:'팀간식룰렛.html', desc:'팀 간식 추첨',                             type:'normal', tags:['GAS'] },
+        {
+          name:'user/', icon:'👤', desc:'팀원 개인설정 (이름만 다름)',
+          children: [
+            { name:'권미숙.html', desc:'개인설정',  type:'normal', tags:['GAS'] },
+            { name:'심우승.html', desc:'개인설정',  type:'normal', tags:['GAS'] },
+            { name:'이대훈.html', desc:'개인설정',  type:'normal', tags:['GAS'] },
+            { name:'강민성.html', desc:'개인설정',  type:'normal', tags:['GAS'] },
+            { name:'박수진.html', desc:'개인설정',  type:'normal', tags:['GAS'] },
+            { name:'장진영.html', desc:'개인설정',  type:'normal', tags:['GAS'] },
+            { name:'정지현.html', desc:'개인설정',  type:'normal', tags:['GAS'] },
+            { name:'조승연.html', desc:'개인설정',  type:'normal', tags:['GAS'] },
+          ]
+        },
+      ]
+    },
+    {
+      name:'report/', icon:'📊', desc:'대시보드 및 보고서 페이지',
+      children: [
+        { name:'ai보고.html',       desc:'AI 종합 보고 뷰어 + 프롬프트 관리',          type:'hub',    tags:['GAS'] },
+        { name:'ai회의자료.html',   desc:'정적 회의자료',                              type:'normal', tags:[] },
+        { name:'kpi.html',          desc:'주요 KPI 대시보드',                          type:'normal', tags:['CSV'] },
+        { name:'반품현황.html',     desc:'반품현황 대시보드',                           type:'normal', tags:['GAS','CSV'] },
+        { name:'상담실적.html',     desc:'상담실적 대시보드 (CSV 5종)',                 type:'normal', tags:['GAS','CSV'] },
+        { name:'채널톡보고.html',   desc:'채널톡 분석 · GAS 프록시 → CH API',          type:'normal', tags:['GAS'] },
+        { name:'처리현황.html',     desc:'처리현황 대시보드',                           type:'normal', tags:['GAS','CSV'] },
+        { name:'품질관리.html',     desc:'품질관리 대시보드',                           type:'normal', tags:['GAS','CSV'] },
+        { name:'월피미(미사용).html',desc:'구버전 (미사용)',                            type:'unused', tags:['미사용'] },
+        {
+          name:'issue/', icon:'🔴', desc:'이슈 보고서',
+          children: [
+            { name:'0616휴대용분유포트.html', desc:'휴대용 분유포트 누수 이슈', type:'normal', tags:[] },
+          ]
+        },
+        {
+          name:'once/', icon:'📄', desc:'건별 보고서',
+          children: [
+            { name:'올스테인레스_직수.html',        desc:'소재 선정 보고서',    type:'normal', tags:[] },
+            { name:'allstain.html',                 desc:'펌웨어 요청 연결',    type:'normal', tags:[] },
+            { name:'firmware_sample_request.html',  desc:'펌웨어 1차 요청서',  type:'normal', tags:[] },
+            { name:'firmware_simple_1200.html',     desc:'펌웨어 2차 요청서',  type:'normal', tags:[] },
+          ]
+        },
+        {
+          name:'week/', icon:'📅', desc:'주간 회의자료',
+          children: [
+            { name:'260529.html', desc:'주간 회의자료 2026-05-29', type:'normal', tags:[] },
+            { name:'260605.html', desc:'주간 회의자료 2026-06-05', type:'normal', tags:[] },
+            { name:'260612.html', desc:'주간 회의자료 2026-06-12', type:'normal', tags:[] },
+          ]
+        },
+        {
+          name:'month/', icon:'🗓', desc:'월별 AI 보고서 (ai보고.html iframe 로드)',
+          children: []
+        },
+      ]
+    },
+    {
+      name:'data/', icon:'🗄', desc:'Claude 생성 CSV 파일들 (직접 편집 금지)',
+      children: []
+    },
+    {
+      name:'manager/', icon:'📖', desc:'관리 매뉴얼',
+      children: [
+        { name:'manager.html', desc:'이 페이지', type:'hub',  tags:[] },
+        { name:'manager.js',   desc:'파일 구조 매니페스트 (단일 소스)', type:'gas', tags:[] },
+      ]
+    },
+  ]
+};
+
+const TAG_CLS = { 'GAS':'vtag-gas', 'CSV':'vtag-csv', '허브':'vtag-hub', '라이브러리':'vtag-lib', '미사용':'vtag-unused', 'Drive':'vtag-drive' };
+const FILE_CLS = { hub:'f-hub', gas:'f-gas', js:'f-js', unused:'f-unused', normal:'f-normal' };
+const FILE_ICON = { hub:'📄', gas:'⚙️', js:'📜', unused:'🚫', normal:'📄' };
+
+function buildTags(tags) {
+  return tags.map(t => `<span class="vtag ${TAG_CLS[t]||'vtag-lib'}">${t}</span>`).join('');
+}
+
+function buildFileRow(item, depth) {
+  const indent = Array.from({length: depth}, () =>
+    `<div class="vline-spacer"><div class="vl"></div></div>`
+  ).join('');
+  const nameCls = FILE_CLS[item.type] || 'f-normal';
+  const icon = FILE_ICON[item.type] || '📄';
+  return `
+  <div class="vfile">
+    <div style="display:flex;align-items:stretch;flex-shrink:0;">${indent}</div>
+    <div class="vfile-label">
+      <span class="vfile-icon">${icon}</span>
+      <span class="vfile-name ${nameCls}">${item.name}</span>
+      <span class="vfile-desc">${item.desc || ''}</span>
+    </div>
+    <div class="vfile-tags">${buildTags(item.tags||[])}</div>
+  </div>`;
+}
+
+function buildFolderBlock(item, depth) {
+  const isFolder = !!item.children;
+  if (!isFolder) return buildFileRow(item, depth);
+
+  const indent = Array.from({length: depth}, () =>
+    `<div class="vline-spacer"><div class="vl"></div></div>`
+  ).join('');
+  const icon = item.icon || '📁';
+  const childCount = item.children.length;
+  const countLabel = childCount > 0 ? `<span class="vfolder-count">${childCount}개</span>` : '';
+  const uid = 'vf_' + Math.random().toString(36).slice(2,8);
+
+  const childrenHtml = item.children.map(c => buildFolderBlock(c, depth + 1)).join('');
+
+  return `
+  <div class="vfolder">
+    <div class="vfolder-header" onclick="toggleVFolder('${uid}')">
+      <div style="display:flex;align-items:stretch;flex-shrink:0;">${indent}</div>
+      <div class="vfolder-toggle open" id="tog_${uid}">▶</div>
+      <div class="vfolder-label">
+        <span class="vfolder-icon">${icon}</span>
+        <span class="vfolder-name">${item.name}</span>
+        <span class="vfolder-desc">${item.desc || ''}</span>
+        ${countLabel}
+      </div>
+    </div>
+    <div class="vfolder-body open" id="${uid}">
+      <div class="vfolder-children">${childrenHtml}</div>
+    </div>
+  </div>`;
+}
+
+function toggleVFolder(uid) {
+  const body = document.getElementById(uid);
+  const tog  = document.getElementById('tog_' + uid);
+  if (!body) return;
+  const isOpen = body.classList.toggle('open');
+  if (tog) tog.classList.toggle('open', isOpen);
+}
+
+function renderVTree() {
+  const root = document.getElementById('vtree-root');
+  if (!root) return;
+
+  // 루트 배지
+  let html = `
+  <div class="vtree-root-badge">
+    <span>📁 dashboard/</span>
+    <span class="root-url">← ggumbi-cs.github.io/dashboard/</span>
+  </div>
+  <div class="vtree">`;
+
+  html += TREE_DATA.children.map(item => buildFolderBlock(item, 0)).join('');
+  html += `</div>`;
+  root.innerHTML = html;
+}
+
+renderVTree();
+
+// ── 카드 생성 유틸 ──
+const TYPE_TAG = {
+  gas:    ['GAS 연동', 'tag-gas'],
+  csv:    ['CSV 참조', 'tag-csv'],
+  static: ['정적',    'tag-static'],
+  unused: ['미사용',  'tag-unused'],
+  lib:    ['라이브러리','tag-lib'],
+  root:   ['허브',    'tag-gas'],
+};
+
+function makeTag(type) {
+  const [label, cls] = TYPE_TAG[type] || ['기타','tag-static'];
+  return `<span class="tag ${cls}">${label}</span>`;
+}
+
+function toggleCard(header) {
+  const body = header.nextElementSibling;
+  header.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+function buildSimpleCard(item) {
+  const deprecated = item.type === 'unused' ? ' deprecated' : '';
+  const members = item.members ? `<div class="info-grid"><div class="info-label">팀원</div><div class="info-val">${item.members.join(' · ')}</div></div>` : '';
+  const refs = item.refs ? `<div class="info-grid"><div class="info-label">참조</div><div class="info-val">${item.refs}</div></div>` : '';
+  return `
+  <div class="file-card${deprecated}">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="file-path">${item.path}</span>
+      <span class="file-role">${item.role}</span>
+      ${makeTag(item.type)}
+      <span class="chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <div class="info-grid">
+        <div class="info-label">요약</div>
+        <div class="info-val">${item.summary}</div>
+      </div>
+      ${refs}
+      ${members}
+    </div>
+  </div>`;
+}
+
+function buildGasCard(item) {
+  const sheetBadges = (item.sheets||[]).map(s=>`<span class="sheet-badge">${s}</span>`).join('');
+  const getActions = (item.actions?.GET||[]).map(a=>`<tr><td><code>GET</code></td><td>${a}</td></tr>`).join('');
+  const postActions = (item.actions?.POST||[]).map(a=>`<tr><td><code>POST</code></td><td>${a}</td></tr>`).join('');
+  const apis = (item.externalAPIs||[]).map(a=>`<li>${a}</li>`).join('');
+  const notes = (item.notes||[]).map(n=>`<li>${n}</li>`).join('');
+
+  return `
+  <div class="file-card">
+    <div class="card-header" onclick="toggleCard(this)">
+      <span class="file-path">${item.path}</span>
+      <span class="file-role">${item.role}</span>
+      <span class="tag tag-gas">GAS</span>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="card-body">
+      <div class="info-grid">
+        <div class="info-label">요약</div>
+        <div class="info-val">${item.summary}</div>
+      </div>
+      <div style="margin:10px 0 4px;font-size:11px;color:var(--text3);font-weight:600;">연결 시트</div>
+      <div class="sheet-list">${sheetBadges}</div>
+      ${getActions || postActions ? `
+      <div style="margin:12px 0 4px;font-size:11px;color:var(--text3);font-weight:600;">Actions</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;overflow:hidden;">
+        <table class="action-table">
+          <thead><tr><th style="width:60px;">방식</th><th>action</th></tr></thead>
+          <tbody>${getActions}${postActions}</tbody>
+        </table>
+      </div>` : ''}
+      ${apis ? `<div style="margin:10px 0 4px;font-size:11px;color:var(--text3);font-weight:600;">외부 API</div><div class="info-val" style="font-size:12px;">${item.externalAPIs.join(' · ')}</div>` : ''}
+      ${notes ? `<div class="notes"><ul>${notes}</ul></div>` : ''}
+    </div>
+  </div>`;
+}
+
+// ── 렌더링 ──
+function renderSection(containerId, items, gasMode) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = items.map(item => gasMode ? buildGasCard(item) : buildSimpleCard(item)).join('');
+}
+
+renderSection('gas-cards',    M.gas,         true);
+renderSection('root-cards',   M.root,        false);
+renderSection('chat-cards',   M.chat,        false);
+renderSection('tool-cards',   M.tool,        false);
+renderSection('user-cards',   M.user,        false);
+renderSection('report-cards', M.report,      false);
+renderSection('issue-cards',  M.reportIssue, false);
+renderSection('once-cards',   M.reportOnce,  false);
+renderSection('week-cards',   M.reportWeek,  false);
+
+// ── 시트 테이블 ──
+const sheetTbody = document.querySelector('#sheet-table tbody');
+sheetTbody.innerHTML = M.sheets.map(s=>`
+  <tr>
+    <td>${s.name}</td>
+    <td>${s.usedBy}</td>
+  </tr>`).join('');
+
+// ── 연관성 테이블 ──
+const relTbody = document.querySelector('#rel-table tbody');
+relTbody.innerHTML = M.relations.map(r=>`
+  <tr>
+    <td>${r.from}</td>
+    <td>${r.to}</td>
+    <td>${r.signal}</td>
+  </tr>`).join('');
+
+// ── 통계 ──
+const htmlCount = M.root.length + M.chat.length + M.tool.length + M.user.length +
+                  M.report.length + M.reportIssue.length + M.reportOnce.length + M.reportWeek.length;
+document.getElementById('cnt-files').textContent = htmlCount;
+document.getElementById('cnt-sheets').textContent = M.sheets.length;
+document.getElementById('cnt-relations').textContent = M.relations.length;
+document.getElementById('lastUpdated').textContent = M.meta.lastUpdated;
+
+// ── 검색 ──
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  document.querySelectorAll('.file-card').forEach(card => {
+    const text = card.textContent.toLowerCase();
+    card.style.display = (!q || text.includes(q)) ? '' : 'none';
+  });
+  document.querySelectorAll('#rel-table tbody tr').forEach(tr => {
+    tr.style.display = (!q || tr.textContent.toLowerCase().includes(q)) ? '' : 'none';
+  });
+  document.querySelectorAll('#sheet-table tbody tr').forEach(tr => {
+    tr.style.display = (!q || tr.textContent.toLowerCase().includes(q)) ? '' : 'none';
+  });
+});
+
+// ── TOC 활성 추적 ──
+const sections = document.querySelectorAll('.section');
+const tocLinks = document.querySelectorAll('.toc a');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      tocLinks.forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+}, { rootMargin: '-20% 0px -60% 0px' });
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

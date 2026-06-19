@@ -439,6 +439,10 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
         <span class="nav-item-label">주요KPI</span>
         <button class="vis-btn" data-tab="주요kpi" onclick="openVisModal(event,'주요kpi')">⚙</button>
       </div>
+      <div class="nav-item" data-tab="스마트스토어" onclick="switchTab(this)">
+        <span class="nav-item-label">스마트스토어 <span style="font-size:11px;color:#4fc3f7;" title="스마트스토어 API 연동">🔗</span></span>
+        <button class="vis-btn" data-tab="스마트스토어" onclick="openVisModal(event,'스마트스토어')">⚙</button>
+      </div>
       <div class="nav-item" data-tab="상담분석" onclick="switchTab(this)">
         <span class="nav-item-label">상담실적 <span style="font-size:11px;color:#4fc3f7;" title="채널톡(ALF) 연동">🔗</span></span>
         <button class="vis-btn" data-tab="상담분석" onclick="openVisModal(event,'상담분석')">⚙</button>
@@ -614,6 +618,7 @@ const TAB_MAP = {
   '건별보고':   'report/once/allstain.html',
   'AI보고':     'report/ai보고.html',
   '상담분석':   'report/채널톡보고.html',
+  '스마트스토어': 'report/smtstore.html',
   '팀Tool':     'report/팀Tool.html',
   '개발자':     'developer/account.html',
 };
@@ -633,8 +638,8 @@ const ROLE_LEVEL = { admin: 0, leader: 1, ggumbi: 2, affiliate: 3 };
 // ── 역할별 기본 허용 탭 (null = 전체허용) ──
 const ROLE_TABS = {
   'admin':     null,
-  'leader':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','건별Issue','건별보고','팀Tool','개발자'],
-  'ggumbi':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','건별Issue','건별보고','팀Tool'],
+  'leader':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','스마트스토어','건별Issue','건별보고','팀Tool','개발자'],
+  'ggumbi':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','스마트스토어','건별Issue','건별보고','팀Tool'],
   'affiliate': ['팀Tool'],
 };
 

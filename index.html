@@ -836,15 +836,17 @@ function loadHome() {
   // nav 선택 완전 해제
   document.querySelectorAll('.nav-item.active').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-parent.has-active').forEach(el => el.classList.remove('has-active'));
-  // src 강제 리로드 — onload는 main.html 로드 후에만 postMessage
-  frame.onload = () => {
+  // onload 덮어쓰기 충돌 방지 — 일회성 이벤트로 처리
+  const ts = Date.now();
+  const handler = function() {
+    frame.removeEventListener('load', handler);
     try {
-      if (!frame.src.includes('main.html')) return;
       const role = sessionStorage.getItem('userRole') || '';
       frame.contentWindow.postMessage({ type:'SCRIPT_URL', url:SCRIPT_URL, userRole:role }, '*');
     } catch(e) {}
   };
-  frame.src = 'main.html?' + Date.now(); // 캐시 방지용 쿼리스트링
+  frame.addEventListener('load', handler);
+  frame.src = 'main.html?' + ts;
 }
 
 // main.html → GO_TAB 수신

@@ -171,9 +171,9 @@
     flex: 1;
   }
   .review-content.related {
-    font-size: 11px; color: var(--text3); padding: 8px 12px;
-    background: var(--surface2); border-radius: 6px; border-top: 1px dashed var(--border);
-    margin-top: 4px; font-style: italic;
+    font-size: 12px; color: var(--text2); padding: 10px 12px;
+    background: #eef2fd; border-radius: 6px; border-left: 3px solid var(--accent);
+    margin-top: 8px;
   }
   .review-footer {
     display: flex; align-items: center; justify-content: space-between;
@@ -1108,7 +1108,7 @@ function makeReviewCard(r) {
       </div>
       ${r.photo ? `<div class="photos-row">${makePhotoHTML(r.photo)}</div>` : ''}
       <div class="review-content">${r.content || '(내용 없음)'}</div>
-      ${r.relContent ? `<div class="review-content related">이전 리뷰 · ${r.relContent}</div>` : ''}
+      ${r.relContent ? `<div class="review-content related"><span style="font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.4px;margin-bottom:4px;display:block;">📅 한달 사용 후기</span>${r.relContent}</div>` : ''}
       <div class="review-footer">
         <div style="display:flex; gap:8px; align-items:center;">
           <span class="review-date">${dateStr}</span>

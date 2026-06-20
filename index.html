@@ -422,6 +422,13 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
 <!-- ── 드롭다운 네비게이션 ── -->
 <nav class="nav-bar" id="navBar">
 
+  <!-- ── 홈 버튼 ── -->
+  <div class="nav-group" id="ng-home">
+    <div class="nav-parent" onclick="loadHome()" style="cursor:pointer; gap:6px;">
+      <span style="font-size:15px;">🏠</span> Home
+    </div>
+  </div>
+
   <!-- 대분류1: AI -->
   <div class="nav-group" id="ng-ai">
     <div class="nav-parent">
@@ -811,12 +818,46 @@ function applyRolePermissions(role) {
   }
 
   // 계열사: 팀Tool로 바로 이동
-  if (role === 'affiliate') {
-    setTimeout(() => switchTabDirect('팀Tool'), 100);
-  }
+  // 모든 role: 홈 화면으로 시작
+  setTimeout(() => loadHome(), 100);
 
   updateVisBtnDisplay();
 }
+
+function loadHome() {
+  const frame = document.getElementById('mainFrame');
+  // 사이드바 먼저 숨김
+  ['dashSidebar','toolSidebar','onceSidebar','smtSidebar','issueSidebar','devSidebar'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  const sb = document.getElementById('sidebar');
+  if (sb) sb.style.display = 'none';
+  // nav 선택 완전 해제
+  document.querySelectorAll('.nav-item.active').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-parent.has-active').forEach(el => el.classList.remove('has-active'));
+  // src 강제 리로드 — onload는 main.html 로드 후에만 postMessage
+  frame.onload = () => {
+    try {
+      if (!frame.src.includes('main.html')) return;
+      const role = sessionStorage.getItem('userRole') || '';
+      frame.contentWindow.postMessage({ type:'SCRIPT_URL', url:SCRIPT_URL, userRole:role }, '*');
+    } catch(e) {}
+  };
+  frame.src = 'main.html?' + Date.now(); // 캐시 방지용 쿼리스트링
+}
+
+// main.html → GO_TAB 수신
+window.addEventListener('message', e => {
+  if (!e.data || e.data.type !== 'GO_TAB') return;
+  const tabName = e.data.tab;
+  // nav-item 있는 일반 탭
+  const tabEl = document.querySelector(`.nav-item[data-tab="${tabName}"]`);
+  if (tabEl) { switchTab(tabEl); return; }
+  // nav-parent 단독 탭 (팀Tool, 개발자 등)
+  const parentEl = document.querySelector(`.nav-parent[data-tab="${tabName}"]`);
+  if (parentEl) { switchTabDirect(tabName); return; }
+});
 
 // ═══════════════════════════════════════════
 //  공개설정 (VIS) - GAS 연동
@@ -1070,6 +1111,9 @@ function _applyTab(tabName, role) {
 }
 
 function _switchSidebar(tabName) {
+  // 사이드바 영역 복원 (Home에서 왔을 경우)
+  const sb = document.getElementById('sidebar');
+  if (sb) sb.style.display = '';
   const isToolTab  = tabName === '팀Tool';
   const isDevTab   = tabName === '개발자';
   const isOnceTab  = tabName === '건별보고';
@@ -1392,6 +1436,23 @@ toolDataChannel.addEventListener('message',(e)=>{
   if(frame&&frame.contentWindow){try{frame.contentWindow.postMessage(d,'*');}catch(e){}}
 });
 setInterval(()=>{if(state.tab==='팀Tool')loadAndBroadcastCSV(false);},5*60*1000);
+
+// iframe 뒤로가기 등으로 main.html 복귀 시 사이드바 자동 숨김
+document.getElementById('mainFrame').addEventListener('load', function() {
+  try {
+    const src = this.src || '';
+    if (src.includes('main.html')) {
+      ['dashSidebar','toolSidebar','onceSidebar','smtSidebar','issueSidebar','devSidebar'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      const sb = document.getElementById('sidebar');
+      if (sb) sb.style.display = 'none';
+      document.querySelectorAll('.nav-item.active').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-parent.has-active').forEach(el => el.classList.remove('has-active'));
+    }
+  } catch(e) {}
+});
 
 init();
 </script>

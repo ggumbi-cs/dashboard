@@ -680,9 +680,10 @@ async function saveSettings() {
   renderAll();
   if (!_scriptUrl) { showToast('⚠ GAS URL 없음 — 화면에만 적용됨'); closeModal(); return; }
   try {
-    const res=await fetch(_scriptUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'saveHomeSettings',settings:{quick:_quickItems,cards:_cardItems}}),redirect:'follow'});
-    const data=await res.json();
-    showToast(data.ok?'✅ 설정 저장 완료':'⚠ 저장 실패: '+(data.msg||''));
+    const payload = encodeURIComponent(JSON.stringify({ quick:_quickItems, cards:_cardItems }));
+    const res  = await fetch(`${_scriptUrl}?action=saveHomeSettings&data=${payload}`, { redirect:'follow' });
+    const data = await res.json();
+    showToast(data.ok ? '✅ 설정 저장 완료' : '⚠ 저장 실패: '+(data.msg||''));
   } catch(e) { showToast('⚠ 저장 오류'); }
   closeModal();
 }

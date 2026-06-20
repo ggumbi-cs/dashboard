@@ -826,6 +826,10 @@ function applyRolePermissions(role) {
 
 function loadHome() {
   const frame = document.getElementById('mainFrame');
+  // state 초기화 — 이전 탭 잔재 제거
+  state.tab = '';
+  // 권한없음 레이어 닫기
+  hideNoPermission();
   // 사이드바 먼저 숨김
   ['dashSidebar','toolSidebar','onceSidebar','smtSidebar','issueSidebar','devSidebar'].forEach(id => {
     const el = document.getElementById(id);

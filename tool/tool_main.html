@@ -13,7 +13,7 @@
   --cyan:#00c8ff;--cyan-dim:rgba(0,200,255,0.08);
   --gold:#f0c060;--green:#00e5a0;--red:#ff5a6e;--orange:#ff9040;--purple:#a080ff;
   --text:#e8f0f8;--text2:#a8c8e0;--text3:#6a8faa;
-  --card-w:240px;
+  --card-w:300px;
   --font-kr:'Noto Sans KR',sans-serif;--font-en:'Inter',sans-serif;
 }
 html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:var(--font-kr);overflow-x:hidden;overflow-y:auto;}
@@ -57,21 +57,29 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .sec-nav-btn:disabled{opacity:0.3;cursor:default;}
 
 /* ── 슬라이더 ── */
-.slider-outer{overflow:hidden;}
-.slider-track{display:flex;gap:12px;transition:transform 0.4s cubic-bezier(0.4,0,0.2,1);padding-bottom:4px;}
+.slider-outer{overflow:hidden;border-radius:16px;}
+.slider-track{display:flex;gap:16px;transition:transform 0.45s cubic-bezier(0.4,0,0.2,1);}
+.slider-controls{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px;}
+.sl-btn{width:32px;height:32px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all 0.15s;}
+.sl-btn:hover{border-color:var(--border2);color:var(--cyan);}
+.sl-btn:disabled{opacity:0.3;cursor:default;}
+.sl-dots{display:flex;gap:6px;}
+.sl-dot{width:6px;height:6px;border-radius:50%;background:var(--border);cursor:pointer;transition:all 0.2s;}
+.sl-dot.active{background:var(--cyan);width:18px;border-radius:3px;}
 
 /* ── 카드 ── */
 .t-card{
-  flex:0 0 var(--card-w);
-  background:var(--bg2);border:1px solid var(--border);border-radius:14px;
+  flex:0 0 calc(33.333% - 11px);
+  min-width:280px;
+  background:var(--bg2);border:1px solid var(--border);border-radius:16px;
   overflow:hidden;cursor:pointer;
   transition:border-color 0.2s,box-shadow 0.2s,transform 0.15s;
   position:relative;
   animation:fadeUp 0.4s ease both;
 }
-.t-card:hover{border-color:var(--border2);box-shadow:0 8px 28px rgba(0,0,0,0.45);transform:translateY(-3px);}
+.t-card:hover{border-color:var(--border2);box-shadow:0 12px 40px rgba(0,0,0,0.4);transform:translateY(-3px);}
 
-.t-card-head{padding:14px 14px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);}
+.t-card-head{padding:16px 18px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);}
 .t-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
 .ic-cyan  {background:rgba(0,200,255,0.12);}
 .ic-green {background:rgba(0,229,160,0.12);}
@@ -81,9 +89,9 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .ic-orange{background:rgba(255,144,64,0.12);}
 .ic-blue  {background:rgba(64,144,255,0.12);}
 .t-meta{flex:1;min-width:0;}
-.t-name{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.t-sub{font-size:9.5px;color:#8ab0cc;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.t-badge{font-size:8.5px;font-weight:600;font-family:var(--font-en);padding:2px 6px;border-radius:7px;white-space:nowrap;flex-shrink:0;}
+.t-name{font-size:13px;font-weight:600;color:var(--text);}
+.t-sub{font-size:10px;color:#8ab0cc;margin-top:2px;}
+.t-badge{font-size:9px;font-weight:600;font-family:var(--font-en);padding:2px 7px;border-radius:8px;white-space:nowrap;flex-shrink:0;}
 .bd-cyan  {background:var(--cyan-dim);color:var(--cyan);border:1px solid var(--border2);}
 .bd-green {background:rgba(0,229,160,0.10);color:var(--green);border:1px solid rgba(0,229,160,0.2);}
 .bd-gold  {background:rgba(240,192,96,0.10);color:var(--gold);border:1px solid rgba(240,192,96,0.2);}
@@ -91,7 +99,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .bd-orange{background:rgba(255,144,64,0.10);color:var(--orange);border:1px solid rgba(255,144,64,0.2);}
 .bd-red   {background:rgba(255,90,110,0.10);color:var(--red);border:1px solid rgba(255,90,110,0.2);}
 
-.t-body{padding:12px 14px 14px;}
+.t-body{padding:16px 18px;}
 
 /* ── 미니 UI 공통 ── */
 .m-select{width:100%;padding:4px 7px;background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--text3);font-size:9.5px;font-family:var(--font-kr);margin-bottom:5px;pointer-events:none;}
@@ -174,10 +182,6 @@ body.is-admin .admin-gear{display:flex;}
     <div class="sec-bar" style="background:var(--cyan)"></div>
     <div class="sec-label">일반 업무 Tool</div>
     <div class="sec-desc">· 진단 · 접수 · 분류 · 변환</div>
-    <div class="sec-right">
-      <button class="sec-nav-btn" id="btn-work-prev" onclick="slide('work',-1)">◀</button>
-      <button class="sec-nav-btn" id="btn-work-next" onclick="slide('work',1)">▶</button>
-    </div>
   </div>
   <div class="slider-outer"><div class="slider-track" id="track-work">
 
@@ -306,6 +310,11 @@ body.is-admin .admin-gear{display:flex;}
     </div>
 
   </div></div>
+  <div class="slider-controls">
+    <button class="sl-btn" id="btn-work-prev" onclick="slide('work',-1)">◀</button>
+    <div class="sl-dots" id="dots-work"></div>
+    <button class="sl-btn" id="btn-work-next" onclick="slide('work',1)">▶</button>
+  </div>
 </div>
 
 <!-- 섹션2: 반품·현장 Tool -->
@@ -314,10 +323,6 @@ body.is-admin .admin-gear{display:flex;}
     <div class="sec-bar" style="background:var(--orange)"></div>
     <div class="sec-label">반품 · 현장 Tool</div>
     <div class="sec-desc">· 소통 · 검사 · 수리</div>
-    <div class="sec-right">
-      <button class="sec-nav-btn" id="btn-return-prev" onclick="slide('return',-1)">◀</button>
-      <button class="sec-nav-btn" id="btn-return-next" onclick="slide('return',1)">▶</button>
-    </div>
   </div>
   <div class="slider-outer"><div class="slider-track" id="track-return">
 
@@ -375,6 +380,11 @@ body.is-admin .admin-gear{display:flex;}
     </div>
 
   </div></div>
+  <div class="slider-controls">
+    <button class="sl-btn" id="btn-return-prev" onclick="slide('return',-1)">◀</button>
+    <div class="sl-dots" id="dots-return"></div>
+    <button class="sl-btn" id="btn-return-next" onclick="slide('return',1)">▶</button>
+  </div>
 </div>
 
 <!-- 섹션3: 팀 복지 -->
@@ -383,10 +393,6 @@ body.is-admin .admin-gear{display:flex;}
     <div class="sec-bar" style="background:var(--purple)"></div>
     <div class="sec-label">팀 복지</div>
     <div class="sec-desc">· 이달의 간식 추첨</div>
-    <div class="sec-right">
-      <button class="sec-nav-btn" id="btn-welfare-prev" onclick="slide('welfare',-1)">◀</button>
-      <button class="sec-nav-btn" id="btn-welfare-next" onclick="slide('welfare',1)">▶</button>
-    </div>
   </div>
   <div class="slider-outer"><div class="slider-track" id="track-welfare">
 
@@ -411,6 +417,11 @@ body.is-admin .admin-gear{display:flex;}
     </div>
 
   </div></div>
+  <div class="slider-controls">
+    <button class="sl-btn" id="btn-welfare-prev" onclick="slide('welfare',-1)">◀</button>
+    <div class="sl-dots" id="dots-welfare"></div>
+    <button class="sl-btn" id="btn-welfare-next" onclick="slide('welfare',1)">▶</button>
+  </div>
 </div>
 
 <div class="sec-bottom"></div>
@@ -446,44 +457,89 @@ function goTool(path) { window.parent.postMessage({type:'TOOL_NAV', path}, '*');
 function goExternal(url) { window.parent.postMessage({type:'TOOL_NAV_EXT', url}, '*'); }
 
 // ─── 슬라이더 ───
-function slide(sec, dir) {
-  const track = document.getElementById('track-'+sec);
-  const cards = track.querySelectorAll('.t-card');
-  const outer = track.parentElement;
-  const cardW = 240 + 12; // card-w + gap
-  const visible = Math.max(1, Math.floor(outer.offsetWidth / cardW));
-  const maxIdx = Math.max(0, cards.length - visible);
-  const st = sliderState[sec];
-  st.idx = Math.max(0, Math.min(st.idx + dir, maxIdx));
-  track.style.transform = `translateX(-${st.idx * cardW}px)`;
-  document.getElementById('btn-'+sec+'-prev').disabled = st.idx === 0;
-  document.getElementById('btn-'+sec+'-next').disabled = st.idx >= maxIdx;
+function getVisible(outer) {
+  // 컨테이너 너비에서 3열이 들어가면 3, 2열이면 2, ...
+  const w = outer.offsetWidth;
+  if (w >= 900) return 3;
+  if (w >= 600) return 2;
+  return 1;
 }
 
-// 초기 버튼 상태
-['work','return','welfare'].forEach(sec => {
-  document.getElementById('btn-'+sec+'-prev').disabled = true;
+function getCardW(outer) {
+  const visible = getVisible(outer);
+  return Math.floor((outer.offsetWidth - (visible - 1) * 16) / visible);
+}
+
+function buildDots(sec, total, visible) {
+  const n = Math.max(1, Math.ceil(total / visible));
+  const dotsEl = document.getElementById('dots-'+sec);
+  if (!dotsEl) return;
+  dotsEl.innerHTML = Array.from({length:n}, (_,i) =>
+    `<div class="sl-dot${i===0?' active':''}" onclick="goSlide('${sec}',${i})"></div>`
+  ).join('');
+}
+
+function updateDots(sec, idx) {
+  const dotsEl = document.getElementById('dots-'+sec);
+  if (!dotsEl) return;
+  dotsEl.querySelectorAll('.sl-dot').forEach((d,i) => d.classList.toggle('active', i===idx));
+}
+
+function goSlide(sec, idx) {
   const track = document.getElementById('track-'+sec);
   const cards = track.querySelectorAll('.t-card');
   const outer = track.parentElement;
-  const cardW = 240 + 12;
-  const visible = Math.max(1, Math.floor(outer.offsetWidth / cardW));
-  document.getElementById('btn-'+sec+'-next').disabled = cards.length <= visible;
-});
+  const visible = getVisible(outer);
+  const cardW = getCardW(outer);
+  const maxIdx = Math.max(0, cards.length - visible);
+  const st = sliderState[sec];
+  st.idx = Math.max(0, Math.min(idx, maxIdx));
+  track.style.transform = `translateX(-${st.idx * (cardW + 16)}px)`;
+  document.getElementById('btn-'+sec+'-prev').disabled = st.idx === 0;
+  document.getElementById('btn-'+sec+'-next').disabled = st.idx >= maxIdx;
+  updateDots(sec, st.idx);
+}
+
+function slide(sec, dir) {
+  goSlide(sec, sliderState[sec].idx + dir);
+}
+
+function initSliders() {
+  ['work','return','welfare'].forEach(sec => {
+    const track = document.getElementById('track-'+sec);
+    const cards = track.querySelectorAll('.t-card');
+    const outer = track.parentElement;
+    const visible = getVisible(outer);
+    // 카드 너비를 3열 기준으로 강제 설정
+    const cardW = getCardW(outer);
+    cards.forEach(c => { c.style.flex = `0 0 ${cardW}px`; });
+    buildDots(sec, cards.length, visible);
+    document.getElementById('btn-'+sec+'-prev').disabled = true;
+    document.getElementById('btn-'+sec+'-next').disabled = cards.length <= visible;
+  });
+}
 
 window.addEventListener('resize', () => {
   ['work','return','welfare'].forEach(sec => {
     sliderState[sec].idx = 0;
-    document.getElementById('track-'+sec).style.transform = 'translateX(0)';
     const track = document.getElementById('track-'+sec);
+    track.style.transform = 'translateX(0)';
     const cards = track.querySelectorAll('.t-card');
     const outer = track.parentElement;
-    const cardW = 240+12;
-    const visible = Math.max(1, Math.floor(outer.offsetWidth/cardW));
+    const visible = getVisible(outer);
+    const cardW = getCardW(outer);
+    cards.forEach(c => { c.style.flex = `0 0 ${cardW}px`; });
+    buildDots(sec, cards.length, visible);
     document.getElementById('btn-'+sec+'-prev').disabled = true;
     document.getElementById('btn-'+sec+'-next').disabled = cards.length <= visible;
   });
 });
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initSliders);
+} else {
+  initSliders();
+}
 </script>
 </body>
 </html>

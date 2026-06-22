@@ -1125,7 +1125,7 @@ function _applyTab(tabName, role) {
 }
 
 function _switchSidebar(tabName) {
-  // 사이드바 영역 복원 (Home에서 왔을 경우)
+  // 사이드바 영역 복원 (Home에서 왔을 경우) — 단, 팀Tool은 tool_main 로드 시 별도 처리
   const sb = document.getElementById('sidebar');
   if (sb) sb.style.display = '';
   const isToolTab  = tabName === '팀Tool';
@@ -1186,8 +1186,10 @@ function smtNav(path, el) {
   document.getElementById('mainFrame').src = path;
 }
 function toolNav(path, el) {
-  hideNoPermission(); // 코딩요청 카드 등 닫기
+  hideNoPermission();
   if (el) { document.querySelectorAll('#toolSidebar .sb-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); }
+  const sb = document.getElementById('sidebar');
+  if (sb) sb.style.display = '';
   const frame = document.getElementById('mainFrame');
   const role  = sessionStorage.getItem('userRole') || '';
   const devParam = role === 'dev' ? (path.includes('?') ? '&dev=1' : '?dev=1') : '';
@@ -1451,21 +1453,16 @@ toolDataChannel.addEventListener('message',(e)=>{
 });
 setInterval(()=>{if(state.tab==='팀Tool')loadAndBroadcastCSV(false);},5*60*1000);
 
-// iframe 뒤로가기 등으로 main.html 복귀 시 사이드바 자동 숨김
+// iframe load 시 홈 상태면 사이드바 숨김 유지
 document.getElementById('mainFrame').addEventListener('load', function() {
   try {
-    const src = this.src || '';
-    // tool_main.html, chat_main.html 등 오탐 방지 — 정확히 main.html 만 체크
-    const isHome = /[/?]main\.html([?#]|$)/.test(src) || src.endsWith('main.html');
-    if (!isHome) return;
+    if (state.tab !== '') return; // 탭이 선택된 상태면 무시
+    const sb = document.getElementById('sidebar');
+    if (sb) sb.style.display = 'none';
     ['dashSidebar','toolSidebar','onceSidebar','smtSidebar','issueSidebar','devSidebar'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });
-    const sb = document.getElementById('sidebar');
-    if (sb) sb.style.display = 'none';
-    document.querySelectorAll('.nav-item.active').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.nav-parent.has-active').forEach(el => el.classList.remove('has-active'));
   } catch(e) {}
 });
 

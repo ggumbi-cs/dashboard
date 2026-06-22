@@ -13,7 +13,7 @@
   --border:   rgba(0,200,255,0.10); --border2: rgba(0,200,255,0.20);
   --cyan:     #00c8ff; --cyan-dim: rgba(0,200,255,0.08);
   --gold:     #f0c060; --gold-dim: rgba(240,192,96,0.12);
-  --text:     #e8f0f8; --text2: #7a9ec0; --text3: #3a5a7a;
+  --text:     #e8f0f8; --text2: #a8c8e0; --text3: #6a8faa;
   --green:    #00e5a0; --red: #ff5a6e; --orange: #ff9040; --purple: #a080ff;
   --font-kr:  'Noto Sans KR', sans-serif; --font-en: 'Inter', sans-serif;
 }
@@ -33,9 +33,9 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 
 /* 메인 */
 #mainWrap { padding:32px 28px 60px; max-width:1400px; margin:0 auto; }
-.sec-title { display:flex; align-items:center; gap:10px; font-size:11px; font-weight:600; font-family:var(--font-en); color:var(--text3); text-transform:uppercase; letter-spacing:2px; margin-bottom:16px; }
+.sec-title { display:flex; align-items:center; gap:10px; font-size:11px; font-weight:600; font-family:var(--font-en); color:#8ab0cc; text-transform:uppercase; letter-spacing:2px; margin-bottom:16px; }
 .sec-title::before { content:''; display:inline-block; width:3px; height:14px; background:var(--cyan); border-radius:2px; }
-.sec-title .sec-count { margin-left:auto; font-size:10px; color:var(--text3); }
+.sec-title .sec-count { margin-left:auto; font-size:10px; color:#8ab0cc; }
 
 /* 웰컴 배너 */
 #welcomeBanner { position:relative; background:linear-gradient(135deg,var(--bg2) 0%,var(--bg3) 50%,#0a1428 100%); border:1px solid var(--border); border-radius:16px; padding:36px 40px; margin-bottom:32px; overflow:hidden; }
@@ -95,7 +95,7 @@ body.is-admin .admin-gear { display:flex; }
 .s-card-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
 .s-card-info { flex:1; min-width:0; }
 .s-card-title { font-size:13px; font-weight:600; color:var(--text); }
-.s-card-sub { font-size:10px; color:var(--text3); margin-top:2px; }
+.s-card-sub { font-size:10px; color:#8ab0cc; margin-top:2px; }
 .s-card-badge { font-size:9px; font-weight:600; font-family:var(--font-en); padding:2px 7px; border-radius:8px; white-space:nowrap; background:rgba(0,229,160,0.12); color:var(--green); border:1px solid rgba(0,229,160,0.2); }
 .s-card-badge.warn { background:rgba(255,144,64,0.12); color:var(--orange); border-color:rgba(255,144,64,0.2); }
 .s-card-badge.info { background:var(--cyan-dim); color:var(--cyan); border-color:var(--border2); }
@@ -133,7 +133,7 @@ body.is-admin .admin-gear { display:flex; }
 #noticeSection { margin-bottom:36px; }
 #noticeGrid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 .notice-card { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:20px 22px; position:relative; }
-.notice-card-title { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.notice-card-title { font-size:11px; font-weight:600; color:#8ab0cc; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
 .notice-item { display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); }
 .notice-item:last-child { border-bottom:none; padding-bottom:0; }
 .notice-dot-wrap { padding-top:4px; flex-shrink:0; }

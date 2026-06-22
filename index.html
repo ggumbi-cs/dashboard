@@ -582,9 +582,9 @@ body { background: #1a2e50; font-family: 'Malgun Gothic', '맑은 고딕', sans-
 
     <div id="toolSidebar" style="display:none;">
       <div class="sb-label">팀 Tool</div>
+      <div class="sb-item" onclick="toolNav('tool/tool_main.html', this)" style="color:#4fc3f7;font-weight:600;">🛠 업무Tool 모음</div>
       <div class="sb-item" onclick="openCodingRequest(this)" style="color:#4fc3f7;font-weight:600;">✏ 코딩요청</div>
       <div class="sb-item" onclick="toolNav('tool/수리내역서.html', this)">수리내역서</div>
-      <div class="sb-item" onclick="toolNav('tool/tool_main.html', this)">업무Tool 코딩</div>
       <div class="sb-item" onclick="toolNav('chat/chat_main.html', this)">소통Chat</div>
       <div class="sb-divider"></div>
       <div class="sb-label">실적마감 Tool</div>
@@ -853,16 +853,24 @@ function loadHome() {
   frame.src = 'main.html?' + ts;
 }
 
-// main.html → GO_TAB 수신
+// main.html → GO_TAB 수신 / tool_main.html → TOOL_NAV 수신
 window.addEventListener('message', e => {
-  if (!e.data || e.data.type !== 'GO_TAB') return;
-  const tabName = e.data.tab;
-  // nav-item 있는 일반 탭
-  const tabEl = document.querySelector(`.nav-item[data-tab="${tabName}"]`);
-  if (tabEl) { switchTab(tabEl); return; }
-  // nav-parent 단독 탭 (팀Tool, 개발자 등)
-  const parentEl = document.querySelector(`.nav-parent[data-tab="${tabName}"]`);
-  if (parentEl) { switchTabDirect(tabName); return; }
+  if (!e.data) return;
+  if (e.data.type === 'GO_TAB') {
+    const tabName = e.data.tab;
+    const tabEl = document.querySelector(`.nav-item[data-tab="${tabName}"]`);
+    if (tabEl) { switchTab(tabEl); return; }
+    const parentEl = document.querySelector(`.nav-parent[data-tab="${tabName}"]`);
+    if (parentEl) { switchTabDirect(tabName); return; }
+  }
+  if (e.data.type === 'TOOL_NAV' && e.data.path) {
+    const sbItem = document.querySelector(`#toolSidebar .sb-item[onclick*="${e.data.path}"]`);
+    toolNav(e.data.path, sbItem || null);
+  }
+  if (e.data.type === 'TOOL_NAV_EXT' && e.data.url) {
+    const sbItem = document.querySelector(`#toolSidebar .sb-item[onclick*="${e.data.url}"]`);
+    toolNavExternal(e.data.url, sbItem || null);
+  }
 });
 
 // ═══════════════════════════════════════════
@@ -1077,7 +1085,7 @@ function _applyTab(tabName, role) {
   } else if (isDevTab) {
     devNav('developer/account.html', null);
   } else if (isToolTab) {
-    openCodingRequest(null);   // 팀Tool 진입 시 코딩요청 카드 기본 표시
+    toolNav('tool/tool_main.html', null);
     setTimeout(() => loadAndBroadcastCSV(false), 0);
   } else if (isSmtTab) {
     const firstItem = document.querySelector('#smtSidebar .sb-item');
@@ -1447,17 +1455,19 @@ setInterval(()=>{if(state.tab==='팀Tool')loadAndBroadcastCSV(false);},5*60*1000
 document.getElementById('mainFrame').addEventListener('load', function() {
   try {
     const src = this.src || '';
-    if (src.includes('main.html')) {
-      ['dashSidebar','toolSidebar','onceSidebar','smtSidebar','issueSidebar','devSidebar'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-      });
-      const sb = document.getElementById('sidebar');
-      if (sb) sb.style.display = 'none';
-      document.querySelectorAll('.nav-item.active').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.nav-parent.has-active').forEach(el => el.classList.remove('has-active'));
-    }
+    // tool_main.html, chat_main.html 등 오탐 방지 — 정확히 main.html 만 체크
+    const isHome = /[/?]main\.html([?#]|$)/.test(src) || src.endsWith('main.html');
+    if (!isHome) return;
+    ['dashSidebar','toolSidebar','onceSidebar','smtSidebar','issueSidebar','devSidebar'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    const sb = document.getElementById('sidebar');
+    if (sb) sb.style.display = 'none';
+    document.querySelectorAll('.nav-item.active').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-parent.has-active').forEach(el => el.classList.remove('has-active'));
   } catch(e) {}
+});
 });
 
 init();

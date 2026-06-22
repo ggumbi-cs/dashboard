@@ -138,11 +138,7 @@ input, select {
     <button type="button" id="copyBtn">복사</button>
     <button type="button" id="resetBtn">초기화</button>
 </div>
-<ul>
-    <li><strong style="color:red;">특별 본사회수(분석)대상 : (분리형) 휴대용 분유포트</strong></li>
-    <li><strong style="color:red;">증상 : 전체 불량증상</strong></li>
-    <li><strong style="color:red;">회수사유 : 초기불량 긴급검수</strong></li>
-</ul>
+
 </div>
 </div>
 
@@ -210,14 +206,22 @@ function buildMemo(){
     // 🔥 모든 유형 제품명 포함
 
     if(link){
-        if(r==="일반반품(개봉)") return o ? `★일반반품 링크맘 엄감★${o} / ${p}` : "주문번호를 입력해주세요.";
-        if(r==="변심반품(개봉X)") return o ? `★변심반품 링크맘 엄감★${o} / ${p}` : "주문번호를 입력해주세요.";
+        const isDirect = modelType.value === "직접입력";
+
+        if(r==="일반반품(개봉)"){
+            if(!o) return "주문번호를 입력해주세요.";
+            return isDirect ? `일반반품 / ${o} / ${p}` : `★일반반품 링크맘 엄감★${o} / ${p}`;
+        }
+        if(r==="변심반품(개봉X)"){
+            if(!o) return "주문번호를 입력해주세요.";
+            return isDirect ? `변심반품 / ${o} / ${p}` : `★변심반품 링크맘 엄감★${o} / ${p}`;
+        }
 
         if(r==="불량반품"||r==="불량교환"){
             if(!o) return "주문번호를 입력해주세요.";
             if(!p) return "모델명을 입력해주세요.";
             if(!s) return "증상을 입력해주세요.";
-            return `★${r}★${o} / ${p} / ${s}`;
+            return isDirect ? `${r} / ${o} / ${p} / ${s}` : `${r} / ${o} / ${p} / ${s}`;
         }
 
         if(r==="AS"||r==="검수"){
@@ -230,7 +234,7 @@ function buildMemo(){
     if(r==="일반반품(개봉)"||r==="변심반품(개봉X)"){
         if(!o) return "주문번호를 입력해주세요.";
         if(!p) return "모델명을 입력해주세요.";
-        return `★${r}★${o} / ${p}`;
+        return `${r} / ${o} / ${p}`;
     }
 
     if(r==="기타(직접입력)"){
@@ -238,14 +242,14 @@ function buildMemo(){
         if(!o) return "주문번호를 입력해주세요.";
         if(!p) return "모델명을 입력해주세요.";
         if(!d) return "직접입력 내용을 입력해주세요.";
-        return `★기타(${d})★${o} / ${p}`;
+        return `기타(${d}) / ${o} / ${p}`;
     }
 
     if(r==="불량반품"||r==="불량교환"){
         if(!o) return "주문번호를 입력해주세요.";
         if(!p) return "모델명을 입력해주세요.";
         if(!s) return "증상을 입력해주세요.";
-        return `★${r}★${o} / ${p} / ${s}`;
+        return `${r} / ${o} / ${p} / ${s}`;
     }
 
     if(r==="AS"||r==="검수"){

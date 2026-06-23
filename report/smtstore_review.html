@@ -1067,7 +1067,7 @@ function renderDashboard() {
     .filter(p => p.total >= 3)
     .map(p => ({...p, avg: p.sum / p.total, lowRate: p.low / p.total}));
   const top3pos = [...qualProd].sort((a,b) => b.avg - a.avg || b.total - a.total).slice(0,3);
-  const top3neg = [...qualProd].filter(p => p.low > 0).sort((a,b) => b.lowRate - a.lowRate || b.low - a.low).slice(0,3);
+  const top3neg = [...qualProd].filter(p => p.low > 0).sort((a,b) => b.low - a.low || b.lowRate - a.lowRate).slice(0,3);
   const makeSpotRow = (p, i, isNeg) => {
     const score = isNeg
       ? '저평점 ' + p.low + '건 · ' + Math.round(p.lowRate*100) + '%'
@@ -1479,7 +1479,7 @@ function buildMonthlyData(year, month) {
 
   // 6. 부정 TOP3 (저평점 비율 높은순)
   const negTop3 = [...prodList].filter(p => p.low > 0)
-    .sort((a,b) => b.lowRate - a.lowRate || b.low - a.low).slice(0, 3)
+    .sort((a,b) => b.low - a.low || b.lowRate - a.lowRate).slice(0, 3)
     .map(p => ({ name: p.name, lowCnt: p.low, lowRate: p.lowRate, avg: p.avg }));
 
   // 7. 월별 추이 (해당 월은 주별 분해)

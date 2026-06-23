@@ -323,7 +323,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         <div class="comment-ai">🤖</div>
         <div class="comment-txt">
           <strong>🔶 아이스쿨시트(78건) 5월 신규 진입 — 자재 수급 위기</strong><br>
-          여름 시즌 제품 문의가 이미 78건 유입됐으나, <span class="r">아기띠 쿨링커버 CS처리 자재(팬·리모컨·스크류)의 입고 예정일이 7월 31일</span>로 확인됩니다. 기안일 6월 10일 기준 결재조차 완료되지 않은 상태입니다. 여름 성수기가 7월에 집중됨을 감안하면 <span class="r">시즌이 거의 끝날 시점에 자재가 들어오는 구조</span>로, CS 처리 지연 및 고객 불만 집중이 예상됩니다. <strong>자재 수급 일정 긴급 재검토 필요.</strong>
+          여름 시즌 제품 문의가 이미 78건 유입됐으나, <span class="r">아기띠 쿨링커버 CS처리 자재(팬·리모컨·스크류)의 입고 예정일이 7월 31일</span>로 확인됩니다. 기안일 6월 10일, 기안승인 6월 18일로 결재는 완료됐으나 여름 성수기가 7월에 집중됨을 감안하면 <span class="r">시즌이 거의 끝날 시점에 자재가 들어오는 구조</span>로, CS 처리 지연 및 고객 불만 집중이 예상됩니다. <strong>자재 수급 일정 긴급 재검토 필요.</strong>
         </div>
       </div>
 
@@ -462,11 +462,11 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       </table>
     </div>
 
-    <!-- 서비스레벨 설명 + 총인입 AI 코멘트 -->
+    <!-- 서비스레벨 설명 AI 코멘트 -->
     <div class="comment-box info" style="margin-top:10px;">
       <div class="comment-ai">🤖</div>
       <div class="comment-txt">
-        <strong>서비스 레벨(50.0%) 해석:</strong> <span class="a">고객이 전화를 걸었을 때 20초 이내에 상담원과 연결된 비율</span>입니다 (응답 전화 ÷ (응답+부재중) 전화 기준). 즉 전화를 건 고객 2명 중 1명은 20초를 넘기거나 연결되지 못했다는 의미입니다. 50%는 업계 기준 하위권에 해당하며, 보고받는 분이 기준을 이해하셔야 수치의 심각성을 판단하실 수 있습니다.
+        <strong>서비스 레벨(50.0%) 해석:</strong> <span class="a">고객이 전화를 걸었을 때 20초 이내에 상담원과 연결된 비율</span>입니다. 전화를 건 고객 2명 중 1명은 20초 이내 연결이 되지 않았다는 의미로, 수치의 기준을 함께 공유드립니다.
       </div>
     </div>
   </div>
@@ -675,66 +675,91 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       <div class="sec-num">불량접수 5월 998건</div>
     </div>
 
-    <!-- SVG 복합 차트: 누적막대 + 꺾은선 -->
+    <!-- SVG 복합 차트: 3개 별개 막대 + 합계 꺾은선 -->
     <div class="card" style="margin-bottom:10px;">
       <div class="card-ttl">불량 접수 월별 추이 (교환/환불 · 자재출고 · 수리출고 · 합계 추이선)</div>
-      <svg viewBox="0 0 560 140" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;margin-top:4px;">
-        <!-- 배경 가이드라인 -->
-        <line x1="60" y1="10" x2="540" y2="10" stroke="#e2e8f0" stroke-width="0.5"/>
-        <line x1="60" y1="40" x2="540" y2="40" stroke="#e2e8f0" stroke-width="0.5"/>
-        <line x1="60" y1="70" x2="540" y2="70" stroke="#e2e8f0" stroke-width="0.5"/>
-        <line x1="60" y1="100" x2="540" y2="100" stroke="#e2e8f0" stroke-width="0.5"/>
+      <svg viewBox="0 0 500 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;margin-top:6px;">
+        <!--
+          Y축: 0~1100, 차트영역 y=20~130 (높이110px)
+          스케일: 1px = 1100/110 = 10
+          바닥 y=130, 값v → 막대높이 = v/10, 막대상단y = 130 - v/10
+
+          월별 그룹 중심 x: 2월=90, 3월=200, 4월=310, 5월=420
+          막대너비=14, 간격=4
+          교환(파랑) x=중심-21, 자재(주황) x=중심-3, 수리(빨강) x=중심+15
+
+          데이터:
+          2월: 교환509, 자재82, 수리131, 합계725 → 합계y=130-72.5=57.5
+          3월: 교환570, 자재132, 수리147, 합계851 → 합계y=130-85.1=44.9
+          4월: 교환694, 자재106, 수리170, 합계973 → 합계y=130-97.3=32.7
+          5월: 교환745, 자재104, 수리147, 합계998 → 합계y=130-99.8=30.2
+        -->
+
+        <!-- 가이드라인 -->
+        <line x1="50" y1="20" x2="490" y2="20" stroke="#e2e8f0" stroke-width="0.7"/>
+        <line x1="50" y1="47.5" x2="490" y2="47.5" stroke="#e2e8f0" stroke-width="0.7"/>
+        <line x1="50" y1="75" x2="490" y2="75" stroke="#e2e8f0" stroke-width="0.7"/>
+        <line x1="50" y1="102.5" x2="490" y2="102.5" stroke="#e2e8f0" stroke-width="0.7"/>
+        <line x1="50" y1="130" x2="490" y2="130" stroke="#cbd5e1" stroke-width="1"/>
         <!-- Y축 라벨 -->
-        <text x="54" y="13" font-size="8" fill="#94a3b8" text-anchor="end">1,000</text>
-        <text x="54" y="43" font-size="8" fill="#94a3b8" text-anchor="end">750</text>
-        <text x="54" y="73" font-size="8" fill="#94a3b8" text-anchor="end">500</text>
-        <text x="54" y="103" font-size="8" fill="#94a3b8" text-anchor="end">250</text>
+        <text x="44" y="23" font-size="8" fill="#94a3b8" text-anchor="end">1,100</text>
+        <text x="44" y="50" font-size="8" fill="#94a3b8" text-anchor="end">825</text>
+        <text x="44" y="78" font-size="8" fill="#94a3b8" text-anchor="end">550</text>
+        <text x="44" y="105" font-size="8" fill="#94a3b8" text-anchor="end">275</text>
 
-        <!-- 2월: 총725 (교환509=56px, 자재82=9px, 수리131=14.4px) -->
-        <!-- 각 값 비례: 교환/환불 max=745 → 100px 기준, 전체 max=998 → 90px -->
-        <!-- 스케일: 90px = 998 → 1px = 0.0901 → 각월 y계산: 110 - 값*0.090 -->
-        <!-- 2월 col x=100 -->
-        <rect x="90" y="54.6" width="30" height="45.4" fill="#3b82f6" rx="2"/><!-- 교환509: 509*0.090=45.8 → y=110-45.8=64.2, h=45.8 -->
-        <rect x="90" y="47.2" width="30" height="7.4" fill="#f59e0b" rx="0"/><!-- 자재82: 82*0.090=7.4 -->
-        <rect x="90" y="35.4" width="30" height="11.8" fill="#ef4444" rx="0"/><!-- 수리131: 131*0.090=11.8 -->
-        <text x="105" y="125" font-size="9" fill="#64748b" text-anchor="middle">2월</text>
-        <text x="105" y="33" font-size="9" fill="#64748b" text-anchor="middle" font-weight="600">725</text>
+        <!-- ===== 2월 ===== -->
+        <!-- 교환/환불 509 → h=50.9 -->
+        <rect x="69" y="79.1" width="14" height="50.9" fill="#3b82f6" rx="2"/>
+        <!-- 자재 82 → h=8.2 -->
+        <rect x="87" y="121.8" width="14" height="8.2" fill="#f59e0b" rx="2"/>
+        <!-- 수리 131 → h=13.1 -->
+        <rect x="105" y="116.9" width="14" height="13.1" fill="#ef4444" rx="2"/>
+        <text x="90" y="148" font-size="9" fill="#64748b" text-anchor="middle">2월</text>
+        <!-- 합계 725 라벨 (꺾은선 포인트 위) -->
+        <text x="90" y="53" font-size="8.5" fill="#475569" text-anchor="middle" font-weight="600">725</text>
 
-        <!-- 3월 col x=210 -->
-        <rect x="200" y="59" width="30" height="51.3" fill="#3b82f6" rx="2"/><!-- 교환570 -->
-        <rect x="200" y="47.1" width="30" height="11.9" fill="#f59e0b" rx="0"/><!-- 자재132 -->
-        <rect x="200" y="33.8" width="30" height="13.3" fill="#ef4444" rx="0"/><!-- 수리147 -->
-        <text x="215" y="125" font-size="9" fill="#64748b" text-anchor="middle">3월</text>
-        <text x="215" y="31" font-size="9" fill="#64748b" text-anchor="middle" font-weight="600">851</text>
+        <!-- ===== 3월 ===== -->
+        <!-- 교환 570 → h=57 -->
+        <rect x="179" y="73" width="14" height="57" fill="#3b82f6" rx="2"/>
+        <!-- 자재 132 → h=13.2 -->
+        <rect x="197" y="116.8" width="14" height="13.2" fill="#f59e0b" rx="2"/>
+        <!-- 수리 147 → h=14.7 -->
+        <rect x="215" y="115.3" width="14" height="14.7" fill="#ef4444" rx="2"/>
+        <text x="200" y="148" font-size="9" fill="#64748b" text-anchor="middle">3월</text>
+        <text x="200" y="40" font-size="8.5" fill="#475569" text-anchor="middle" font-weight="600">851</text>
 
-        <!-- 4월 col x=320 -->
-        <rect x="310" y="47.5" width="30" height="62.5" fill="#3b82f6" rx="2"/><!-- 교환694 -->
-        <rect x="310" y="38" width="30" height="9.5" fill="#f59e0b" rx="0"/><!-- 자재106 -->
-        <rect x="310" y="22.7" width="30" height="15.3" fill="#ef4444" rx="0"/><!-- 수리170 -->
-        <text x="325" y="125" font-size="9" fill="#64748b" text-anchor="middle">4월</text>
-        <text x="325" y="20" font-size="9" fill="#b45309" text-anchor="middle" font-weight="700">973</text>
+        <!-- ===== 4월 ===== -->
+        <!-- 교환 694 → h=69.4 -->
+        <rect x="289" y="60.6" width="14" height="69.4" fill="#3b82f6" rx="2"/>
+        <!-- 자재 106 → h=10.6 -->
+        <rect x="307" y="119.4" width="14" height="10.6" fill="#f59e0b" rx="2"/>
+        <!-- 수리 170 → h=17 -->
+        <rect x="325" y="113" width="14" height="17" fill="#ef4444" rx="2"/>
+        <text x="310" y="148" font-size="9" fill="#64748b" text-anchor="middle">4월</text>
+        <text x="310" y="27" font-size="8.5" fill="#b45309" text-anchor="middle" font-weight="700">973</text>
 
-        <!-- 5월 col x=430 (강조) -->
-        <rect x="420" y="43.1" width="30" height="67.1" fill="#3b82f6" rx="2"/><!-- 교환745 -->
-        <rect x="420" y="33.7" width="30" height="9.4" fill="#f59e0b" rx="0"/><!-- 자재104 -->
-        <rect x="420" y="20.5" width="30" height="13.2" fill="#ef4444" rx="0"/><!-- 수리147 -->
-        <!-- 5월 강조 테두리 -->
-        <rect x="419" y="19.5" width="32" height="91.5" fill="none" stroke="#ef4444" stroke-width="1.5" rx="3" stroke-dasharray="3,2"/>
-        <text x="435" y="125" font-size="9" fill="#b91c1c" text-anchor="middle" font-weight="700">5월</text>
-        <text x="435" y="18" font-size="9" fill="#b91c1c" text-anchor="middle" font-weight="800">998</text>
+        <!-- ===== 5월 (강조) ===== -->
+        <!-- 교환 745 → h=74.5 -->
+        <rect x="399" y="55.5" width="14" height="74.5" fill="#3b82f6" rx="2"/>
+        <!-- 자재 104 → h=10.4 -->
+        <rect x="417" y="119.6" width="14" height="10.4" fill="#f59e0b" rx="2"/>
+        <!-- 수리 147 → h=14.7 -->
+        <rect x="435" y="115.3" width="14" height="14.7" fill="#ef4444" rx="2"/>
+        <!-- 5월 강조 점선 박스 -->
+        <rect x="396" y="52" width="56" height="81" fill="none" stroke="#ef4444" stroke-width="1.2" rx="3" stroke-dasharray="3,2"/>
+        <text x="424" y="148" font-size="9" fill="#b91c1c" text-anchor="middle" font-weight="700">5월</text>
+        <text x="424" y="47" font-size="8.5" fill="#b91c1c" text-anchor="middle" font-weight="800">998</text>
 
-        <!-- 합계 꺾은선 (각 월 막대 중심 상단) -->
-        <!-- 2월(725): x=105, y=35.4-4=31.4 / 3월(851): x=215, y=33.8-4=29.8 / 4월(973): x=325, y=22.7-4=18.7 / 5월(998): x=435, y=20.5-4=16.5 -->
-        <polyline points="105,31.4 215,29.8 325,18.7 435,16.5" fill="none" stroke="#0c1e3c" stroke-width="2" stroke-linejoin="round"/>
-        <!-- 포인트 -->
-        <circle cx="105" cy="31.4" r="3.5" fill="#0c1e3c"/>
-        <circle cx="215" cy="29.8" r="3.5" fill="#0c1e3c"/>
-        <circle cx="325" cy="18.7" r="3.5" fill="#b45309"/>
-        <circle cx="435" cy="16.5" r="3.5" fill="#b91c1c"/>
+        <!-- 합계 꺾은선: 각 월 그룹 중심 x, y=130-합계/10 -->
+        <!-- 2월(725): x=90, y=57.5 / 3월(851): x=200, y=44.9 / 4월(973): x=310, y=32.7 / 5월(998): x=424, y=30.2 -->
+        <polyline points="90,57.5 200,44.9 310,32.7 424,30.2" fill="none" stroke="#0c1e3c" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle cx="90"  cy="57.5" r="3" fill="#0c1e3c"/>
+        <circle cx="200" cy="44.9" r="3" fill="#0c1e3c"/>
+        <circle cx="310" cy="32.7" r="3" fill="#b45309"/>
+        <circle cx="424" cy="30.2" r="3" fill="#b91c1c"/>
       </svg>
 
-      <!-- 범례 -->
-      <div style="display:flex;gap:16px;margin-top:6px;justify-content:center;flex-wrap:wrap;">
+      <div style="display:flex;gap:16px;margin-top:4px;justify-content:center;flex-wrap:wrap;">
         <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3);"><span style="width:10px;height:10px;background:#3b82f6;border-radius:2px;display:inline-block;"></span>교환/환불</div>
         <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3);"><span style="width:10px;height:10px;background:#f59e0b;border-radius:2px;display:inline-block;"></span>자재출고</div>
         <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3);"><span style="width:10px;height:10px;background:#ef4444;border-radius:2px;display:inline-block;"></span>수리출고</div>
@@ -989,19 +1014,19 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         <div class="card-ttl" style="color:var(--red2);">👎 저평점 집중 제품 TOP 3</div>
         <div style="display:grid;gap:8px;margin-top:4px;">
           <div style="padding:8px 10px;background:rgba(200,30,30,0.05);border:1px solid rgba(200,30,30,0.15);border-radius:7px;">
-            <div style="font-size:10px;font-weight:700;color:var(--red2);">저평점 100%</div>
-            <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:2px;">낮잠이불 세트 카멜베어</div>
-            <div style="font-size:10px;color:var(--text3);">저평점 1건 / 평점 1.0</div>
+            <div style="font-size:10px;font-weight:700;color:var(--red2);">저평점 3% · 20건</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:2px;">휴대용 분유포트 500ml</div>
+            <div style="font-size:10px;color:var(--text3);">평균 4.87 · 전체 705건</div>
           </div>
           <div style="padding:8px 10px;background:rgba(200,30,30,0.05);border:1px solid rgba(200,30,30,0.15);border-radius:7px;">
-            <div style="font-size:10px;font-weight:700;color:var(--red2);">저평점 100%</div>
-            <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:2px;">[오가닉그라운드] 유기농 선크림</div>
-            <div style="font-size:10px;color:var(--text3);">저평점 1건 / 평점 3.0</div>
+            <div style="font-size:10px;font-weight:700;color:var(--red2);">저평점 5% · 14건</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:2px;">분리형 분유포트 500ml</div>
+            <div style="font-size:10px;color:var(--text3);">평균 4.76 · 전체 284건</div>
           </div>
           <div style="padding:8px 10px;background:rgba(200,30,30,0.05);border:1px solid rgba(200,30,30,0.15);border-radius:7px;">
-            <div style="font-size:10px;font-weight:700;color:var(--red2);">저평점 100%</div>
-            <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:2px;">TPU 퍼즐매트 60x60</div>
-            <div style="font-size:10px;color:var(--text3);">저평점 1건 / 평점 1.0</div>
+            <div style="font-size:10px;font-weight:700;color:var(--red2);">저평점 3% · 7건</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:2px;">아이스허그 듀얼팬 쿨시트</div>
+            <div style="font-size:10px;color:var(--text3);">평균 4.81 · 전체 216건</div>
           </div>
         </div>
       </div>
@@ -1029,7 +1054,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         </div>
         <div class="ai-pt">
           <div class="ai-dot">2</div>
-          <div class="ai-pt-txt"><b>쿨링커버 자재 수급 — 여름 시즌 공백 위기</b> — 아이스쿨시트 문의가 5월부터 78건 발생했으나, <span class="r">아기띠 쿨링커버 자재 입고 예정일이 7월 31일</span>입니다. 기안일(6.10) 기준 결재도 미완료 상태입니다. 7월이 여름 시즌 피크임을 감안하면 CS 처리 공백이 발생할 것이 자명합니다. <span class="r">긴급 일정 재조율이 필요합니다.</span></div>
+          <div class="ai-pt-txt"><b>쿨링커버 자재 수급 — 여름 시즌 공백 위기</b> — 아이스쿨시트 문의가 5월부터 78건 발생했으나, <span class="r">아기띠 쿨링커버 자재 입고 예정일이 7월 31일</span>입니다. 기안일 6.10, 기안승인 6.18 완료 상태입니다. 7월이 여름 시즌 피크임을 감안하면 CS 처리 공백이 발생할 것이 자명합니다. <span class="r">긴급 일정 재조율이 필요합니다.</span></div>
         </div>
         <div class="ai-pt">
           <div class="ai-dot">3</div>

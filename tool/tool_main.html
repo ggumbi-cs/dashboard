@@ -16,13 +16,22 @@
   --card-w:300px;
   --font-kr:'Noto Sans KR',sans-serif;--font-en:'Inter',sans-serif;
 }
+/* ── 라이트 모드 ── */
+body.light-mode {
+  --bg:#f0f4fa;--bg2:#ffffff;--bg3:#e8f0fb;--bg4:#dce8f7;
+  --border:rgba(26,78,180,0.12);--border2:rgba(26,78,180,0.25);
+  --cyan:#1a6eb8;--cyan-dim:rgba(26,110,184,0.08);
+  --gold:#b07800;--green:#007a50;--red:#c02020;--orange:#c05010;--purple:#5030b0;
+  --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6a9a;
+}
+
 html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:var(--font-kr);overflow-x:hidden;overflow-y:auto;}
 ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 
 /* ── 웰컴 배너 ── */
 #welcomeBar{
   position:relative;
-  background:linear-gradient(135deg,#0a1428 0%,#0d1830 40%,#0f1f3a 100%);
+  background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 40%,var(--bg3) 100%);
   border-bottom:1px solid var(--border);
   padding:28px 32px 24px;
   overflow:hidden;
@@ -34,9 +43,9 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .wb-left{flex:1;}
 .wb-eyebrow{font-size:10px;font-weight:600;font-family:var(--font-en);color:var(--cyan);text-transform:uppercase;letter-spacing:3px;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
 .wb-eyebrow::before{content:'';width:18px;height:1px;background:var(--cyan);}
-.wb-title{font-size:24px;font-weight:700;line-height:1.2;margin-bottom:6px;letter-spacing:-0.3px;}
+.wb-title{font-size:24px;font-weight:700;line-height:1.2;margin-bottom:6px;letter-spacing:-0.3px;color:var(--text);}
 .wb-title .hl{color:var(--cyan);}
-.wb-desc{font-size:12px;color:#a8c8e0;font-weight:400;line-height:1.7;}
+.wb-desc{font-size:12px;color:var(--text2);font-weight:400;line-height:1.7;}
 .wb-right{display:flex;gap:16px;align-items:center;flex-shrink:0;}
 .wb-stat{text-align:center;padding:10px 16px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:10px;}
 .wb-stat-val{font-size:22px;font-weight:700;font-family:var(--font-en);color:var(--text);line-height:1;}
@@ -434,6 +443,11 @@ const sliderState = { work:{idx:0}, return:{idx:0}, welfare:{idx:0} };
 // ─── postMessage ───
 window.addEventListener('message', e => {
   if (!e.data) return;
+  if (e.data.type === 'THEME') {
+    if (e.data.mode === 'light') document.body.classList.add('light-mode');
+    else document.body.classList.remove('light-mode');
+    return;
+  }
   if (e.data.type === 'SCRIPT_URL') {
     _isAdmin = e.data.userRole === 'admin';
     if (_isAdmin) document.body.classList.add('is-admin');

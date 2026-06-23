@@ -503,18 +503,6 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
   </div>
 
   <!-- 대분류1: AI -->
-  <div class="nav-group" id="ng-ai">
-    <div class="nav-parent">
-      <span style="font-size:15px;">🤖</span> AI <span class="nav-arrow">▾</span>
-    </div>
-    <div class="nav-dropdown">
-      <div class="nav-item" data-tab="AI보고" onclick="switchTab(this)">
-        <span class="nav-item-label">AI보고 <span style="font-size:10px;color:#4fc3f7;">★</span></span>
-        <button class="vis-btn" data-tab="AI보고" onclick="openVisModal(event,'AI보고')">⚙</button>
-      </div>
-
-    </div>
-  </div>
 
   <!-- 대분류2: 현황관리 -->
   <div class="nav-group" id="ng-status">
@@ -531,12 +519,8 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
         <button class="vis-btn" data-tab="스마트스토어" onclick="openVisModal(event,'스마트스토어')">⚙</button>
       </div>
       <div class="nav-item" data-tab="상담분석" onclick="switchTab(this)">
-        <span class="nav-item-label">상담실적 <span style="font-size:11px;color:#4fc3f7;" title="채널톡(ALF) 연동">🔗</span></span>
+        <span class="nav-item-label">채널톡 <span style="font-size:11px;color:#4fc3f7;" title="채널톡(ALF) 연동">🔗</span></span>
         <button class="vis-btn" data-tab="상담분석" onclick="openVisModal(event,'상담분석')">⚙</button>
-      </div>
-      <div class="nav-item admin-only-item" data-tab="상담실적" onclick="switchTab(this)" style="display:none;">
-        <span class="nav-item-label" style="color:#6a8faa;">상담실적(미사용)</span>
-        <button class="vis-btn" data-tab="상담실적" onclick="openVisModal(event,'상담실적')">⚙</button>
       </div>
       <div class="nav-item" data-tab="반품현황" onclick="switchTab(this)">
         <span class="nav-item-label">반품현황</span>
@@ -596,6 +580,17 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
 <div class="main">
 
   <div class="sidebar" id="sidebar">
+
+    <div id="statusSidebar" style="display:none;">
+      <div class="sb-label">현황관리</div>
+      <div class="sb-item" onclick="switchTabByName('주요kpi', this)">주요KPI</div>
+      <div class="sb-item" onclick="switchTabByName('스마트스토어', this)">스마트스토어</div>
+      <div class="sb-item" onclick="switchTabByName('상담분석', this)">채널톡 🔗</div>
+      <div class="sb-divider"></div>
+      <div class="sb-item" onclick="switchTabByName('반품현황', this)">반품현황</div>
+      <div class="sb-item" onclick="switchTabByName('처리현황', this)">처리현황</div>
+      <div class="sb-item" onclick="switchTabByName('품질관리', this)">품질관리</div>
+    </div>
 
     <div id="dashSidebar">
       <div class="sb-label">연간현황</div>
@@ -915,7 +910,7 @@ function loadHome() {
   // 권한없음 레이어 닫기
   hideNoPermission();
   // 사이드바 먼저 숨김
-  ['dashSidebar','toolSidebar','onceSidebar','smtSidebar','issueSidebar','devSidebar'].forEach(id => {
+  ['dashSidebar','statusSidebar','toolSidebar','onceSidebar','smtSidebar','issueSidebar','devSidebar'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
@@ -1174,8 +1169,9 @@ function _applyTab(tabName, role) {
     toolNav('tool/tool_main.html', null);
     setTimeout(() => loadAndBroadcastCSV(false), 0);
   } else if (isSmtTab) {
-    const firstItem = document.querySelector('#smtSidebar .sb-item');
-    if (firstItem) smtNav(firstItem.getAttribute('onclick').match(/'([^']+)'/)[1], firstItem);
+    // dashSidebar 사용 — 날짜 신호로 iframe 로드
+    updateFrame();
+    updateHeader();
   } else if (isMeetTab) {
     buildMeetSidebar(tabName);
   } else {
@@ -1216,19 +1212,21 @@ function _switchSidebar(tabName) {
   // 사이드바 영역 복원 (Home에서 왔을 경우) — 단, 팀Tool은 tool_main 로드 시 별도 처리
   const sb = document.getElementById('sidebar');
   if (sb) sb.style.display = '';
-  const isToolTab  = tabName === '팀Tool';
-  const isDevTab   = tabName === '개발자';
-  const isOnceTab  = tabName === '건별보고';
-  const isIssueTab = tabName === '건별Issue';
-  const isSmtTab   = tabName === '스마트스토어';
-  const isMeetTab  = tabName === '주피미' || tabName === '월피미';
-  document.getElementById('dashSidebar').style.display  = (isToolTab || isOnceTab || isIssueTab || isDevTab || isSmtTab || isMeetTab) ? 'none' : 'block';
-  document.getElementById('toolSidebar').style.display  = isToolTab  ? 'block' : 'none';
-  document.getElementById('onceSidebar').style.display  = isOnceTab  ? 'block' : 'none';
-  document.getElementById('issueSidebar').style.display = isIssueTab ? 'block' : 'none';
-  document.getElementById('devSidebar').style.display   = isDevTab   ? 'block' : 'none';
-  document.getElementById('smtSidebar').style.display   = isSmtTab   ? 'block' : 'none';
-  document.getElementById('meetSidebar').style.display  = isMeetTab  ? 'block' : 'none';
+  const isToolTab   = tabName === '팀Tool';
+  const isDevTab    = tabName === '개발자';
+  const isOnceTab   = tabName === '건별보고';
+  const isIssueTab  = tabName === '건별Issue';
+  const isSmtTab    = tabName === '스마트스토어';
+  const isMeetTab   = tabName === '주피미' || tabName === '월피미';
+  const isStatusTab = tabName === '주요kpi' || tabName === '스마트스토어' || tabName === '상담분석';
+  document.getElementById('dashSidebar').style.display    = (isToolTab || isOnceTab || isIssueTab || isDevTab || isMeetTab || isStatusTab) ? 'none' : 'block';
+  document.getElementById('statusSidebar').style.display  = isStatusTab ? 'block' : 'none';
+  document.getElementById('toolSidebar').style.display    = isToolTab  ? 'block' : 'none';
+  document.getElementById('onceSidebar').style.display    = isOnceTab  ? 'block' : 'none';
+  document.getElementById('issueSidebar').style.display   = isIssueTab ? 'block' : 'none';
+  document.getElementById('devSidebar').style.display     = isDevTab   ? 'block' : 'none';
+  document.getElementById('smtSidebar').style.display     = 'none';
+  document.getElementById('meetSidebar').style.display    = isMeetTab  ? 'block' : 'none';
 }
 
 function showNoPermission(tabName) {
@@ -1407,6 +1405,15 @@ function onceNav(path, el) {
   const _h = () => { frame.removeEventListener('load',_h); sendThemeToFrame(); };
   frame.addEventListener('load', _h);
 }
+function switchTabByName(tabName, sidebarEl) {
+  // statusSidebar 아이템 active 표시
+  document.querySelectorAll('#statusSidebar .sb-item').forEach(i => i.classList.remove('active'));
+  if (sidebarEl) sidebarEl.classList.add('active');
+  // nav-item 찾아서 switchTab 호출
+  const navEl = document.querySelector(`.nav-item[data-tab="${tabName}"]`);
+  if (navEl) switchTab(navEl);
+}
+
 function smtNav(path, el) {
   if (el) { document.querySelectorAll('#smtSidebar .sb-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); }
   const frame = document.getElementById('mainFrame');
@@ -1688,7 +1695,7 @@ document.getElementById('mainFrame').addEventListener('load', function() {
     if (state.tab !== '') return; // 탭이 선택된 상태면 무시
     const sb = document.getElementById('sidebar');
     if (sb) sb.style.display = 'none';
-    ['dashSidebar','toolSidebar','onceSidebar','smtSidebar','issueSidebar','devSidebar'].forEach(id => {
+    ['dashSidebar','statusSidebar','toolSidebar','onceSidebar','smtSidebar','issueSidebar','devSidebar'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });

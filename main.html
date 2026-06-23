@@ -410,13 +410,16 @@ let _pickerTarget = null, _pickerType = null, _pickerIdx = null;
 window.addEventListener('message', e => {
   if (!e.data) return;
   if (e.data.type === 'THEME') {
-    if (e.data.mode === 'light') document.body.classList.add('light-mode');
-    else document.body.classList.remove('light-mode');
+    if (e.data.mode === 'light') { document.body.classList.add('light-mode'); sessionStorage.setItem('_theme','light'); }
+    else { document.body.classList.remove('light-mode'); sessionStorage.setItem('_theme','dark'); }
     return;
   }
   if (e.data.type !== 'SCRIPT_URL') return;
   _scriptUrl = e.data.url || '';
   _userRole  = e.data.userRole || '';
+  // 캐싱
+  if (_scriptUrl) sessionStorage.setItem('_gasUrl', _scriptUrl);
+  if (_userRole)  sessionStorage.setItem('_userRole', _userRole);
   _isAdmin   = (_userRole === 'admin');
   if (_isAdmin) document.body.classList.add('is-admin');
   applyUserInfo();
@@ -726,8 +729,19 @@ function showToast(msg) {
   _toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
 }
 
-// fallback
-setTimeout(()=>{ if(!_scriptUrl) useDefaults(); },800);
+// fallback — sessionStorage 캐시 우선 사용
+setTimeout(() => {
+  if (!_scriptUrl) {
+    _scriptUrl = sessionStorage.getItem('_gasUrl') || '';
+    _userRole  = sessionStorage.getItem('_userRole') || '';
+    _isAdmin   = (_userRole === 'admin');
+    if (_isAdmin) document.body.classList.add('is-admin');
+    const t = sessionStorage.getItem('_theme') || localStorage.getItem('ggumbi-theme') || 'dark';
+    if (t === 'light') document.body.classList.add('light-mode');
+    applyUserInfo();
+    loadSettings();
+  }
+}, 400);
 </script>
 </body>
 </html>

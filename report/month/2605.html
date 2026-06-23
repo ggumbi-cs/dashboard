@@ -675,96 +675,110 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       <div class="sec-num">불량접수 5월 998건</div>
     </div>
 
-    <!-- SVG 복합 차트: 3개 별개 막대 + 합계 꺾은선 -->
-    <div class="card" style="margin-bottom:10px;">
-      <div class="card-ttl">불량 접수 월별 추이 (교환/환불 · 자재출고 · 수리출고 · 합계 추이선)</div>
-      <svg viewBox="0 0 500 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;margin-top:6px;">
-        <!--
-          Y축: 0~1100, 차트영역 y=20~130 (높이110px)
-          스케일: 1px = 1100/110 = 10
-          바닥 y=130, 값v → 막대높이 = v/10, 막대상단y = 130 - v/10
+    <!-- 차트 + AI 코멘트 2분할 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;">
 
-          월별 그룹 중심 x: 2월=90, 3월=200, 4월=310, 5월=420
-          막대너비=14, 간격=4
-          교환(파랑) x=중심-21, 자재(주황) x=중심-3, 수리(빨강) x=중심+15
-
-          데이터:
-          2월: 교환509, 자재82, 수리131, 합계725 → 합계y=130-72.5=57.5
-          3월: 교환570, 자재132, 수리147, 합계851 → 합계y=130-85.1=44.9
-          4월: 교환694, 자재106, 수리170, 합계973 → 합계y=130-97.3=32.7
-          5월: 교환745, 자재104, 수리147, 합계998 → 합계y=130-99.8=30.2
+      <!-- 차트 카드 -->
+      <div class="card">
+        <div class="card-ttl">불량 접수 월별 추이</div>
+        <!-- viewBox: x=0~260, y=0~55 / 차트영역 y=6~46(높이40) / Y스케일: 1100→40px, 1px=27.5 / 바닥y=46
+          그룹중심: 2월=68, 3월=118, 4월=168, 5월=218
+          막대너비=7, 간격=2 / 교환x=중심-11, 자재x=중심-1, 수리x=중심+9
+          교환h=값/27.5, 자재h=값/27.5, 수리h=값/27.5
+          2월(725): 교환509→h=18.5 자재82→h=3.0 수리131→h=4.8 합계y=46-26.4=19.6
+          3월(851): 교환570→h=20.7 자재132→h=4.8 수리147→h=5.3 합계y=46-31.0=15.0
+          4월(973): 교환694→h=25.2 자재106→h=3.9 수리170→h=6.2 합계y=46-35.4=10.6
+          5월(998): 교환745→h=27.1 자재104→h=3.8 수리147→h=5.3 합계y=46-36.2=9.8
         -->
+        <!-- viewBox 높이 62으로 늘려 라벨 공간 확보
+             Y스케일 동일: 1100→40px, 바닥y=50
+             합계라벨은 꺾은선 포인트 y-3.5 위치
+             2월합계y=50-26.4=23.6 → 라벨y=20.1
+             3월합계y=50-31.0=19.0 → 라벨y=15.5
+             4월합계y=50-35.4=14.6 → 라벨y=11.1
+             5월합계y=50-36.2=13.8 → 라벨y=10.3
+        -->
+        <svg viewBox="0 0 260 62" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;margin-top:6px;">
+          <!-- 가이드라인 -->
+          <line x1="32" y1="10" x2="252" y2="10" stroke="#e2e8f0" stroke-width="0.4"/>
+          <line x1="32" y1="20" x2="252" y2="20" stroke="#e2e8f0" stroke-width="0.4"/>
+          <line x1="32" y1="30" x2="252" y2="30" stroke="#e2e8f0" stroke-width="0.4"/>
+          <line x1="32" y1="40" x2="252" y2="40" stroke="#e2e8f0" stroke-width="0.4"/>
+          <line x1="32" y1="50" x2="252" y2="50" stroke="#cbd5e1" stroke-width="0.6"/>
+          <!-- Y축 라벨 -->
+          <text x="30" y="13"  style="font-size:4px !important;" fill="#94a3b8" text-anchor="end">1,100</text>
+          <text x="30" y="23"  style="font-size:4px !important;" fill="#94a3b8" text-anchor="end">825</text>
+          <text x="30" y="33"  style="font-size:4px !important;" fill="#94a3b8" text-anchor="end">550</text>
+          <text x="30" y="43"  style="font-size:4px !important;" fill="#94a3b8" text-anchor="end">275</text>
 
-        <!-- 가이드라인 -->
-        <line x1="50" y1="20" x2="490" y2="20" stroke="#e2e8f0" stroke-width="0.7"/>
-        <line x1="50" y1="47.5" x2="490" y2="47.5" stroke="#e2e8f0" stroke-width="0.7"/>
-        <line x1="50" y1="75" x2="490" y2="75" stroke="#e2e8f0" stroke-width="0.7"/>
-        <line x1="50" y1="102.5" x2="490" y2="102.5" stroke="#e2e8f0" stroke-width="0.7"/>
-        <line x1="50" y1="130" x2="490" y2="130" stroke="#cbd5e1" stroke-width="1"/>
-        <!-- Y축 라벨 -->
-        <text x="44" y="23" font-size="8" fill="#94a3b8" text-anchor="end">1,100</text>
-        <text x="44" y="50" font-size="8" fill="#94a3b8" text-anchor="end">825</text>
-        <text x="44" y="78" font-size="8" fill="#94a3b8" text-anchor="end">550</text>
-        <text x="44" y="105" font-size="8" fill="#94a3b8" text-anchor="end">275</text>
+          <!-- 2월 -->
+          <rect x="57"  y="31.5" width="7" height="18.5" fill="#3b82f6" rx="1"/>
+          <rect x="67"  y="47.0" width="7" height="3.0"  fill="#f59e0b" rx="1"/>
+          <rect x="77"  y="45.2" width="7" height="4.8"  fill="#ef4444" rx="1"/>
+          <text x="72"  y="58"   style="font-size:5px !important;" fill="#64748b" text-anchor="middle">2월</text>
+          <text x="72"  y="20.1" style="font-size:5px !important;" fill="#64748b" text-anchor="middle" font-weight="600">725</text>
 
-        <!-- ===== 2월 ===== -->
-        <!-- 교환/환불 509 → h=50.9 -->
-        <rect x="69" y="79.1" width="14" height="50.9" fill="#3b82f6" rx="2"/>
-        <!-- 자재 82 → h=8.2 -->
-        <rect x="87" y="121.8" width="14" height="8.2" fill="#f59e0b" rx="2"/>
-        <!-- 수리 131 → h=13.1 -->
-        <rect x="105" y="116.9" width="14" height="13.1" fill="#ef4444" rx="2"/>
-        <text x="90" y="148" font-size="9" fill="#64748b" text-anchor="middle">2월</text>
-        <!-- 합계 725 라벨 (꺾은선 포인트 위) -->
-        <text x="90" y="53" font-size="8.5" fill="#475569" text-anchor="middle" font-weight="600">725</text>
+          <!-- 3월 -->
+          <rect x="107" y="29.3" width="7" height="20.7" fill="#3b82f6" rx="1"/>
+          <rect x="117" y="45.2" width="7" height="4.8"  fill="#f59e0b" rx="1"/>
+          <rect x="127" y="44.7" width="7" height="5.3"  fill="#ef4444" rx="1"/>
+          <text x="122" y="58"   style="font-size:5px !important;" fill="#64748b" text-anchor="middle">3월</text>
+          <text x="122" y="15.5" style="font-size:5px !important;" fill="#64748b" text-anchor="middle" font-weight="600">851</text>
 
-        <!-- ===== 3월 ===== -->
-        <!-- 교환 570 → h=57 -->
-        <rect x="179" y="73" width="14" height="57" fill="#3b82f6" rx="2"/>
-        <!-- 자재 132 → h=13.2 -->
-        <rect x="197" y="116.8" width="14" height="13.2" fill="#f59e0b" rx="2"/>
-        <!-- 수리 147 → h=14.7 -->
-        <rect x="215" y="115.3" width="14" height="14.7" fill="#ef4444" rx="2"/>
-        <text x="200" y="148" font-size="9" fill="#64748b" text-anchor="middle">3월</text>
-        <text x="200" y="40" font-size="8.5" fill="#475569" text-anchor="middle" font-weight="600">851</text>
+          <!-- 4월 -->
+          <rect x="157" y="24.8" width="7" height="25.2" fill="#3b82f6" rx="1"/>
+          <rect x="167" y="46.1" width="7" height="3.9"  fill="#f59e0b" rx="1"/>
+          <rect x="177" y="43.8" width="7" height="6.2"  fill="#ef4444" rx="1"/>
+          <text x="172" y="58"   style="font-size:5px !important;" fill="#64748b" text-anchor="middle">4월</text>
+          <text x="172" y="11.1" style="font-size:5px !important;" fill="#b45309" text-anchor="middle" font-weight="700">973</text>
 
-        <!-- ===== 4월 ===== -->
-        <!-- 교환 694 → h=69.4 -->
-        <rect x="289" y="60.6" width="14" height="69.4" fill="#3b82f6" rx="2"/>
-        <!-- 자재 106 → h=10.6 -->
-        <rect x="307" y="119.4" width="14" height="10.6" fill="#f59e0b" rx="2"/>
-        <!-- 수리 170 → h=17 -->
-        <rect x="325" y="113" width="14" height="17" fill="#ef4444" rx="2"/>
-        <text x="310" y="148" font-size="9" fill="#64748b" text-anchor="middle">4월</text>
-        <text x="310" y="27" font-size="8.5" fill="#b45309" text-anchor="middle" font-weight="700">973</text>
+          <!-- 5월 (강조) -->
+          <rect x="207" y="22.9" width="7" height="27.1" fill="#3b82f6" rx="1"/>
+          <rect x="217" y="46.2" width="7" height="3.8"  fill="#f59e0b" rx="1"/>
+          <rect x="227" y="44.7" width="7" height="5.3"  fill="#ef4444" rx="1"/>
+          <rect x="204" y="20.0" width="33" height="33"  fill="none" stroke="#ef4444" stroke-width="0.7" rx="1.5" stroke-dasharray="2,1.5"/>
+          <text x="222" y="58"   style="font-size:5px !important;" fill="#b91c1c" text-anchor="middle" font-weight="700">5월</text>
+          <text x="222" y="10.3" style="font-size:5px !important;" fill="#b91c1c" text-anchor="middle" font-weight="800">998</text>
 
-        <!-- ===== 5월 (강조) ===== -->
-        <!-- 교환 745 → h=74.5 -->
-        <rect x="399" y="55.5" width="14" height="74.5" fill="#3b82f6" rx="2"/>
-        <!-- 자재 104 → h=10.4 -->
-        <rect x="417" y="119.6" width="14" height="10.4" fill="#f59e0b" rx="2"/>
-        <!-- 수리 147 → h=14.7 -->
-        <rect x="435" y="115.3" width="14" height="14.7" fill="#ef4444" rx="2"/>
-        <!-- 5월 강조 점선 박스 -->
-        <rect x="396" y="52" width="56" height="81" fill="none" stroke="#ef4444" stroke-width="1.2" rx="3" stroke-dasharray="3,2"/>
-        <text x="424" y="148" font-size="9" fill="#b91c1c" text-anchor="middle" font-weight="700">5월</text>
-        <text x="424" y="47" font-size="8.5" fill="#b91c1c" text-anchor="middle" font-weight="800">998</text>
+          <!-- 합계 꺾은선 -->
+          <polyline points="72,23.6 122,19.0 172,14.6 222,13.8" fill="none" stroke="#0c1e3c" stroke-width="0.9" stroke-linejoin="round"/>
+          <circle cx="72"  cy="23.6" r="1.3" fill="#0c1e3c"/>
+          <circle cx="122" cy="19.0" r="1.3" fill="#0c1e3c"/>
+          <circle cx="172" cy="14.6" r="1.3" fill="#b45309"/>
+          <circle cx="222" cy="13.8" r="1.3" fill="#b91c1c"/>
+        </svg>
 
-        <!-- 합계 꺾은선: 각 월 그룹 중심 x, y=130-합계/10 -->
-        <!-- 2월(725): x=90, y=57.5 / 3월(851): x=200, y=44.9 / 4월(973): x=310, y=32.7 / 5월(998): x=424, y=30.2 -->
-        <polyline points="90,57.5 200,44.9 310,32.7 424,30.2" fill="none" stroke="#0c1e3c" stroke-width="1.8" stroke-linejoin="round"/>
-        <circle cx="90"  cy="57.5" r="3" fill="#0c1e3c"/>
-        <circle cx="200" cy="44.9" r="3" fill="#0c1e3c"/>
-        <circle cx="310" cy="32.7" r="3" fill="#b45309"/>
-        <circle cx="424" cy="30.2" r="3" fill="#b91c1c"/>
-      </svg>
-
-      <div style="display:flex;gap:16px;margin-top:4px;justify-content:center;flex-wrap:wrap;">
-        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3);"><span style="width:10px;height:10px;background:#3b82f6;border-radius:2px;display:inline-block;"></span>교환/환불</div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3);"><span style="width:10px;height:10px;background:#f59e0b;border-radius:2px;display:inline-block;"></span>자재출고</div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3);"><span style="width:10px;height:10px;background:#ef4444;border-radius:2px;display:inline-block;"></span>수리출고</div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text);font-weight:700;"><span style="width:18px;height:2px;background:#0c1e3c;display:inline-block;"></span>합계 추이</div>
+        <!-- 범례 중앙 -->
+        <div style="display:flex;gap:10px;margin-top:5px;flex-wrap:wrap;justify-content:center;">
+          <div style="display:flex;align-items:center;gap:3px;font-size:9px;color:var(--text3);"><span style="width:8px;height:8px;background:#3b82f6;border-radius:1px;display:inline-block;"></span>교환/환불</div>
+          <div style="display:flex;align-items:center;gap:3px;font-size:9px;color:var(--text3);"><span style="width:8px;height:8px;background:#f59e0b;border-radius:1px;display:inline-block;"></span>자재출고</div>
+          <div style="display:flex;align-items:center;gap:3px;font-size:9px;color:var(--text3);"><span style="width:8px;height:8px;background:#ef4444;border-radius:1px;display:inline-block;"></span>수리출고</div>
+          <div style="display:flex;align-items:center;gap:3px;font-size:9px;color:var(--text);font-weight:600;"><span style="width:14px;height:1.5px;background:#0c1e3c;display:inline-block;"></span>합계</div>
+        </div>
       </div>
+
+      <!-- AI 코멘트 카드 -->
+      <div class="ai-box" style="display:flex;flex-direction:column;gap:10px;">
+        <div class="ai-bx-hdr" style="margin-bottom:0;">
+          <div style="width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,var(--ai1),var(--ai2));display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;">🤖</div>
+          <div class="ai-bx-lbl">✦ AI 분석 · 불량 추이</div>
+        </div>
+        <div style="display:grid;gap:7px;">
+          <div class="ai-pt">
+            <div class="ai-dot" style="width:15px;height:15px;font-size:8px;margin-top:2px;">1</div>
+            <div class="ai-pt-txt"><b>5개월 연속 증가</b> — 725→851→973→998건. 4월부터 기울기가 가팔라졌으며 1,000건 돌파가 임박합니다.</div>
+          </div>
+          <div class="ai-pt">
+            <div class="ai-dot" style="width:15px;height:15px;font-size:8px;margin-top:2px;">2</div>
+            <div class="ai-pt-txt"><b>교환/환불이 구조적 주도</b> — 매월 전체의 70% 이상을 차지합니다. <span class="r">휴대용 분유포트(558건·55.9%)</span>의 충전·전원·누수 불량이 핵심 원인으로, 제조사 구조 개선 없이는 해소되지 않습니다.</div>
+          </div>
+          <div class="ai-pt">
+            <div class="ai-dot" style="width:15px;height:15px;font-size:8px;margin-top:2px;">3</div>
+            <div class="ai-pt-txt"><span class="a">분리형 분유포트 신규 진입(51건)</span> — 신제품 초기 불량 패턴으로 6월 이후 증가 가능성 높습니다. 선제 모니터링 필요.</div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- 제품별 TOP 5 -->
@@ -955,34 +969,34 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       <!-- 평점 분포 -->
       <div class="card">
         <div class="card-ttl">평점 분포</div>
-        <div class="bar-list">
-          <div class="bar-row">
-            <div class="bar-lbl" style="width:50px;white-space:nowrap;">⭐⭐⭐⭐⭐ 5점</div>
+        <div style="display:grid;gap:7px;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="font-size:10px;color:var(--text2);white-space:nowrap;flex-shrink:0;">⭐×5</div>
             <div class="bar-track"><div class="bar-fill" style="width:89%;background:#22c55e;"></div></div>
             <div class="bar-val">2,388</div>
           </div>
-          <div class="bar-row">
-            <div class="bar-lbl" style="width:50px;white-space:nowrap;">⭐⭐⭐⭐ 4점</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="font-size:10px;color:var(--text2);white-space:nowrap;flex-shrink:0;">⭐×4</div>
             <div class="bar-track"><div class="bar-fill" style="width:7%;background:#86efac;"></div></div>
             <div class="bar-val">191</div>
           </div>
-          <div class="bar-row">
-            <div class="bar-lbl" style="width:50px;white-space:nowrap;">⭐⭐⭐ 3점</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="font-size:10px;color:var(--text2);white-space:nowrap;flex-shrink:0;">⭐×3</div>
             <div class="bar-track"><div class="bar-fill" style="width:2%;background:#fbbf24;"></div></div>
             <div class="bar-val">57</div>
           </div>
-          <div class="bar-row">
-            <div class="bar-lbl" style="width:50px;white-space:nowrap;">⭐⭐ 2점</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="font-size:10px;color:var(--text2);white-space:nowrap;flex-shrink:0;">⭐×2</div>
             <div class="bar-track"><div class="bar-fill" style="width:0.5%;background:#f97316;"></div></div>
             <div class="bar-val">3</div>
           </div>
-          <div class="bar-row">
-            <div class="bar-lbl" style="width:50px;white-space:nowrap;">⭐ 1점</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="font-size:10px;color:var(--text2);white-space:nowrap;flex-shrink:0;">⭐×1</div>
             <div class="bar-track"><div class="bar-fill" style="width:1%;background:#ef4444;"></div></div>
             <div class="bar-val">29</div>
           </div>
         </div>
-        <div style="margin-top:8px;font-size:10.5px;color:var(--text3);">
+        <div style="margin-top:8px;font-size:10px;color:var(--text3);line-height:1.6;">
           최고: <b>미니 수유등(구름)</b> 5.0 (15건)<br><b>LED 분유쉐이커+포트 세트</b> 5.0 (15건)
         </div>
       </div>

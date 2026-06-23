@@ -346,7 +346,8 @@ svg.chart{width:100%;display:block;}
     <div class="hdr-right">
       <span class="load-badge loading" id="loadBadge"><span class="spinner"></span> 로딩 중...</span>
       <button class="hdr-btn" onclick="fetchAll()">↺ 새로고침</button>
-      <button class="ai-btn" id="aiBtn" onclick="runAllAI()" disabled>✦ AI 분석</button>
+      <button class="hdr-btn" id="saveBtn" onclick="saveSummaryData()" style="background:rgba(16,163,74,0.2);border-color:rgba(16,163,74,0.5);color:#6ee7b7;" disabled>💾 마감저장</button>
+      <button class="ai-btn" id="aiBtn" onclick="runAllAI()" disabled>✦ AI 분析</button>
     </div>
   </div>
 </div>
@@ -822,6 +823,7 @@ async function fetchAll() {
     setLoadBadge('ok','✓ 데이터 로드 완료');
     document.getElementById('aiBtn').disabled    = false;
     document.getElementById('runAllBtn').disabled = false;
+    document.getElementById('saveBtn').disabled   = false;
     await loadAllInsightsFromSheet();
 
   } catch(e) {
@@ -1202,6 +1204,61 @@ async function loadInsightFromSheet(type){
 }
 
 async function loadAllInsightsFromSheet(){for(const type of AI_TYPES)await loadInsightFromSheet(type);}
+
+function saveSummaryData() {
+  if (!CH_DATA) { showToast('데이터를 먼저 로드해주세요', 'err'); return; }
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.textContent = '저장 중...';
+
+  const period = DATA.period;
+  const saveData = {
+    total:      CH_DATA.total      || 0,
+    alfRate:    CH_DATA.alfRate    || 0,
+    alfHandled: CH_DATA.alf?.handled || 0,
+    alfUnresolve: CH_DATA.alf?.unresolve || 0,
+    humHandled: CH_DATA.human?.handled || 0,
+    avgRespSec: CH_DATA.human?.avgRespSec || 0,
+    avgCloseSec:CH_DATA.human?.avgCloseSec || 0,
+    cxScore:    CH_DATA.cx?.score  || 0,
+    cxTotal:    CH_DATA.cx?.total  || 0,
+    tags:       CH_DATA.tags       || [],
+    channels:   CH_DATA.channels   || [],
+    meet:       CH_DATA.meet       || {},
+    agents:     (CH_DATA.agents||[]).map(a=>({
+      name:a.name, handled:a.handled,
+      avgRespSec:a.avgRespSec||0, avgCloseSec:a.avgCloseSec||0, cx:a.cx||0
+    })),
+    periodType: DATA.type,
+    savedAt:    new Date().toLocaleString('ko-KR')
+  };
+
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({
+      action:  'saveSummary',
+      tab:     '채널톡',
+      period:  period,
+      data:    saveData
+    })
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (res.ok) {
+      showToast(`✓ 마감저장 완료 (${period})`, 'ok');
+      btn.textContent = '💾 마감저장';
+    } else {
+      showToast('저장 실패: ' + (res.msg||''), 'err');
+      btn.textContent = '💾 마감저장';
+    }
+    btn.disabled = false;
+  })
+  .catch(e => {
+    showToast('저장 오류: ' + e.message, 'err');
+    btn.textContent = '💾 마감저장';
+    btn.disabled = false;
+  });
+}
 
 function buildDataSummary(){
   if(!CH_DATA)return'데이터 없음';

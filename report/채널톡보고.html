@@ -811,9 +811,25 @@ async function fetchAll() {
   showApiError('');
 
   try {
+    // 월간: 주차별 집계를 위해 앞뒤 주 경계까지 확장
+    let fetchStart = DATA.startDate, fetchEnd = DATA.endDate;
+    if (DATA.type === 'monthly') {
+      // startDate가 속한 주의 토요일(주 시작)
+      const s = new Date(DATA.startDate);
+      const sDow = s.getDay(); // 0=일
+      const diffToSat = sDow === 6 ? 0 : -(sDow + 1);
+      const sat = new Date(s); sat.setDate(s.getDate() + diffToSat);
+      // endDate가 속한 주의 금요일(주 끝)
+      const e = new Date(DATA.endDate);
+      const eDow = e.getDay();
+      const diffToFri = eDow <= 5 ? (5 - eDow) : (5 - eDow + 7);
+      const fri = new Date(e); fri.setDate(e.getDate() + diffToFri);
+      fetchStart = sat;
+      fetchEnd   = fri;
+    }
     const qs = `?action=channelTalk&data=${encodeURIComponent(JSON.stringify({
-      startDate: fmtDateFull(DATA.startDate),
-      endDate:   fmtDateFull(DATA.endDate),
+      startDate: fmtDateFull(fetchStart),
+      endDate:   fmtDateFull(fetchEnd),
       type:      DATA.type,
     }))}`;
     const res  = await fetch(SCRIPT_URL + qs);

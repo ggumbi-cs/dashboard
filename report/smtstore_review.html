@@ -171,9 +171,9 @@
     flex: 1;
   }
   .review-content.related {
-    font-size: 12px; color: var(--text2); padding: 10px 12px;
-    background: #eef2fd; border-radius: 6px; border-left: 3px solid var(--accent);
-    margin-top: 8px;
+    font-size: 11px; color: var(--text3); padding: 8px 12px;
+    background: var(--surface2); border-radius: 6px; border-top: 1px dashed var(--border);
+    margin-top: 4px; font-style: italic;
   }
   .review-footer {
     display: flex; align-items: center; justify-content: space-between;
@@ -314,6 +314,60 @@
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+  /* ── 마감전송 버튼 ── */
+  .close-btn-wrap {
+    position: relative;
+  }
+  .close-btn {
+    background: linear-gradient(135deg, #4470e8, #7c5cdb);
+    color: #fff; border: none; border-radius: 8px;
+    padding: 8px 16px; font-family: var(--font); font-size: 13px; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; gap: 6px;
+    box-shadow: 0 2px 8px rgba(68,112,232,.3);
+    transition: opacity .2s;
+  }
+  .close-btn:hover { opacity: .9; }
+  .close-popup {
+    display: none;
+    position: absolute; right: 0; top: calc(100% + 8px);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.12);
+    width: 240px; z-index: 999;
+  }
+  .close-popup.open { display: block; }
+  .close-popup-title {
+    font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 12px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .close-popup-x {
+    background: none; border: none; cursor: pointer; color: var(--text3);
+    font-size: 16px; line-height: 1; padding: 0 2px;
+  }
+  .close-popup-x:hover { color: var(--red); }
+  .close-popup-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .close-popup select {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 7px 10px; font-family: var(--font);
+    font-size: 12px; color: var(--text); outline: none;
+  }
+  .close-popup select:focus { border-color: var(--accent); }
+  .close-send-btn {
+    width: 100%; background: linear-gradient(135deg, #4470e8, #7c5cdb);
+    color: #fff; border: none; border-radius: 6px; padding: 9px;
+    font-family: var(--font); font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: opacity .2s;
+  }
+  .close-send-btn:hover { opacity: .88; }
+  .close-send-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .close-status {
+    font-size: 11px; text-align: center; margin-top: 8px; min-height: 16px;
+    color: var(--text3);
+  }
+  .close-status.ok  { color: var(--green); }
+  .close-status.err { color: var(--red); }
 </style>
 </head>
 <body>
@@ -323,6 +377,18 @@
   <div class="header-left">
     <div class="header-logo">📊 리뷰 분석</div>
     <div class="header-sub">스마트스토어 · 꿈비 / 리코코 / 바바디토</div>
+  </div>
+  <div class="close-btn-wrap">
+    <button class="close-btn" onclick="toggleClosePopup(event)">📤 마감전송 ▾</button>
+    <div class="close-popup">
+      <div class="close-popup-title"><span>📅 월간 리뷰 마감 전송</span><button class="close-popup-x" onclick="toggleClosePopup()">✕</button></div>
+      <div class="close-popup-row">
+        <select id="closeYear"></select>
+        <select id="closeMonth"></select>
+      </div>
+      <button class="close-send-btn" id="closeSendBtn" onclick="sendClosingData()">전송하기</button>
+      <div class="close-status" id="closeStatus"></div>
+    </div>
   </div>
   <div class="data-status">
     <div class="dot"></div>
@@ -446,7 +512,7 @@
 
   <!-- ③ 상품별 분석 탭 -->
   <div id="tab-product" class="tab-panel">
-    <div class="filter-bar" style="margin-bottom:16px;">
+    <div class="filter-bar" id="productFilterBar" style="margin-bottom:16px; position:sticky; top:57px; z-index:90; border-radius:0; margin-left:-24px; margin-right:-24px; padding-left:24px; padding-right:24px; border-left:none; border-right:none;">
       <input id="productSearch" type="text" placeholder="🔍  상품명 검색..." oninput="filterProductCards()">
       <select id="productBrandFilter" onchange="filterProductCards()">
         <option value="">브랜드 전체</option>
@@ -798,6 +864,7 @@ async function loadData() {
     document.getElementById('dataStatus').textContent = `${total.toLocaleString()}건 · ${timeStr} 불러오기 완료`;
 
     renderDashboard();
+    initClosingSelector();
     applyFilters();
     filterProductCards();
     renderLowRating();
@@ -1108,7 +1175,7 @@ function makeReviewCard(r) {
       </div>
       ${r.photo ? `<div class="photos-row">${makePhotoHTML(r.photo)}</div>` : ''}
       <div class="review-content">${r.content || '(내용 없음)'}</div>
-      ${r.relContent ? `<div class="review-content related"><span style="font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.4px;margin-bottom:4px;display:block;">📅 한달 사용 후기</span>${r.relContent}</div>` : ''}
+      ${r.relContent ? `<div class="review-content related">이전 리뷰 · ${r.relContent}</div>` : ''}
       <div class="review-footer">
         <div style="display:flex; gap:8px; align-items:center;">
           <span class="review-date">${dateStr}</span>
@@ -1320,6 +1387,169 @@ function renderLowRating() {
 // ============================================================
 // 초기화
 // ============================================================
+
+// ============================================================
+// 마감전송 — GAS 분석용요약 시트로 월별 집계 전송
+// ============================================================
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec';
+
+
+function toggleClosePopup(e) {
+  if (e) e.stopPropagation();
+  const popup = document.querySelector('.close-popup');
+  if (!popup) return;
+  popup.classList.toggle('open');
+}
+// 팝업 외부 클릭 시 닫기
+document.addEventListener('click', function(e) {
+  const wrap = document.querySelector('.close-btn-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    const popup = document.querySelector('.close-popup');
+    if (popup) popup.classList.remove('open');
+  }
+});
+
+function initClosingSelector() {
+  const now = new Date();
+  const yearSel  = document.getElementById('closeYear');
+  const monthSel = document.getElementById('closeMonth');
+  if (!yearSel || !monthSel) return;
+
+  // 년도: 2026 ~ 현재년도
+  yearSel.innerHTML = '';
+  for (let y = 2026; y <= now.getFullYear(); y++) {
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = y + '년';
+    if (y === now.getFullYear()) opt.selected = true;
+    yearSel.appendChild(opt);
+  }
+  // 월: 1~12
+  monthSel.innerHTML = '';
+  for (let m = 1; m <= 12; m++) {
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = m + '월';
+    if (m === now.getMonth() + 1) opt.selected = true;
+    monthSel.appendChild(opt);
+  }
+}
+
+function buildMonthlyData(year, month) {
+  // 해당 월 리뷰만 필터
+  const monthReviews = allReviews.filter(r => {
+    if (!r.dateObj) return false;
+    return r.dateObj.getFullYear() === year && r.dateObj.getMonth() + 1 === month;
+  });
+
+  if (monthReviews.length === 0) return null;
+
+  const total = monthReviews.length;
+
+  // 1. 평점 분포
+  const ratingDist = {1:0, 2:0, 3:0, 4:0, 5:0};
+  monthReviews.forEach(r => { if (ratingDist[r.rating] !== undefined) ratingDist[r.rating]++; });
+  const avgRating = monthReviews.reduce((s,r) => s+r.rating, 0) / total;
+
+  // 2. 저평점
+  const lowCount = monthReviews.filter(r => r.rating <= 3).length;
+  const lowRate  = Math.round(lowCount / total * 100);
+
+  // 3. 상품별 집계
+  const prodMap = {};
+  monthReviews.forEach(r => {
+    if (!prodMap[r.shortName]) prodMap[r.shortName] = {name:r.shortName, brand:r.brand, total:0, sum:0, low:0};
+    prodMap[r.shortName].total++;
+    prodMap[r.shortName].sum += r.rating;
+    if (r.rating <= 3) prodMap[r.shortName].low++;
+  });
+  const prodList = Object.values(prodMap).map(p => ({
+    ...p, avg: Math.round(p.sum / p.total * 100) / 100,
+    lowRate: Math.round(p.low / p.total * 100)
+  }));
+
+  // 4. TOP10 (리뷰 많은순)
+  const top10 = [...prodList].sort((a,b) => b.total - a.total).slice(0, 10)
+    .map(p => ({ name: p.name, cnt: p.total, avg: p.avg }));
+
+  // 5. 긍정 TOP3 (리뷰 3건 이상 중 평점 높은순)
+  const posTop3 = [...prodList].filter(p => p.total >= 3)
+    .sort((a,b) => b.avg - a.avg || b.total - a.total).slice(0, 3)
+    .map(p => ({ name: p.name, avg: p.avg, cnt: p.total }));
+
+  // 6. 부정 TOP3 (저평점 비율 높은순)
+  const negTop3 = [...prodList].filter(p => p.low > 0)
+    .sort((a,b) => b.lowRate - a.lowRate || b.low - a.low).slice(0, 3)
+    .map(p => ({ name: p.name, lowCnt: p.low, lowRate: p.lowRate, avg: p.avg }));
+
+  // 7. 월별 추이 (해당 월은 주별 분해)
+  const weekMap = {};
+  monthReviews.forEach(r => {
+    if (!r.dateObj) return;
+    // 해당 월의 주차 (1~5)
+    const d = r.dateObj.getDate();
+    const week = Math.ceil(d / 7);
+    const key = `${month}월 ${week}주`;
+    if (!weekMap[key]) weekMap[key] = {cnt:0, sum:0};
+    weekMap[key].cnt++;
+    weekMap[key].sum += r.rating;
+  });
+  const trend = Object.entries(weekMap).map(([k,v]) => ({
+    label: k, cnt: v.cnt, avg: Math.round(v.sum/v.cnt*100)/100
+  }));
+
+  return {
+    period: `${String(year).slice(2)}.${String(month).padStart(2,'0')}월`,
+    year, month, total,
+    avgRating: Math.round(avgRating * 100) / 100,
+    ratingDist,
+    lowCount, lowRate,
+    top10, posTop3, negTop3, trend
+  };
+}
+
+async function sendClosingData() {
+  const year  = parseInt(document.getElementById('closeYear').value);
+  const month = parseInt(document.getElementById('closeMonth').value);
+  const btn    = document.getElementById('closeSendBtn');
+  const status = document.getElementById('closeStatus');
+
+  const data = buildMonthlyData(year, month);
+  if (!data) {
+    status.className = 'close-status err';
+    status.textContent = `${year}년 ${month}월 리뷰 데이터가 없습니다`;
+    return;
+  }
+
+  btn.disabled = true;
+  status.className = 'close-status';
+  status.textContent = '전송 중...';
+
+  try {
+    const payload = {
+      action: 'saveSummary',
+      tab: '스마트스토어',
+      period: `${String(year).slice(2)}.${String(month).padStart(2,'0')}월`,
+      data
+    };
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+    if (json.ok) {
+      status.className = 'close-status ok';
+      status.textContent = `✅ ${year}년 ${month}월 전송 완료`;
+    } else {
+      throw new Error(json.msg || '오류');
+    }
+  } catch(e) {
+    status.className = 'close-status err';
+    status.textContent = '❌ ' + e.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 loadData();
 </script>
 </body>

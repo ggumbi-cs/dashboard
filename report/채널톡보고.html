@@ -419,11 +419,12 @@ svg.chart{width:100%;display:block;}
   </div>
 
   <!-- ② 인입 추이 + VOC 태그 -->
-  <div class="grid-52">
-    <div class="card">
+  <div class="grid-52" id="trendTagGrid">
+    <!-- 월간: 주차별 꺾은선 + 요일별 바차트 / 그 외: 일별 꺾은선 -->
+    <div class="card" id="trendCard">
       <div class="card-title">
-        인입 추이
-        <div class="trend-legend">
+        <span id="trendCardTitle">인입 추이</span>
+        <div class="trend-legend" id="trendLegend">
           <div class="trend-leg-item"><div class="trend-leg-dot" style="background:var(--ch);"></div>전체</div>
           <div class="trend-leg-item"><div class="trend-leg-dot" style="background:var(--blue3);"></div>ALF</div>
           <div class="trend-leg-item"><div class="trend-leg-dot" style="background:var(--teal);"></div>상담원</div>
@@ -432,7 +433,12 @@ svg.chart{width:100%;display:block;}
       <svg id="trendChart" class="chart" style="height:180px;"></svg>
       <div id="trendEmpty" class="empty-state" style="display:none;"><div class="icon">📈</div><p>데이터 없음</p></div>
     </div>
-    <div class="card">
+    <!-- 월간 전용: 요일별 인입량 (평일만) -->
+    <div class="card" id="dowCard" style="display:none;">
+      <div class="card-title">요일별 인입 분포 <span style="font-size:10px;color:var(--textL);font-weight:400;">평균 건수</span></div>
+      <svg id="dowChart" class="chart" style="height:180px;"></svg>
+    </div>
+    <div class="card" id="tagCard">
       <div class="card-title">VOC 태그 TOP 10</div>
       <div id="tagBarWrap" class="mini-bar-wrap">
         <div class="skeleton" style="width:90%;"></div>
@@ -875,6 +881,32 @@ function renderKPI(d) {
 }
 
 function renderTrend(trend) {
+  const isMonthly = DATA.type === 'monthly';
+  const trendCard = document.getElementById('trendCard');
+  const dowCard   = document.getElementById('dowCard');
+  const tagCard   = document.getElementById('tagCard');
+  const grid      = document.getElementById('trendTagGrid');
+
+  if (isMonthly) {
+    // 월간: 주차별 꺾은선(절반) + 요일별 바차트(절반) + VOC태그
+    grid.style.gridTemplateColumns = '5fr 5fr 4fr';
+    dowCard.style.display = '';
+    document.getElementById('trendCardTitle').textContent = '주차별 인입 추이';
+    document.getElementById('trendLegend').style.display = '';
+    renderWeeklyTrend(trend);
+    renderDOWChart(trend);
+  } else {
+    // 주간/연간: 기존 일별/월별 꺾은선
+    grid.style.gridTemplateColumns = '';
+    dowCard.style.display = 'none';
+    document.getElementById('trendCardTitle').textContent = '인입 추이';
+    document.getElementById('trendLegend').style.display = '';
+    renderLineTrend(trend);
+  }
+}
+
+// 기존 꺾은선 차트 (주간/연간)
+function renderLineTrend(trend) {
   const svg = document.getElementById('trendChart');
   if (!trend || trend.length === 0) {
     document.getElementById('trendEmpty').style.display='';
@@ -903,8 +935,8 @@ function renderTrend(trend) {
   html+=`<defs><linearGradient id="tGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00b2ff"/><stop offset="100%" stop-color="#00b2ff" stop-opacity="0"/></linearGradient></defs>`;
   html+=`<polygon points="${areaTop} ${areaBot}" fill="url(#tGrad)" opacity="0.15"/>`;
   html+=`<polyline points="${pts('total')}" fill="none" stroke="var(--ch)" stroke-width="2" stroke-linejoin="round"/>`;
-  if (trend[0].alf!==undefined) html+=`<polyline points="${pts('alf')}" fill="none" stroke="var(--blue3)" stroke-width="1.5" stroke-dasharray="4,3" stroke-linejoin="round"/>`;
-  if (trend[0].human!==undefined) html+=`<polyline points="${pts('human')}" fill="none" stroke="var(--teal)" stroke-width="1.5" stroke-dasharray="2,2" stroke-linejoin="round"/>`;
+  if (trend[0]&&trend[0].alf!==undefined) html+=`<polyline points="${pts('alf')}" fill="none" stroke="var(--blue3)" stroke-width="1.5" stroke-dasharray="4,3" stroke-linejoin="round"/>`;
+  if (trend[0]&&trend[0].human!==undefined) html+=`<polyline points="${pts('human')}" fill="none" stroke="var(--teal)" stroke-width="1.5" stroke-dasharray="2,2" stroke-linejoin="round"/>`;
   trend.forEach((d,i)=>{
     const x=px(i),y=py(d.total),isLast=i===trend.length-1;
     html+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${isLast?4:2.5}" fill="${isLast?'var(--ch)':'#fff'}" stroke="var(--ch)" stroke-width="${isLast?0:1.5}"/>`;
@@ -912,6 +944,140 @@ function renderTrend(trend) {
     const show=trend.length<=14||i%Math.ceil(trend.length/14)===0||isLast;
     if (show) html+=`<text x="${x.toFixed(1)}" y="${(H-3).toFixed(1)}" text-anchor="middle" font-size="9" fill="${isLast?'#475569':'#94a3b8'}">${d.date||''}</text>`;
   });
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML=html;
+}
+
+// 월간 전용: 주차별 꺾은선 (금요일 기준 주차)
+function renderWeeklyTrend(trend) {
+  const svg = document.getElementById('trendChart');
+  if (!trend||trend.length===0){svg.style.display='none';return;}
+  svg.style.display='';
+
+  // 금요일(일자)만 추출해서 주차별 합산
+  // trend 배열: date="5/1", "5/2" ... → 금요일만 찍기
+  // 실제로는 일별 데이터를 주차별로 묶어서 합산
+  const weekMap = {}; // key: "5/2", "5/9" ... (금요일)
+  const startDate = DATA.startDate;
+  if (!startDate) { renderLineTrend(trend); return; }
+
+  trend.forEach(d => {
+    // d.date = "5/1" 형식
+    const parts = d.date.split('/');
+    if (parts.length < 2) return;
+    const m = parseInt(parts[0]), day = parseInt(parts[1]);
+    const dt = new Date(startDate.getFullYear(), m-1, day);
+    const dow = dt.getDay(); // 0=일,1=월,...,5=금,6=토
+    // 이 날짜가 속하는 주의 금요일 찾기
+    const diffToFri = (5 - dow + 7) % 7;
+    const fri = new Date(dt); fri.setDate(dt.getDate() + diffToFri);
+    const friKey = `${fri.getMonth()+1}/${fri.getDate()}`;
+    if (!weekMap[friKey]) weekMap[friKey] = {date:friKey, total:0, alf:0, human:0};
+    weekMap[friKey].total += d.total;
+    weekMap[friKey].alf   += d.alf||0;
+    weekMap[friKey].human += d.human||0;
+  });
+
+  const weeks = Object.values(weekMap).sort((a,b)=>{
+    const [am,ad]=a.date.split('/').map(Number);
+    const [bm,bd]=b.date.split('/').map(Number);
+    return am!==bm?am-bm:ad-bd;
+  });
+
+  if (weeks.length === 0) { renderLineTrend(trend); return; }
+
+  const W=svg.getBoundingClientRect().width||300;
+  const H=180,padL=36,padR=12,padT=18,padB=28;
+  const pH=H-padT-padB, pW=W-padL-padR;
+  const maxVal=Math.max(...weeks.map(d=>d.total),1);
+  const yMax=Math.ceil(maxVal/50)*50+50;
+  const xStep=pW/(weeks.length-1||1);
+  const px=i=>padL+i*xStep;
+  const py=v=>padT+pH*(1-v/yMax);
+
+  let html='';
+  [0,yMax*0.5,yMax].forEach(v=>{
+    const y=py(v);
+    html+=`<line x1="${padL}" x2="${W-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>`;
+    html+=`<text x="${padL-4}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="9" fill="#94a3b8">${Math.round(v)}</text>`;
+  });
+
+  const areaTop=weeks.map((d,i)=>`${px(i).toFixed(1)},${py(d.total).toFixed(1)}`).join(' ');
+  const areaBot=`${px(weeks.length-1).toFixed(1)},${(padT+pH).toFixed(1)} ${padL.toFixed(1)},${(padT+pH).toFixed(1)}`;
+  html+=`<defs><linearGradient id="wGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00b2ff"/><stop offset="100%" stop-color="#00b2ff" stop-opacity="0"/></linearGradient></defs>`;
+  html+=`<polygon points="${areaTop} ${areaBot}" fill="url(#wGrad)" opacity="0.15"/>`;
+  html+=`<polyline points="${weeks.map((d,i)=>`${px(i).toFixed(1)},${py(d.total).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--ch)" stroke-width="2.5" stroke-linejoin="round"/>`;
+  html+=`<polyline points="${weeks.map((d,i)=>`${px(i).toFixed(1)},${py(d.alf).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--blue3)" stroke-width="1.5" stroke-dasharray="4,3" stroke-linejoin="round"/>`;
+  html+=`<polyline points="${weeks.map((d,i)=>`${px(i).toFixed(1)},${py(d.human).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--teal)" stroke-width="1.5" stroke-dasharray="2,2" stroke-linejoin="round"/>`;
+
+  weeks.forEach((d,i)=>{
+    const x=px(i),y=py(d.total);
+    html+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="#fff" stroke="var(--ch)" stroke-width="2"/>`;
+    html+=`<text x="${x.toFixed(1)}" y="${(y-9).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="700" fill="#0090cc">${fmtN(d.total)}</text>`;
+    html+=`<text x="${x.toFixed(1)}" y="${(H-3).toFixed(1)}" text-anchor="middle" font-size="9" fill="#475569">~${d.date}</text>`;
+  });
+
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML=html;
+}
+
+// 월간 전용: 요일별 인입 분포 바차트
+function renderDOWChart(trend) {
+  const svg = document.getElementById('dowChart');
+  if (!svg) return;
+  const dowLabels = ['일','월','화','수','목','금','토'];
+  const dowColors = ['#94a3b8','#3b82f6','#0d9488','#7c3aed','#d97706','#00b2ff','#94a3b8'];
+  const dowSum  = [0,0,0,0,0,0,0];
+  const dowCnt  = [0,0,0,0,0,0,0];
+
+  const startDate = DATA.startDate;
+  if (!startDate) return;
+
+  trend.forEach(d=>{
+    const parts=d.date.split('/');
+    if(parts.length<2)return;
+    const m=parseInt(parts[0]),day=parseInt(parts[1]);
+    const dt=new Date(startDate.getFullYear(),m-1,day);
+    const dow=dt.getDay();
+    dowSum[dow]+=d.total;
+    dowCnt[dow]++;
+  });
+
+  // 평일만(월~금) 표시
+  const labels=['월','화','수','목','금'];
+  const vals=[
+    dowCnt[1]>0?Math.round(dowSum[1]/dowCnt[1]):0,
+    dowCnt[2]>0?Math.round(dowSum[2]/dowCnt[2]):0,
+    dowCnt[3]>0?Math.round(dowSum[3]/dowCnt[3]):0,
+    dowCnt[4]>0?Math.round(dowSum[4]/dowCnt[4]):0,
+    dowCnt[5]>0?Math.round(dowSum[5]/dowCnt[5]):0,
+  ];
+  const colors=['#3b82f6','#0d9488','#7c3aed','#d97706','#00b2ff'];
+
+  const W=svg.getBoundingClientRect().width||260;
+  const H=180,padL=28,padR=12,padT=18,padB=28;
+  const pH=H-padT-padB,pW=W-padL-padR;
+  const maxVal=Math.max(...vals,1);
+  const yMax=Math.ceil(maxVal/10)*10+10;
+  const barW=Math.floor(pW/labels.length*0.6);
+  const gap=pW/labels.length;
+
+  let html='';
+  [0,yMax*0.5,yMax].forEach(v=>{
+    const y=padT+pH*(1-v/yMax);
+    html+=`<line x1="${padL}" x2="${W-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>`;
+    html+=`<text x="${padL-4}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="9" fill="#94a3b8">${Math.round(v)}</text>`;
+  });
+
+  labels.forEach((lbl,i)=>{
+    const cx=padL+gap*(i+0.5);
+    const barH=pH*(vals[i]/yMax);
+    const by=padT+pH-barH;
+    html+=`<rect x="${(cx-barW/2).toFixed(1)}" y="${by.toFixed(1)}" width="${barW}" height="${barH.toFixed(1)}" fill="${colors[i]}" rx="3" opacity="0.85"/>`;
+    html+=`<text x="${cx.toFixed(1)}" y="${(by-5).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="700" fill="${colors[i]}">${vals[i]}</text>`;
+    html+=`<text x="${cx.toFixed(1)}" y="${(H-3).toFixed(1)}" text-anchor="middle" font-size="10" fill="#475569" font-weight="600">${lbl}</text>`;
+  });
+
   svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
   svg.innerHTML=html;
 }
@@ -1121,7 +1287,7 @@ function showToast(msg,state){
   toast.textContent=msg;toast.style.opacity='1';
   clearTimeout(toast._t);toast._t=setTimeout(()=>{toast.style.opacity='0';},2500);
 }
-window.addEventListener('resize',()=>{if(CH_DATA)renderTrend(CH_DATA.trend||[]);});
+window.addEventListener('resize',()=>{if(CH_DATA){renderTrend(CH_DATA.trend||[]);}});
 
 // ════════════════════════════════════
 // AI 인사이트

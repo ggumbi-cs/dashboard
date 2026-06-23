@@ -23,7 +23,6 @@
 }
 html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto Sans KR',sans-serif;color:var(--text);font-size:13px;line-height:1.5;}
 
-/* ══ 헤더 ══ */
 .header{background:linear-gradient(118deg,#0c1e3c 0%,#1a3a6c 45%,#0d4f6e 100%);padding:24px 32px 20px;position:relative;overflow:hidden;}
 .header::after{content:'';position:absolute;right:-60px;top:-60px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(26,86,219,0.22) 0%,transparent 70%);pointer-events:none;}
 .header::before{content:'';position:absolute;left:0;bottom:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);}
@@ -39,7 +38,6 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .hdr-chip.warn{background:rgba(239,68,68,0.18);border-color:rgba(239,68,68,0.4);color:#fca5a5;}
 .hdr-chip.warn b{color:#fca5a5;}
 
-/* ══ AI 배너 ══ */
 .ai-banner{padding:18px 32px;background:linear-gradient(90deg,rgba(67,56,202,0.06),rgba(15,118,110,0.03));border-bottom:1px solid rgba(67,56,202,0.12);display:flex;align-items:flex-start;gap:14px;}
 .ai-orb{flex-shrink:0;width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--ai1),var(--ai2));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 14px rgba(67,56,202,0.25);margin-top:1px;}
 .ai-lbl{font-size:9.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(90deg,var(--ai1),var(--ai2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;}
@@ -49,23 +47,20 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .ai-body .warn{color:var(--red2);font-weight:600;}
 .ai-body .good{color:var(--green2);font-weight:600;}
 
-/* ══ 바디 레이아웃 ══ */
+/* AI 인라인 태그 */
+.ai-tag{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,rgba(67,56,202,0.1),rgba(15,118,110,0.07));border:1px solid rgba(67,56,202,0.2);border-radius:4px;padding:1px 6px;font-size:9.5px;font-weight:700;color:var(--ai1);vertical-align:middle;white-space:nowrap;}
+
 .body{padding:22px 28px;display:grid;gap:22px;}
 
-/* ══ 섹션 헤더 ══ */
 .sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
 .sec-acc{width:3px;border-radius:2px;flex-shrink:0;}
 .sec-ttl{font-size:14px;font-weight:800;color:var(--text);}
 .sec-num{font-size:12px;font-weight:700;color:var(--text3);background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.07);padding:2px 9px;border-radius:3px;margin-left:auto;}
 
-/* ══ 카드 ══ */
 .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}
 .card-ttl{font-size:9.5px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px;}
 
-/* ══ KPI 그리드 ══ */
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-.kpi-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-.kpi-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:14px 16px;}
 .kpi-lbl{font-size:9.5px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
 .kpi-val{font-size:22px;font-weight:900;font-family:'Inter',sans-serif;color:var(--text);line-height:1.1;margin-bottom:4px;}
@@ -78,7 +73,6 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .kpi-bar{height:3px;border-radius:2px;margin-top:8px;background:var(--border2);}
 .kpi-bar-fill{height:100%;border-radius:2px;}
 
-/* ══ 비교표 ══ */
 .cmp-table{width:100%;border-collapse:collapse;font-size:12px;}
 .cmp-table th{background:var(--card3);font-size:10px;font-weight:700;color:var(--text3);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border2);}
 .cmp-table th:not(:first-child){text-align:right;}
@@ -86,13 +80,11 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .cmp-table td:not(:first-child){text-align:right;font-family:'Inter',sans-serif;font-weight:600;}
 .cmp-table tr:last-child td{border-bottom:none;}
 .cmp-table .row-lbl{font-size:11.5px;font-weight:600;color:var(--text2);}
-.cmp-table .row-sub{font-size:10px;color:var(--text4);margin-top:1px;}
 .cmp-table .val-may{color:var(--blue2);font-weight:700;}
 .cmp-table .delta-up{color:var(--green2);font-size:10px;}
 .cmp-table .delta-dn{color:var(--red2);font-size:10px;}
 .cmp-table .delta-neu{color:var(--text3);font-size:10px;}
 
-/* ══ 바 차트 (가로) ══ */
 .bar-list{display:grid;gap:7px;}
 .bar-row{display:flex;align-items:center;gap:8px;}
 .bar-lbl{font-size:11px;color:var(--text2);width:130px;flex-shrink:0;line-height:1.3;}
@@ -102,11 +94,6 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .bar-val{font-size:11px;font-weight:700;font-family:'Inter',sans-serif;color:var(--text);width:44px;text-align:right;flex-shrink:0;}
 .bar-pct{font-size:10px;color:var(--text3);width:32px;text-align:right;flex-shrink:0;}
 
-/* ══ 미니 스파크바 ══ */
-.spark-row{display:flex;align-items:flex-end;gap:3px;height:32px;}
-.spark-bar{border-radius:2px 2px 0 0;min-width:6px;flex:1;}
-
-/* ══ 에이전트 테이블 ══ */
 .agent-table{width:100%;border-collapse:collapse;font-size:11.5px;}
 .agent-table th{background:var(--card3);font-size:10px;font-weight:700;color:var(--text3);padding:7px 10px;text-align:right;border-bottom:1px solid var(--border2);}
 .agent-table th:first-child{text-align:left;}
@@ -115,15 +102,12 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .agent-table tr:last-child td{border-bottom:none;}
 .cx-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;}
 
-/* ══ 배지 ══ */
 .bdg{display:inline-flex;align-items:center;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;}
 .bdg-r{background:var(--redbg);color:var(--red2);border:1px solid var(--redborder);}
 .bdg-a{background:var(--amberbg);color:var(--amber);border:1px solid rgba(180,83,9,0.2);}
 .bdg-b{background:rgba(26,86,219,0.07);color:var(--blue2);border:1px solid rgba(26,86,219,0.2);}
 .bdg-g{background:var(--greenbg);color:var(--green2);border:1px solid rgba(22,101,52,0.2);}
-.bdg-p{background:var(--purplebg);color:var(--purple);border:1px solid rgba(91,33,182,0.2);}
 
-/* ══ 인사이트 블록 ══ */
 .insight-block{border-radius:8px;padding:12px 14px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start;}
 .insight-block:last-child{margin-bottom:0;}
 .insight-block.pos{background:rgba(22,101,52,0.05);border:1px solid rgba(22,101,52,0.15);}
@@ -136,7 +120,6 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .insight-txt .g{color:var(--green2);font-weight:600;}
 .insight-txt .a{color:var(--amber);font-weight:600;}
 
-/* ══ AI 포인트 ══ */
 .ai-box{border:1px solid rgba(67,56,202,0.18);background:linear-gradient(135deg,rgba(67,56,202,0.04),rgba(15,118,110,0.03));border-radius:10px;padding:18px 20px;}
 .ai-bx-hdr{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
 .ai-bx-lbl{font-size:9.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(90deg,var(--ai1),var(--ai2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
@@ -149,7 +132,18 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .ai-pt-txt .r{color:var(--red2);font-weight:600;}
 .ai-pt-txt .g{color:var(--green2);font-weight:600;}
 
-/* ══ 품질 제품 카드 ══ */
+/* 인라인 코멘트 박스 */
+.comment-box{display:flex;gap:8px;align-items:flex-start;padding:9px 12px;border-radius:7px;margin-top:8px;}
+.comment-box.warn{background:rgba(200,30,30,0.05);border:1px solid rgba(200,30,30,0.15);}
+.comment-box.amber{background:rgba(180,83,9,0.05);border:1px solid rgba(180,83,9,0.18);}
+.comment-box.info{background:rgba(67,56,202,0.04);border:1px solid rgba(67,56,202,0.15);}
+.comment-ai{flex-shrink:0;width:20px;height:20px;border-radius:6px;background:linear-gradient(135deg,var(--ai1),var(--ai2));display:flex;align-items:center;justify-content:center;font-size:10px;margin-top:1px;}
+.comment-txt{font-size:11.5px;color:var(--text2);line-height:1.65;}
+.comment-txt strong{color:var(--text);font-weight:700;}
+.comment-txt .r{color:var(--red2);font-weight:600;}
+.comment-txt .a{color:var(--amber);font-weight:600;}
+.comment-txt .g{color:var(--green2);font-weight:600;}
+
 .qc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .qc-card{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:13px 15px;}
 .qc-name{font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;line-height:1.4;}
@@ -158,25 +152,16 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .qc-top{font-size:10.5px;color:var(--text3);margin-top:6px;line-height:1.6;}
 .qc-top b{color:var(--red2);font-weight:600;}
 
-/* ══ 추이 미니차트 ══ */
-.trend-chart{display:flex;gap:6px;height:48px;align-items:flex-end;margin-top:10px;}
-.tc-col{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;}
-.tc-bar{width:100%;border-radius:3px 3px 0 0;min-height:4px;}
-.tc-lbl{font-size:8.5px;color:var(--text4);white-space:nowrap;}
-
-/* ══ 반품 ══ */
 .return-row{display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--border2);}
 .return-row:last-child{border-bottom:none;}
 .return-lbl{font-size:11.5px;color:var(--text2);flex:1;}
 .return-val{font-size:12px;font-weight:700;font-family:'Inter',sans-serif;color:var(--text);}
 .return-pct{font-size:10px;color:var(--text4);width:36px;text-align:right;}
 
-/* ══ 푸터 ══ */
 .footer{text-align:center;padding:20px;font-size:10px;color:var(--text4);border-top:1px solid var(--border);background:var(--card2);}
 
 @media(max-width:860px){
   .kpi-grid{grid-template-columns:repeat(2,1fr);}
-  .kpi-grid-3{grid-template-columns:1fr 1fr;}
   .qc-grid{grid-template-columns:1fr 1fr;}
   .body{padding:16px;}
 }
@@ -184,7 +169,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 </head>
 <body>
 
-<!-- ══ 헤더 ══ -->
+<!-- 헤더 -->
 <div class="header">
   <div class="hdr-row">
     <div>
@@ -202,17 +187,16 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
   </div>
 </div>
 
-<!-- ══ AI 종합 분석 ══ -->
+<!-- AI 종합 분석 배너 -->
 <div class="ai-banner">
   <div class="ai-orb">🤖</div>
   <div>
     <div class="ai-lbl">✦ AI 종합 분석 · 2026년 5월</div>
     <div class="ai-body">
-      5월은 <strong>총 인입량이 전월 대비 +11.8% 증가</strong>하며 역대 최고 수준을 기록했습니다.
-      통화 응답률은 79.3%로 개선됐고 반품교환율도 3.87%로 소폭 하락하는 긍정적 흐름이 있었으나,
-      <span class="warn">ALF 미해결 건수가 1,262건으로 전월 대비 +248건 급증</span>하며 자동화 품질 문제가 부각됩니다.
-      <span class="warn">고객만족도(CX)는 4.74→4.61점으로 하락</span>했고, 평균 응답 대기 시간도 20분에서 26분대로 늘어났습니다.
-      불량 접수는 5개월 연속 증가 추세이며, <span class="hl">분리형 분유포트 신제품의 기구 불량이 신규 이슈</span>로 등장한 점은 주목이 필요합니다.
+      5월 총 인입 6,942건은 역대 최고치이나, <strong>인입 증가는 곧 불만·불량·정보 부족 문의 증가</strong>를 의미하므로 단순 수치 증가를 긍정으로 해석해선 안 됩니다.
+      통화 응답률 79.3% 개선, 반품교환율 3.87% 소폭 하락은 긍정적이나,
+      <span class="warn">ALF 미해결 +248건 급증·CX 4.61점 하락·평균 응답 대기 26분대</span>는 동시에 악화됐습니다.
+      불량 접수 5개월 연속 증가 중이며, <span class="hl">쿨링커버 자재 입고 예정일 7월 말 — 여름 시즌 대응에 심각한 공백 우려</span>됩니다.
     </div>
   </div>
 </div>
@@ -227,18 +211,17 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       <div class="sec-num">채널톡 기준 · 전월 대비</div>
     </div>
 
-    <!-- KPI 4개 -->
     <div class="kpi-grid" style="margin-bottom:10px;">
       <div class="kpi-card">
         <div class="kpi-lbl">총 인입</div>
-        <div class="kpi-val">6,942</div>
-        <div class="kpi-cmp">4월 6,209 &nbsp;<b class="up">▲ +733건 (+11.8%)</b></div>
-        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:89%;background:var(--blue3);"></div></div>
+        <div class="kpi-val" style="color:var(--red2);">6,942</div>
+        <div class="kpi-cmp">4월 6,209 &nbsp;<b class="dn">▲ +733건 (+11.8%)</b></div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:89%;background:var(--red3);"></div></div>
       </div>
       <div class="kpi-card">
         <div class="kpi-lbl">인간 상담 처리</div>
         <div class="kpi-val">2,630</div>
-        <div class="kpi-cmp">4월 2,582 &nbsp;<b class="up">▲ +48건</b></div>
+        <div class="kpi-cmp">4월 2,582 &nbsp;<b class="dn">▲ +48건</b></div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:62%;background:var(--teal);"></div></div>
       </div>
       <div class="kpi-card">
@@ -255,7 +238,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       </div>
     </div>
 
-    <div class="kpi-grid" style="margin-bottom:14px;">
+    <div class="kpi-grid" style="margin-bottom:10px;">
       <div class="kpi-card">
         <div class="kpi-lbl">고객만족도 (CX)</div>
         <div class="kpi-val" style="color:var(--amber);">4.61</div>
@@ -273,7 +256,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         <div class="kpi-cmp">4월 130분 35초 &nbsp;<b class="up">▲ 소폭 개선</b></div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-lbl">상담원별 상담수 <span style="font-size:9px;color:var(--text4);">상위</span></div>
+        <div class="kpi-lbl">상담원별 처리 상위</div>
         <div class="kpi-val sm" style="font-size:14px;margin-top:4px;">J 743 / C 684 / H 530</div>
         <div class="kpi-cmp">P 406 &nbsp;·&nbsp; K 177</div>
       </div>
@@ -309,8 +292,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
           <div class="bar-val">195</div>
         </div>
         <div class="bar-row">
-          <div class="bar-lbl">아이스쿨시트</div>
-          <div class="bar-track"><div class="bar-fill" style="width:16%;background:#06b6d4;"></div></div>
+          <div class="bar-lbl" style="color:var(--amber);font-weight:600;">아이스쿨시트 🔶</div>
+          <div class="bar-track"><div class="bar-fill" style="width:16%;background:#f97316;"></div></div>
           <div class="bar-val">78</div>
         </div>
         <div class="bar-row">
@@ -334,8 +317,22 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
           <div class="bar-val">62</div>
         </div>
       </div>
-      <div style="margin-top:10px;padding:8px 10px;background:rgba(239,68,68,0.05);border-radius:6px;border:1px solid rgba(239,68,68,0.1);font-size:11px;color:var(--text2);">
-        ▲ <b>아이스쿨시트(78건)</b>가 5월 신규 진입 — 여름 시즌 제품으로 쿨시트 관련 문의·불량 문의 증가세 주목 필요
+
+      <!-- 아이스쿨시트 AI 코멘트 -->
+      <div class="comment-box warn" style="margin-top:10px;">
+        <div class="comment-ai">🤖</div>
+        <div class="comment-txt">
+          <strong>🔶 아이스쿨시트(78건) 5월 신규 진입 — 자재 수급 위기</strong><br>
+          여름 시즌 제품 문의가 이미 78건 유입됐으나, <span class="r">아기띠 쿨링커버 CS처리 자재(팬·리모컨·스크류)의 입고 예정일이 7월 31일</span>로 확인됩니다. 기안일 6월 10일 기준 결재조차 완료되지 않은 상태입니다. 여름 성수기가 7월에 집중됨을 감안하면 <span class="r">시즌이 거의 끝날 시점에 자재가 들어오는 구조</span>로, CS 처리 지연 및 고객 불만 집중이 예상됩니다. <strong>자재 수급 일정 긴급 재검토 필요.</strong>
+        </div>
+      </div>
+
+      <!-- 총 인입 증가 AI 코멘트 -->
+      <div class="comment-box info" style="margin-top:8px;">
+        <div class="comment-ai">🤖</div>
+        <div class="comment-txt">
+          <strong>총 인입 증가는 긍정 지표가 아닙니다.</strong> 문의량 증가는 <span class="a">제품 불량 증가 또는 제품 정보·사용 안내 부족</span>에서 비롯됩니다. 교환/불량(488건)·AS접수(326건)가 TOP3를 차지하는 구조에서 인입 +11.8% 증가는 현장의 부담 증가로 직결됩니다.
+        </div>
       </div>
     </div>
   </div>
@@ -360,106 +357,117 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
           </tr>
         </thead>
         <tbody>
-          <tr>
+          <tr style="background:rgba(200,30,30,0.03);">
             <td><div class="row-lbl">💬 채널톡 총 인입</div></td>
             <td>6,209</td>
-            <td class="val-may">6,942</td>
+            <td class="val-may" style="color:var(--red2);">6,942</td>
             <td><span class="delta-dn">▲ +733 (+11.8%)</span></td>
-            <td style="font-size:10.5px;color:var(--text3);">역대 최고</td>
+            <td style="font-size:10px;color:var(--red2);">불량·문의 증가 반영</td>
           </tr>
           <tr>
             <td><div class="row-lbl">🤖 ALF 처리율</div></td>
             <td>58.4%</td>
             <td class="val-may">62.1%</td>
             <td><span class="delta-up">▲ +3.7%p</span></td>
-            <td style="font-size:10.5px;color:var(--text3);">자동화 ↑</td>
+            <td style="font-size:10px;color:var(--text3);">자동화 ↑</td>
           </tr>
           <tr>
             <td><div class="row-lbl">⚠ ALF 미해결</div></td>
             <td>1,014</td>
             <td class="val-may" style="color:var(--red2);">1,262</td>
             <td><span class="delta-dn">▲ +248 (+24.5%)</span></td>
-            <td style="font-size:10.5px;color:var(--red2);">주의 필요</td>
+            <td style="font-size:10px;color:var(--red2);">주의 필요</td>
           </tr>
           <tr>
             <td><div class="row-lbl">👤 인간 상담 처리</div></td>
             <td>2,582</td>
             <td class="val-may">2,630</td>
-            <td><span class="delta-up">▲ +48</span></td>
-            <td style="font-size:10.5px;color:var(--text3);">소폭 증가</td>
+            <td><span class="delta-dn">▲ +48</span></td>
+            <td style="font-size:10px;color:var(--text3);">소폭 증가</td>
           </tr>
           <tr>
             <td><div class="row-lbl">⏱ 평균 응답 대기</div></td>
             <td>20분 1초</td>
             <td class="val-may" style="color:var(--red2);">25분 49초</td>
             <td><span class="delta-dn">▼ +5분 48초</span></td>
-            <td style="font-size:10.5px;color:var(--red2);">악화</td>
+            <td style="font-size:10px;color:var(--red2);">악화</td>
           </tr>
           <tr>
             <td><div class="row-lbl">⏱ 평균 상담 처리</div></td>
             <td>130분 35초</td>
             <td class="val-may">129분 48초</td>
             <td><span class="delta-up">▲ 47초 개선</span></td>
-            <td style="font-size:10.5px;color:var(--text3);">미미한 개선</td>
+            <td style="font-size:10px;color:var(--text3);">미미한 개선</td>
           </tr>
           <tr>
             <td><div class="row-lbl">⭐ 고객만족도 (CX)</div></td>
             <td>4.74점</td>
             <td class="val-may" style="color:var(--amber);">4.61점</td>
             <td><span class="delta-dn">▼ -0.13점</span></td>
-            <td style="font-size:10.5px;color:var(--text3);">참여 264→199건</td>
+            <td style="font-size:10px;color:var(--text3);">참여 264→199건</td>
           </tr>
           <tr>
-            <td><div class="row-lbl">📞 통화 수 <span style="font-size:9px;color:var(--text4);">채널톡 캡처기준</span></div></td>
+            <td><div class="row-lbl">📞 통화 수 <span style="font-size:9px;color:var(--text4);">캡처기준</span></div></td>
             <td>843건</td>
             <td class="val-may">896건</td>
             <td><span class="delta-dn">▲ +53건</span></td>
-            <td style="font-size:10.5px;color:var(--text3);">1,766분→1,842분</td>
+            <td style="font-size:10px;color:var(--text3);">1,766분→1,842분</td>
           </tr>
           <tr>
             <td><div class="row-lbl">📞 통화 응답률</div></td>
             <td>77.3%</td>
             <td class="val-may">79.3%</td>
             <td><span class="delta-up">▲ +2.0%p</span></td>
-            <td style="font-size:10.5px;color:var(--green2);">개선</td>
+            <td style="font-size:10px;color:var(--green2);">개선</td>
           </tr>
           <tr>
-            <td><div class="row-lbl">📞 서비스 레벨</div></td>
+            <td>
+              <div class="row-lbl">📞 서비스 레벨</div>
+              <div style="font-size:9.5px;color:var(--text4);margin-top:2px;">고객 대기 20초 이내 응답 전환율</div>
+            </td>
             <td>49.8%</td>
             <td class="val-may">50.0%</td>
             <td><span class="delta-up">▲ +0.2%p</span></td>
-            <td style="font-size:10.5px;color:var(--text3);">소폭</td>
+            <td style="font-size:10px;color:var(--text3);">응답+부재중 대비</td>
           </tr>
           <tr>
             <td><div class="row-lbl">📦 반품교환 (꿈비)</div></td>
             <td>1,528건 / 4.34%</td>
             <td class="val-may">1,676건 / 3.87%</td>
             <td><span class="delta-up">▲ 율 -0.47%p</span></td>
-            <td style="font-size:10.5px;color:var(--text3);">건수는 증가</td>
+            <td style="font-size:10px;color:var(--text3);">건수는 증가</td>
           </tr>
           <tr>
             <td><div class="row-lbl">🔧 불량 접수 총계</div></td>
             <td>972건</td>
-            <td class="val-may">998건</td>
+            <td class="val-may" style="color:var(--red2);">998건</td>
             <td><span class="delta-dn">▲ +26건</span></td>
-            <td style="font-size:10.5px;color:var(--red2);">5개월 연속↑</td>
+            <td style="font-size:10px;color:var(--red2);">5개월 연속↑</td>
           </tr>
           <tr>
             <td><div class="row-lbl">🔧 수리 처리 (전자)</div></td>
             <td>156건</td>
             <td class="val-may">132건</td>
             <td><span class="delta-up">▼ -24건</span></td>
-            <td style="font-size:10.5px;color:var(--text3);">유상 2,265만원</td>
+            <td style="font-size:10px;color:var(--text3);">유상 2,265만원</td>
           </tr>
           <tr>
             <td><div class="row-lbl">⭐ 스마트스토어 리뷰</div></td>
             <td>2,347건 / 4.83점</td>
             <td class="val-may">2,668건 / 4.84점</td>
             <td><span class="delta-up">▲ +321건 / +0.01점</span></td>
-            <td style="font-size:10.5px;color:var(--green2);">안정</td>
+            <td style="font-size:10px;color:var(--green2);">안정</td>
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- 서비스레벨 설명 + 총인입 AI 코멘트 -->
+    <div class="comment-box info" style="margin-top:10px;">
+      <div class="comment-ai">🤖</div>
+      <div class="comment-txt">
+        <strong>서비스 레벨(50.0%) 해석:</strong> <span class="a">고객이 전화를 걸었을 때 20초 이내에 상담원과 연결된 비율</span>입니다 (응답 전화 ÷ (응답+부재중) 전화 기준). 즉 전화를 건 고객 2명 중 1명은 20초를 넘기거나 연결되지 못했다는 의미입니다. 50%는 업계 기준 하위권에 해당하며, 보고받는 분이 기준을 이해하셔야 수치의 심각성을 판단하실 수 있습니다.
+      </div>
     </div>
   </div>
 
@@ -496,7 +504,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         <div class="kpi-cmp">4월 77.3% &nbsp;<b class="up">▲ +2.0%p</b></div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-lbl">서비스 레벨</div>
+        <div class="kpi-lbl">서비스 레벨 <span style="font-size:9px;color:var(--text4);">20초내 응답률</span></div>
         <div class="kpi-val">50.0<span style="font-size:14px;">%</span></div>
         <div class="kpi-cmp">4월 49.8% &nbsp;<b class="up">▲ +0.2%p</b></div>
       </div>
@@ -553,12 +561,12 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
             <td>142분 19초</td>
             <td><span class="cx-dot" style="background:#f59e0b;"></span>4.29</td>
           </tr>
-          <tr>
-            <td>상담원 P</td>
+          <tr style="background:rgba(67,56,202,0.03);">
+            <td>상담원 P <span class="bdg bdg-b" style="font-size:8px;margin-left:4px;">정체구간 담당</span></td>
             <td>406</td>
             <td>76분 48초</td>
             <td>188분 24초</td>
-            <td><span class="cx-dot" style="background:#ef4444;"></span>3.71</td>
+            <td><span class="cx-dot" style="background:#f59e0b;"></span>3.71</td>
           </tr>
           <tr>
             <td>상담원 K</td>
@@ -581,16 +589,18 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
       <div class="insight-block pos">
         <div class="insight-icon">✅</div>
-        <div class="insight-txt"><strong>상담원 C</strong> — CX 4.65로 최고점. 응답속도(8분)와 만족도 모두 우수. 처리량 684건으로 안정적.</div>
+        <div class="insight-txt"><strong>상담원 C</strong> — CX 4.65 팀 내 최고점. 응답속도(8분)·만족도 모두 우수. 684건 안정 처리.</div>
       </div>
-      <div class="insight-block neg">
-        <div class="insight-icon">⚠</div>
-        <div class="insight-txt"><strong>상담원 P</strong> — 평균 응답 76분으로 팀 내 최장. CX 3.71 하위권. 처리 패턴 점검 필요.</div>
+      <div class="comment-box info" style="margin:0;">
+        <div class="comment-ai">🤖</div>
+        <div class="comment-txt">
+          <strong>상담원 P 지표 해석 주의</strong> — 응답 76분·CX 3.71은 <span class="a">게시판 위주 처리 담당이며, 팀 내 정체구간(장기 지연 상담) 투입 전담</span> 역할 때문입니다. 구조적으로 응답 지연과 낮은 만족도가 발생할 수밖에 없는 포지션으로, 수치만으로 성과를 평가하기 어렵습니다.
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- ⑤ 반품/교환 현황 -->
+  <!-- ⑤ 반품·교환 현황 -->
   <div>
     <div class="sec-hdr">
       <div class="sec-acc" style="background:var(--red2);height:20px;"></div>
@@ -650,8 +660,9 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
           <div class="bar-pct">4.5%</div>
         </div>
       </div>
-      <div style="margin-top:10px;padding:8px 10px;background:rgba(239,68,68,0.05);border-radius:6px;border:1px solid rgba(239,68,68,0.1);font-size:11px;color:var(--text2);">
-        <strong>작동불량 43.0%</strong>는 4월 대비 비슷한 수준이나 건수 자체(720건)는 4월(691건) 대비 +29건 증가. 단순변심 비율은 4월 26.7%→5월 29.1%로 소폭 증가.
+      <div class="comment-box amber" style="margin-top:10px;">
+        <div class="comment-ai">🤖</div>
+        <div class="comment-txt">반품교환율 3.87%는 4월(4.34%) 대비 개선됐으나 절대 건수(1,676건)는 증가했습니다. 판매량 증가로 인한 분모 효과일 수 있으며, <span class="a">작동불량(720건)은 품질 개선 없이 자연 감소하지 않습니다.</span></div>
       </div>
     </div>
   </div>
@@ -664,51 +675,70 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       <div class="sec-num">불량접수 5월 998건</div>
     </div>
 
-    <!-- 추이 -->
+    <!-- SVG 복합 차트: 누적막대 + 꺾은선 -->
     <div class="card" style="margin-bottom:10px;">
-      <div class="card-ttl">불량 접수 월별 추이</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
-        <div style="text-align:center;">
-          <div style="font-size:10px;color:var(--text3);margin-bottom:6px;">2월</div>
-          <div style="height:60px;display:flex;align-items:flex-end;justify-content:center;gap:4px;">
-            <div style="width:28px;height:43%;background:#3b82f6;border-radius:3px 3px 0 0;"></div>
-            <div style="width:28px;height:30%;background:#ef4444;border-radius:3px 3px 0 0;"></div>
-            <div style="width:28px;height:50%;background:#f59e0b;border-radius:3px 3px 0 0;"></div>
-          </div>
-          <div style="font-size:13px;font-weight:800;font-family:'Inter',sans-serif;color:var(--text);margin-top:4px;">725</div>
-        </div>
-        <div style="text-align:center;">
-          <div style="font-size:10px;color:var(--text3);margin-bottom:6px;">3월</div>
-          <div style="height:60px;display:flex;align-items:flex-end;justify-content:center;gap:4px;">
-            <div style="width:28px;height:50%;background:#3b82f6;border-radius:3px 3px 0 0;"></div>
-            <div style="width:28px;height:35%;background:#ef4444;border-radius:3px 3px 0 0;"></div>
-            <div style="width:28px;height:54%;background:#f59e0b;border-radius:3px 3px 0 0;"></div>
-          </div>
-          <div style="font-size:13px;font-weight:800;font-family:'Inter',sans-serif;color:var(--text);margin-top:4px;">851</div>
-        </div>
-        <div style="text-align:center;">
-          <div style="font-size:10px;color:var(--text3);margin-bottom:6px;">4월</div>
-          <div style="height:60px;display:flex;align-items:flex-end;justify-content:center;gap:4px;">
-            <div style="width:28px;height:60%;background:#3b82f6;border-radius:3px 3px 0 0;"></div>
-            <div style="width:28px;height:35%;background:#ef4444;border-radius:3px 3px 0 0;"></div>
-            <div style="width:28px;height:58%;background:#f59e0b;border-radius:3px 3px 0 0;"></div>
-          </div>
-          <div style="font-size:13px;font-weight:800;font-family:'Inter',sans-serif;color:var(--amber);margin-top:4px;">973</div>
-        </div>
-        <div style="text-align:center;background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.12);border-radius:8px;padding:4px;">
-          <div style="font-size:10px;color:var(--red2);font-weight:700;margin-bottom:6px;">5월 ●</div>
-          <div style="height:60px;display:flex;align-items:flex-end;justify-content:center;gap:4px;">
-            <div style="width:28px;height:62%;background:#3b82f6;border-radius:3px 3px 0 0;"></div>
-            <div style="width:28px;height:34%;background:#ef4444;border-radius:3px 3px 0 0;"></div>
-            <div style="width:28px;height:52%;background:#f59e0b;border-radius:3px 3px 0 0;"></div>
-          </div>
-          <div style="font-size:13px;font-weight:800;font-family:'Inter',sans-serif;color:var(--red2);margin-top:4px;">998</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:14px;margin-top:10px;justify-content:center;flex-wrap:wrap;">
+      <div class="card-ttl">불량 접수 월별 추이 (교환/환불 · 자재출고 · 수리출고 · 합계 추이선)</div>
+      <svg viewBox="0 0 560 140" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;margin-top:4px;">
+        <!-- 배경 가이드라인 -->
+        <line x1="60" y1="10" x2="540" y2="10" stroke="#e2e8f0" stroke-width="0.5"/>
+        <line x1="60" y1="40" x2="540" y2="40" stroke="#e2e8f0" stroke-width="0.5"/>
+        <line x1="60" y1="70" x2="540" y2="70" stroke="#e2e8f0" stroke-width="0.5"/>
+        <line x1="60" y1="100" x2="540" y2="100" stroke="#e2e8f0" stroke-width="0.5"/>
+        <!-- Y축 라벨 -->
+        <text x="54" y="13" font-size="8" fill="#94a3b8" text-anchor="end">1,000</text>
+        <text x="54" y="43" font-size="8" fill="#94a3b8" text-anchor="end">750</text>
+        <text x="54" y="73" font-size="8" fill="#94a3b8" text-anchor="end">500</text>
+        <text x="54" y="103" font-size="8" fill="#94a3b8" text-anchor="end">250</text>
+
+        <!-- 2월: 총725 (교환509=56px, 자재82=9px, 수리131=14.4px) -->
+        <!-- 각 값 비례: 교환/환불 max=745 → 100px 기준, 전체 max=998 → 90px -->
+        <!-- 스케일: 90px = 998 → 1px = 0.0901 → 각월 y계산: 110 - 값*0.090 -->
+        <!-- 2월 col x=100 -->
+        <rect x="90" y="54.6" width="30" height="45.4" fill="#3b82f6" rx="2"/><!-- 교환509: 509*0.090=45.8 → y=110-45.8=64.2, h=45.8 -->
+        <rect x="90" y="47.2" width="30" height="7.4" fill="#f59e0b" rx="0"/><!-- 자재82: 82*0.090=7.4 -->
+        <rect x="90" y="35.4" width="30" height="11.8" fill="#ef4444" rx="0"/><!-- 수리131: 131*0.090=11.8 -->
+        <text x="105" y="125" font-size="9" fill="#64748b" text-anchor="middle">2월</text>
+        <text x="105" y="33" font-size="9" fill="#64748b" text-anchor="middle" font-weight="600">725</text>
+
+        <!-- 3월 col x=210 -->
+        <rect x="200" y="59" width="30" height="51.3" fill="#3b82f6" rx="2"/><!-- 교환570 -->
+        <rect x="200" y="47.1" width="30" height="11.9" fill="#f59e0b" rx="0"/><!-- 자재132 -->
+        <rect x="200" y="33.8" width="30" height="13.3" fill="#ef4444" rx="0"/><!-- 수리147 -->
+        <text x="215" y="125" font-size="9" fill="#64748b" text-anchor="middle">3월</text>
+        <text x="215" y="31" font-size="9" fill="#64748b" text-anchor="middle" font-weight="600">851</text>
+
+        <!-- 4월 col x=320 -->
+        <rect x="310" y="47.5" width="30" height="62.5" fill="#3b82f6" rx="2"/><!-- 교환694 -->
+        <rect x="310" y="38" width="30" height="9.5" fill="#f59e0b" rx="0"/><!-- 자재106 -->
+        <rect x="310" y="22.7" width="30" height="15.3" fill="#ef4444" rx="0"/><!-- 수리170 -->
+        <text x="325" y="125" font-size="9" fill="#64748b" text-anchor="middle">4월</text>
+        <text x="325" y="20" font-size="9" fill="#b45309" text-anchor="middle" font-weight="700">973</text>
+
+        <!-- 5월 col x=430 (강조) -->
+        <rect x="420" y="43.1" width="30" height="67.1" fill="#3b82f6" rx="2"/><!-- 교환745 -->
+        <rect x="420" y="33.7" width="30" height="9.4" fill="#f59e0b" rx="0"/><!-- 자재104 -->
+        <rect x="420" y="20.5" width="30" height="13.2" fill="#ef4444" rx="0"/><!-- 수리147 -->
+        <!-- 5월 강조 테두리 -->
+        <rect x="419" y="19.5" width="32" height="91.5" fill="none" stroke="#ef4444" stroke-width="1.5" rx="3" stroke-dasharray="3,2"/>
+        <text x="435" y="125" font-size="9" fill="#b91c1c" text-anchor="middle" font-weight="700">5월</text>
+        <text x="435" y="18" font-size="9" fill="#b91c1c" text-anchor="middle" font-weight="800">998</text>
+
+        <!-- 합계 꺾은선 (각 월 막대 중심 상단) -->
+        <!-- 2월(725): x=105, y=35.4-4=31.4 / 3월(851): x=215, y=33.8-4=29.8 / 4월(973): x=325, y=22.7-4=18.7 / 5월(998): x=435, y=20.5-4=16.5 -->
+        <polyline points="105,31.4 215,29.8 325,18.7 435,16.5" fill="none" stroke="#0c1e3c" stroke-width="2" stroke-linejoin="round"/>
+        <!-- 포인트 -->
+        <circle cx="105" cy="31.4" r="3.5" fill="#0c1e3c"/>
+        <circle cx="215" cy="29.8" r="3.5" fill="#0c1e3c"/>
+        <circle cx="325" cy="18.7" r="3.5" fill="#b45309"/>
+        <circle cx="435" cy="16.5" r="3.5" fill="#b91c1c"/>
+      </svg>
+
+      <!-- 범례 -->
+      <div style="display:flex;gap:16px;margin-top:6px;justify-content:center;flex-wrap:wrap;">
         <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3);"><span style="width:10px;height:10px;background:#3b82f6;border-radius:2px;display:inline-block;"></span>교환/환불</div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3);"><span style="width:10px;height:10px;background:#ef4444;border-radius:2px;display:inline-block;"></span>자재출고</div>
-        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3);"><span style="width:10px;height:10px;background:#f59e0b;border-radius:2px;display:inline-block;"></span>수리출고</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3);"><span style="width:10px;height:10px;background:#f59e0b;border-radius:2px;display:inline-block;"></span>자재출고</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3);"><span style="width:10px;height:10px;background:#ef4444;border-radius:2px;display:inline-block;"></span>수리출고</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text);font-weight:700;"><span style="width:18px;height:2px;background:#0c1e3c;display:inline-block;"></span>합계 추이</div>
       </div>
     </div>
 
@@ -753,8 +783,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         <div class="qc-name" style="color:var(--text3);">5월 주요 개선 진행</div>
         <div style="font-size:10.5px;color:var(--text2);margin-top:6px;line-height:1.7;">
           • <b>분리형 포트 뚜껑 누수</b> 긴급 개선 요청<br>
-          • 젖병세척기 내부 누수구조 개선<br>
-          • 분유쉐이커 5V 2A 개선샘플 측정<br>
+          • <b>휴대용 분유포트 수분유입</b> — 제조사 집중 관리 중<br>
+          • 젖병세척기 내부 누수구조 — 제조사 최종 조율 중 (협조요청)<br>
           <span style="color:var(--text3);">총 7건 진행 (사후4 / 출시전3)</span>
         </div>
       </div>
@@ -824,7 +854,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
           </div>
         </div>
         <div style="margin-top:12px;padding:8px 10px;background:var(--card3);border-radius:6px;font-size:11px;color:var(--text2);">
-          전자제품 외 수리: <b>14건</b> (유상 13건, 291.5만원)<br>
+          매트류(커버류) 수리: <b>14건</b> (유상 13건, 291.5만원)<br>
           평균 소요일: <b>14.5일</b> (전월 대비 1일 단축)
         </div>
       </div>
@@ -862,70 +892,120 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <!-- 리뷰 4분할 그리드 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;">
+
+      <!-- 리뷰 TOP 5 -->
       <div class="card">
-        <div class="card-ttl">리뷰 TOP 5 제품 (5월)</div>
+        <div class="card-ttl">리뷰 TOP 5 제품</div>
         <div class="bar-list">
           <div class="bar-row">
-            <div class="bar-lbl">휴대용 분유포트 500ml</div>
+            <div class="bar-lbl" style="width:100px;">휴대용 분유포트</div>
             <div class="bar-track"><div class="bar-fill" style="width:100%;background:#3b82f6;"></div></div>
             <div class="bar-val">705</div>
           </div>
           <div class="bar-row">
-            <div class="bar-lbl">분리형 분유포트 500ml</div>
+            <div class="bar-lbl" style="width:100px;">분리형 분유포트</div>
             <div class="bar-track"><div class="bar-fill" style="width:40%;background:#1a56db;"></div></div>
             <div class="bar-val">284</div>
           </div>
           <div class="bar-row">
-            <div class="bar-lbl">아이스허그 쿨시트</div>
+            <div class="bar-lbl" style="width:100px;">아이스허그 쿨시트</div>
             <div class="bar-track"><div class="bar-fill" style="width:31%;background:#06b6d4;"></div></div>
             <div class="bar-val">216</div>
           </div>
           <div class="bar-row">
-            <div class="bar-lbl">분유쉐이커</div>
+            <div class="bar-lbl" style="width:100px;">분유쉐이커</div>
             <div class="bar-track"><div class="bar-fill" style="width:19%;background:#8b5cf6;"></div></div>
             <div class="bar-val">134</div>
           </div>
           <div class="bar-row">
-            <div class="bar-lbl">분유쉐이커 LED</div>
+            <div class="bar-lbl" style="width:100px;">분유쉐이커 LED</div>
             <div class="bar-track"><div class="bar-fill" style="width:17%;background:#7c3aed;"></div></div>
             <div class="bar-val">123</div>
           </div>
         </div>
       </div>
+
+      <!-- 평점 분포 -->
       <div class="card">
         <div class="card-ttl">평점 분포</div>
         <div class="bar-list">
           <div class="bar-row">
-            <div class="bar-lbl narrow">⭐⭐⭐⭐⭐ 5점</div>
+            <div class="bar-lbl" style="width:50px;white-space:nowrap;">⭐⭐⭐⭐⭐ 5점</div>
             <div class="bar-track"><div class="bar-fill" style="width:89%;background:#22c55e;"></div></div>
             <div class="bar-val">2,388</div>
           </div>
           <div class="bar-row">
-            <div class="bar-lbl narrow">⭐⭐⭐⭐ 4점</div>
+            <div class="bar-lbl" style="width:50px;white-space:nowrap;">⭐⭐⭐⭐ 4점</div>
             <div class="bar-track"><div class="bar-fill" style="width:7%;background:#86efac;"></div></div>
             <div class="bar-val">191</div>
           </div>
           <div class="bar-row">
-            <div class="bar-lbl narrow">⭐⭐⭐ 3점</div>
+            <div class="bar-lbl" style="width:50px;white-space:nowrap;">⭐⭐⭐ 3점</div>
             <div class="bar-track"><div class="bar-fill" style="width:2%;background:#fbbf24;"></div></div>
             <div class="bar-val">57</div>
           </div>
           <div class="bar-row">
-            <div class="bar-lbl narrow">⭐⭐ 2점</div>
+            <div class="bar-lbl" style="width:50px;white-space:nowrap;">⭐⭐ 2점</div>
             <div class="bar-track"><div class="bar-fill" style="width:0.5%;background:#f97316;"></div></div>
             <div class="bar-val">3</div>
           </div>
           <div class="bar-row">
-            <div class="bar-lbl narrow">⭐ 1점</div>
+            <div class="bar-lbl" style="width:50px;white-space:nowrap;">⭐ 1점</div>
             <div class="bar-track"><div class="bar-fill" style="width:1%;background:#ef4444;"></div></div>
             <div class="bar-val">29</div>
           </div>
         </div>
-        <div style="margin-top:10px;font-size:11px;color:var(--text3);">
-          최고 평점: <b>미니 수유등(구름)</b> 5.0 (15건) · <b>LED 분유쉐이커+포트 세트</b> 5.0 (15건)
+        <div style="margin-top:8px;font-size:10.5px;color:var(--text3);">
+          최고: <b>미니 수유등(구름)</b> 5.0 (15건)<br><b>LED 분유쉐이커+포트 세트</b> 5.0 (15건)
         </div>
       </div>
+
+      <!-- 긍정 TOP 3 -->
+      <div class="card">
+        <div class="card-ttl" style="color:var(--green2);">👍 평점 높은 제품 TOP 3</div>
+        <div style="display:grid;gap:8px;margin-top:4px;">
+          <div style="padding:8px 10px;background:rgba(22,101,52,0.05);border:1px solid rgba(22,101,52,0.15);border-radius:7px;">
+            <div style="font-size:10px;font-weight:700;color:var(--green2);">⭐ 5.0</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:2px;">미니 수유등 (구름)</div>
+            <div style="font-size:10px;color:var(--text3);">15건</div>
+          </div>
+          <div style="padding:8px 10px;background:rgba(22,101,52,0.05);border:1px solid rgba(22,101,52,0.15);border-radius:7px;">
+            <div style="font-size:10px;font-weight:700;color:var(--green2);">⭐ 5.0</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:2px;">LED 분유쉐이커+포트 세트</div>
+            <div style="font-size:10px;color:var(--text3);">15건</div>
+          </div>
+          <div style="padding:8px 10px;background:rgba(22,101,52,0.05);border:1px solid rgba(22,101,52,0.15);border-radius:7px;">
+            <div style="font-size:10px;font-weight:700;color:var(--green2);">⭐ 5.0</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:2px;">신생아 옷걸이 5P</div>
+            <div style="font-size:10px;color:var(--text3);">10건</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 부정 TOP 3 -->
+      <div class="card">
+        <div class="card-ttl" style="color:var(--red2);">👎 저평점 집중 제품 TOP 3</div>
+        <div style="display:grid;gap:8px;margin-top:4px;">
+          <div style="padding:8px 10px;background:rgba(200,30,30,0.05);border:1px solid rgba(200,30,30,0.15);border-radius:7px;">
+            <div style="font-size:10px;font-weight:700;color:var(--red2);">저평점 100%</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:2px;">낮잠이불 세트 카멜베어</div>
+            <div style="font-size:10px;color:var(--text3);">저평점 1건 / 평점 1.0</div>
+          </div>
+          <div style="padding:8px 10px;background:rgba(200,30,30,0.05);border:1px solid rgba(200,30,30,0.15);border-radius:7px;">
+            <div style="font-size:10px;font-weight:700;color:var(--red2);">저평점 100%</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:2px;">[오가닉그라운드] 유기농 선크림</div>
+            <div style="font-size:10px;color:var(--text3);">저평점 1건 / 평점 3.0</div>
+          </div>
+          <div style="padding:8px 10px;background:rgba(200,30,30,0.05);border:1px solid rgba(200,30,30,0.15);border-radius:7px;">
+            <div style="font-size:10px;font-weight:700;color:var(--red2);">저평점 100%</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text);margin-top:2px;">TPU 퍼즐매트 60x60</div>
+            <div style="font-size:10px;color:var(--text3);">저평점 1건 / 평점 1.0</div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -945,27 +1025,27 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       <div class="ai-pts">
         <div class="ai-pt">
           <div class="ai-dot">1</div>
-          <div class="ai-pt-txt"><b>인입 증가 vs 품질 저하의 딜레마</b> — 5월 총 인입 6,942건은 역대 최고 수준이나, 같은 기간 CX 점수는 4.61점으로 하락하고 평균 응답 대기가 26분대로 늘었습니다. <span class="a">인입 증가가 상담 품질 저하로 이어지는 구조적 위험</span>이 존재합니다. 상담 인력 여건 검토가 필요한 시점입니다.</div>
+          <div class="ai-pt-txt"><b>인입 증가 = 문제 증가</b> — 5월 총 인입 6,942건 역대 최고치는 긍정 신호가 아닙니다. 교환/불량(488건)·AS접수(326건)가 상위를 차지하는 구조에서 <span class="r">인입 +11.8%는 현장 부담 +11.8%</span>입니다. CX 하락·응답 대기 증가가 동반된 것은 인입 증가가 상담 품질 저하로 이어지는 구조적 악순환임을 보여줍니다.</div>
         </div>
         <div class="ai-pt">
           <div class="ai-dot">2</div>
-          <div class="ai-pt-txt"><b>ALF 미해결 24.5% 급증</b> — ALF 처리율은 높아졌지만 미해결도 함께 늘었다는 것은 <span class="r">ALF가 처리를 시도했으나 해결하지 못하는 케이스가 증가</span>하고 있음을 의미합니다. ALF 시나리오 커버리지 점검 및 미해결 유형 분석이 필요합니다.</div>
+          <div class="ai-pt-txt"><b>쿨링커버 자재 수급 — 여름 시즌 공백 위기</b> — 아이스쿨시트 문의가 5월부터 78건 발생했으나, <span class="r">아기띠 쿨링커버 자재 입고 예정일이 7월 31일</span>입니다. 기안일(6.10) 기준 결재도 미완료 상태입니다. 7월이 여름 시즌 피크임을 감안하면 CS 처리 공백이 발생할 것이 자명합니다. <span class="r">긴급 일정 재조율이 필요합니다.</span></div>
         </div>
         <div class="ai-pt">
           <div class="ai-dot">3</div>
-          <div class="ai-pt-txt"><b>불량 접수 5개월 연속 증가</b> — 1월 729건 → 2월 725건 → 3월 851건 → 4월 973건 → 5월 998건으로 <span class="r">4월부터 가파른 상승</span>이 이어지고 있습니다. 특히 휴대용 분유포트(558건, 55.9%)의 충전/전원/누수 불량은 고질적 이슈로 제조사 구조 개선 없이는 해소되기 어렵습니다.</div>
+          <div class="ai-pt-txt"><b>ALF 미해결 24.5% 급증</b> — 처리율은 높아졌으나 미해결이 동반 증가한다는 것은 <span class="r">ALF 시나리오 커버리지 한계</span>를 의미합니다. 미해결 유형 분류 및 시나리오 보강이 6월 최우선 과제입니다.</div>
         </div>
         <div class="ai-pt">
           <div class="ai-dot">4</div>
-          <div class="ai-pt-txt"><b>분리형 분유포트 신제품 신규 이슈</b> — 5월부터 배터리 분리형 분유포트 불량이 51건 발생하며 TOP5에 진입했습니다. <span class="a">조립불량·기구불량·마감불량이 주를 이루는 신제품 초기 불량 패턴</span>으로, 6월 이후 증가 가능성이 높습니다. 선제적 품질 모니터링이 요구됩니다.</div>
+          <div class="ai-pt-txt"><b>불량 접수 5개월 연속 증가</b> — 725→851→973→998건으로 가파른 상승세입니다. 특히 분리형 분유포트가 5월 신규 TOP5 진입(51건)으로, <span class="a">신제품 초기 불량이 누적되기 시작하는 시점</span>입니다. 6월 모니터링 강화 필요.</div>
         </div>
         <div class="ai-pt">
           <div class="ai-dot">5</div>
-          <div class="ai-pt-txt"><b>반품교환율은 개선 흐름 — 단 건수는 증가</b> — 꿈비 반품교환율은 4.34%→3.87%로 개선됐습니다. 이는 판매량 증가에 따른 분모 효과일 수 있으므로 <span class="g">긍정적이나 절대 건수 1,676건은 역대 고점 수준</span>임을 함께 인식해야 합니다. 작동불량 반품(720건)은 품질 개선 없이 자연 감소하기 어렵습니다.</div>
+          <div class="ai-pt-txt"><b>반품교환율 3.87% — 건수 동반 증가 주의</b> — 율은 개선됐으나 절대 건수 1,676건은 여전히 높습니다. 판매량 증가에 따른 분모 효과를 감안해야 하며, 작동불량(720건)은 <span class="g">품질 개선 없이는 자연 감소하지 않습니다.</span></div>
         </div>
         <div class="ai-pt">
           <div class="ai-dot">6</div>
-          <div class="ai-pt-txt"><b>6월 주요 모니터링 포인트</b> — ① 아이스쿨시트 여름 시즌 문의·불량 증가 추이 ② 분리형 분유포트 불량 확산 여부 ③ ALF 미해결 패턴 분석 및 시나리오 보강 ④ 상담원 P의 응답 지연(76분) 원인 파악 및 개선</div>
+          <div class="ai-pt-txt"><b>6월 주요 모니터링 포인트</b> — ① <span class="r">아기띠 쿨링커버 자재 수급 일정 긴급 재검토</span> (7/31 입고 예정 → 여름 시즌 공백) ② 분리형 분유포트 불량 확산 여부 ③ ALF 미해결 패턴 분류 및 시나리오 보강 ④ 상담원 P는 게시판·정체구간 전담 구조로 수치 개선보다 역할 분류 체계를 정비하는 방향 권고</div>
         </div>
       </div>
     </div>

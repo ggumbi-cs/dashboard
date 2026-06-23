@@ -391,7 +391,7 @@ svg.chart{width:100%;display:block;}
         <div class="kpi-card-bg">💬</div>
       </div>
       <div class="kpi-card blue">
-        <div class="kpi-label">🤖 ALF 처리율</div>
+        <div class="kpi-label">🤖 ALF 관여율</div>
         <div class="kpi-val" id="kv-alf">-<span class="unit">%</span></div>
         <div class="kpi-sub" id="ks-alf">로딩 중...</div>
         <div class="kpi-card-bg">🤖</div>
@@ -851,7 +851,7 @@ function renderKPI(d) {
   setText('ks-total', `ALF ${fmtN(alfHandled)}건 포함`);
 
   setText('kv-alf', `${(d.alfRate||0).toFixed(1)}`);
-  setText('ks-alf', `자동처리 ${fmtN(alfHandled)}건`);
+  setText('ks-alf', `전체 인입 중 ALF 관여 ${fmtN(alfHandled)}건`);
 
   setText('kv-resp', `${(d.respMin||0).toFixed(1)}`);
   setText('ks-resp', '단위: 분 (첫응답시간)');
@@ -956,10 +956,10 @@ function renderALFvsHuman(alf, human) {
   const alfTransRate = alf.handled>0 ? ((alf.unresolve||0)/(alf.handled||1)*100).toFixed(1) : '0.0';
   const alfAutoRate  = alf.handled>0 ? (100-((alf.unresolve||0)/(alf.handled||1)*100)).toFixed(1) : '0.0';
   document.getElementById('alfStats').innerHTML=`
-    <div class="compare-stat"><span class="compare-stat-lbl">처리 건수</span><span class="compare-stat-val">${fmtN(alf.handled||0)}<span class="unit">건</span></span></div>
+    <div class="compare-stat"><span class="compare-stat-lbl">관여 건수</span><span class="compare-stat-val">${fmtN(alf.handled||0)}<span class="unit">건</span></span></div>
+    <div class="compare-stat"><span class="compare-stat-lbl">자동처리 (ALF 해결)</span><span class="compare-stat-val">${fmtN((alf.handled||0)-(alf.unresolve||0))}<span class="unit">건</span></span></div>
     <div class="compare-stat"><span class="compare-stat-lbl">상담원 전환</span><span class="compare-stat-val">${fmtN(alf.unresolve||0)}<span class="unit">건</span></span></div>
-    <div class="compare-stat"><span class="compare-stat-lbl">자동처리율</span><span class="compare-stat-val">${alfAutoRate}<span class="unit">%</span></span></div>
-    <div class="compare-stat"><span class="compare-stat-lbl">전환율</span><span class="compare-stat-val">${alfTransRate}<span class="unit">%</span></span></div>`;
+    <div class="compare-stat"><span class="compare-stat-lbl">자동처리율 <span style="font-size:9px;color:var(--textL);">(관여건 중)</span></span><span class="compare-stat-val">${alfAutoRate}<span class="unit">%</span></span></div>`;
   document.getElementById('humanStats').innerHTML=`
     <div class="compare-stat"><span class="compare-stat-lbl">처리 건수</span><span class="compare-stat-val">${fmtN(human.handled||0)}<span class="unit">건</span></span></div>
     <div class="compare-stat"><span class="compare-stat-lbl">평균 첫응답</span><span class="compare-stat-val">${secToHM(human.avgRespSec||0)}</span></div>
@@ -1065,7 +1065,7 @@ function renderCloseTime(agents) {
         </div>`;
       }).join('')}
     </div>
-    <div style="margin-top:8px;font-size:10px;color:var(--textL);">※ 건당 평균 처리시간 (인입~종료) · 🟢 2시간 미만 · 🟡 2~8시간 · 🔴 8시간 초과</div>`;
+    <div style="margin-top:8px;font-size:10px;color:var(--textL);">업무시간 기준 평균 첫응답/처리시간 · 8시간 초과 건 제외(물류스케줄 포함 장기 상담) · 🟢 2h미만 · 🟡 2~8h</div>`;
 }
 
 function renderMeet(meet) {

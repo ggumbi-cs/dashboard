@@ -17,11 +17,31 @@
   --green:    #00e5a0; --red: #ff5a6e; --orange: #ff9040; --purple: #a080ff;
   --font-kr:  'Noto Sans KR', sans-serif; --font-en: 'Inter', sans-serif;
 }
+/* ── 라이트 모드 ── */
+body.light-mode {
+  --bg:       #f0f4fa;
+  --bg2:      #ffffff;
+  --bg3:      #e8f0fb;
+  --bg4:      #dce8f7;
+  --border:   rgba(26,78,180,0.12);
+  --border2:  rgba(26,78,180,0.25);
+  --cyan:     #1a6eb8;
+  --cyan-dim: rgba(26,110,184,0.08);
+  --gold:     #b07800;
+  --green:    #007a50;
+  --red:      #c02020;
+  --orange:   #c05010;
+  --purple:   #5030b0;
+  --text:     #1a2e50;
+  --text2:    #2a4e7a;
+  --text3:    #3a6a9a;
+}
+
 html, body { width:100%; height:100%; background:var(--bg); color:var(--text); font-family:var(--font-kr); overflow-x:hidden; overflow-y:auto; }
 ::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
 
 /* 상태바 */
-#statusBar { position:sticky; top:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:0 28px; height:36px; background:rgba(8,15,30,0.95); border-bottom:1px solid var(--border); backdrop-filter:blur(12px); font-family:var(--font-en); }
+#statusBar { position:sticky; top:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:0 28px; height:36px; background:var(--bg2); border-bottom:1px solid var(--border); backdrop-filter:blur(12px); font-family:var(--font-en); }
 .sb-left { display:flex; align-items:center; gap:16px; }
 .sb-brand { font-size:11px; font-weight:600; color:var(--cyan); letter-spacing:2px; text-transform:uppercase; }
 .sb-dot { width:5px; height:5px; border-radius:50%; background:var(--green); animation:pulse-dot 2s infinite; }
@@ -38,7 +58,7 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .sec-title .sec-count { margin-left:auto; font-size:10px; color:#8ab0cc; }
 
 /* 웰컴 배너 */
-#welcomeBanner { position:relative; background:linear-gradient(135deg,var(--bg2) 0%,var(--bg3) 50%,#0a1428 100%); border:1px solid var(--border); border-radius:16px; padding:36px 40px; margin-bottom:32px; overflow:hidden; }
+#welcomeBanner { position:relative; background:linear-gradient(135deg,var(--bg2) 0%,var(--bg3) 50%,var(--bg) 100%); border:1px solid var(--border); border-radius:16px; padding:36px 40px; margin-bottom:32px; overflow:hidden; }
 .wb-grid { position:absolute; inset:0; background-image:linear-gradient(rgba(0,200,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.03) 1px,transparent 1px); background-size:40px 40px; }
 .wb-glow { position:absolute; top:-60px; right:-60px; width:300px; height:300px; background:radial-gradient(circle,rgba(0,200,255,0.06) 0%,transparent 70%); pointer-events:none; }
 .wb-glow2 { position:absolute; bottom:-80px; left:40%; width:400px; height:200px; background:radial-gradient(ellipse,rgba(160,128,255,0.04) 0%,transparent 70%); pointer-events:none; }
@@ -46,7 +66,7 @@ html, body { width:100%; height:100%; background:var(--bg); color:var(--text); f
 .wb-left { flex:1; }
 .wb-eyebrow { font-size:10px; font-weight:600; font-family:var(--font-en); color:var(--cyan); text-transform:uppercase; letter-spacing:3px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
 .wb-eyebrow::before { content:''; width:20px; height:1px; background:var(--cyan); }
-.wb-title { font-size:30px; font-weight:700; line-height:1.2; letter-spacing:-0.5px; margin-bottom:10px; }
+.wb-title { font-size:30px; font-weight:700; color:var(--text); line-height:1.2; letter-spacing:-0.5px; margin-bottom:10px; }
 .wb-title .hl { color:var(--cyan); }
 .wb-sub { font-size:13px; color:var(--text2); font-weight:300; line-height:1.7; }
 .wb-right { display:flex; flex-direction:column; align-items:flex-end; gap:12px; min-width:200px; }
@@ -222,7 +242,7 @@ body.is-admin .admin-gear { display:flex; }
     <div class="wb-content">
       <div class="wb-left">
         <div class="wb-eyebrow">Dashboard</div>
-        <div class="wb-title">안녕하세요,<br><span class="hl" id="wbName">엄마감동팀</span> 엄마감동팀 소통채널 입니다</div>
+        <div class="wb-title">안녕하세요,<br><span class="hl" id="wbName">엄마감동팀</span> 님 엄마감동팀 소통채널 입니다</div>
         <div class="wb-sub" id="wbDate">오늘도 고객의 마음을 움직이는 하루를 만들어가세요.</div>
       </div>
       <div class="wb-right">
@@ -363,10 +383,11 @@ const DEFAULT_CARDS = [
 ];
 
 const DEFAULT_NOTICES_UPDATE = [
+  { text:'라이트모드 / 다크모드 전환 기능 추가', date:'06.23', dot:'green' },
+  { text:'채널톡 데이터 수신속도 향상 작업', date:'06.23', dot:'cyan' },
   { text:'스마트스토어 리뷰 분석 페이지 오픈', date:'06.20', dot:'cyan' },
   { text:'홈 화면 런처 UI 적용', date:'06.20', dot:'green' },
-  { text:'개발자탭 관리 매뉴얼 추가', date:'06.19', dot:'cyan' },
-  { text:'건별보고 세척기 직수관 항목 추가', date:'06.18', dot:'gold' },
+  { text:'개발자탭 관리 매뉴얼 추가', date:'06.19', dot:'gold' },
 ];
 const DEFAULT_NOTICES_OPS = [
   { text:'관리자모드 접속 시 각 카드/아이콘 설정 가능', date:'', dot:'gold' },
@@ -387,7 +408,13 @@ let _pickerTarget = null, _pickerType = null, _pickerIdx = null;
 // postMessage 수신
 // ─────────────────────────────────────────────
 window.addEventListener('message', e => {
-  if (!e.data || e.data.type !== 'SCRIPT_URL') return;
+  if (!e.data) return;
+  if (e.data.type === 'THEME') {
+    if (e.data.mode === 'light') document.body.classList.add('light-mode');
+    else document.body.classList.remove('light-mode');
+    return;
+  }
+  if (e.data.type !== 'SCRIPT_URL') return;
   _scriptUrl = e.data.url || '';
   _userRole  = e.data.userRole || '';
   _isAdmin   = (_userRole === 'admin');
@@ -412,7 +439,7 @@ function applyUserInfo() {
   const nameMap={admin:'관리자',leader:'리더급',ggumbi:'꿈비',affiliate:'계열사'};
   const displayName=nameMap[_userRole]||_userRole||'방문자';
   document.getElementById('sbUser').textContent=displayName;
-  document.getElementById('wbName').textContent=displayName+' 님';
+  document.getElementById('wbName').textContent=displayName;
   const now=new Date(), days=['일','월','화','수','목','금','토'], m=now.getMonth()+1, d=now.getDate();
   document.getElementById('wbDate').textContent=`${now.getFullYear()}년 ${m}월 ${d}일 ${days[now.getDay()]}요일 · 오늘도 고객의 마음을 움직이는 하루를 만들어가세요.`;
   document.getElementById('wbDateNum').innerHTML=`${d}<span class="unit">일</span>`;

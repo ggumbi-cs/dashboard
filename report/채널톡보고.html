@@ -347,7 +347,7 @@ svg.chart{width:100%;display:block;}
       <span class="load-badge loading" id="loadBadge"><span class="spinner"></span> 로딩 중...</span>
       <button class="hdr-btn" onclick="fetchAll()">↺ 새로고침</button>
       <button class="hdr-btn" id="saveBtn" onclick="saveSummaryData()" style="background:rgba(16,163,74,0.2);border-color:rgba(16,163,74,0.5);color:#6ee7b7;" disabled>💾 마감저장</button>
-      <button class="ai-btn" id="aiBtn" onclick="runAllAI()" disabled>✦ AI 분析</button>
+      <button class="ai-btn" id="aiBtn" onclick="runAllAI()" disabled>✦ AI 분석</button>
     </div>
   </div>
 </div>
@@ -556,7 +556,7 @@ svg.chart{width:100%;display:block;}
         <div class="ai-section-icon">🤖</div>
         <div>
           <div class="ai-section-title">✦ AI 채널톡 인사이트</div>
-          <div class="ai-section-sub" id="aiSavedInfo">Gemini 분析 · 구글시트 저장</div>
+          <div class="ai-section-sub" id="aiSavedInfo">Gemini 분석 · 구글시트 저장</div>
         </div>
       </div>
       <div class="ai-section-actions">
@@ -609,11 +609,11 @@ svg.chart{width:100%;display:block;}
         <div class="ai-panel-hdr" onclick="togglePanel('action')">
           <div class="ai-panel-num">4</div>
           <div class="ai-panel-lbl">개선 제안 · 액션플랜</div>
-          <button class="ai-panel-rerun" onclick="event.stopPropagation();runAISingle('action')" id="rerunBtn-action">↺ 재분析</button>
+          <button class="ai-panel-rerun" onclick="event.stopPropagation();runAISingle('action')" id="rerunBtn-action">↺ 재분석</button>
           <button class="ai-expand-btn" id="expandBtn-action">▼</button>
         </div>
         <div class="ai-panel-body" id="aiBody-action">
-          <div class="ai-output" id="aiOutput-action">✦ 분析실행 버튼을 눌러 인사이트를 생성하세요</div>
+          <div class="ai-output" id="aiOutput-action">✦ 분석실행 버튼을 눌러 인사이트를 생성하세요</div>
           <div class="ai-saved-at" id="aiSavedAt-action"></div>
         </div>
       </div>
@@ -630,7 +630,7 @@ svg.chart{width:100%;display:block;}
     <textarea class="modal-ta" id="pt-summary" rows="4"></textarea>
     <label class="modal-label">2. ALF vs 상담원 패턴</label>
     <textarea class="modal-ta" id="pt-alf" rows="4"></textarea>
-    <label class="modal-label">3. CX 스코어 분析</label>
+    <label class="modal-label">3. CX 스코어 분석</label>
     <textarea class="modal-ta" id="pt-cx" rows="4"></textarea>
     <label class="modal-label">4. 개선 제안 · 액션플랜</label>
     <textarea class="modal-ta" id="pt-action" rows="4"></textarea>
@@ -1127,11 +1127,11 @@ window.addEventListener('resize',()=>{if(CH_DATA)renderTrend(CH_DATA.trend||[]);
 // AI 인사이트
 // ════════════════════════════════════
 const AI_TYPES=['summary','alf','cx','action'];
-const AI_LABELS={summary:'인입 종합 분析',alf:'ALF vs 상담원 패턴',cx:'CX 스코어 分析',action:'개선 제안 · 액션플랜'};
+const AI_LABELS={summary:'인입 종합 분석',alf:'ALF vs 상담원 패턴',cx:'CX 스코어 분석',action:'개선 제안 · 액션플랜'};
 const DEFAULT_PROMPTS={
   summary:`당신은 채널톡 고객상담 데이터 분석 전문가입니다. 아래 데이터를 바탕으로 인입 종합 현황을 PPT 보고서 스타일로 분석하세요.\n- 총 인입 건수, 채널별 비중 분석\n- 핵심 이슈 2-3가지\n- 마크다운 **굵게**, ## 헤더 사용 가능\n데이터:\n`,
-  alf:`채널톡 ALF(봇 자동응대)와 상담원 직접응대 데이터를 비교 분析하세요.\n- ALF 처리율, 자동해결율 평가\n- 상담원 평균 응답시간 분析\n- 자동화 개선 방향 제안\n데이터:\n`,
-  cx:`CX 스코어(고객만족도) 데이터를 分析하세요.\n- 스코어 수준 평가 (5점 만점 기준)\n- 점수 분포 특이점\n- 만족도 개선 포인트\n데이터:\n`,
+  alf:`채널톡 ALF(봇 자동응대)와 상담원 직접응대 데이터를 비교 분석하세요.\n- ALF 처리율, 자동해결율 평가\n- 상담원 평균 응답시간 분석\n- 자동화 개선 방향 제안\n데이터:\n`,
+  cx:`CX 스코어(고객만족도) 데이터를 분석하세요.\n- 스코어 수준 평가 (5점 만점 기준)\n- 점수 분포 특이점\n- 만족도 개선 포인트\n데이터:\n`,
   action:`위 채널톡 데이터 전반을 검토하고 다음 기간 액션플랜을 제안하세요.\n- 즉시 조치 사항 1-2개\n- 단기 개선 과제 2-3개\n- 각 항목에 기대 효과 포함\n데이터:\n`,
 };
 let PROMPTS={...DEFAULT_PROMPTS};
@@ -1156,11 +1156,11 @@ async function runAllAI(){
   btn.disabled=true;aBtn.disabled=true;prog.classList.add('visible');
   AI_TYPES.forEach(t=>{const r=document.getElementById('rerunBtn-'+t);if(r)r.disabled=true;const el=document.getElementById('aiOutput-'+t);if(el){el.className='ai-output loading';el.textContent='대기 중...';}});
   for(let i=0;i<AI_TYPES.length;i++){
-    const type=AI_TYPES[i];text.textContent=`${AI_LABELS[type]} 분析 중... (${i+1}/${AI_TYPES.length})`;fill.style.width=`${(i/AI_TYPES.length)*100}%`;
-    const el=document.getElementById('aiOutput-'+type);if(el){el.className='ai-output loading';el.textContent='✦ 분析 중...';}
+    const type=AI_TYPES[i];text.textContent=`${AI_LABELS[type]} 분석 중... (${i+1}/${AI_TYPES.length})`;fill.style.width=`${(i/AI_TYPES.length)*100}%`;
+    const el=document.getElementById('aiOutput-'+type);if(el){el.className='ai-output loading';el.textContent='✦ 분석 중...';}
     const loaded=await loadInsightFromSheet(type);if(!loaded)await runAICore(type);
   }
-  fill.style.width='100%';text.textContent='分析 완료 ✓';
+  fill.style.width='100%';text.textContent='분석 완료 ✓';
   setTimeout(()=>{prog.classList.remove('visible');fill.style.width='0%';},2000);
   btn.disabled=false;aBtn.disabled=false;AI_TYPES.forEach(t=>{const b=document.getElementById('rerunBtn-'+t);if(b)b.disabled=false;});
 }
@@ -1169,7 +1169,7 @@ async function runAISingle(type){
   event.stopPropagation();
   const btn=document.getElementById('rerunBtn-'+type),allBtn=document.getElementById('runAllBtn');
   if(btn)btn.disabled=true;if(allBtn)allBtn.disabled=true;
-  const el=document.getElementById('aiOutput-'+type);if(el){el.className='ai-output loading';el.textContent='✦ 분析 중...';}
+  const el=document.getElementById('aiOutput-'+type);if(el){el.className='ai-output loading';el.textContent='✦ 분석 중...';}
   await runAICore(type,true);
   if(btn)btn.disabled=false;if(allBtn)allBtn.disabled=false;
 }
@@ -1183,8 +1183,8 @@ async function runAICore(type,force=false){
     if(output){output.className='ai-output';output.innerHTML=renderMarkdown(data.text);}
     openPanel(type);
     const saveKey=`채널톡__${DATA.period}__${type}`;const now=new Date().toLocaleString('ko-KR');
-    if(savedAt)savedAt.textContent=`마지막 분析: ${now}`;
-    document.getElementById('aiSavedInfo').innerHTML=`마지막 분析: <b>${now}</b>`;
+    if(savedAt)savedAt.textContent=`마지막 분석: ${now}`;
+    document.getElementById('aiSavedInfo').innerHTML=`마지막 분석: <b>${now}</b>`;
     fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'saveInsight',period:saveKey,insights:{_aiReport:data.text,_type:type,_period:DATA.period,_savedAt:now}})}).catch(e=>console.warn(e));
   }catch(e){if(output){output.className='ai-output';output.textContent='⚠ 오류: '+e.message;}}
 }
@@ -1197,7 +1197,7 @@ async function loadInsightFromSheet(type){
     if(data.ok&&data.insights&&data.insights._aiReport){
       const output=document.getElementById('aiOutput-'+type);const savedAt=document.getElementById('aiSavedAt-'+type);
       if(output){output.className='ai-output';output.innerHTML=renderMarkdown(data.insights._aiReport);}
-      if(savedAt&&data.savedAt)savedAt.textContent=`마지막 분析: ${data.savedAt}`;
+      if(savedAt&&data.savedAt)savedAt.textContent=`마지막 분석: ${data.savedAt}`;
       return true;
     }
   }catch(e){console.warn(e);}return false;
@@ -1307,11 +1307,24 @@ document.getElementById('promptModal').addEventListener('click',function(e){if(e
 // 초기화
 // ════════════════════════════════════
 buildPeriodTabs();
-// 주간 패널 기본 open, 첫 탭 선택
-const firstTab=document.querySelector('#weeklyTabs .ptab');
-if(firstTab){DATA.type=firstTab.dataset.type;DATA.period=firstTab.dataset.period;}
-initPeriod();
-fetchAll();
+// 초기 탭: 토요일(6)부터는 이번주, 그 이전(월~금)은 지난주
+(function(){
+  const now = new Date();
+  const dow = now.getDay(); // 0=일, 6=토
+  // 토요일(6)부터는 이번주(index 0), 월~금은 지난주(index 1)
+  const targetIdx = dow >= 6 ? 0 : 1;
+  const tabs = document.querySelectorAll('#weeklyTabs .ptab');
+  // 기존 active 제거 후 target에 active 부여
+  tabs.forEach(t => t.classList.remove('active'));
+  const target = tabs[targetIdx] || tabs[0];
+  if(target){
+    target.classList.add('active');
+    DATA.type   = target.dataset.type;
+    DATA.period = target.dataset.period;
+  }
+  initPeriod();
+  fetchAll();
+})();
 </script>
 </body>
 </html>

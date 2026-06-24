@@ -210,6 +210,29 @@ body.is-admin .admin-gear { display:flex; }
 .perm-block-msg { font-size:13px; color:var(--text2); line-height:1.6; margin-bottom:20px; }
 .perm-block-btn { padding:9px 28px; background:var(--bg3); border:1px solid var(--border); border-radius:10px; color:var(--text2); font-size:13px; cursor:pointer; font-family:var(--font-kr); }
 
+/* 공지 관리자 기어 */
+.notice-admin-gear { display:none; position:absolute; top:14px; right:14px; width:24px; height:24px; background:rgba(240,192,96,0.15); border:1px solid rgba(240,192,96,0.3); border-radius:6px; cursor:pointer; align-items:center; justify-content:center; font-size:13px; color:var(--gold); transition:all 0.15s; z-index:10; }
+.notice-admin-gear:hover { background:rgba(240,192,96,0.3); }
+body.is-admin .notice-admin-gear { display:flex; }
+
+/* 공지 편집 모달 */
+#noticeEditModal { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); align-items:center; justify-content:center; }
+#noticeEditModal.open { display:flex; }
+.notice-modal-box { background:var(--bg2); border:1px solid var(--border2); border-radius:20px; padding:28px 32px; width:620px; max-height:88vh; overflow-y:auto; position:relative; }
+.notice-row-wrap { display:flex; flex-direction:column; gap:6px; margin-bottom:6px; }
+.notice-edit-row { display:flex; align-items:center; gap:8px; background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:8px 10px; }
+.notice-edit-dot-sel { width:28px; height:28px; border-radius:7px; border:1px solid var(--border2); background:var(--bg4); font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; position:relative; flex-shrink:0; }
+.notice-edit-text { flex:1; background:transparent; border:none; color:var(--text); font-size:12px; font-family:var(--font-kr); outline:none; }
+.notice-edit-date { width:56px; background:transparent; border:none; border-left:1px solid var(--border); color:var(--text3); font-size:11px; font-family:var(--font-en); outline:none; padding-left:8px; text-align:center; }
+.notice-edit-del { background:none; border:none; color:var(--text3); font-size:14px; cursor:pointer; flex-shrink:0; padding:2px 4px; }
+.notice-edit-del:hover { color:var(--red); }
+.notice-add-btn { width:100%; padding:7px; background:var(--bg4); border:1px dashed var(--border2); color:var(--text3); border-radius:8px; cursor:pointer; font-size:12px; font-family:var(--font-kr); transition:all 0.15s; margin-top:4px; }
+.notice-add-btn:hover { color:var(--cyan); border-color:var(--cyan); }
+.dot-picker { display:none; position:absolute; top:32px; left:0; z-index:200; background:var(--bg2); border:1px solid var(--border2); border-radius:10px; padding:8px; display:none; flex-direction:row; gap:6px; box-shadow:0 8px 24px rgba(0,0,0,0.4); }
+.dot-picker.open { display:flex; }
+.dp-opt { width:20px; height:20px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:border-color 0.1s; }
+.dp-opt:hover, .dp-opt.selected { border-color:white; }
+
 /* 토스트 */
 #toast { position:fixed; bottom:24px; right:24px; z-index:9997; background:var(--bg3); border:1px solid var(--border2); color:var(--text); font-size:12px; padding:10px 18px; border-radius:10px; opacity:0; transform:translateY(8px); transition:all 0.3s; pointer-events:none; }
 #toast.show { opacity:1; transform:translateY(0); }
@@ -281,10 +304,12 @@ body.is-admin .admin-gear { display:flex; }
     <div id="noticeGrid">
       <div class="notice-card">
         <div class="notice-card-title"><span>📌</span> 업데이트 내역</div>
+        <div class="notice-admin-gear" onclick="openNoticeEdit('update')" title="업데이트 내역 편집">⚙</div>
         <div id="noticeUpdateList"></div>
       </div>
       <div class="notice-card">
         <div class="notice-card-title"><span>🔔</span> 운영 안내</div>
+        <div class="notice-admin-gear" onclick="openNoticeEdit('ops')" title="운영 안내 편집">⚙</div>
         <div id="noticeOpsList"></div>
       </div>
     </div>
@@ -316,6 +341,20 @@ body.is-admin .admin-gear { display:flex; }
   <div class="icon-grid" id="iconGrid"></div>
   <div class="icon-picker-title" style="margin-top:8px;">색상 선택</div>
   <div class="color-grid" id="colorGrid"></div>
+</div>
+
+<!-- 공지 편집 모달 -->
+<div id="noticeEditModal">
+  <div class="notice-modal-box">
+    <button class="modal-close" onclick="closeNoticeEdit()">✕</button>
+    <div class="modal-title" id="noticeEditTitle">📌 업데이트 내역 편집</div>
+    <div class="modal-sub">항목을 추가·수정·삭제하고 저장하세요. 구글시트에 자동 반영됩니다.</div>
+    <div class="modal-section">
+      <div id="noticeEditRows" class="notice-row-wrap"></div>
+      <button class="notice-add-btn" onclick="addNoticeRow()">+ 항목 추가</button>
+    </div>
+    <button class="modal-btn" onclick="saveNoticeEdit()">💾 저장</button>
+  </div>
 </div>
 
 <!-- 권한 차단 팝업 -->
@@ -382,14 +421,14 @@ const DEFAULT_CARDS = [
   { id:'ai',      title:'AI 보고',     sub:'AI 주간·월간 분석',  icon:'🤖', tab:'AI보고',     iconCls:'qi-purple', minRole:'affiliate' },
 ];
 
-const DEFAULT_NOTICES_UPDATE = [
+let DEFAULT_NOTICES_UPDATE = [
   { text:'라이트모드 / 다크모드 전환 기능 추가', date:'06.23', dot:'green' },
   { text:'채널톡 데이터 수신속도 향상 작업', date:'06.23', dot:'cyan' },
   { text:'스마트스토어 리뷰 분석 페이지 오픈', date:'06.20', dot:'cyan' },
   { text:'홈 화면 런처 UI 적용', date:'06.20', dot:'green' },
   { text:'개발자탭 관리 매뉴얼 추가', date:'06.19', dot:'gold' },
 ];
-const DEFAULT_NOTICES_OPS = [
+let DEFAULT_NOTICES_OPS = [
   { text:'관리자모드 접속 시 각 카드/아이콘 설정 가능', date:'', dot:'gold' },
   { text:'스마트스토어 탭은 별도 사이드바 구성', date:'', dot:'cyan' },
   { text:'GAS 웹훅: 채널톡 CSAT 자동 수집 중', date:'', dot:'green' },
@@ -403,6 +442,8 @@ let _scriptUrl = '', _userRole = '', _isAdmin = false;
 let _quickItems = [], _cardItems = [];
 let _sliderIdx = 0, _sliderPer = 3;
 let _pickerTarget = null, _pickerType = null, _pickerIdx = null;
+let _noticeEditType = 'update'; // 현재 편집 중인 공지 타입
+let _noticeEditRows = [];       // 편집 중인 공지 항목 배열
 
 // ─────────────────────────────────────────────
 // postMessage 수신
@@ -471,6 +512,11 @@ async function loadSettings() {
       _quickItems = data.settings.quick?.length ? data.settings.quick : JSON.parse(JSON.stringify(DEFAULT_QUICK));
       _cardItems  = data.settings.cards?.length ? data.settings.cards : JSON.parse(JSON.stringify(DEFAULT_CARDS));
     } else { useDefaults(); }
+    // 공지 불러오기
+    if (data.ok && data.settings) {
+      if (data.settings.noticeUpdate?.length) DEFAULT_NOTICES_UPDATE = data.settings.noticeUpdate;
+      if (data.settings.noticeOps?.length)    DEFAULT_NOTICES_OPS    = data.settings.noticeOps;
+    }
   } catch(e) { useDefaults(); }
   renderAll();
 }
@@ -552,6 +598,109 @@ function renderNotices() {
   const mkItem = it => `<div class="notice-item"><div class="notice-dot-wrap"><div class="notice-dot ${it.dot||'cyan'}"></div></div><div class="notice-text">${it.text}</div>${it.date?`<div class="notice-date">${it.date}</div>`:''}</div>`;
   document.getElementById('noticeUpdateList').innerHTML = DEFAULT_NOTICES_UPDATE.map(mkItem).join('');
   document.getElementById('noticeOpsList').innerHTML    = DEFAULT_NOTICES_OPS.map(mkItem).join('');
+}
+
+// ─────────────────────────────────────────────
+// 공지 편집 (관리자 전용)
+// ─────────────────────────────────────────────
+const DOT_COLORS = [
+  { key:'cyan',   hex:'#00c8ff' },
+  { key:'green',  hex:'#00e5a0' },
+  { key:'gold',   hex:'#f0c060' },
+  { key:'orange', hex:'#ff9040' },
+  { key:'red',    hex:'#ff5a6e' },
+];
+
+function openNoticeEdit(type) {
+  _noticeEditType = type;
+  const src = type === 'update' ? DEFAULT_NOTICES_UPDATE : DEFAULT_NOTICES_OPS;
+  _noticeEditRows = JSON.parse(JSON.stringify(src));
+  document.getElementById('noticeEditTitle').textContent = type === 'update' ? '📌 업데이트 내역 편집' : '🔔 운영 안내 편집';
+  renderNoticeEditRows();
+  document.getElementById('noticeEditModal').classList.add('open');
+}
+
+function closeNoticeEdit() {
+  document.getElementById('noticeEditModal').classList.remove('open');
+  // 열려있는 dot picker 닫기
+  document.querySelectorAll('.dot-picker').forEach(p => p.classList.remove('open'));
+}
+
+function renderNoticeEditRows() {
+  const wrap = document.getElementById('noticeEditRows');
+  wrap.innerHTML = _noticeEditRows.map((it, i) => {
+    const dotColor = DOT_COLORS.find(c => c.key === (it.dot||'cyan'))?.hex || '#00c8ff';
+    const dotOpts = DOT_COLORS.map(c =>
+      `<div class="dp-opt${(it.dot||'cyan')===c.key?' selected':''}" style="background:${c.hex}" onclick="selectNoticeDot(${i},'${c.key}',this)" title="${c.key}"></div>`
+    ).join('');
+    return `
+    <div class="notice-edit-row" id="nerow-${i}">
+      <div class="notice-edit-dot-sel" id="dotsel-${i}" onclick="toggleDotPicker(${i},event)" style="background:${dotColor}20;border-color:${dotColor}60">
+        <div style="width:10px;height:10px;border-radius:50%;background:${dotColor}"></div>
+        <div class="dot-picker" id="dotpicker-${i}">${dotOpts}</div>
+      </div>
+      <input class="notice-edit-text" value="${it.text||''}" placeholder="내용을 입력하세요" oninput="_noticeEditRows[${i}].text=this.value">
+      <input class="notice-edit-date" value="${it.date||''}" placeholder="날짜" oninput="_noticeEditRows[${i}].date=this.value">
+      <button class="notice-edit-del" onclick="removeNoticeRow(${i})" title="삭제">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function toggleDotPicker(i, e) {
+  e.stopPropagation();
+  const picker = document.getElementById('dotpicker-'+i);
+  const wasOpen = picker.classList.contains('open');
+  // 모든 picker 닫기
+  document.querySelectorAll('.dot-picker').forEach(p => p.classList.remove('open'));
+  if (!wasOpen) picker.classList.add('open');
+}
+
+// dot picker 외부 클릭 닫기
+document.addEventListener('click', e => {
+  if (!e.target.closest('.notice-edit-dot-sel')) {
+    document.querySelectorAll('.dot-picker').forEach(p => p.classList.remove('open'));
+  }
+});
+
+function selectNoticeDot(i, dotKey, el) {
+  _noticeEditRows[i].dot = dotKey;
+  // picker 닫고 재렌더
+  document.querySelectorAll('.dot-picker').forEach(p => p.classList.remove('open'));
+  renderNoticeEditRows();
+}
+
+function addNoticeRow() {
+  _noticeEditRows.push({ text:'', date:'', dot:'cyan' });
+  renderNoticeEditRows();
+  // 마지막 input에 포커스
+  const rows = document.querySelectorAll('.notice-edit-text');
+  if (rows.length) rows[rows.length-1].focus();
+}
+
+function removeNoticeRow(i) {
+  _noticeEditRows.splice(i, 1);
+  renderNoticeEditRows();
+}
+
+async function saveNoticeEdit() {
+  // 빈 텍스트 항목 제거
+  const cleaned = _noticeEditRows.filter(it => it.text.trim() !== '');
+  if (_noticeEditType === 'update') DEFAULT_NOTICES_UPDATE = cleaned;
+  else DEFAULT_NOTICES_OPS = cleaned;
+
+  renderNotices();
+
+  if (!_scriptUrl) { showToast('⚠ GAS URL 없음 — 화면에만 적용됨'); closeNoticeEdit(); return; }
+  try {
+    const payload = encodeURIComponent(JSON.stringify({
+      noticeUpdate: DEFAULT_NOTICES_UPDATE,
+      noticeOps:    DEFAULT_NOTICES_OPS
+    }));
+    const res  = await fetch(`${_scriptUrl}?action=saveNoticeSettings&data=${payload}`, { redirect:'follow' });
+    const data = await res.json();
+    showToast(data.ok ? '✅ 공지 저장 완료' : '⚠ 저장 실패: '+(data.msg||''));
+  } catch(e) { showToast('⚠ 저장 오류'); }
+  closeNoticeEdit();
 }
 
 // ─────────────────────────────────────────────

@@ -177,11 +177,11 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       <div class="hdr-title">2026년 <em>5월</em> 월간 보고</div>
       <div class="hdr-range">2026.05.01 ~ 2026.05.31 &nbsp;·&nbsp; 전월(4월) 대비 분석 포함</div>
       <div class="hdr-chips">
-        <div class="hdr-chip">💬 <b>총 인입</b> · 6,942건 (+11.8%)</div>
+        <div class="hdr-chip">💬 <b>총 인입</b> · 6,911건 (+425)</div>
         <div class="hdr-chip">📞 <b>통화 응답률</b> · 79.3% (+2.0%p)</div>
-        <div class="hdr-chip">⭐ <b>고객만족도</b> · 4.61점</div>
+        <div class="hdr-chip">🤖 <b>ALF 해결률</b> · 25.3% (914건)</div>
         <div class="hdr-chip">📦 <b>반품교환율</b> · 3.87% (↓0.47%p)</div>
-        <div class="hdr-chip warn">⚠ <b>ALF 미해결</b> · 1,262건 (+248건)</div>
+        <div class="hdr-chip warn">⚠ <b>ALF 미해결</b> · 2,700건 (74.7%)</div>
       </div>
     </div>
   </div>
@@ -208,132 +208,171 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
     <div class="sec-hdr">
       <div class="sec-acc" style="background:var(--blue);height:20px;"></div>
       <div class="sec-ttl">① 상담 현황 종합</div>
-      <div class="sec-num">채널톡 기준 · 전월 대비</div>
+      <div class="sec-num">채널톡 직접 집계 기준</div>
     </div>
 
+    <!-- KPI 1행: 인입/응답/처리/ALF -->
     <div class="kpi-grid" style="margin-bottom:10px;">
       <div class="kpi-card">
-        <div class="kpi-lbl">총 인입</div>
-        <div class="kpi-val" style="color:var(--red2);">6,942</div>
-        <div class="kpi-cmp">4월 6,209 &nbsp;<b class="dn">▲ +733건 (+11.8%)</b></div>
+        <div class="kpi-lbl">총 상담 인입</div>
+        <div class="kpi-val" style="color:var(--red2);">6,911</div>
+        <div class="kpi-cmp">전월 대비 &nbsp;<b class="dn">▲ +425건</b></div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:89%;background:var(--red3);"></div></div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-lbl">인간 상담 처리</div>
-        <div class="kpi-val">2,630</div>
-        <div class="kpi-cmp">4월 2,582 &nbsp;<b class="dn">▲ +48건</b></div>
-        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:62%;background:var(--teal);"></div></div>
+        <div class="kpi-lbl">첫 응답까지</div>
+        <div class="kpi-val sm">5분 53초</div>
+        <div class="kpi-cmp">전월 대비 &nbsp;<b class="dn">▲ +1분 44초 증가</b></div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-lbl">ALF 처리율</div>
-        <div class="kpi-val">62.1<span style="font-size:14px;">%</span></div>
-        <div class="kpi-cmp">4월 58.4% &nbsp;<b class="up">▲ +3.7%p</b></div>
-        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:62%;background:var(--blue2);"></div></div>
+        <div class="kpi-lbl">평균 응답 시간</div>
+        <div class="kpi-val sm">4분 20초</div>
+        <div class="kpi-cmp">전월 대비 &nbsp;<b class="up">▼ -2초 개선</b></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">상담 종료까지</div>
+        <div class="kpi-val sm">3시간 40분</div>
+        <div class="kpi-cmp">전월 대비 &nbsp;<b class="dn">▲ +29분 49초</b></div>
+      </div>
+    </div>
+
+    <!-- KPI 2행: ALF / 이관율 / 방문자 -->
+    <div class="kpi-grid" style="margin-bottom:10px;">
+      <div class="kpi-card">
+        <div class="kpi-lbl">ALF 관여율</div>
+        <div class="kpi-val">66.8<span style="font-size:14px;">%</span></div>
+        <div class="kpi-cmp">3,614건 &nbsp;<b class="up">▲ +5.0%p</b></div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:67%;background:var(--blue2);"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">ALF 해결률</div>
+        <div class="kpi-val">25.3<span style="font-size:14px;">%</span></div>
+        <div class="kpi-cmp">914건 해결 &nbsp;<b class="up">▲ +1.9%p</b></div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:25%;background:var(--teal);"></div></div>
       </div>
       <div class="kpi-card">
         <div class="kpi-lbl">ALF 미해결</div>
-        <div class="kpi-val" style="color:var(--red2);">1,262</div>
-        <div class="kpi-cmp">4월 1,014 &nbsp;<b class="dn">▲ +248건</b></div>
+        <div class="kpi-val" style="color:var(--red2);">2,700</div>
+        <div class="kpi-cmp">관여 대비 74.7% &nbsp;<b class="dn">미해결</b></div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:75%;background:var(--red3);"></div></div>
       </div>
-    </div>
-
-    <div class="kpi-grid" style="margin-bottom:10px;">
       <div class="kpi-card">
-        <div class="kpi-lbl">고객만족도 (CX)</div>
-        <div class="kpi-val" style="color:var(--amber);">4.61</div>
-        <div class="kpi-cmp">4월 4.74 &nbsp;<b class="dn">▼ -0.13점</b></div>
-        <div class="kpi-cmp" style="margin-top:2px;">참여 199건 (4월 264건)</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-lbl">평균 응답 대기</div>
-        <div class="kpi-val sm">25분 49초</div>
-        <div class="kpi-cmp">4월 20분 1초 &nbsp;<b class="dn">▼ +5분 48초 증가</b></div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-lbl">평균 상담 처리</div>
-        <div class="kpi-val sm">129분 48초</div>
-        <div class="kpi-cmp">4월 130분 35초 &nbsp;<b class="up">▲ 소폭 개선</b></div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-lbl">상담원별 처리 상위</div>
-        <div class="kpi-val sm" style="font-size:14px;margin-top:4px;">J 743 / C 684 / H 530</div>
-        <div class="kpi-cmp">P 406 &nbsp;·&nbsp; K 177</div>
+        <div class="kpi-lbl">담당자 이관율</div>
+        <div class="kpi-val">1<span style="font-size:14px;">%</span></div>
+        <div class="kpi-cmp">전월 대비 &nbsp;<b class="up">▼ -0.7%p 개선</b></div>
       </div>
     </div>
 
-    <!-- 태그별 인입 -->
-    <div class="card">
-      <div class="card-ttl">주요 태그별 인입 · TOP 10 (5월)</div>
-      <div class="bar-list">
-        <div class="bar-row">
-          <div class="bar-lbl">교환/불량</div>
-          <div class="bar-track"><div class="bar-fill" style="width:100%;background:#ef4444;"></div></div>
-          <div class="bar-val">488</div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-lbl">휴대용분유포트</div>
-          <div class="bar-track"><div class="bar-fill" style="width:83%;background:#3b82f6;"></div></div>
-          <div class="bar-val">405</div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-lbl">AS접수/전자제품</div>
-          <div class="bar-track"><div class="bar-fill" style="width:67%;background:#f59e0b;"></div></div>
-          <div class="bar-val">326</div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-lbl">분유쉐이커</div>
-          <div class="bar-track"><div class="bar-fill" style="width:47%;background:#8b5cf6;"></div></div>
-          <div class="bar-val">229</div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-lbl">회수/요청</div>
-          <div class="bar-track"><div class="bar-fill" style="width:40%;background:#0d9488;"></div></div>
-          <div class="bar-val">195</div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-lbl" style="color:var(--amber);font-weight:600;">아이스쿨시트 🔶</div>
-          <div class="bar-track"><div class="bar-fill" style="width:16%;background:#f97316;"></div></div>
-          <div class="bar-val">78</div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-lbl">반품/변심</div>
-          <div class="bar-track"><div class="bar-fill" style="width:15%;background:#64748b;"></div></div>
-          <div class="bar-val">75</div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-lbl">휴대용포트(분리형)</div>
-          <div class="bar-track"><div class="bar-fill" style="width:15%;background:#1a56db;"></div></div>
-          <div class="bar-val">72</div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-lbl">젖병세척기</div>
-          <div class="bar-track"><div class="bar-fill" style="width:14%;background:#dc2626;"></div></div>
-          <div class="bar-val">67</div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-lbl">배송</div>
-          <div class="bar-track"><div class="bar-fill" style="width:13%;background:#94a3b8;"></div></div>
-          <div class="bar-val">62</div>
+    <!-- 경로별 인입 + 태그별 2분할 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="card">
+        <div class="card-ttl">경로별 인입 (5월)</div>
+        <div class="bar-list">
+          <div class="bar-row">
+            <div class="bar-lbl">워크플로우</div>
+            <div class="bar-track"><div class="bar-fill" style="width:100%;background:#3b82f6;"></div></div>
+            <div class="bar-val">2,937</div>
+            <div class="bar-pct">42.5%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-lbl">전화</div>
+            <div class="bar-track"><div class="bar-fill" style="width:51%;background:#0d9488;"></div></div>
+            <div class="bar-val">1,502</div>
+            <div class="bar-pct">21.7%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-lbl">카카오</div>
+            <div class="bar-track"><div class="bar-fill" style="width:42%;background:#f59e0b;"></div></div>
+            <div class="bar-val">1,239</div>
+            <div class="bar-pct">17.9%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-lbl">네이버 톡톡</div>
+            <div class="bar-track"><div class="bar-fill" style="width:42%;background:#8b5cf6;"></div></div>
+            <div class="bar-val">1,233</div>
+            <div class="bar-pct">17.8%</div>
+          </div>
         </div>
       </div>
 
-      <!-- 아이스쿨시트 AI 코멘트 -->
-      <div class="comment-box warn" style="margin-top:10px;">
-        <div class="comment-ai">🤖</div>
-        <div class="comment-txt">
-          <strong>🔶 아이스쿨시트(78건) 5월 신규 진입 — 자재 수급 위기</strong><br>
-          여름 시즌 제품 문의가 이미 78건 유입됐으나, <span class="r">아기띠 쿨링커버 CS처리 자재(팬·리모컨·스크류)의 입고 예정일이 7월 31일</span>로 확인됩니다. 기안일 6월 10일, 기안승인 6월 18일로 결재는 완료됐으나 여름 성수기가 7월에 집중됨을 감안하면 <span class="r">시즌이 거의 끝날 시점에 자재가 들어오는 구조</span>로, CS 처리 지연 및 고객 불만 집중이 예상됩니다. <strong>자재 수급 일정 긴급 재검토 필요.</strong>
+      <div class="card">
+        <div class="card-ttl">주요 태그별 인입 · TOP 5 (5월)</div>
+        <div class="bar-list">
+          <div class="bar-row">
+            <div class="bar-lbl">교환</div>
+            <div class="bar-track"><div class="bar-fill" style="width:100%;background:#ef4444;"></div></div>
+            <div class="bar-val">1,241</div>
+            <div class="bar-pct">12.6%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-lbl">휴대용분유포트</div>
+            <div class="bar-track"><div class="bar-fill" style="width:73%;background:#3b82f6;"></div></div>
+            <div class="bar-val">902</div>
+            <div class="bar-pct">9.2%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-lbl">상품</div>
+            <div class="bar-track"><div class="bar-fill" style="width:58%;background:#f59e0b;"></div></div>
+            <div class="bar-val">714</div>
+            <div class="bar-pct">7.3%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-lbl">AS</div>
+            <div class="bar-track"><div class="bar-fill" style="width:57%;background:#0d9488;"></div></div>
+            <div class="bar-val">704</div>
+            <div class="bar-pct">7.2%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-lbl">분유쉐이커</div>
+            <div class="bar-track"><div class="bar-fill" style="width:39%;background:#8b5cf6;"></div></div>
+            <div class="bar-val">483</div>
+            <div class="bar-pct">4.9%</div>
+          </div>
         </div>
-      </div>
 
-      <!-- 총 인입 증가 AI 코멘트 -->
-      <div class="comment-box info" style="margin-top:8px;">
-        <div class="comment-ai">🤖</div>
-        <div class="comment-txt">
-          <strong>총 인입 증가는 긍정 지표가 아닙니다.</strong> 문의량 증가는 <span class="a">제품 불량 증가 또는 제품 정보·사용 안내 부족</span>에서 비롯됩니다. 교환/불량(488건)·AS접수(326건)가 TOP3를 차지하는 구조에서 인입 +11.8% 증가는 현장의 부담 증가로 직결됩니다.
+        <!-- AI 코멘트 -->
+        <div class="comment-box info" style="margin-top:10px;">
+          <div class="comment-ai">🤖</div>
+          <div class="comment-txt"><strong>총 인입 +425건 증가는 긍정 지표가 아닙니다.</strong> 교환(1,241건)·AS(704건)가 상위를 차지하며, <span class="a">인입 증가는 불량 또는 정보 부족 문의 증가</span>를 의미합니다.</div>
         </div>
       </div>
+    </div>
+
+    <!-- 쿨시트 AI 경고 -->
+    <div class="comment-box warn" style="margin-top:10px;">
+      <div class="comment-ai">🤖</div>
+      <div class="comment-txt">
+        <strong>🔶 아이스쿨시트 문의 급증 — 자재 수급 위기</strong><br>
+        여름 시즌 문의가 급증 중이나, <span class="r">아기띠 쿨링커버 CS처리 자재(팬·리모컨·스크류) 입고 예정일이 7월 31일</span>입니다. 기안 6.10 / 승인 6.18 완료됐으나 <span class="r">여름 성수기 피크(7월)에 자재가 없는 구조</span>로 CS 처리 공백이 예상됩니다. <strong>긴급 일정 재검토 필요.</strong>
+      </div>
+    </div>
+
+    <!-- CX 토픽 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;">
+      <div class="card">
+        <div class="card-ttl" style="color:var(--green2);">😊 CX 점수 높은 토픽</div>
+        <div style="display:grid;gap:5px;margin-top:4px;">
+          <div style="font-size:11.5px;color:var(--text2);padding:5px 8px;background:var(--greenbg);border-radius:5px;">교환·반품·AS 제품 수거 일정 및 포장 안내</div>
+          <div style="font-size:11.5px;color:var(--text2);padding:5px 8px;background:var(--greenbg);border-radius:5px;">휴대용 분유포트 충전 및 전원 작동 불량</div>
+          <div style="font-size:11.5px;color:var(--text2);padding:5px 8px;background:var(--greenbg);border-radius:5px;">분유쉐이커 회전 및 모터 작동 오류</div>
+          <div style="font-size:11.5px;color:var(--text2);padding:5px 8px;background:var(--greenbg);border-radius:5px;">분유쉐이커 충전 및 전원 고장</div>
+          <div style="font-size:11.5px;color:var(--text2);padding:5px 8px;background:var(--greenbg);border-radius:5px;">부속품 및 소모품 별도 구매 문의</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-ttl" style="color:var(--red2);">😤 CX 점수 낮은 토픽</div>
+        <div style="display:grid;gap:5px;margin-top:4px;">
+          <div style="font-size:11.5px;color:var(--text2);padding:5px 8px;background:var(--redbg);border-radius:5px;">교환·반품·AS 제품 수거 일정 및 포장 안내</div>
+          <div style="font-size:11.5px;color:var(--text2);padding:5px 8px;background:var(--redbg);border-radius:5px;">휴대용 분유포트 충전 및 전원 작동 불량</div>
+          <div style="font-size:11.5px;color:var(--text2);padding:5px 8px;background:var(--redbg);border-radius:5px;">부속품 및 소모품 별도 구매 문의</div>
+          <div style="font-size:11.5px;color:var(--text2);padding:5px 8px;background:var(--redbg);border-radius:5px;">분유쉐이커 충전 및 전원 고장</div>
+          <div style="font-size:11.5px;color:var(--text2);padding:5px 8px;background:var(--redbg);border-radius:5px;">주문 배송 상태 및 운송장 번호 조회</div>
+        </div>
+      </div>
+    </div>
+    <div class="comment-box amber" style="margin-top:8px;">
+      <div class="comment-ai">🤖</div>
+      <div class="comment-txt"><strong>교환·반품·AS 수거 안내</strong>와 <strong>휴대용 분유포트 충전·전원 불량</strong>이 높은 토픽·낮은 토픽 양쪽에 동시 등장합니다. <span class="a">동일 유형의 상담도 담당자·처리 방식에 따라 만족도가 크게 갈린다</span>는 의미로, 대응 가이드 표준화 검토가 필요합니다.</div>
     </div>
   </div>
 
@@ -358,60 +397,60 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         </thead>
         <tbody>
           <tr style="background:rgba(200,30,30,0.03);">
-            <td><div class="row-lbl">💬 채널톡 총 인입</div></td>
-            <td>6,209</td>
-            <td class="val-may" style="color:var(--red2);">6,942</td>
-            <td><span class="delta-dn">▲ +733 (+11.8%)</span></td>
-            <td style="font-size:10px;color:var(--red2);">불량·문의 증가 반영</td>
+            <td><div class="row-lbl">💬 총 상담 인입</div></td>
+            <td>6,486</td>
+            <td class="val-may" style="color:var(--red2);">6,911</td>
+            <td><span class="delta-dn">▲ +425건</span></td>
+            <td style="font-size:10px;color:var(--red2);">불량·문의 증가</td>
           </tr>
           <tr>
-            <td><div class="row-lbl">🤖 ALF 처리율</div></td>
-            <td>58.4%</td>
-            <td class="val-may">62.1%</td>
-            <td><span class="delta-up">▲ +3.7%p</span></td>
+            <td><div class="row-lbl">🤖 ALF 관여율</div></td>
+            <td>~61.8%</td>
+            <td class="val-may">66.8%</td>
+            <td><span class="delta-up">▲ +5.0%p</span></td>
             <td style="font-size:10px;color:var(--text3);">자동화 ↑</td>
           </tr>
           <tr>
             <td><div class="row-lbl">⚠ ALF 미해결</div></td>
-            <td>1,014</td>
-            <td class="val-may" style="color:var(--red2);">1,262</td>
-            <td><span class="delta-dn">▲ +248 (+24.5%)</span></td>
-            <td style="font-size:10px;color:var(--red2);">주의 필요</td>
+            <td>—</td>
+            <td class="val-may" style="color:var(--red2);">2,700건</td>
+            <td><span class="delta-dn">관여 74.7%</span></td>
+            <td style="font-size:10px;color:var(--red2);">시나리오 한계</td>
           </tr>
           <tr>
-            <td><div class="row-lbl">👤 인간 상담 처리</div></td>
-            <td>2,582</td>
-            <td class="val-may">2,630</td>
-            <td><span class="delta-dn">▲ +48</span></td>
-            <td style="font-size:10px;color:var(--text3);">소폭 증가</td>
-          </tr>
-          <tr>
-            <td><div class="row-lbl">⏱ 평균 응답 대기</div></td>
-            <td>20분 1초</td>
-            <td class="val-may" style="color:var(--red2);">25분 49초</td>
-            <td><span class="delta-dn">▼ +5분 48초</span></td>
+            <td><div class="row-lbl">⏱ 첫 응답까지</div></td>
+            <td>~4분 9초</td>
+            <td class="val-may" style="color:var(--red2);">5분 53초</td>
+            <td><span class="delta-dn">▼ +1분 44초</span></td>
             <td style="font-size:10px;color:var(--red2);">악화</td>
           </tr>
           <tr>
-            <td><div class="row-lbl">⏱ 평균 상담 처리</div></td>
-            <td>130분 35초</td>
-            <td class="val-may">129분 48초</td>
-            <td><span class="delta-up">▲ 47초 개선</span></td>
+            <td><div class="row-lbl">⏱ 평균 응답 시간</div></td>
+            <td>~4분 22초</td>
+            <td class="val-may">4분 20초</td>
+            <td><span class="delta-up">▲ 2초 개선</span></td>
             <td style="font-size:10px;color:var(--text3);">미미한 개선</td>
           </tr>
           <tr>
-            <td><div class="row-lbl">⭐ 고객만족도 (CX)</div></td>
-            <td>4.74점</td>
-            <td class="val-may" style="color:var(--amber);">4.61점</td>
-            <td><span class="delta-dn">▼ -0.13점</span></td>
-            <td style="font-size:10px;color:var(--text3);">참여 264→199건</td>
+            <td><div class="row-lbl">⏱ 상담 종료까지</div></td>
+            <td>~3시간 10분</td>
+            <td class="val-may" style="color:var(--red2);">3시간 40분</td>
+            <td><span class="delta-dn">▼ +29분 49초</span></td>
+            <td style="font-size:10px;color:var(--red2);">악화</td>
           </tr>
           <tr>
-            <td><div class="row-lbl">📞 통화 수 <span style="font-size:9px;color:var(--text4);">캡처기준</span></div></td>
+            <td><div class="row-lbl">🔀 담당자 이관율</div></td>
+            <td>1.7%</td>
+            <td class="val-may">1.0%</td>
+            <td><span class="delta-up">▼ -0.7%p</span></td>
+            <td style="font-size:10px;color:var(--green2);">개선</td>
+          </tr>
+          <tr>
+            <td><div class="row-lbl">📞 통화 수</div></td>
             <td>843건</td>
             <td class="val-may">896건</td>
             <td><span class="delta-dn">▲ +53건</span></td>
-            <td style="font-size:10px;color:var(--text3);">1,766분→1,842분</td>
+            <td style="font-size:10px;color:var(--text3);">1,766→1,842분</td>
           </tr>
           <tr>
             <td><div class="row-lbl">📞 통화 응답률</div></td>
@@ -423,7 +462,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
           <tr>
             <td>
               <div class="row-lbl">📞 서비스 레벨</div>
-              <div style="font-size:9.5px;color:var(--text4);margin-top:2px;">고객 대기 20초 이내 응답 전환율</div>
+              <div style="font-size:9.5px;color:var(--text4);margin-top:2px;">20초 이내 응답 전환율</div>
             </td>
             <td>49.8%</td>
             <td class="val-may">50.0%</td>
@@ -439,9 +478,9 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
           </tr>
           <tr>
             <td><div class="row-lbl">🔧 불량 접수 총계</div></td>
-            <td>972건</td>
+            <td>973건</td>
             <td class="val-may" style="color:var(--red2);">998건</td>
-            <td><span class="delta-dn">▲ +26건</span></td>
+            <td><span class="delta-dn">▲ +25건</span></td>
             <td style="font-size:10px;color:var(--red2);">5개월 연속↑</td>
           </tr>
           <tr>
@@ -449,7 +488,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
             <td>156건</td>
             <td class="val-may">132건</td>
             <td><span class="delta-up">▼ -24건</span></td>
-            <td style="font-size:10px;color:var(--text3);">유상 2,265만원</td>
+            <td style="font-size:10px;color:var(--text3);">유상 226.5만원</td>
           </tr>
           <tr>
             <td><div class="row-lbl">⭐ 스마트스토어 리뷰</div></td>
@@ -461,14 +500,6 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         </tbody>
       </table>
     </div>
-
-    <!-- 서비스레벨 설명 AI 코멘트 -->
-    <div class="comment-box info" style="margin-top:10px;">
-      <div class="comment-ai">🤖</div>
-      <div class="comment-txt">
-        <strong>서비스 레벨(50.0%) 해석:</strong> <span class="a">고객이 전화를 걸었을 때 20초 이내에 상담원과 연결된 비율</span>입니다. 전화를 건 고객 2명 중 1명은 20초 이내 연결이 되지 않았다는 의미로, 수치의 기준을 함께 공유드립니다.
-      </div>
-    </div>
   </div>
 
   <!-- ③ 통화 현황 -->
@@ -476,10 +507,10 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
     <div class="sec-hdr">
       <div class="sec-acc" style="background:#7c3aed;height:20px;"></div>
       <div class="sec-ttl">③ 통화 현황</div>
-      <div class="sec-num">채널톡 캡처 기준 · 4월 집계방식 변경 유의</div>
+      <div class="sec-num">채널톡 직접 집계 기준</div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;">
       <div class="kpi-card">
         <div class="kpi-lbl">총 통화 수</div>
         <div class="kpi-val">896<span style="font-size:13px;color:var(--text3);"> 건</span></div>
@@ -497,14 +528,14 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
       <div class="kpi-card">
         <div class="kpi-lbl">응답률</div>
         <div class="kpi-val" style="color:var(--green2);">79.3<span style="font-size:14px;">%</span></div>
         <div class="kpi-cmp">4월 77.3% &nbsp;<b class="up">▲ +2.0%p</b></div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-lbl">서비스 레벨 <span style="font-size:9px;color:var(--text4);">20초내 응답률</span></div>
+        <div class="kpi-lbl">서비스 레벨 <span style="font-size:9px;color:var(--text4);">20초내</span></div>
         <div class="kpi-val">50.0<span style="font-size:14px;">%</span></div>
         <div class="kpi-cmp">4월 49.8% &nbsp;<b class="up">▲ +0.2%p</b></div>
       </div>
@@ -513,10 +544,11 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         <div class="kpi-val">77.1<span style="font-size:14px;">%</span></div>
         <div class="kpi-cmp">4월 74.0% &nbsp;<b class="up">▲ +3.1%p</b></div>
       </div>
-    </div>
-
-    <div style="margin-top:10px;padding:10px 14px;background:rgba(180,83,9,0.05);border:1px solid rgba(180,83,9,0.15);border-radius:8px;font-size:11.5px;color:var(--text2);">
-      ⚠ <strong>4월 통화 집계 주의:</strong> 채널톡 시스템 운영방식 변경으로 4월 통화수는 GAS 자동집계와 실제 수치 불일치가 있어, 채널톡 대시보드 직접 확인 수치(843건)를 기준으로 작성하였습니다.
+      <div class="kpi-card">
+        <div class="kpi-lbl">평균 후처리</div>
+        <div class="kpi-val sm">15분 33초</div>
+        <div class="kpi-cmp">4월 대비 &nbsp;<b class="dn">▲ +2분 40초</b></div>
+      </div>
     </div>
   </div>
 
@@ -525,7 +557,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
     <div class="sec-hdr">
       <div class="sec-acc" style="background:var(--teal);height:20px;"></div>
       <div class="sec-ttl">④ 상담원별 실적</div>
-      <div class="sec-num">채널톡 5월 기준</div>
+      <div class="sec-num">채널톡 직접 집계 기준</div>
     </div>
 
     <div class="card" style="padding:0;overflow:hidden;">
@@ -533,54 +565,41 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         <thead>
           <tr>
             <th>상담원</th>
-            <th>처리 건수</th>
-            <th>평균 응답</th>
-            <th>평균 처리</th>
-            <th>CX 점수</th>
+            <th>담당 수</th>
+            <th>첫 응답 시간</th>
+            <th>목표 달성</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>상담원 J</td>
-            <td>743</td>
-            <td>12분 1초</td>
-            <td>109분 0초</td>
-            <td><span class="cx-dot" style="background:#22c55e;"></span>4.49</td>
+            <td>1,518</td>
+            <td>22분 31초</td>
+            <td>0%</td>
           </tr>
           <tr>
             <td>상담원 C</td>
-            <td>684</td>
-            <td>8분 21초</td>
-            <td>82분 58초</td>
-            <td><span class="cx-dot" style="background:#22c55e;"></span>4.65</td>
+            <td>1,395</td>
+            <td>16분 23초</td>
+            <td>0%</td>
           </tr>
           <tr>
             <td>상담원 H</td>
-            <td>530</td>
-            <td>11분 15초</td>
-            <td>142분 19초</td>
-            <td><span class="cx-dot" style="background:#f59e0b;"></span>4.29</td>
+            <td>1,108</td>
+            <td>22분 16초</td>
+            <td>0%</td>
           </tr>
           <tr style="background:rgba(67,56,202,0.03);">
-            <td>상담원 P <span class="bdg bdg-b" style="font-size:8px;margin-left:4px;">정체구간 담당</span></td>
-            <td>406</td>
-            <td>76분 48초</td>
-            <td>188분 24초</td>
-            <td><span class="cx-dot" style="background:#f59e0b;"></span>3.71</td>
+            <td>상담원 P &nbsp;<span class="bdg bdg-b" style="font-size:8px;">정체구간 담당</span></td>
+            <td>935</td>
+            <td>1시간 37분</td>
+            <td>0%</td>
           </tr>
           <tr>
             <td>상담원 K</td>
-            <td>177</td>
-            <td>55분 44초</td>
-            <td>211분 19초</td>
-            <td><span class="cx-dot" style="background:#94a3b8;"></span>—</td>
-          </tr>
-          <tr style="background:rgba(0,178,255,0.04);">
-            <td style="color:var(--text3);">ALF (자동)</td>
-            <td>90</td>
-            <td>—</td>
-            <td>—</td>
-            <td>—</td>
+            <td>551</td>
+            <td>1시간 21분</td>
+            <td>0%</td>
           </tr>
         </tbody>
       </table>
@@ -589,13 +608,11 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
       <div class="insight-block pos">
         <div class="insight-icon">✅</div>
-        <div class="insight-txt"><strong>상담원 C</strong> — CX 4.65 팀 내 최고점. 응답속도(8분)·만족도 모두 우수. 684건 안정 처리.</div>
+        <div class="insight-txt"><strong>상담원 C</strong> — 첫 응답 16분 23초로 팀 내 최단. 1,395건 안정 처리.</div>
       </div>
       <div class="comment-box info" style="margin:0;">
         <div class="comment-ai">🤖</div>
-        <div class="comment-txt">
-          <strong>상담원 P 지표 해석 주의</strong> — 응답 76분·CX 3.71은 <span class="a">게시판 위주 처리 담당이며, 팀 내 정체구간(장기 지연 상담) 투입 전담</span> 역할 때문입니다. 구조적으로 응답 지연과 낮은 만족도가 발생할 수밖에 없는 포지션으로, 수치만으로 성과를 평가하기 어렵습니다.
-        </div>
+        <div class="comment-txt"><strong>상담원 P 지표 해석 주의</strong> — 응답 1시간 37분은 <span class="a">게시판 위주 처리 및 팀 내 정체구간(장기 지연 상담) 투입 전담</span> 역할 때문입니다. 수치만으로 성과를 평가하기 어렵습니다.</div>
       </div>
     </div>
   </div>

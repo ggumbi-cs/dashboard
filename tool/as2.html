@@ -9,20 +9,17 @@ html, body {
     height: 100%;
     margin: 0;
 }
-
 body {
     font-family: Arial, sans-serif;
     padding: 10px;
     box-sizing: border-box;
 }
-
 .layout {
     display: grid;
     grid-template-columns: 55% 45%;
     gap: 12px;
     height: 100%;
 }
-
 .left, .right {
     border: 1px solid #ddd;
     padding: 10px;
@@ -30,24 +27,20 @@ body {
     overflow: auto;
     background: #fff;
 }
-
 h2, h3 {
     margin: 5px 0 10px 0;
 }
-
 label {
     font-weight: bold;
     display: block;
     margin-bottom: 4px;
 }
-
 input, select {
     width: 95%;
     padding: 6px;
     margin-bottom: 10px;
     box-sizing: border-box;
 }
-
 .result-box {
     border: 1px solid #ccc;
     padding: 12px;
@@ -55,10 +48,92 @@ input, select {
     min-height: 84px;
     white-space: pre-line;
 }
-
 .button-area {
     margin-top: 10px;
+    display: flex;
+    gap: 6px;
 }
+.button-area button {
+    padding: 6px 12px;
+    cursor: pointer;
+}
+
+/* 팝업 오버레이 */
+#settingsOverlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+}
+#settingsOverlay.open {
+    display: flex;
+}
+#settingsModal {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    width: 780px;
+    max-width: 96vw;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+}
+#settingsModal h3 {
+    margin: 0 0 14px 0;
+    font-size: 15px;
+}
+#settingsModal table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+#settingsModal th {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    padding: 7px 8px;
+    text-align: center;
+    white-space: nowrap;
+}
+#settingsModal td {
+    border: 1px solid #ddd;
+    padding: 7px 8px;
+    vertical-align: middle;
+    text-align: center;
+}
+#settingsModal td.reason-label {
+    text-align: left;
+    font-weight: bold;
+    white-space: nowrap;
+}
+#settingsModal td select.linkmom-sel {
+    width: 100%;
+    font-size: 12px;
+    padding: 3px 2px;
+    margin: 0;
+}
+#settingsModal td input[type=checkbox] {
+    width: auto;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+}
+.modal-footer {
+    margin-top: 16px;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+.modal-footer button {
+    padding: 7px 16px;
+    cursor: pointer;
+    font-size: 13px;
+}
+.btn-save { background: #3b82f6; color: #fff; border: none; border-radius: 4px; }
+.btn-reset-default { background: #f3f4f6; border: 1px solid #ccc; border-radius: 4px; }
+.btn-close { background: #f3f4f6; border: 1px solid #ccc; border-radius: 4px; }
 </style>
 </head>
 
@@ -119,11 +194,6 @@ input, select {
     <input type="text" id="directInput">
 </div>
 
-<div id="directWrap" style="display:none;">
-    <label>직접입력</label>
-    <input type="text" id="directInput">
-</div>
-
 <div id="customerWrap">
     <label>고객명</label>
     <input type="text" id="customer">
@@ -137,129 +207,201 @@ input, select {
 <div class="button-area">
     <button type="button" id="copyBtn">복사</button>
     <button type="button" id="resetBtn">초기화</button>
+    <button type="button" id="settingsBtn">조건수정</button>
+</div>
+</div>
 </div>
 
+<!-- 조건 수정 팝업 -->
+<div id="settingsOverlay">
+<div id="settingsModal">
+    <h3>📋 자동생성 조건표 수정</h3>
+    <table id="settingsTable">
+        <thead>
+            <tr>
+                <th>회수사유</th>
+                <th>★링크맘 엄감★</th>
+                <th>회수사유<br><small>(고정)</small></th>
+                <th>주문번호</th>
+                <th>모델명</th>
+                <th>증상</th>
+                <th>고객명</th>
+            </tr>
+        </thead>
+        <tbody id="settingsTbody"></tbody>
+    </table>
+    <div class="modal-footer">
+        <button class="btn-reset-default" id="restoreDefaultBtn">기본값 복원</button>
+        <button class="btn-close" id="closeModalBtn">닫기</button>
+        <button class="btn-save" id="saveSettingsBtn">저장</button>
+    </div>
 </div>
 </div>
 
 <script>
-const LINKMOM = ["(일체형) 휴대용 분유포트","(분리형) 휴대용 분유포트","LED 분유쉐이커","분유쉐이커 솔로","젖병살균세척기","스팀플러스","쿨시트","쿨링커버"];
+// ─── 기본값 정의 (현재 코드 기준) ───────────────────────────
+// linkmom: 없음 / 모델선택만 / 직접입력만 / 항상
+const DEFAULT_CONDITIONS = [
+    { reason:"일반반품(개봉)",   linkmom:"모델선택만", 주문번호:true,  모델명:true,  증상:false, 고객명:false },
+    { reason:"변심반품(개봉X)",  linkmom:"모델선택만", 주문번호:true,  모델명:true,  증상:false, 고객명:false },
+    { reason:"불량반품",         linkmom:"없음",       주문번호:true,  모델명:true,  증상:true,  고객명:false },
+    { reason:"불량교환",         linkmom:"없음",       주문번호:true,  모델명:true,  증상:true,  고객명:false },
+    { reason:"AS",               linkmom:"항상",       주문번호:false, 모델명:true,  증상:true,  고객명:true  },
+    { reason:"검수",             linkmom:"항상",       주문번호:false, 모델명:true,  증상:true,  고객명:true  },
+    { reason:"기타(직접입력)",   linkmom:"없음",       주문번호:true,  모델명:true,  증상:false, 고객명:false },
+];
 
-const modelType = document.getElementById("modelType");
-const selectWrap = document.getElementById("selectWrap");
-const inputWrap = document.getElementById("inputWrap");
+const LS_KEY  = "as2_conditions";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec";
 
-const reason = document.getElementById("reason");
+// ─── 조건 로드: GAS 우선, 실패 시 localStorage → 기본값 ───────
+async function loadConditionsFromGAS(){
+    try {
+        const res  = await fetch(GAS_URL + "?action=as2CondLoad");
+        const json = await res.json();
+        if(json.ok && Array.isArray(json.conditions) && json.conditions.length > 0){
+            localStorage.setItem(LS_KEY, JSON.stringify(json.conditions));
+            return json.conditions;
+        }
+    } catch(e){}
+    try {
+        const raw = localStorage.getItem(LS_KEY);
+        if(raw) return JSON.parse(raw);
+    } catch(e){}
+    return JSON.parse(JSON.stringify(DEFAULT_CONDITIONS));
+}
 
-const symptomWrap = document.getElementById("symptomWrap");
-const orderWrap = document.getElementById("orderWrap");
-const customerWrap = document.getElementById("customerWrap");
+// ─── 조건 저장: GAS + localStorage 동시 ─────────────────────
+async function saveConditions(data){
+    localStorage.setItem(LS_KEY, JSON.stringify(data));
+    try {
+        await fetch(GAS_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "as2CondSave", conditions: data })
+        });
+    } catch(e){ console.warn("GAS 저장 실패 (localStorage 유지됨)", e); }
+}
 
+let CONDITIONS = JSON.parse(JSON.stringify(DEFAULT_CONDITIONS));
+
+// ─── DOM 요소 ────────────────────────────────────────────────
+const LINKMOM_PRODUCTS = ["(일체형) 휴대용 분유포트","(분리형) 휴대용 분유포트","LED 분유쉐이커","분유쉐이커 솔로","젖병살균세척기","스팀플러스","쿨시트","쿨링커버"];
+
+const modelType     = document.getElementById("modelType");
+const selectWrap    = document.getElementById("selectWrap");
+const inputWrap     = document.getElementById("inputWrap");
+const reason        = document.getElementById("reason");
+const symptomWrap   = document.getElementById("symptomWrap");
+const orderWrap     = document.getElementById("orderWrap");
+const customerWrap  = document.getElementById("customerWrap");
 const productSelect = document.getElementById("productSelect");
-const productInput = document.getElementById("productInput");
+const productInput  = document.getElementById("productInput");
+const symptom       = document.getElementById("symptom");
+const order         = document.getElementById("order");
+const customer      = document.getElementById("customer");
+const result        = document.getElementById("result");
+const copyBtn       = document.getElementById("copyBtn");
+const resetBtn      = document.getElementById("resetBtn");
+const settingsBtn   = document.getElementById("settingsBtn");
+const overlay       = document.getElementById("settingsOverlay");
 
-const symptom = document.getElementById("symptom");
-const order = document.getElementById("order");
-const customer = document.getElementById("customer");
-const result = document.getElementById("result");
-const copyBtn = document.getElementById("copyBtn");
-const resetBtn = document.getElementById("resetBtn");
-
+// ─── 헬퍼 ────────────────────────────────────────────────────
 function getProduct(){
     return modelType.value === "모델 선택"
         ? productSelect.value.trim()
         : productInput.value.trim();
 }
 
-function isLinkmom(p){
-    // 4종 선택이면 목록 포함 여부로 판단
-    // 직접입력이면 항상 링크맘으로 처리
-    if(modelType.value === "직접입력") return true;
-    return LINKMOM.includes(p);
+function isDirect(){
+    return modelType.value === "직접입력";
 }
 
+function getCondition(r){
+    return CONDITIONS.find(c => c.reason === r) || null;
+}
+
+// 현재 모델방식 기준으로 링크맘 엄감 붙여야 하는지 판단
+function needsLinkmom(cond){
+    if(!cond) return false;
+    const lm = cond.linkmom;
+    if(lm === "항상") return true;
+    if(lm === "모델선택만" && !isDirect()) return true;
+    if(lm === "직접입력만" && isDirect()) return true;
+    return false;
+}
+
+// ─── 필드 표시/숨김 (조건표 기반) ───────────────────────────
 function updateFields(){
     const r = reason.value;
-
-    symptomWrap.style.display =
-        ["불량반품","불량교환","AS","검수"].includes(r) ? "block" : "none";
-
-    orderWrap.style.display =
-        ["일반반품(개봉)","변심반품(개봉X)","불량반품","불량교환","기타(직접입력)"].includes(r) ? "block" : "none";
-
-    customerWrap.style.display =
-        ["AS","검수"].includes(r) ? "block" : "none";
-
+    const cond = getCondition(r);
+    if(!cond){
+        symptomWrap.style.display = "none";
+        orderWrap.style.display = "none";
+        customerWrap.style.display = "none";
+        document.getElementById("directWrap").style.display = "none";
+        return;
+    }
+    symptomWrap.style.display  = cond.증상    ? "block" : "none";
+    orderWrap.style.display    = cond.주문번호 ? "block" : "none";
+    customerWrap.style.display = cond.고객명  ? "block" : "none";
     document.getElementById("directWrap").style.display =
         r === "기타(직접입력)" ? "block" : "none";
 }
 
+// ─── 메모 생성 ───────────────────────────────────────────────
 function buildMemo(){
     const p = getProduct();
     const r = reason.value;
     const s = symptom.value.trim();
     const o = order.value.trim();
     const c = customer.value.trim();
+    const d = document.getElementById("directInput").value.trim();
 
-    const link = isLinkmom(p);
+    const cond = getCondition(r);
+    if(!cond) return "";
 
-    // 🔥 모든 유형 제품명 포함
+    // 필수값 체크
+    if(cond.주문번호 && !o) return "주문번호를 입력해주세요.";
+    if(cond.모델명   && !p) return "모델명을 입력해주세요.";
+    if(cond.증상     && !s) return "증상을 입력해주세요.";
+    if(cond.고객명   && !c) return "고객명을 입력해주세요.";
+    if(r === "기타(직접입력)" && !d) return "직접입력 내용을 입력해주세요.";
 
-    if(link){
-        const isDirect = modelType.value === "직접입력";
+    // 링크맘 엄감 prefix
+    const lm = needsLinkmom(cond);
 
-        if(r==="일반반품(개봉)"){
-            if(!o) return "주문번호를 입력해주세요.";
-            return isDirect ? `일반반품 / ${o} / ${p}` : `★일반반품 링크맘 엄감★${o} / ${p}`;
+    // 항목 조합
+    let parts = [];
+
+    // 회수사유 표기 (기타는 괄호 포함)
+    const reasonLabel = r === "기타(직접입력)" ? `기타(${d})` : r;
+
+    if(lm){
+        // AS/검수 스타일: ★r 링크맘 엄감★ (모델명) 고객명고객님 / 증상
+        // 그 외 링크맘 스타일: ★r 링크맘 엄감★주문번호 / 모델명
+        if(cond.고객명){
+            let str = `★${reasonLabel} 링크맘 엄감★`;
+            if(cond.모델명)   str += ` (${p})`;
+            if(cond.고객명)   str += ` ${c}고객님`;
+            if(cond.증상)     str += ` / ${s}`;
+            return str;
+        } else {
+            let str = `★${reasonLabel} 링크맘 엄감★`;
+            if(cond.주문번호) str += `${o}`;
+            if(cond.모델명)   str += ` / ${p}`;
+            if(cond.증상)     str += ` / ${s}`;
+            return str;
         }
-        if(r==="변심반품(개봉X)"){
-            if(!o) return "주문번호를 입력해주세요.";
-            return isDirect ? `변심반품 / ${o} / ${p}` : `★변심반품 링크맘 엄감★${o} / ${p}`;
-        }
-
-        if(r==="불량반품"||r==="불량교환"){
-            if(!o) return "주문번호를 입력해주세요.";
-            if(!p) return "모델명을 입력해주세요.";
-            if(!s) return "증상을 입력해주세요.";
-            return isDirect ? `${r} / ${o} / ${p} / ${s}` : `${r} / ${o} / ${p} / ${s}`;
-        }
-
-        if(r==="AS"||r==="검수"){
-            if(!c) return "고객명을 입력해주세요.";
-            if(!s) return "증상을 입력해주세요.";
-            return `★${r} 링크맘 엄감★ (${p}) ${c}고객님 / ${s}`;
-        }
+    } else {
+        // 링크맘 없음: 회수사유 / 항목들
+        parts.push(reasonLabel);
+        if(cond.주문번호) parts.push(o);
+        if(cond.모델명)   parts.push(p);
+        if(cond.증상)     parts.push(s);
+        if(cond.고객명)   parts.push(`${c}고객님`);
+        return parts.join(" / ");
     }
-
-    if(r==="일반반품(개봉)"||r==="변심반품(개봉X)"){
-        if(!o) return "주문번호를 입력해주세요.";
-        if(!p) return "모델명을 입력해주세요.";
-        return `${r} / ${o} / ${p}`;
-    }
-
-    if(r==="기타(직접입력)"){
-        const d = document.getElementById("directInput").value.trim();
-        if(!o) return "주문번호를 입력해주세요.";
-        if(!p) return "모델명을 입력해주세요.";
-        if(!d) return "직접입력 내용을 입력해주세요.";
-        return `기타(${d}) / ${o} / ${p}`;
-    }
-
-    if(r==="불량반품"||r==="불량교환"){
-        if(!o) return "주문번호를 입력해주세요.";
-        if(!p) return "모델명을 입력해주세요.";
-        if(!s) return "증상을 입력해주세요.";
-        return `${r} / ${o} / ${p} / ${s}`;
-    }
-
-    if(r==="AS"||r==="검수"){
-        if(!c) return "고객명을 입력해주세요.";
-        if(!p) return "모델명을 입력해주세요.";
-        if(!s) return "증상을 입력해주세요.";
-        return `★${r} 링크맘 엄감★ (${p}) ${c}고객님 / ${s}`;
-    }
-
-    return "";
 }
 
 function sendToParent(){
@@ -267,47 +409,128 @@ function sendToParent(){
     result.innerText = memo || "여기에 결과 출력";
 }
 
-document.querySelectorAll("input, select").forEach(el=>{
-    el.addEventListener("input", ()=>{
-        updateFields();
-        sendToParent();
+// ─── 팝업 테이블 렌더링 ──────────────────────────────────────
+function renderSettingsTable(){
+    const tbody = document.getElementById("settingsTbody");
+    tbody.innerHTML = "";
+    CONDITIONS.forEach((cond, i) => {
+        const tr = document.createElement("tr");
+
+        // 회수사유
+        const tdR = document.createElement("td");
+        tdR.className = "reason-label";
+        tdR.textContent = cond.reason;
+        tr.appendChild(tdR);
+
+        // 링크맘 엄감 select
+        const tdLm = document.createElement("td");
+        const sel = document.createElement("select");
+        sel.className = "linkmom-sel";
+        sel.dataset.idx = i;
+        ["없음","모델선택만","직접입력만","항상"].forEach(opt => {
+            const o = document.createElement("option");
+            o.value = opt; o.textContent = opt;
+            if(cond.linkmom === opt) o.selected = true;
+            sel.appendChild(o);
+        });
+        tdLm.appendChild(sel);
+        tr.appendChild(tdLm);
+
+        // 회수사유 고정 체크 (항상 체크, disabled)
+        const tdFixed = document.createElement("td");
+        const cbFixed = document.createElement("input");
+        cbFixed.type = "checkbox"; cbFixed.checked = true; cbFixed.disabled = true;
+        tdFixed.appendChild(cbFixed);
+        tr.appendChild(tdFixed);
+
+        // 나머지 항목 체크박스
+        ["주문번호","모델명","증상","고객명"].forEach(field => {
+            const td = document.createElement("td");
+            const cb = document.createElement("input");
+            cb.type = "checkbox";
+            cb.dataset.idx = i;
+            cb.dataset.field = field;
+            cb.checked = !!cond[field];
+            td.appendChild(cb);
+            tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
     });
-    el.addEventListener("change", ()=>{
-        updateFields();
-        sendToParent();
+}
+
+// ─── 팝업 저장 ───────────────────────────────────────────────
+function collectSettings(){
+    const tbody = document.getElementById("settingsTbody");
+    const rows = tbody.querySelectorAll("tr");
+    rows.forEach((tr, i) => {
+        const sel = tr.querySelector("select.linkmom-sel");
+        if(sel) CONDITIONS[i].linkmom = sel.value;
+        tr.querySelectorAll("input[type=checkbox][data-field]").forEach(cb => {
+            CONDITIONS[i][cb.dataset.field] = cb.checked;
+        });
     });
+}
+
+// ─── 이벤트 바인딩 ───────────────────────────────────────────
+document.querySelectorAll("input, select").forEach(el => {
+    el.addEventListener("input",  () => { updateFields(); sendToParent(); });
+    el.addEventListener("change", () => { updateFields(); sendToParent(); });
 });
 
-modelType.addEventListener("change", ()=>{
-    if(modelType.value==="모델 선택"){
-        selectWrap.style.display="block";
-        inputWrap.style.display="none";
-    }else{
-        selectWrap.style.display="none";
-        inputWrap.style.display="block";
+modelType.addEventListener("change", () => {
+    if(modelType.value === "모델 선택"){
+        selectWrap.style.display = "block";
+        inputWrap.style.display  = "none";
+    } else {
+        selectWrap.style.display = "none";
+        inputWrap.style.display  = "block";
     }
 });
 
-copyBtn.addEventListener("click", async ()=>{
+copyBtn.addEventListener("click", async () => {
     const text = result.innerText.trim();
-    if(!text || text === "여기에 결과 출력"){
-        alert("내용 없음");
-        return;
-    }
-    try{
-        await navigator.clipboard.writeText(text);
-        alert("복사 완료");
-    }catch(e){
-        alert("복사 실패");
-    }
+    if(!text || text === "여기에 결과 출력"){ alert("내용 없음"); return; }
+    try { await navigator.clipboard.writeText(text); alert("복사 완료"); }
+    catch(e){ alert("복사 실패"); }
 });
 
-resetBtn.addEventListener("click", ()=>{
-    location.reload();
+resetBtn.addEventListener("click", () => { location.reload(); });
+
+settingsBtn.addEventListener("click", () => {
+    renderSettingsTable();
+    overlay.classList.add("open");
 });
 
-updateFields();
-sendToParent();
+document.getElementById("closeModalBtn").addEventListener("click", () => {
+    overlay.classList.remove("open");
+});
+
+overlay.addEventListener("click", e => {
+    if(e.target === overlay) overlay.classList.remove("open");
+});
+
+document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
+    collectSettings();
+    overlay.classList.remove("open");
+    updateFields();
+    sendToParent();
+    await saveConditions(CONDITIONS);
+    alert("저장되었습니다.");
+});
+
+document.getElementById("restoreDefaultBtn").addEventListener("click", () => {
+    if(!confirm("기본값으로 복원하시겠습니까?")) return;
+    CONDITIONS = JSON.parse(JSON.stringify(DEFAULT_CONDITIONS));
+    renderSettingsTable();
+});
+
+// ─── 초기화: GAS에서 조건 로드 후 화면 갱신 ─────────────────
+(async () => {
+    CONDITIONS = await loadConditionsFromGAS();
+    updateFields();
+    sendToParent();
+})();
 </script>
 
 </body>

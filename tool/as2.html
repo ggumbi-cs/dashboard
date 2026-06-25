@@ -271,15 +271,13 @@ async function loadConditionsFromGAS(){
     return JSON.parse(JSON.stringify(DEFAULT_CONDITIONS));
 }
 
-// ─── 조건 저장: GAS + localStorage 동시 ─────────────────────
+// ─── 조건 저장: GAS(GET 방식) + localStorage 동시 ───────────
 async function saveConditions(data){
     localStorage.setItem(LS_KEY, JSON.stringify(data));
     try {
-        await fetch(GAS_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "as2CondSave", conditions: data })
-        });
+        const encoded = encodeURIComponent(JSON.stringify({ conditions: data }));
+        const url = GAS_URL + "?action=as2CondSave&data=" + encoded;
+        await fetch(url, { mode: "no-cors" });
     } catch(e){ console.warn("GAS 저장 실패 (localStorage 유지됨)", e); }
 }
 

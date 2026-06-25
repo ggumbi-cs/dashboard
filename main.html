@@ -179,7 +179,7 @@ body.is-admin .admin-gear { display:flex; }
 
 /* 설정 행 */
 .cfg-item { background:var(--bg3); border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
-.cfg-item-top { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.cfg-item-top { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
 .cfg-icon-preview { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; cursor:pointer; border:1px solid var(--border2); }
 .cfg-fields { display:flex; gap:8px; flex:1; }
 .cfg-del { background:none; border:none; color:var(--text3); font-size:16px; cursor:pointer; padding:2px 4px; }
@@ -228,6 +228,15 @@ body.is-admin .notice-admin-gear { display:flex; }
 .notice-edit-del:hover { color:var(--red); }
 .notice-add-btn { width:100%; padding:7px; background:var(--bg4); border:1px dashed var(--border2); color:var(--text3); border-radius:8px; cursor:pointer; font-size:12px; font-family:var(--font-kr); transition:all 0.15s; margin-top:4px; }
 .notice-add-btn:hover { color:var(--cyan); border-color:var(--cyan); }
+
+/* 드래그&드롭 공통 */
+.drag-handle { width:18px; flex-shrink:0; display:flex; flex-direction:column; gap:3px; align-items:center; justify-content:center; cursor:grab; padding:2px 0; opacity:0.35; transition:opacity 0.15s; user-select:none; }
+.drag-handle:hover { opacity:0.9; }
+.drag-handle:active { cursor:grabbing; }
+.drag-handle span { display:block; width:12px; height:2px; background:var(--text2); border-radius:1px; }
+.dragging { opacity:0.3; background:var(--bg4) !important; border:1px dashed var(--border2) !important; }
+.drag-over-top    { border-top:2px solid var(--cyan) !important; }
+.drag-over-bottom { border-bottom:2px solid var(--cyan) !important; }
 .dot-picker { display:none; position:absolute; top:32px; left:0; z-index:200; background:var(--bg2); border:1px solid var(--border2); border-radius:10px; padding:8px; display:none; flex-direction:row; gap:6px; box-shadow:0 8px 24px rgba(0,0,0,0.4); }
 .dot-picker.open { display:flex; }
 .dp-opt { width:20px; height:20px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:border-color 0.1s; }
@@ -634,7 +643,8 @@ function renderNoticeEditRows() {
       `<div class="dp-opt${(it.dot||'cyan')===c.key?' selected':''}" style="background:${c.hex}" onclick="selectNoticeDot(${i},'${c.key}',this)" title="${c.key}"></div>`
     ).join('');
     return `
-    <div class="notice-edit-row" id="nerow-${i}">
+    <div class="notice-edit-row" id="nerow-${i}" draggable="true" data-idx="${i}">
+      <div class="drag-handle" title="드래그하여 순서 변경"><span></span><span></span><span></span></div>
       <div class="notice-edit-dot-sel" id="dotsel-${i}" onclick="toggleDotPicker(${i},event)" style="background:${dotColor}20;border-color:${dotColor}60">
         <div style="width:10px;height:10px;border-radius:50%;background:${dotColor}"></div>
         <div class="dot-picker" id="dotpicker-${i}">${dotOpts}</div>
@@ -644,6 +654,8 @@ function renderNoticeEditRows() {
       <button class="notice-edit-del" onclick="removeNoticeRow(${i})" title="삭제">✕</button>
     </div>`;
   }).join('');
+  // 드래그 이벤트 바인딩
+  bindDragEvents(wrap, _noticeEditRows, renderNoticeEditRows);
 }
 
 function toggleDotPicker(i, e) {
@@ -761,8 +773,9 @@ function renderCfgList(type, container, items) {
     const permBtns = roles.map(r => `<button class="perm-btn${minRole===r?' active-perm':''}" onclick="setMinRole('${type}',${i},'${r}',this)">${roleLabel[r]}</button>`).join('');
     const colorBg = COLOR_OPTIONS.find(c=>c.cls===(it.color||it.iconCls||'qi-cyan'))?.hex || 'rgba(0,200,255,0.12)';
     return `
-    <div class="cfg-item" id="cfg-${type}-${i}">
+    <div class="cfg-item" id="cfg-${type}-${i}" draggable="true" data-type="${type}" data-idx="${i}">
       <div class="cfg-item-top">
+        <div class="drag-handle" title="드래그하여 순서 변경"><span></span><span></span><span></span></div>
         <div class="cfg-icon-preview ${it.color||it.iconCls||'qi-cyan'}" style="background:${colorBg}" onclick="openIconPicker('${type}',${i},this)">${it.icon}</div>
         <div class="cfg-fields">
           <input class="modal-input" value="${it.label||it.title||''}" placeholder="라벨" oninput="updateItem('${type}',${i},'label',this.value);updateItem('${type}',${i},'title',this.value)">
@@ -776,6 +789,8 @@ function renderCfgList(type, container, items) {
       </div>
     </div>`;
   }).join('');
+  // 드래그 이벤트 바인딩
+  bindDragEvents(container, type === 'quick' ? _quickItems : _cardItems, () => renderCfgList(type, container, type === 'quick' ? _quickItems : _cardItems));
 }
 
 function updateItem(type, i, key, val) {
@@ -851,6 +866,72 @@ document.addEventListener('click', e => {
   if (picker.classList.contains('open') && !picker.contains(e.target) && !e.target.classList.contains('cfg-icon-preview'))
     closeIconPicker();
 });
+
+// ─────────────────────────────────────────────
+// 드래그&드롭 공통 엔진
+// ─────────────────────────────────────────────
+function bindDragEvents(container, dataArr, rerender) {
+  let dragSrcEl = null;
+  let dragSrcIdx = -1;
+
+  container.querySelectorAll('[draggable="true"]').forEach(row => {
+    row.addEventListener('dragstart', e => {
+      // 핸들에서만 드래그 허용 (input, button 클릭 시 드래그 방지)
+      if (e.target !== row && !e.target.closest('.drag-handle')) {
+        e.preventDefault(); return;
+      }
+      dragSrcEl  = row;
+      dragSrcIdx = parseInt(row.dataset.idx);
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', dragSrcIdx);
+      setTimeout(() => row.classList.add('dragging'), 0);
+    });
+
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging');
+      container.querySelectorAll('[draggable="true"]').forEach(r => {
+        r.classList.remove('drag-over-top', 'drag-over-bottom');
+      });
+      dragSrcEl = null; dragSrcIdx = -1;
+    });
+
+    row.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (!dragSrcEl || row === dragSrcEl) return;
+      e.dataTransfer.dropEffect = 'move';
+      // 마우스가 행의 위/아래 절반 중 어디인지 판단
+      const rect = row.getBoundingClientRect();
+      const mid  = rect.top + rect.height / 2;
+      container.querySelectorAll('[draggable="true"]').forEach(r => {
+        r.classList.remove('drag-over-top', 'drag-over-bottom');
+      });
+      row.classList.add(e.clientY < mid ? 'drag-over-top' : 'drag-over-bottom');
+    });
+
+    row.addEventListener('dragleave', () => {
+      row.classList.remove('drag-over-top', 'drag-over-bottom');
+    });
+
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!dragSrcEl || row === dragSrcEl) return;
+      const targetIdx = parseInt(row.dataset.idx);
+      const rect = row.getBoundingClientRect();
+      const mid  = rect.top + rect.height / 2;
+      const insertAfter = e.clientY >= mid;
+
+      // 배열 재정렬
+      const moved = dataArr.splice(dragSrcIdx, 1)[0];
+      let newIdx = targetIdx;
+      if (dragSrcIdx < targetIdx) newIdx = targetIdx - 1;
+      if (insertAfter) newIdx++;
+      newIdx = Math.max(0, Math.min(newIdx, dataArr.length));
+      dataArr.splice(newIdx, 0, moved);
+
+      rerender();
+    });
+  });
+}
 
 // ─────────────────────────────────────────────
 // 저장

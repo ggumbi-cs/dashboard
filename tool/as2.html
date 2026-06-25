@@ -378,21 +378,13 @@ function buildMemo(){
     const reasonLabel = r === "기타(직접입력)" ? `기타(${d})` : r;
 
     if(lm){
-        // AS/검수 스타일: ★r 링크맘 엄감★ (모델명) 고객명고객님 / 증상
-        // 그 외 링크맘 스타일: ★r 링크맘 엄감★주문번호 / 모델명
-        if(cond.고객명){
-            let str = `★${reasonLabel} 링크맘 엄감★`;
-            if(cond.모델명)   str += ` (${p})`;
-            if(cond.고객명)   str += ` ${c}고객님`;
-            if(cond.증상)     str += ` / ${s}`;
-            return str;
-        } else {
-            let str = `★${reasonLabel} 링크맘 엄감★`;
-            if(cond.주문번호) str += `${o}`;
-            if(cond.모델명)   str += ` / ${p}`;
-            if(cond.증상)     str += ` / ${s}`;
-            return str;
-        }
+        // ★링크맘 엄감★ 고정 prefix + 회수사유 / 항목들
+        const lmParts = [`★링크맘 엄감★ ${reasonLabel}`];
+        if(cond.주문번호) lmParts.push(o);
+        if(cond.모델명)   lmParts.push(p);
+        if(cond.고객명)   lmParts.push(`${c}고객님`);
+        if(cond.증상)     lmParts.push(s);
+        return lmParts.join(" / ");
     } else {
         // 링크맘 없음: 회수사유 / 항목들
         parts.push(reasonLabel);

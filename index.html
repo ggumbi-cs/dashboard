@@ -650,6 +650,8 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
       <div class="sb-label">건별보고</div>
       <div class="sb-item" onclick="onceNav('report/once/allstain.html', this)">세척기 (꿈비-브레쨔)</div>
       <div class="sb-item" onclick="onceNav('report/once/올스테인레스_직수.html', this)">세척기 (직수관)</div>
+      <div class="sb-item" onclick="onceNavWithPerm('report/once/계열사소통_내부용.html', this, ['admin','leader'])">계열사소통(내부)</div>
+      <div class="sb-item" onclick="onceNavWithPerm('report/once/계열사소통_회의용.html', this, ['admin','leader','ggumbi'])">계열사소통(회의)</div>
     </div>
 
     <div id="smtSidebar" style="display:none;">
@@ -1404,6 +1406,14 @@ function onceNav(path, el) {
   frame.src = path;
   const _h = () => { frame.removeEventListener('load',_h); sendThemeToFrame(); };
   frame.addEventListener('load', _h);
+}
+function onceNavWithPerm(path, el, allowedRoles) {
+  const role = sessionStorage.getItem('userRole') || '';
+  if (!allowedRoles.includes(role)) {
+    showNoPermission(el ? el.textContent.trim() : path);
+    return;
+  }
+  onceNav(path, el);
 }
 function switchTabByName(tabName, sidebarEl) {
   // statusSidebar 아이템 active 표시

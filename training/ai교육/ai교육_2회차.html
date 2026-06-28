@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI 교육 2회차 · GitHub 게시하기</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root{
+  --bg:#070d1a;
+  --bg2:#0c1628;
+  --bg3:#111e35;
+  --bg4:#172240;
+  --border:rgba(80,140,255,0.12);
+  --border2:rgba(80,140,255,0.25);
+  --blue:#4a8fff;
+  --blue-dim:rgba(74,143,255,0.10);
+  --cyan:#00d4ff;
+  --green:#00e5a0;
+  --red:#ff5a5a;
+  --orange:#ffaa40;
+  --gold:#f0c060;
+  --purple:#a07aff;
+  --text:#e4eeff;
+  --text2:#8aaad0;
+  --text3:#4a6a90;
+  --radius:14px;
+}
+
+body.light-mode{
+  --bg:#f0f4fa;--bg2:#ffffff;--bg3:#e8f0fb;--bg4:#dce8f7;
+  --border:rgba(26,78,180,0.12);--border2:rgba(26,78,180,0.28);
+  --blue:#1a5fd4;--blue-dim:rgba(26,95,212,0.08);
+  --cyan:#0090b8;--green:#007a50;--red:#c02020;--orange:#b06010;--gold:#8a6000;--purple:#5030b0;
+  --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6090;
+}
+body.light-mode .hero-glow{background:radial-gradient(ellipse,rgba(26,95,212,0.07) 0%,transparent 65%);}
+body.light-mode .hero-glow2{background:radial-gradient(ellipse,rgba(0,144,184,0.05) 0%,transparent 65%);}
+body.light-mode .tool-card:hover{box-shadow:0 8px 24px rgba(26,78,180,0.12);}
+body.light-mode #summary::before{background:radial-gradient(ellipse at 50% 0%,rgba(26,95,212,0.06) 0%,transparent 60%);}
+
+html,body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo',sans-serif;font-size:14px;line-height:1.6;overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── 공통 유틸 ── */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:0.3px;}
+.badge-blue  {background:var(--blue-dim);color:var(--blue);border:1px solid var(--border2);}
+.badge-green {background:rgba(0,229,160,0.10);color:var(--green);border:1px solid rgba(0,229,160,0.25);}
+.badge-red   {background:rgba(255,90,90,0.10);color:var(--red);border:1px solid rgba(255,90,90,0.25);}
+.badge-gold  {background:rgba(240,192,96,0.10);color:var(--gold);border:1px solid rgba(240,192,96,0.25);}
+.badge-purple{background:rgba(160,122,255,0.10);color:var(--purple);border:1px solid rgba(160,122,255,0.25);}
+.hl-blue{color:var(--blue);}
+.hl-cyan{color:var(--cyan);}
+.hl-green{color:var(--green);}
+.hl-gold{color:var(--gold);}
+
+.wrap{max-width:960px;margin:0 auto;padding:0 24px;}
+
+/* ════════════ 1. 히어로 ════════════ */
+#hero{
+  position:relative;
+  background:linear-gradient(160deg,var(--bg) 0%,var(--bg2) 55%,var(--bg) 100%);
+  border-bottom:1px solid var(--border);
+  padding:48px 0 42px;overflow:hidden;
+}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:44px 44px;}
+.hero-glow{position:absolute;top:-80px;right:-40px;width:440px;height:320px;background:radial-gradient(ellipse,rgba(74,143,255,0.07) 0%,transparent 65%);pointer-events:none;}
+.hero-glow2{position:absolute;bottom:-60px;left:10%;width:340px;height:220px;background:radial-gradient(ellipse,rgba(0,212,255,0.04) 0%,transparent 65%);pointer-events:none;}
+.hero-inner{position:relative;z-index:1;}
+.hero-top{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.hero-eyebrow{font-size:11px;font-weight:700;color:var(--blue);letter-spacing:2.5px;text-transform:uppercase;}
+.hero-title{font-size:clamp(26px,4vw,38px);font-weight:800;line-height:1.15;margin-bottom:10px;letter-spacing:-0.5px;color:var(--text);}
+.hero-sub{font-size:15px;color:var(--text2);max-width:580px;line-height:1.7;margin-bottom:20px;}
+.hero-pills{display:flex;gap:12px;flex-wrap:wrap;}
+.hero-pill{display:flex;align-items:center;gap:7px;padding:7px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:30px;font-size:12px;color:var(--text2);}
+
+/* ════════════ 공통 섹션 ════════════ */
+.sec{padding:40px 0 0;}
+.sec-head{display:flex;align-items:center;gap:10px;margin-bottom:24px;}
+.sec-bar{width:3px;height:16px;border-radius:2px;flex-shrink:0;}
+.sec-title{font-size:15px;font-weight:700;color:var(--text);}
+.sec-sub{font-size:11px;color:var(--text3);margin-left:2px;}
+
+/* ════════════ 2. 플로우 ════════════ */
+.flow-wrap{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:32px 24px;display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;
+}
+.flow-node{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:0 12px;text-align:center;
+}
+.flow-node-icon{
+  width:64px;height:64px;border-radius:18px;
+  display:flex;align-items:center;justify-content:center;font-size:30px;
+  border:1px solid var(--border2);
+}
+.fn-blue  {background:rgba(74,143,255,0.10);}
+.fn-cyan  {background:rgba(0,212,255,0.10);}
+.fn-green {background:rgba(0,229,160,0.10);}
+.fn-gold  {background:rgba(240,192,96,0.10);}
+.fn-purple{background:rgba(160,122,255,0.10);}
+.flow-node-label{font-size:12px;font-weight:700;color:var(--text);}
+.flow-node-sub{font-size:10px;color:var(--text3);}
+.flow-arrow-v{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:0 8px;
+}
+.flow-arrow-v .arr-line{width:2px;height:24px;background:linear-gradient(to bottom,var(--border2),var(--blue));border-radius:1px;}
+.flow-arrow-v .arr-head{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid var(--blue);}
+
+/* ════════════ 3. 비교 ════════════ */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.compare-card{border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);}
+.compare-head{padding:16px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);}
+.compare-icon{font-size:22px;}
+.compare-name{font-size:14px;font-weight:700;}
+.compare-list{padding:16px 20px;display:flex;flex-direction:column;gap:10px;}
+.compare-item{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;line-height:1.5;color:var(--text2);}
+.ci-dot{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;margin-top:1px;}
+.ci-bad {background:rgba(255,90,90,0.12);color:var(--red);}
+.ci-good{background:rgba(0,229,160,0.12);color:var(--green);}
+.cc-bad {background:var(--bg2);}
+.cc-bad  .compare-head{background:rgba(255,90,90,0.05);}
+.cc-bad  .compare-name{color:var(--red);}
+.cc-good{background:var(--bg2);}
+.cc-good .compare-head{background:rgba(0,229,160,0.05);}
+.cc-good .compare-name{color:var(--green);}
+body.light-mode .cc-bad  .compare-head{background:rgba(192,32,32,0.04);}
+body.light-mode .cc-good .compare-head{background:rgba(0,122,80,0.04);}
+
+/* ════════════ 4. 집 구조 ════════════ */
+.house-wrap{
+  display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;
+}
+.house-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;
+}
+.house-head{
+  padding:16px 20px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.house-icon{font-size:26px;}
+.house-title{font-size:14px;font-weight:700;color:var(--text);}
+.house-sub{font-size:10px;color:var(--text3);margin-top:2px;}
+.house-body{padding:16px 20px;}
+
+/* 방 구조 */
+.room-index{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;margin-bottom:10px;
+  background:var(--blue-dim);border:1px solid var(--border2);border-radius:10px;
+}
+.room-index-icon{font-size:20px;}
+.room-index-text{font-size:13px;font-weight:700;color:var(--blue);}
+.room-index-sub{font-size:10px;color:var(--text3);}
+.rooms{display:flex;flex-direction:column;gap:5px;padding-left:12px;border-left:2px solid var(--border2);}
+.room-item{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 10px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:7px;font-size:11.5px;color:var(--text2);
+}
+.room-item-icon{font-size:15px;flex-shrink:0;}
+.room-folder{
+  margin-top:4px;
+  display:flex;align-items:center;gap:8px;
+  padding:6px 10px;background:var(--bg4);border:1px solid var(--border);
+  border-radius:7px;font-size:11px;color:var(--text3);
+}
+
+/* 건물 비유 */
+.bldg-list{display:flex;flex-direction:column;gap:8px;}
+.bldg-floor{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 14px;border-radius:9px;border:1px solid var(--border);
+}
+.bldg-floor.f-main{background:var(--blue-dim);border-color:var(--border2);}
+.bldg-floor.f-room{background:var(--bg3);}
+.bldg-floor.f-store{background:var(--bg4);}
+.bldg-floor-icon{font-size:20px;flex-shrink:0;}
+.bldg-floor-name{font-size:12.5px;font-weight:700;color:var(--text);}
+.bldg-floor-role{font-size:10.5px;color:var(--text3);}
+.bldg-floor-file{font-size:10px;color:var(--text3);margin-left:auto;font-family:monospace;background:var(--bg2);padding:2px 7px;border-radius:4px;border:1px solid var(--border);}
+
+/* ════════════ 5. 저장소 트리 ════════════ */
+.repo-wrap{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;
+}
+.repo-head{
+  padding:12px 18px;background:var(--bg3);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);font-family:monospace;
+}
+.repo-dot{width:10px;height:10px;border-radius:50%;}
+.repo-body{padding:20px 24px;}
+.tree-root{font-size:13px;font-weight:700;color:var(--blue);font-family:monospace;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.tree-lines{display:flex;flex-direction:column;gap:4px;padding-left:8px;}
+.tree-item{display:flex;align-items:center;gap:8px;font-size:12px;font-family:monospace;color:var(--text2);padding:3px 0;}
+.tree-prefix{color:var(--text3);flex-shrink:0;}
+.tree-icon{font-size:14px;flex-shrink:0;}
+.tree-name{flex:1;}
+.tree-name.t-index{color:var(--cyan);font-weight:700;}
+.tree-name.t-folder{color:var(--gold);}
+.tree-badge{font-size:9px;padding:1px 6px;border-radius:4px;font-weight:600;white-space:nowrap;}
+.tb-main{background:rgba(0,212,255,0.10);color:var(--cyan);border:1px solid rgba(0,212,255,0.2);}
+.tb-edu {background:rgba(160,122,255,0.10);color:var(--purple);border:1px solid rgba(160,122,255,0.2);}
+
+/* ════════════ 6. 접속 디바이스 ════════════ */
+.device-wrap{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:24px;display:flex;align-items:center;gap:0;flex-wrap:wrap;justify-content:center;
+}
+.device-node{
+  display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 20px;text-align:center;
+}
+.device-icon-wrap{
+  width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  font-size:26px;background:var(--bg3);border:1px solid var(--border);
+}
+.device-label{font-size:11px;color:var(--text2);font-weight:600;}
+.device-arrow{font-size:22px;color:var(--border2);padding:0 4px;align-self:center;}
+.url-box{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 18px;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;
+  font-family:monospace;font-size:11.5px;color:var(--cyan);
+  margin:0 12px;white-space:nowrap;
+}
+.url-lock{font-size:14px;}
+
+/* ════════════ 7. 요약 ════════════ */
+#summary{
+  margin:40px 0 0;padding:32px;
+  background:linear-gradient(135deg,var(--bg2) 0%,var(--bg4) 100%);
+  border:1px solid var(--border2);border-radius:var(--radius);
+  text-align:center;position:relative;overflow:hidden;
+}
+#summary::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(74,143,255,0.06) 0%,transparent 60%);}
+.summary-inner{position:relative;z-index:1;}
+.summary-quote{font-size:clamp(13px,2vw,16px);font-weight:700;line-height:1.7;color:var(--text);max-width:680px;margin:0 auto 16px;}
+.summary-author{font-size:11px;color:var(--text3);}
+
+.sec-bottom{height:48px;}
+
+/* ── 반응형 ── */
+@media(max-width:700px){
+  .compare-grid{grid-template-columns:1fr;}
+  .house-wrap{grid-template-columns:1fr;}
+  .flow-wrap{flex-direction:column;}
+  .flow-arrow-v{transform:none;}
+  .device-wrap{flex-direction:column;}
+  .device-arrow{transform:rotate(90deg);}
+  #summary{padding:22px 16px;}
+}
+
+/* ── 애니메이션 ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.anim{animation:fadeUp 0.45s ease both;}
+.d1{animation-delay:0.05s;}.d2{animation-delay:0.10s;}.d3{animation-delay:0.15s;}.d4{animation-delay:0.20s;}.d5{animation-delay:0.25s;}
+</style>
+</head>
+<body>
+
+<!-- ════════════ 1. 히어로 ════════════ -->
+<div id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="wrap hero-inner anim d1">
+    <div class="hero-top">
+      <div class="hero-eyebrow">AI 교육 2회차</div>
+      <div class="badge badge-blue">⏱ 3분 완성</div>
+      <div class="badge badge-gold">🎯 입문</div>
+    </div>
+    <div class="hero-title">
+      <span class="hl-blue">GitHub</span>에 게시하기<br>
+      <span style="font-size:0.62em;font-weight:500;color:var(--text2);">만든 HTML을 인터넷에서 사용하는 방법</span>
+    </div>
+    <div class="hero-sub">
+      HTML 파일은 내 컴퓨터에만 두면 나만 쓸 수 있어요.<br>
+      GitHub에 올리면 인터넷 어디서든 누구나 접속 가능한 웹페이지가 됩니다.
+    </div>
+    <div class="hero-pills">
+      <div class="hero-pill"><span>☁</span> 인터넷 창고</div>
+      <div class="hero-pill"><span>🌐</span> 웹페이지로 게시</div>
+      <div class="hero-pill"><span>🔗</span> 링크 하나로 공유</div>
+      <div class="hero-pill"><span>👥</span> 팀원 모두 동일 화면</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ════════════ 2. 제작 → 게시 플로우 ════════════ -->
+<div class="sec anim d2">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--blue);"></div>
+    <div class="sec-title">HTML은 어떻게 인터넷에 올라가나요?</div>
+    <div class="sec-sub">· 제작부터 게시까지</div>
+  </div>
+  <div class="flow-wrap">
+
+    <div class="flow-node">
+      <div class="flow-node-icon fn-blue">💻</div>
+      <div class="flow-node-label">Claude</div>
+      <div class="flow-node-sub">AI와 대화로 제작</div>
+    </div>
+
+    <div class="flow-arrow-v"><div class="arr-line"></div><div class="arr-head"></div></div>
+
+    <div class="flow-node">
+      <div class="flow-node-icon fn-cyan">📄</div>
+      <div class="flow-node-label">HTML 파일 완성</div>
+      <div class="flow-node-sub">내 컴퓨터에 저장</div>
+    </div>
+
+    <div class="flow-arrow-v"><div class="arr-line"></div><div class="arr-head"></div></div>
+
+    <div class="flow-node">
+      <div class="flow-node-icon fn-gold" style="position:relative;">
+        ☁
+        <span style="position:absolute;bottom:-4px;right:-4px;font-size:14px;">📤</span>
+      </div>
+      <div class="flow-node-label">GitHub 업로드</div>
+      <div class="flow-node-sub">파일을 인터넷 창고로</div>
+    </div>
+
+    <div class="flow-arrow-v"><div class="arr-line"></div><div class="arr-head"></div></div>
+
+    <div class="flow-node">
+      <div class="flow-node-icon fn-green">🌐</div>
+      <div class="flow-node-label">인터넷 게시 완료</div>
+      <div class="flow-node-sub">링크 생성</div>
+    </div>
+
+    <div class="flow-arrow-v"><div class="arr-line"></div><div class="arr-head"></div></div>
+
+    <div class="flow-node">
+      <div class="flow-node-icon fn-purple">👥</div>
+      <div class="flow-node-label">팀원 누구나 접속</div>
+      <div class="flow-node-sub">링크 클릭 한 번</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════ 3. 비교 ════════════ -->
+<div class="sec anim d3">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--cyan);"></div>
+    <div class="sec-title">왜 GitHub에 올릴까요?</div>
+    <div class="sec-sub">· 내 컴퓨터 vs GitHub</div>
+  </div>
+  <div class="compare-grid">
+
+    <div class="compare-card cc-bad">
+      <div class="compare-head">
+        <div class="compare-icon">💻</div>
+        <div>
+          <div class="compare-name">내 컴퓨터에만 있는 HTML</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px;">로컬 파일 방식</div>
+        </div>
+        <div class="badge badge-red" style="margin-left:auto;">불편함</div>
+      </div>
+      <div class="compare-list">
+        <div class="compare-item"><div class="ci-dot ci-bad">✕</div><div>내 PC에서만 실행 가능</div></div>
+        <div class="compare-item"><div class="ci-dot ci-bad">✕</div><div>회사 컴퓨터가 바뀌면 파일도 없어짐</div></div>
+        <div class="compare-item"><div class="ci-dot ci-bad">✕</div><div>다른 팀원은 사용 불가</div></div>
+        <div class="compare-item"><div class="ci-dot ci-bad">✕</div><div>링크로 공유 불가능</div></div>
+        <div class="compare-item"><div class="ci-dot ci-bad">✕</div><div>집에서 접속 불가</div></div>
+      </div>
+    </div>
+
+    <div class="compare-card cc-good">
+      <div class="compare-head">
+        <div class="compare-icon">☁</div>
+        <div>
+          <div class="compare-name">GitHub에 게시한 HTML</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px;">인터넷 게시 방식</div>
+        </div>
+        <div class="badge badge-green" style="margin-left:auto;">편리함</div>
+      </div>
+      <div class="compare-list">
+        <div class="compare-item"><div class="ci-dot ci-good">✓</div><div>인터넷 어디서든 접속 가능</div></div>
+        <div class="compare-item"><div class="ci-dot ci-good">✓</div><div>링크 하나로 누구에게나 공유</div></div>
+        <div class="compare-item"><div class="ci-dot ci-good">✓</div><div>팀원 모두가 동일한 화면 사용</div></div>
+        <div class="compare-item"><div class="ci-dot ci-good">✓</div><div>수정 후 다시 올리면 전원 최신 버전</div></div>
+        <div class="compare-item"><div class="ci-dot ci-good">✓</div><div>회사·집·노트북 어디서나 동일</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════ 4. index.html의 역할 ════════════ -->
+<div class="sec anim d4">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--gold);"></div>
+    <div class="sec-title">index.html은 무엇인가요?</div>
+    <div class="sec-sub">· 모든 페이지의 출입문</div>
+  </div>
+  <div class="house-wrap">
+
+    <!-- 집 구조 -->
+    <div class="house-card">
+      <div class="house-head">
+        <div class="house-icon">🏠</div>
+        <div>
+          <div class="house-title">집과 방의 구조</div>
+          <div class="house-sub">index.html = 현관문</div>
+        </div>
+      </div>
+      <div class="house-body">
+        <div class="room-index">
+          <div class="room-index-icon">🚪</div>
+          <div>
+            <div class="room-index-text">index.html</div>
+            <div class="room-index-sub">현관 · 모든 방의 입구</div>
+          </div>
+        </div>
+        <div class="rooms">
+          <div class="room-item"><div class="room-item-icon">📊</div>보고서 방 · report.html</div>
+          <div class="room-item"><div class="room-item-icon">📈</div>KPI 방 · kpi.html</div>
+          <div class="room-item"><div class="room-item-icon">📋</div>상담현황 방 · 상담실적.html</div>
+          <div class="room-item"><div class="room-item-icon">🔧</div>품질관리 방 · 품질관리.html</div>
+          <div class="room-folder"><span style="margin-right:4px;">📁</span>월간·주간 폴더 / 이미지 폴더</div>
+        </div>
+        <div style="margin-top:12px;padding:10px 12px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--gold);">
+          <div style="font-size:11.5px;color:var(--text2);line-height:1.6;">
+            현관이 없으면 방은 있어도<br>
+            <strong style="color:var(--gold);">사람들이 어디로 들어가야 할지 모른다.</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 회사 건물 비유 -->
+    <div class="house-card">
+      <div class="house-head">
+        <div class="house-icon">🏢</div>
+        <div>
+          <div class="house-title">회사 건물로 보면</div>
+          <div class="house-sub">각 층 = 각각의 HTML 파일</div>
+        </div>
+      </div>
+      <div class="house-body">
+        <div class="bldg-list">
+          <div class="bldg-floor f-main">
+            <div class="bldg-floor-icon">🗂</div>
+            <div>
+              <div class="bldg-floor-name">1층 안내데스크</div>
+              <div class="bldg-floor-role">모든 곳으로 안내하는 출발점</div>
+            </div>
+            <div class="bldg-floor-file">index.html</div>
+          </div>
+          <div class="bldg-floor f-room">
+            <div class="bldg-floor-icon">📊</div>
+            <div>
+              <div class="bldg-floor-name">회의실</div>
+              <div class="bldg-floor-role">보고서 열람</div>
+            </div>
+            <div class="bldg-floor-file">report.html</div>
+          </div>
+          <div class="bldg-floor f-room">
+            <div class="bldg-floor-icon">💼</div>
+            <div>
+              <div class="bldg-floor-name">사무실</div>
+              <div class="bldg-floor-role">KPI 확인</div>
+            </div>
+            <div class="bldg-floor-file">kpi.html</div>
+          </div>
+          <div class="bldg-floor f-store">
+            <div class="bldg-floor-icon">📦</div>
+            <div>
+              <div class="bldg-floor-name">창고</div>
+              <div class="bldg-floor-role">데이터 보관</div>
+            </div>
+            <div class="bldg-floor-file">data/</div>
+          </div>
+          <div class="bldg-floor f-store">
+            <div class="bldg-floor-icon">🖼</div>
+            <div>
+              <div class="bldg-floor-name">사진보관실</div>
+              <div class="bldg-floor-role">이미지 파일</div>
+            </div>
+            <div class="bldg-floor-file">images/</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════ 5. 저장소 트리 ════════════ -->
+<div class="sec anim d5">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--purple);"></div>
+    <div class="sec-title">실제 저장소 구조</div>
+    <div class="sec-sub">· 우리 팀 대시보드 폴더 예시</div>
+  </div>
+  <div class="repo-wrap">
+    <div class="repo-head">
+      <div class="repo-dot" style="background:#ff5f57;"></div>
+      <div class="repo-dot" style="background:#febc2e;margin:0 5px;"></div>
+      <div class="repo-dot" style="background:#28c840;"></div>
+      <span style="margin-left:12px;">📁 dashboard</span>
+      <span style="margin-left:auto;font-size:10px;color:var(--text3);">GitHub Pages 저장소</span>
+    </div>
+    <div class="repo-body">
+      <div class="tree-root">📁 dashboard/</div>
+      <div class="tree-lines">
+        <div class="tree-item">
+          <span class="tree-prefix">├──</span>
+          <span class="tree-icon">🌐</span>
+          <span class="tree-name t-index">index.html</span>
+          <span class="tree-badge tb-main">출입문</span>
+        </div>
+        <div class="tree-item">
+          <span class="tree-prefix">├──</span>
+          <span class="tree-icon">📁</span>
+          <span class="tree-name t-folder">report/</span>
+        </div>
+        <div class="tree-item" style="padding-left:20px;">
+          <span class="tree-prefix" style="color:var(--text3);">└──</span>
+          <span class="tree-icon">📄</span>
+          <span class="tree-name">kpi.html, 상담실적.html …</span>
+        </div>
+        <div class="tree-item">
+          <span class="tree-prefix">├──</span>
+          <span class="tree-icon">📁</span>
+          <span class="tree-name t-folder">training/</span>
+          <span class="tree-badge tb-edu">교육자료</span>
+        </div>
+        <div class="tree-item" style="padding-left:20px;">
+          <span class="tree-prefix" style="color:var(--text3);">└──</span>
+          <span class="tree-icon">📄</span>
+          <span class="tree-name">training_main.html, ai교육/ …</span>
+        </div>
+        <div class="tree-item">
+          <span class="tree-prefix">├──</span>
+          <span class="tree-icon">📁</span>
+          <span class="tree-name t-folder">tool/</span>
+        </div>
+        <div class="tree-item">
+          <span class="tree-prefix">├──</span>
+          <span class="tree-icon">📁</span>
+          <span class="tree-name t-folder">images/</span>
+        </div>
+        <div class="tree-item">
+          <span class="tree-prefix">└──</span>
+          <span class="tree-icon">📁</span>
+          <span class="tree-name t-folder">data/</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 6. 어디서든 접속 ════════════ -->
+<div class="sec anim d5">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--green);"></div>
+    <div class="sec-title">GitHub에 올리면 어디서든 접속</div>
+    <div class="sec-sub">· 링크 하나로 모든 기기에서</div>
+  </div>
+  <div class="device-wrap">
+    <div class="device-node">
+      <div class="device-icon-wrap">🖥</div>
+      <div class="device-label">회사 PC</div>
+    </div>
+    <div class="device-arrow">+</div>
+    <div class="device-node">
+      <div class="device-icon-wrap">🏠</div>
+      <div class="device-label">집 PC</div>
+    </div>
+    <div class="device-arrow">+</div>
+    <div class="device-node">
+      <div class="device-icon-wrap">💻</div>
+      <div class="device-label">노트북</div>
+    </div>
+    <div class="device-arrow">+</div>
+    <div class="device-node">
+      <div class="device-icon-wrap">📱</div>
+      <div class="device-label">태블릿</div>
+    </div>
+
+    <div style="width:100%;display:flex;justify-content:center;margin-top:20px;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">모두 같은 링크 하나로 접속</div>
+        <div class="url-box">
+          <span class="url-lock">🔗</span>
+          https://ggumbi-cs.github.io/dashboard/
+        </div>
+        <div style="font-size:11px;color:var(--green);font-weight:600;">언제나 최신 버전 · 동일한 화면</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 7. 마지막 요약 ════════════ -->
+<div id="summary" class="anim" style="animation-delay:0.3s;">
+  <div class="summary-inner">
+    <div style="font-size:28px;margin-bottom:14px;">💡</div>
+    <div class="summary-quote">
+      HTML은 내 컴퓨터에서 실행할 수 있고,<br>
+      <span class="hl-cyan">GitHub는 그 HTML을 인터넷에 게시해</span><br>
+      모두가 언제 어디서나 사용할 수 있도록 만드는 공간이다.
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+      <div class="badge badge-blue">💻 HTML 제작</div>
+      <div style="color:var(--text3);font-size:12px;">→</div>
+      <div class="badge badge-gold">☁ GitHub 업로드</div>
+      <div style="color:var(--text3);font-size:12px;">→</div>
+      <div class="badge badge-green">🌐 인터넷 게시 완료</div>
+    </div>
+    <div class="summary-author">AI 교육 2회차 · 엄마감동팀</div>
+  </div>
+</div>
+
+<div class="sec-bottom"></div>
+</div>
+
+<script>
+window.addEventListener('message', e => {
+  if (!e.data) return;
+  if (e.data.type === 'THEME') {
+    if (e.data.mode === 'light') document.body.classList.add('light-mode');
+    else document.body.classList.remove('light-mode');
+  }
+});
+</script>
+</body>
+</html>

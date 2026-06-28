@@ -566,10 +566,16 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
     </div>
   </div>
 
-  <!-- 팀원교육 (단독탭) -->
+  <!-- 팀원교육 -->
   <div class="nav-group" id="ng-training">
-    <div class="nav-parent" data-tab="팀원교육" onclick="switchTabDirect('팀원교육')" style="cursor:pointer;">
-      📚 팀원교육
+    <div class="nav-parent has-dropdown">
+      📚 팀원교육 <span class="nav-arrow">▾</span>
+    </div>
+    <div class="nav-dropdown">
+      <div class="nav-item" data-tab="팀원교육" onclick="switchTab(this)">
+        <span class="nav-item-label">📚 교육자료 모음</span>
+        <button class="vis-btn" data-tab="팀원교육" onclick="openVisModal(event,'팀원교육')">⚙</button>
+      </div>
     </div>
   </div>
 
@@ -904,6 +910,12 @@ function applyRolePermissions(role) {
   const devNG = document.getElementById('ng-dev');
   if (devNG) {
     devNG.style.display = (allowed === null || allowed.includes('개발자')) ? '' : 'none';
+  }
+
+  // 팀원교육탭
+  const trainingNG = document.getElementById('ng-training');
+  if (trainingNG) {
+    trainingNG.style.display = (allowed === null || allowed.includes('팀원교육')) ? '' : 'none';
   }
 
   // 계열사: 팀Tool로 바로 이동

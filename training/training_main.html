@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>팀원교육</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#080f1e;--bg2:#0d1830;--bg3:#111e35;--bg4:#162240;
+  --border:rgba(0,200,255,0.10);--border2:rgba(0,200,255,0.20);
+  --cyan:#00c8ff;--cyan-dim:rgba(0,200,255,0.08);
+  --gold:#f0c060;--green:#00e5a0;--red:#ff5a6e;--orange:#ff9040;--purple:#a080ff;--teal:#00d4aa;
+  --text:#e8f0f8;--text2:#a8c8e0;--text3:#6a8faa;
+  --font-kr:'Noto Sans KR',sans-serif;--font-en:'Inter',sans-serif;
+}
+body.light-mode{
+  --bg:#f0f4fa;--bg2:#ffffff;--bg3:#e8f0fb;--bg4:#dce8f7;
+  --border:rgba(26,78,180,0.12);--border2:rgba(26,78,180,0.25);
+  --cyan:#1a6eb8;--cyan-dim:rgba(26,110,184,0.08);
+  --gold:#b07800;--green:#007a50;--red:#c02020;--orange:#c05010;--purple:#5030b0;--teal:#007a62;
+  --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6a9a;
+}
+
+html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:var(--font-kr);overflow-x:hidden;overflow-y:auto;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── 웰컴 배너 ── */
+#welcomeBar{
+  position:relative;
+  background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 40%,var(--bg3) 100%);
+  border-bottom:1px solid var(--border);
+  padding:28px 32px 24px;
+  overflow:hidden;
+}
+.wb-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,200,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.025) 1px,transparent 1px);background-size:36px 36px;pointer-events:none;}
+.wb-glow{position:absolute;top:-40px;right:60px;width:260px;height:180px;background:radial-gradient(ellipse,rgba(0,200,255,0.05) 0%,transparent 70%);pointer-events:none;}
+.wb-glow2{position:absolute;bottom:-40px;left:30%;width:300px;height:160px;background:radial-gradient(ellipse,rgba(160,128,255,0.04) 0%,transparent 70%);pointer-events:none;}
+.wb-inner{position:relative;z-index:1;display:flex;align-items:center;gap:24px;}
+.wb-left{flex:1;}
+.wb-eyebrow{font-size:10px;font-weight:600;font-family:var(--font-en);color:var(--cyan);text-transform:uppercase;letter-spacing:3px;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.wb-eyebrow::before{content:'';width:18px;height:1px;background:var(--cyan);}
+.wb-title{font-size:24px;font-weight:700;line-height:1.2;margin-bottom:6px;letter-spacing:-0.3px;color:var(--text);}
+.wb-title .hl{color:var(--cyan);}
+.wb-desc{font-size:12px;color:var(--text2);font-weight:400;line-height:1.7;}
+.wb-right{display:flex;gap:16px;align-items:center;flex-shrink:0;}
+.wb-stat{text-align:center;padding:10px 16px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:10px;}
+.wb-stat-val{font-size:22px;font-weight:700;font-family:var(--font-en);color:var(--text);line-height:1;}
+.wb-stat-lbl{font-size:9px;color:var(--text3);margin-top:3px;letter-spacing:0.5px;}
+.wb-stat-val.c-cyan{color:var(--cyan);}
+.wb-stat-val.c-gold{color:var(--gold);}
+.wb-stat-val.c-green{color:var(--green);}
+
+/* ── 섹션 ── */
+.sec{padding:20px 28px 0;}
+.sec-head{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.sec-bar{width:3px;height:15px;border-radius:2px;flex-shrink:0;}
+.sec-label{font-size:11px;font-weight:700;font-family:var(--font-en);text-transform:uppercase;letter-spacing:2px;color:#8ab0cc;}
+.sec-desc{font-size:11px;color:#8ab0cc;margin-left:4px;}
+.sec-count{margin-left:auto;font-size:10px;color:var(--text3);font-family:var(--font-en);font-weight:600;}
+
+/* ── 카드 그리드 ── */
+.card-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:16px;
+}
+
+/* ── 교육 카드 ── */
+.edu-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:16px;
+  overflow:hidden;cursor:pointer;
+  transition:border-color 0.2s,box-shadow 0.2s,transform 0.15s;
+  position:relative;
+  animation:fadeUp 0.4s ease both;
+}
+.edu-card:hover{border-color:var(--border2);box-shadow:0 12px 40px rgba(0,0,0,0.4);transform:translateY(-3px);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+.edu-card-head{padding:16px 18px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);}
+.edu-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.ic-cyan  {background:rgba(0,200,255,0.12);}
+.ic-green {background:rgba(0,229,160,0.12);}
+.ic-gold  {background:rgba(240,192,96,0.12);}
+.ic-purple{background:rgba(160,128,255,0.12);}
+.ic-teal  {background:rgba(0,212,170,0.12);}
+.ic-orange{background:rgba(255,144,64,0.12);}
+.edu-meta{flex:1;min-width:0;}
+.edu-name{font-size:13px;font-weight:600;color:var(--text);}
+.edu-sub{font-size:10px;color:#8ab0cc;margin-top:2px;}
+.edu-badge{font-size:9px;font-weight:600;font-family:var(--font-en);padding:2px 7px;border-radius:8px;white-space:nowrap;flex-shrink:0;}
+.bd-cyan  {background:var(--cyan-dim);color:var(--cyan);border:1px solid var(--border2);}
+.bd-green {background:rgba(0,229,160,0.10);color:var(--green);border:1px solid rgba(0,229,160,0.2);}
+.bd-gold  {background:rgba(240,192,96,0.10);color:var(--gold);border:1px solid rgba(240,192,96,0.2);}
+.bd-purple{background:rgba(160,128,255,0.10);color:var(--purple);border:1px solid rgba(160,128,255,0.2);}
+.bd-teal  {background:rgba(0,212,170,0.10);color:var(--teal);border:1px solid rgba(0,212,170,0.2);}
+.bd-orange{background:rgba(255,144,64,0.10);color:var(--orange);border:1px solid rgba(255,144,64,0.2);}
+
+.edu-body{padding:14px 18px;}
+.edu-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);}
+.edu-row:last-child{border-bottom:none;}
+.edu-row-num{font-size:10px;font-family:var(--font-en);font-weight:700;color:var(--text3);min-width:20px;}
+.edu-row-title{font-size:11px;color:var(--text2);flex:1;}
+.edu-row-date{font-size:9.5px;color:var(--text3);font-family:var(--font-en);}
+.edu-row-badge{font-size:8.5px;padding:1px 6px;border-radius:4px;font-weight:600;white-space:nowrap;}
+.rb-done{background:rgba(0,229,160,0.12);color:var(--green);}
+.rb-plan{background:rgba(255,144,64,0.10);color:var(--orange);}
+
+/* 빈 상태 */
+.edu-empty{padding:18px 0 10px;text-align:center;font-size:11px;color:var(--text3);}
+.edu-empty .empty-icon{font-size:22px;margin-bottom:6px;}
+
+/* 더보기 링크 */
+.edu-more{padding:8px 18px 14px;text-align:right;font-size:10px;color:var(--cyan);cursor:pointer;font-family:var(--font-en);font-weight:600;letter-spacing:0.5px;transition:opacity 0.15s;}
+.edu-more:hover{opacity:0.7;}
+
+/* 섹션 구분 없음 메시지 */
+.coming-soon{
+  background:var(--bg2);border:1px dashed var(--border2);border-radius:12px;
+  padding:24px;text-align:center;color:var(--text3);font-size:12px;grid-column:1/-1;
+}
+.coming-soon .cs-icon{font-size:28px;margin-bottom:8px;}
+
+.sec-bottom{height:32px;}
+</style>
+</head>
+<body>
+
+<!-- ── 웰컴 배너 ── -->
+<div id="welcomeBar">
+  <div class="wb-grid"></div>
+  <div class="wb-glow"></div>
+  <div class="wb-glow2"></div>
+  <div class="wb-inner">
+    <div class="wb-left">
+      <div class="wb-eyebrow">Team Training Hub</div>
+      <div class="wb-title">팀원 <span class="hl">교육자료</span></div>
+      <div class="wb-desc">AI 활용 · 노션 · 업무 스킬 교육 회차별 자료 모음<br>회차를 클릭하면 해당 교육자료로 이동합니다</div>
+    </div>
+    <div class="wb-right">
+      <div class="wb-stat">
+        <div class="wb-stat-val c-cyan" id="statTotal">0</div>
+        <div class="wb-stat-lbl">Total Sessions</div>
+      </div>
+      <div class="wb-stat">
+        <div class="wb-stat-val c-green" id="statDone">0</div>
+        <div class="wb-stat-lbl">Completed</div>
+      </div>
+      <div class="wb-stat">
+        <div class="wb-stat-val c-gold" id="statPlan">0</div>
+        <div class="wb-stat-lbl">Upcoming</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── AI 교육 섹션 ── -->
+<div class="sec">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--cyan);"></div>
+    <div class="sec-label">AI 교육</div>
+    <div class="sec-desc">· ChatGPT · Claude · 업무 자동화</div>
+    <div class="sec-count" id="aiCount">0 회차</div>
+  </div>
+  <div class="card-grid" id="aiGrid">
+    <!-- 동적 렌더링 -->
+  </div>
+</div>
+
+<!-- ── 노션 교육 섹션 ── -->
+<div class="sec" style="margin-top:24px;">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--teal);"></div>
+    <div class="sec-label">노션 교육</div>
+    <div class="sec-desc">· 페이지 구성 · 데이터베이스 · 자동화</div>
+    <div class="sec-count" id="notionCount">0 회차</div>
+  </div>
+  <div class="card-grid" id="notionGrid">
+    <!-- 동적 렌더링 -->
+  </div>
+</div>
+
+<!-- ── 기타 교육 섹션 ── -->
+<div class="sec" style="margin-top:24px;">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--gold);"></div>
+    <div class="sec-label">기타 교육</div>
+    <div class="sec-desc">· 업무 스킬 · 시스템 · 기타</div>
+    <div class="sec-count" id="etcCount">0 회차</div>
+  </div>
+  <div class="card-grid" id="etcGrid">
+    <!-- 동적 렌더링 -->
+  </div>
+</div>
+
+<div class="sec-bottom"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  교육 데이터 정의
+//  회차 추가 시 여기에만 추가하면 됨
+// ══════════════════════════════════════════
+
+const TRAINING_DATA = {
+
+  // AI 교육
+  ai: {
+    icon: '🤖',
+    iconClass: 'ic-cyan',
+    badgeText: 'AI',
+    badgeClass: 'bd-cyan',
+    color: 'var(--cyan)',
+    sessions: [
+      {
+        round: 1,
+        title: 'AI 기초 · ChatGPT 활용법',
+        subtitle: '프롬프트 작성, 업무 적용 방법',
+        date: '2025-06',
+        status: 'done',   // 'done' | 'plan'
+        path: 'training/ai교육/ai교육_1회차.html'
+      },
+      // 예시: 2회차 추가 시
+      // {
+      //   round: 2,
+      //   title: 'Claude 활용 · 고급 프롬프트',
+      //   subtitle: '시스템 프롬프트, 역할 지정, 자동화',
+      //   date: '2025-07',
+      //   status: 'plan',
+      //   path: 'training/ai교육/ai교육_2회차.html'
+      // },
+    ]
+  },
+
+  // 노션 교육
+  notion: {
+    icon: '📓',
+    iconClass: 'ic-teal',
+    badgeText: 'Notion',
+    badgeClass: 'bd-teal',
+    color: 'var(--teal)',
+    sessions: [
+      {
+        round: 1,
+        title: '노션 기초 · 페이지 구성',
+        subtitle: '블록, 데이터베이스, 팀스페이스 설정',
+        date: '2025-07',
+        status: 'plan',
+        path: 'training/노션교육/노션교육_01회차.html'
+      },
+    ]
+  },
+
+  // 기타 교육
+  etc: {
+    icon: '📚',
+    iconClass: 'ic-gold',
+    badgeText: 'ETC',
+    badgeClass: 'bd-gold',
+    color: 'var(--gold)',
+    sessions: [
+      {
+        round: 1,
+        title: '기타 교육 1회차',
+        subtitle: '업무 스킬 향상',
+        date: '2025-08',
+        status: 'plan',
+        path: 'training/기타교육/기타교육_1회차.html'
+      },
+    ]
+  }
+};
+
+// ══════════════════════════════════════════
+//  렌더링
+// ══════════════════════════════════════════
+
+function statusBadge(status) {
+  if (status === 'done')
+    return '<span class="edu-row-badge rb-done">완료</span>';
+  return '<span class="edu-row-badge rb-plan">예정</span>';
+}
+
+// 세션 목록 → 미리보기 카드 1장으로 렌더링
+function renderSection(key, gridId, countId) {
+  const def = TRAINING_DATA[key];
+  const grid = document.getElementById(gridId);
+  const countEl = document.getElementById(countId);
+  const sessions = def.sessions;
+
+  countEl.textContent = sessions.length + ' 회차';
+
+  if (!sessions.length) {
+    grid.innerHTML = `
+      <div class="coming-soon">
+        <div class="cs-icon">🚧</div>
+        교육 자료가 준비 중입니다
+      </div>`;
+    return;
+  }
+
+  // 카드 1장: 전체 회차 목록 표시
+  const rowsHtml = sessions.map(s => `
+    <div class="edu-row" onclick="goSession('${s.path}')" style="cursor:pointer;">
+      <div class="edu-row-num">${String(s.round).padStart(2,'0')}</div>
+      <div class="edu-row-title">${s.title}</div>
+      <div class="edu-row-date">${s.date}</div>
+      ${statusBadge(s.status)}
+    </div>
+  `).join('');
+
+  const latestDone  = sessions.filter(s => s.status === 'done').length;
+  const latestPlan  = sessions.filter(s => s.status === 'plan').length;
+
+  grid.innerHTML = `
+    <div class="edu-card" style="animation-delay:0.05s;">
+      <div class="edu-card-head">
+        <div class="edu-icon ${def.iconClass}">${def.icon}</div>
+        <div class="edu-meta">
+          <div class="edu-name">${key === 'ai' ? 'AI 교육' : key === 'notion' ? '노션 교육' : '기타 교육'} 전체</div>
+          <div class="edu-sub">총 ${sessions.length}회차 · 완료 ${latestDone} / 예정 ${latestPlan}</div>
+        </div>
+        <div class="edu-badge ${def.badgeClass}">${def.badgeText}</div>
+      </div>
+      <div class="edu-body">
+        ${rowsHtml}
+      </div>
+    </div>
+  `;
+}
+
+function goSession(path) {
+  window.parent.postMessage({ type: 'TRAINING_NAV', path }, '*');
+}
+
+function renderAll() {
+  renderSection('ai',     'aiGrid',     'aiCount');
+  renderSection('notion', 'notionGrid', 'notionCount');
+  renderSection('etc',    'etcGrid',    'etcCount');
+
+  // 통계 배너 업데이트
+  let total = 0, done = 0, plan = 0;
+  Object.values(TRAINING_DATA).forEach(def => {
+    def.sessions.forEach(s => {
+      total++;
+      if (s.status === 'done') done++;
+      else plan++;
+    });
+  });
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statDone').textContent  = done;
+  document.getElementById('statPlan').textContent  = plan;
+}
+
+// ── postMessage: 테마 수신 ──
+window.addEventListener('message', e => {
+  if (!e.data) return;
+  if (e.data.type === 'THEME') {
+    if (e.data.mode === 'light') document.body.classList.add('light-mode');
+    else document.body.classList.remove('light-mode');
+  }
+});
+
+renderAll();
+</script>
+</body>
+</html>

@@ -566,6 +566,13 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
     </div>
   </div>
 
+  <!-- 팀원교육 (단독탭) -->
+  <div class="nav-group" id="ng-training">
+    <div class="nav-parent" data-tab="팀원교육" onclick="switchTabDirect('팀원교육')" style="cursor:pointer;">
+      📚 팀원교육
+    </div>
+  </div>
+
   <div class="nav-right">
     <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="라이트/다크 모드 전환">
       <span id="themeIcon">☀️</span><span id="themeLabel">라이트모드</span>
@@ -723,6 +730,7 @@ const TAB_MAP = {
   '개발자':     'developer/account.html',
   '주피미':     'report/week/',
   '월피미':     'report/month/',
+  '팀원교육':   'training/training_main.html',
 };
 
 // ── 계정 정보 ──
@@ -740,8 +748,8 @@ const ROLE_LEVEL = { admin: 0, leader: 1, ggumbi: 2, affiliate: 3 };
 // ── 역할별 기본 허용 탭 (null = 전체허용) ──
 const ROLE_TABS = {
   'admin':     null,
-  'leader':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','스마트스토어','건별Issue','건별보고','팀Tool','개발자','주피미','월피미'],
-  'ggumbi':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','스마트스토어','건별Issue','건별보고','팀Tool','주피미','월피미'],
+  'leader':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','스마트스토어','건별Issue','건별보고','팀Tool','개발자','주피미','월피미','팀원교육'],
+  'ggumbi':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','스마트스토어','건별Issue','건별보고','팀Tool','주피미','월피미','팀원교육'],
   'affiliate': ['팀Tool'],
 };
 
@@ -954,6 +962,16 @@ window.addEventListener('message', e => {
     const sbItem = document.querySelector(`#toolSidebar .sb-item[onclick*="${e.data.url}"]`);
     toolNavExternal(e.data.url, sbItem || null);
   }
+  if (e.data.type === 'TRAINING_NAV' && e.data.path) {
+    const frame = document.getElementById('mainFrame');
+    frame.onload = () => {
+      try {
+        const t = localStorage.getItem('ggumbi-theme') || 'dark';
+        frame.contentWindow.postMessage({ type:'THEME', mode: t }, '*');
+      } catch(e) {}
+    };
+    frame.src = e.data.path + '?' + Date.now();
+  }
 });
 
 // ═══════════════════════════════════════════
@@ -1159,8 +1177,18 @@ function _applyTab(tabName, role) {
   const isIssueTab = tabName === '건별Issue';
   const isSmtTab   = tabName === '스마트스토어';
   const isMeetTab  = tabName === '주피미' || tabName === '월피미';
+  const isTrainingTab = tabName === '팀원교육';
 
-  if (isIssueTab) {
+  if (isTrainingTab) {
+    const frame = document.getElementById('mainFrame');
+    frame.onload = () => {
+      try {
+        const t = localStorage.getItem('ggumbi-theme');
+        frame.contentWindow.postMessage({ type:'THEME', mode: t || 'dark' }, '*');
+      } catch(e) {}
+    };
+    frame.src = 'training/training_main.html?' + Date.now();
+  } else if (isIssueTab) {
     const firstItem = document.querySelector('#issueSidebar .sb-item');
     if (firstItem) onceNav(firstItem.getAttribute('onclick').match(/'([^']+)'/)[1], firstItem);
   } else if (isOnceTab) {
@@ -1191,6 +1219,7 @@ function _applyTab(tabName, role) {
   }
 
   // 사이드바 기간 컨트롤 표시/숨김
+  if (isTrainingTab) return; // 사이드바 자체가 숨겨지므로 skip
   const monthly = document.getElementById('monthlyList');
   const weekly  = document.getElementById('weeklyList');
   const calWrap = document.querySelector('.date-pick-wrap');
@@ -1213,7 +1242,6 @@ function _applyTab(tabName, role) {
 function _switchSidebar(tabName) {
   // 사이드바 영역 복원 (Home에서 왔을 경우) — 단, 팀Tool은 tool_main 로드 시 별도 처리
   const sb = document.getElementById('sidebar');
-  if (sb) sb.style.display = '';
   const isToolTab   = tabName === '팀Tool';
   const isDevTab    = tabName === '개발자';
   const isOnceTab   = tabName === '건별보고';
@@ -1221,6 +1249,15 @@ function _switchSidebar(tabName) {
   const isSmtTab    = tabName === '스마트스토어';
   const isMeetTab   = tabName === '주피미' || tabName === '월피미';
   const isStatusTab = tabName === '주요kpi' || tabName === '스마트스토어' || tabName === '상담분석';
+  const isTrainingTab = tabName === '팀원교육';
+
+  // 팀원교육: 사이드바 완전 숨김
+  if (isTrainingTab) {
+    if (sb) sb.style.display = 'none';
+    return;
+  }
+
+  if (sb) sb.style.display = '';
   document.getElementById('dashSidebar').style.display    = (isToolTab || isOnceTab || isIssueTab || isDevTab || isMeetTab || isStatusTab) ? 'none' : 'block';
   document.getElementById('statusSidebar').style.display  = isStatusTab ? 'block' : 'none';
   document.getElementById('toolSidebar').style.display    = isToolTab  ? 'block' : 'none';

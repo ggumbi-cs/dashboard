@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI 교육 1회차 · 바이브 코딩이란?</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root{
+  --bg:       #070d1a;
+  --bg2:      #0c1628;
+  --bg3:      #111e35;
+  --bg4:      #172240;
+  --border:   rgba(80,140,255,0.12);
+  --border2:  rgba(80,140,255,0.25);
+  --blue:     #4a8fff;
+  --blue-dim: rgba(74,143,255,0.10);
+  --cyan:     #00d4ff;
+  --green:    #00e5a0;
+  --red:      #ff5a5a;
+  --orange:   #ffaa40;
+  --gold:     #f0c060;
+  --purple:   #a07aff;
+  --text:     #e4eeff;
+  --text2:    #8aaad0;
+  --text3:    #4a6a90;
+  --radius:   14px;
+}
+
+body.light-mode{
+  --bg:#f0f4fa;--bg2:#ffffff;--bg3:#e8f0fb;--bg4:#dce8f7;
+  --border:rgba(26,78,180,0.12);--border2:rgba(26,78,180,0.28);
+  --blue:#1a5fd4;--blue-dim:rgba(26,95,212,0.08);
+  --cyan:#0090b8;--green:#007a50;--red:#c02020;--orange:#b06010;--gold:#8a6000;--purple:#5030b0;
+  --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6090;
+}
+
+html,body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo',sans-serif;font-size:14px;line-height:1.6;overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── 공통 유틸 ── */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:0.3px;}
+.badge-blue  {background:var(--blue-dim);color:var(--blue);border:1px solid var(--border2);}
+.badge-green {background:rgba(0,229,160,0.10);color:var(--green);border:1px solid rgba(0,229,160,0.25);}
+.badge-red   {background:rgba(255,90,90,0.10);color:var(--red);border:1px solid rgba(255,90,90,0.25);}
+.badge-gold  {background:rgba(240,192,96,0.10);color:var(--gold);border:1px solid rgba(240,192,96,0.25);}
+.badge-purple{background:rgba(160,122,255,0.10);color:var(--purple);border:1px solid rgba(160,122,255,0.25);}
+.badge-orange{background:rgba(255,170,64,0.10);color:var(--orange);border:1px solid rgba(255,170,64,0.25);}
+
+.hl-blue  {color:var(--blue);}
+.hl-cyan  {color:var(--cyan);}
+.hl-green {color:var(--green);}
+.hl-gold  {color:var(--gold);}
+
+/* ── 레이아웃 래퍼 ── */
+.wrap{max-width:960px;margin:0 auto;padding:0 24px;}
+
+/* ════════════════════════════════
+   1. 히어로
+════════════════════════════════ */
+#hero{
+  position:relative;
+  background:linear-gradient(160deg,#070d1a 0%,#0c1a38 55%,#0a1828 100%);
+  border-bottom:1px solid var(--border);
+  padding:48px 0 42px;
+  overflow:hidden;
+}
+.hero-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(74,143,255,0.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(74,143,255,0.04) 1px,transparent 1px);
+  background-size:44px 44px;
+}
+.hero-glow{
+  position:absolute;top:-80px;right:-40px;
+  width:440px;height:320px;
+  background:radial-gradient(ellipse,rgba(74,143,255,0.07) 0%,transparent 65%);
+  pointer-events:none;
+}
+.hero-glow2{
+  position:absolute;bottom:-60px;left:10%;
+  width:340px;height:220px;
+  background:radial-gradient(ellipse,rgba(0,212,255,0.04) 0%,transparent 65%);
+  pointer-events:none;
+}
+.hero-inner{position:relative;z-index:1;}
+.hero-top{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.hero-eyebrow{font-size:11px;font-weight:700;color:var(--blue);letter-spacing:2.5px;text-transform:uppercase;}
+.hero-title{font-size:clamp(26px,4vw,38px);font-weight:800;line-height:1.15;margin-bottom:10px;letter-spacing:-0.5px;}
+.hero-sub{font-size:15px;color:var(--text2);max-width:580px;line-height:1.7;margin-bottom:20px;}
+.hero-summary{display:flex;gap:12px;flex-wrap:wrap;}
+.hero-pill{display:flex;align-items:center;gap:7px;padding:7px 14px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:30px;font-size:12px;color:var(--text2);}
+.hero-pill span{font-size:16px;}
+
+/* ════════════════════════════════
+   공통 섹션
+════════════════════════════════ */
+.sec{padding:40px 0 0;}
+.sec-head{display:flex;align-items:center;gap:10px;margin-bottom:24px;}
+.sec-bar{width:3px;height:16px;border-radius:2px;flex-shrink:0;}
+.sec-title{font-size:15px;font-weight:700;color:var(--text);}
+.sec-sub{font-size:11px;color:var(--text3);margin-left:2px;}
+
+/* ════════════════════════════════
+   2. 개념 흐름
+════════════════════════════════ */
+.flow-row{
+  display:flex;align-items:stretch;gap:0;
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;
+}
+.flow-step{
+  flex:1;padding:20px 18px;position:relative;
+  border-right:1px solid var(--border);
+  transition:background 0.15s;
+}
+.flow-step:last-child{border-right:none;}
+.flow-step:hover{background:var(--bg3);}
+.flow-num{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:1.5px;margin-bottom:8px;}
+.flow-icon{font-size:24px;margin-bottom:8px;}
+.flow-label{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.flow-desc{font-size:11px;color:var(--text2);line-height:1.5;}
+.flow-arrow{
+  position:absolute;right:-10px;top:50%;transform:translateY(-50%);
+  width:20px;height:20px;background:var(--blue);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;color:#fff;z-index:2;flex-shrink:0;
+}
+.flow-step:last-child .flow-arrow{display:none;}
+
+/* ════════════════════════════════
+   3. 비교
+════════════════════════════════ */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.compare-card{border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);}
+.compare-head{padding:16px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);}
+.compare-icon{font-size:22px;}
+.compare-name{font-size:14px;font-weight:700;}
+.compare-list{padding:16px 20px;display:flex;flex-direction:column;gap:9px;}
+.compare-item{display:flex;align-items:flex-start;gap:9px;font-size:12px;line-height:1.5;color:var(--text2);}
+.ci-dot{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;margin-top:1px;}
+.ci-bad {background:rgba(255,90,90,0.12); color:var(--red);}
+.ci-good{background:rgba(0,229,160,0.12); color:var(--green);}
+
+/* 파이썬 카드 */
+.cc-python{background:var(--bg2);}
+.cc-python .compare-head{background:rgba(255,90,90,0.05);}
+.cc-python .compare-name{color:var(--red);}
+
+/* HTML 카드 */
+.cc-html{background:var(--bg2);}
+.cc-html .compare-head{background:rgba(0,229,160,0.05);}
+.cc-html .compare-name{color:var(--green);}
+
+/* 중간 배지 */
+.compare-vs{
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:800;color:var(--text3);
+  grid-column:1/-1;
+  position:relative;margin:-8px 0;
+}
+.compare-vs::before,.compare-vs::after{content:'';flex:1;height:1px;background:var(--border);}
+.compare-vs span{padding:0 16px;}
+
+/* ════════════════════════════════
+   4. 실제 툴 예시
+════════════════════════════════ */
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+
+.tool-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;transition:border-color 0.2s,transform 0.15s,box-shadow 0.2s;
+}
+.tool-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,0,0,0.4);}
+.tool-head{padding:16px 18px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);}
+.tool-icon-wrap{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.tc-cyan  {background:rgba(0,212,255,0.10);}
+.tc-blue  {background:rgba(74,143,255,0.10);}
+.tc-purple{background:rgba(160,122,255,0.10);}
+.tool-meta{flex:1;}
+.tool-name{font-size:13px;font-weight:700;color:var(--text);}
+.tool-sub{font-size:10px;color:var(--text3);margin-top:2px;}
+
+.tool-body{padding:14px 18px;}
+
+/* 흐름 비교 미니 */
+.mini-flow{display:flex;flex-direction:column;gap:5px;}
+.mini-flow-row{display:flex;align-items:center;gap:7px;}
+.mf-label{font-size:9.5px;font-weight:700;width:34px;flex-shrink:0;padding:2px 4px;border-radius:4px;text-align:center;}
+.mf-old{background:rgba(255,90,90,0.10);color:var(--red);}
+.mf-new{background:rgba(0,229,160,0.10);color:var(--green);}
+.mf-steps{display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+.mf-step{font-size:10px;color:var(--text2);padding:2px 7px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;}
+.mf-arrow{font-size:9px;color:var(--text3);}
+.mf-step.accent-green{background:rgba(0,229,160,0.08);border-color:rgba(0,229,160,0.2);color:var(--green);}
+
+/* 대시보드 미니 그리드 */
+.mini-dashboard{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:2px;}
+.md-item{padding:6px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text2);}
+.md-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+
+/* ════════════════════════════════
+   5. 마지막 요약
+════════════════════════════════ */
+#summary{
+  margin:40px 0 0;
+  padding:32px;
+  background:linear-gradient(135deg,var(--bg2) 0%,var(--bg4) 100%);
+  border:1px solid var(--border2);
+  border-radius:var(--radius);
+  text-align:center;
+  position:relative;overflow:hidden;
+}
+#summary::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(74,143,255,0.06) 0%,transparent 60%);
+}
+.summary-inner{position:relative;z-index:1;}
+.summary-quote{
+  font-size:clamp(14px,2vw,17px);font-weight:700;line-height:1.6;
+  color:var(--text);max-width:640px;margin:0 auto 14px;
+}
+.summary-quote .hl{color:var(--cyan);}
+.summary-author{font-size:11px;color:var(--text3);}
+
+/* ── 섹션 하단 ── */
+.sec-bottom{height:48px;}
+
+/* ── 반응형 ── */
+@media(max-width:640px){
+  #hero{padding:32px 0 28px;}
+  .flow-row{flex-direction:column;}
+  .flow-step{border-right:none;border-bottom:1px solid var(--border);}
+  .flow-step:last-child{border-bottom:none;}
+  .flow-arrow{display:none;}
+  .compare-grid{grid-template-columns:1fr;}
+  .compare-vs{display:none;}
+  #summary{padding:22px 18px;}
+}
+
+/* ── 등장 애니메이션 ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.anim{animation:fadeUp 0.45s ease both;}
+.d1{animation-delay:0.05s;}.d2{animation-delay:0.12s;}.d3{animation-delay:0.19s;}.d4{animation-delay:0.26s;}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════ 1. 히어로 ════════════════════════ -->
+<div id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="wrap hero-inner anim d1">
+    <div class="hero-top">
+      <div class="hero-eyebrow">AI 교육 1회차</div>
+      <div class="badge badge-blue">⏱ 3분 완성</div>
+      <div class="badge badge-gold">🎯 입문</div>
+    </div>
+    <div class="hero-title">
+      <span class="hl-blue">바이브 코딩</span>이란?<br>
+      <span style="font-size:0.62em;font-weight:500;color:var(--text2);">말로 설명하면, AI가 업무툴 제작을 도와주는 시대</span>
+    </div>
+    <div class="hero-sub">
+      코딩을 몰라도 괜찮아요. 내가 원하는 업무 흐름을 AI에게 설명하면,<br>
+      AI가 코드를 짜고 — 우리 팀 대시보드에 바로 붙여 쓸 수 있는 툴이 완성됩니다.
+    </div>
+    <div class="hero-summary">
+      <div class="hero-pill"><span>🗣</span> 대화로 개발</div>
+      <div class="hero-pill"><span>🌐</span> HTML 웹툴</div>
+      <div class="hero-pill"><span>⚡</span> 설치 없이 바로 사용</div>
+      <div class="hero-pill"><span>🔧</span> 수정도 대화로</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ════════════════════════ 2. 개념 흐름 ════════════════════════ -->
+<div class="sec anim d2">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--blue);"></div>
+    <div class="sec-title">바이브 코딩, 어떻게 작동하나요?</div>
+    <div class="sec-sub">4단계 흐름</div>
+  </div>
+  <div class="flow-row">
+    <div class="flow-step">
+      <div class="flow-num">STEP 01</div>
+      <div class="flow-icon">🗣</div>
+      <div class="flow-label">업무 흐름 설명</div>
+      <div class="flow-desc">"이 데이터를 이렇게 정리해서 이 형식으로 내려받고 싶어"</div>
+      <div class="flow-arrow">▶</div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">STEP 02</div>
+      <div class="flow-icon">🤖</div>
+      <div class="flow-label">AI가 코드 초안 제작</div>
+      <div class="flow-desc">HTML + 기능 코드를 AI가 작성. 개발자 없이도 가능</div>
+      <div class="flow-arrow">▶</div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">STEP 03</div>
+      <div class="flow-icon">🌐</div>
+      <div class="flow-label">HTML 웹툴로 배포</div>
+      <div class="flow-desc">파일 1개를 팀 대시보드에 올리면 끝. 설치 불필요</div>
+      <div class="flow-arrow">▶</div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-num">STEP 04</div>
+      <div class="flow-icon">👥</div>
+      <div class="flow-label">팀원이 바로 사용</div>
+      <div class="flow-desc">링크 클릭 한 번으로 누구나 최신 버전 접근</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════ 3. 비교 ════════════════════════ -->
+<div class="sec anim d3">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--cyan);"></div>
+    <div class="sec-title">왜 HTML 웹툴인가요?</div>
+    <div class="sec-sub">· 배포 방식 비교</div>
+  </div>
+  <div class="compare-grid">
+
+    <!-- 파이썬 배포형 -->
+    <div class="compare-card cc-python">
+      <div class="compare-head">
+        <div class="compare-icon">🐍</div>
+        <div>
+          <div class="compare-name">파이썬 배포형 프로그램</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px;">설치 + 실행 파일 방식</div>
+        </div>
+        <div class="badge badge-red" style="margin-left:auto;">무거움</div>
+      </div>
+      <div class="compare-list">
+        <div class="compare-item">
+          <div class="ci-dot ci-bad">✕</div>
+          <div>사용자 PC마다 실행 환경·라이브러리 <strong>설치 필요</strong></div>
+        </div>
+        <div class="compare-item">
+          <div class="ci-dot ci-bad">✕</div>
+          <div>패키지 포함 시 <strong>용량이 수백 MB</strong>까지 커질 수 있음</div>
+        </div>
+        <div class="compare-item">
+          <div class="ci-dot ci-bad">✕</div>
+          <div>수정하면 <strong>새 버전을 다시 배포</strong>해야 함</div>
+        </div>
+        <div class="compare-item">
+          <div class="ci-dot ci-bad">✕</div>
+          <div>팀원별로 <strong>업데이트 관리</strong>가 번거로움</div>
+        </div>
+        <div class="compare-item">
+          <div class="ci-dot ci-bad">✕</div>
+          <div>PC 환경마다 <strong>오류 원인이 달라질 수 있음</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HTML 웹툴 -->
+    <div class="compare-card cc-html">
+      <div class="compare-head">
+        <div class="compare-icon">🌐</div>
+        <div>
+          <div class="compare-name">HTML 웹툴</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px;">브라우저에서 바로 실행</div>
+        </div>
+        <div class="badge badge-green" style="margin-left:auto;">가벼움</div>
+      </div>
+      <div class="compare-list">
+        <div class="compare-item">
+          <div class="ci-dot ci-good">✓</div>
+          <div><strong>링크 클릭</strong> 한 번으로 누구나 사용 가능</div>
+        </div>
+        <div class="compare-item">
+          <div class="ci-dot ci-good">✓</div>
+          <div>설치 없이 접근, 파일 <strong>크기는 수십 KB</strong> 수준</div>
+        </div>
+        <div class="compare-item">
+          <div class="ci-dot ci-good">✓</div>
+          <div>관리자 1명이 수정·게시하면 <strong>전원이 즉시 최신 버전</strong> 사용</div>
+        </div>
+        <div class="compare-item">
+          <div class="ci-dot ci-good">✓</div>
+          <div>팀 대시보드에 게시해 <strong>사무용 도구처럼</strong> 활용</div>
+        </div>
+        <div class="compare-item">
+          <div class="ci-dot ci-good">✓</div>
+          <div>어떤 PC, 어떤 브라우저에서도 <strong>동일하게 작동</strong></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════ 4. 실제 툴 예시 ════════════════════════ -->
+<div class="sec anim d4">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--purple);"></div>
+    <div class="sec-title">실제로 이런 툴을 만들었어요</div>
+    <div class="sec-sub">· 팀 대시보드 HTML 툴 예시</div>
+  </div>
+  <div class="tool-grid">
+
+    <!-- CSV 이중압축 해제 -->
+    <div class="tool-card">
+      <div class="tool-head">
+        <div class="tool-icon-wrap tc-cyan">📦</div>
+        <div class="tool-meta">
+          <div class="tool-name">CSV 이중압축 해제 툴</div>
+          <div class="tool-sub">노션 내보내기 파일 처리</div>
+        </div>
+        <div class="badge badge-blue" style="font-size:9px;">사용 중</div>
+      </div>
+      <div class="tool-body">
+        <div class="mini-flow">
+          <div class="mini-flow-row">
+            <div class="mf-label mf-old">기존</div>
+            <div class="mf-steps">
+              <div class="mf-step">압축 풀기</div>
+              <div class="mf-arrow">›</div>
+              <div class="mf-step">또 풀기</div>
+              <div class="mf-arrow">›</div>
+              <div class="mf-step">파일명 정리</div>
+              <div class="mf-arrow">›</div>
+              <div class="mf-step">저장</div>
+            </div>
+          </div>
+          <div style="height:6px;"></div>
+          <div class="mini-flow-row">
+            <div class="mf-label mf-new">툴</div>
+            <div class="mf-steps">
+              <div class="mf-step accent-green">드래그</div>
+              <div class="mf-arrow">›</div>
+              <div class="mf-step accent-green">한번에 해제</div>
+              <div class="mf-arrow">›</div>
+              <div class="mf-step accent-green">바로 저장</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 이미지 PDF 변환 -->
+    <div class="tool-card">
+      <div class="tool-head">
+        <div class="tool-icon-wrap tc-blue">🖼</div>
+        <div class="tool-meta">
+          <div class="tool-name">이미지 → PDF 변환 툴</div>
+          <div class="tool-sub">증빙자료·마감자료 제작</div>
+        </div>
+        <div class="badge badge-blue" style="font-size:9px;">사용 중</div>
+      </div>
+      <div class="tool-body">
+        <div class="mini-flow">
+          <div class="mini-flow-row" style="margin-bottom:7px;">
+            <div class="mf-steps" style="flex-wrap:wrap;gap:5px;">
+              <div class="mf-step accent-green">이미지 선택</div>
+              <div class="mf-arrow">›</div>
+              <div class="mf-step">개별 PDF 변환</div>
+            </div>
+          </div>
+          <div class="mini-flow-row" style="margin-bottom:7px;">
+            <div class="mf-steps">
+              <div class="mf-step">그룹별 묶기</div>
+              <div class="mf-arrow">›</div>
+              <div class="mf-step">그룹 PDF 변환</div>
+            </div>
+          </div>
+          <div class="mini-flow-row">
+            <div class="mf-steps">
+              <div class="mf-step">전체 선택</div>
+              <div class="mf-arrow">›</div>
+              <div class="mf-step accent-green">하나의 PDF로 통합</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 대시보드 미니 툴 모음 -->
+    <div class="tool-card">
+      <div class="tool-head">
+        <div class="tool-icon-wrap tc-purple">🛠</div>
+        <div class="tool-meta">
+          <div class="tool-name">팀 대시보드 미니 툴들</div>
+          <div class="tool-sub">반복 업무 자동화 보조</div>
+        </div>
+        <div class="badge badge-purple" style="font-size:9px;">확장 중</div>
+      </div>
+      <div class="tool-body">
+        <div class="mini-dashboard">
+          <div class="md-item"><div class="md-dot" style="background:var(--cyan);"></div>반복 계산기</div>
+          <div class="md-item"><div class="md-dot" style="background:var(--blue);"></div>파일명 정리기</div>
+          <div class="md-item"><div class="md-dot" style="background:var(--green);"></div>CSV 변환기</div>
+          <div class="md-item"><div class="md-dot" style="background:var(--orange);"></div>이미지 정리기</div>
+          <div class="md-item" style="grid-column:1/-1;"><div class="md-dot" style="background:var(--purple);"></div>상담·AS 데이터 정리 보조도구</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════ 5. 마지막 요약 ════════════════════════ -->
+<div id="summary" class="anim" style="animation-delay:0.3s;">
+  <div class="summary-inner">
+    <div style="font-size:28px;margin-bottom:14px;">💡</div>
+    <div class="summary-quote">
+      바이브 코딩은 <span class="hl">코딩 공부</span>가 아니라,<br>
+      <span class="hl">내 업무를 AI에게 잘 설명하는 능력</span>에서 시작된다.
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+      <div class="badge badge-blue">🗣 말로 설명</div>
+      <div style="color:var(--text3);font-size:12px;">→</div>
+      <div class="badge badge-purple">🤖 AI가 코드 작성</div>
+      <div style="color:var(--text3);font-size:12px;">→</div>
+      <div class="badge badge-green">🌐 팀이 바로 사용</div>
+    </div>
+    <div class="summary-author">AI 교육 1회차 · 엄마감동팀</div>
+  </div>
+</div>
+
+<div class="sec-bottom"></div>
+
+</div><!-- /wrap -->
+
+<script>
+window.addEventListener('message', e => {
+  if (!e.data) return;
+  if (e.data.type === 'THEME') {
+    if (e.data.mode === 'light') document.body.classList.add('light-mode');
+    else document.body.classList.remove('light-mode');
+  }
+});
+</script>
+</body>
+</html>

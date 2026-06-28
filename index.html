@@ -947,6 +947,10 @@ function loadHome() {
 // main.html → GO_TAB 수신 / tool_main.html → TOOL_NAV 수신
 window.addEventListener('message', e => {
   if (!e.data) return;
+  // 디버그 로그 (배포 전 제거)
+  if (['TRAINING_NAV','TOOL_NAV','GO_TAB'].includes(e.data.type)) {
+    console.log('[index] message received:', e.data.type, e.data.path || e.data.tab || '');
+  }
   if (e.data.type === 'GO_TAB') {
     const tabName = e.data.tab;
     const tabEl = document.querySelector(`.nav-item[data-tab="${tabName}"]`);
@@ -964,13 +968,15 @@ window.addEventListener('message', e => {
   }
   if (e.data.type === 'TRAINING_NAV' && e.data.path) {
     const frame = document.getElementById('mainFrame');
-    frame.onload = () => {
+    const _tHandler = function() {
+      frame.removeEventListener('load', _tHandler);
       try {
         const t = localStorage.getItem('ggumbi-theme') || 'dark';
         frame.contentWindow.postMessage({ type:'THEME', mode: t }, '*');
-      } catch(e) {}
+      } catch(err) {}
     };
-    frame.src = e.data.path + '?' + Date.now();
+    frame.addEventListener('load', _tHandler);
+    frame.src = e.data.path;
   }
 });
 

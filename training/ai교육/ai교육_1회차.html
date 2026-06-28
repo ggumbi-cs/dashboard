@@ -35,6 +35,9 @@ body.light-mode{
   --cyan:#0090b8;--green:#007a50;--red:#c02020;--orange:#b06010;--gold:#8a6000;--purple:#5030b0;
   --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6090;
 }
+/* 라이트모드 히어로 글로우 재정의 */
+body.light-mode .hero-glow{background:radial-gradient(ellipse,rgba(26,95,212,0.07) 0%,transparent 65%);}
+body.light-mode .hero-glow2{background:radial-gradient(ellipse,rgba(0,144,184,0.05) 0%,transparent 65%);}
 
 html,body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo',sans-serif;font-size:14px;line-height:1.6;overflow-x:hidden;}
 ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
@@ -61,7 +64,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic','�
 ════════════════════════════════ */
 #hero{
   position:relative;
-  background:linear-gradient(160deg,#070d1a 0%,#0c1a38 55%,#0a1828 100%);
+  background:linear-gradient(160deg,var(--bg) 0%,var(--bg2) 55%,var(--bg) 100%);
   border-bottom:1px solid var(--border);
   padding:48px 0 42px;
   overflow:hidden;
@@ -69,29 +72,29 @@ html,body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic','�
 .hero-grid{
   position:absolute;inset:0;
   background-image:
-    linear-gradient(rgba(74,143,255,0.04) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(74,143,255,0.04) 1px,transparent 1px);
+    linear-gradient(var(--border) 1px,transparent 1px),
+    linear-gradient(90deg,var(--border) 1px,transparent 1px);
   background-size:44px 44px;
 }
 .hero-glow{
   position:absolute;top:-80px;right:-40px;
   width:440px;height:320px;
-  background:radial-gradient(ellipse,rgba(74,143,255,0.07) 0%,transparent 65%);
+  background:radial-gradient(ellipse,rgba(74,143,255,0.06) 0%,transparent 65%);
   pointer-events:none;
 }
 .hero-glow2{
   position:absolute;bottom:-60px;left:10%;
   width:340px;height:220px;
-  background:radial-gradient(ellipse,rgba(0,212,255,0.04) 0%,transparent 65%);
+  background:radial-gradient(ellipse,rgba(0,144,184,0.04) 0%,transparent 65%);
   pointer-events:none;
 }
 .hero-inner{position:relative;z-index:1;}
 .hero-top{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
 .hero-eyebrow{font-size:11px;font-weight:700;color:var(--blue);letter-spacing:2.5px;text-transform:uppercase;}
-.hero-title{font-size:clamp(26px,4vw,38px);font-weight:800;line-height:1.15;margin-bottom:10px;letter-spacing:-0.5px;}
+.hero-title{font-size:clamp(26px,4vw,38px);font-weight:800;line-height:1.15;margin-bottom:10px;letter-spacing:-0.5px;color:var(--text);}
 .hero-sub{font-size:15px;color:var(--text2);max-width:580px;line-height:1.7;margin-bottom:20px;}
 .hero-summary{display:flex;gap:12px;flex-wrap:wrap;}
-.hero-pill{display:flex;align-items:center;gap:7px;padding:7px 14px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:30px;font-size:12px;color:var(--text2);}
+.hero-pill{display:flex;align-items:center;gap:7px;padding:7px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:30px;font-size:12px;color:var(--text2);}
 .hero-pill span{font-size:16px;}
 
 /* ════════════════════════════════
@@ -239,6 +242,14 @@ html,body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic','�
   .compare-vs{display:none;}
   #summary{padding:22px 18px;}
 }
+
+/* ── 라이트모드 전용 오버라이드 ── */
+body.light-mode .flow-row{background:var(--bg2);border-color:var(--border);}
+body.light-mode .flow-step:hover{background:var(--bg3);}
+body.light-mode .tool-card:hover{box-shadow:0 8px 24px rgba(26,78,180,0.12);}
+body.light-mode #summary::before{background:radial-gradient(ellipse at 50% 0%,rgba(26,95,212,0.06) 0%,transparent 60%);}
+body.light-mode .cc-python .compare-head{background:rgba(192,32,32,0.04);}
+body.light-mode .cc-html .compare-head{background:rgba(0,122,80,0.04);}
 
 /* ── 등장 애니메이션 ── */
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}

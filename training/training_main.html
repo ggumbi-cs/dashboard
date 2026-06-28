@@ -215,7 +215,7 @@ const TRAINING_DATA = {
     sessions: [
       {
         round: 1,
-        title: 'AI 기초 · ChatGPT 활용법',
+        title: '바이브 코딩',
         subtitle: '프롬프트 작성, 업무 적용 방법',
         date: '2025-06',
         status: 'done',   // 'done' | 'plan'
@@ -282,7 +282,7 @@ function statusBadge(status) {
   return '<span class="edu-row-badge rb-plan">예정</span>';
 }
 
-// 세션 목록 → 미리보기 카드 1장으로 렌더링
+// 회차별 카드 1장씩 렌더링
 function renderSection(key, gridId, countId) {
   const def = TRAINING_DATA[key];
   const grid = document.getElementById(gridId);
@@ -292,46 +292,40 @@ function renderSection(key, gridId, countId) {
   countEl.textContent = sessions.length + ' 회차';
 
   if (!sessions.length) {
-    grid.innerHTML = `
-      <div class="coming-soon">
-        <div class="cs-icon">🚧</div>
-        교육 자료가 준비 중입니다
-      </div>`;
+    grid.innerHTML = `<div class="coming-soon"><div class="cs-icon">🚧</div>교육 자료가 준비 중입니다</div>`;
     return;
   }
 
-  // 카드 1장: 전체 회차 목록 표시
-  const rowsHtml = sessions.map(s => `
-    <div class="edu-row" onclick="goSession('${s.path}')" style="cursor:pointer;">
-      <div class="edu-row-num">${String(s.round).padStart(2,'0')}</div>
-      <div class="edu-row-title">${s.title}</div>
-      <div class="edu-row-date">${s.date}</div>
-      ${statusBadge(s.status)}
-    </div>
-  `).join('');
-
-  const latestDone  = sessions.filter(s => s.status === 'done').length;
-  const latestPlan  = sessions.filter(s => s.status === 'plan').length;
-
-  grid.innerHTML = `
-    <div class="edu-card" style="animation-delay:0.05s;">
-      <div class="edu-card-head">
-        <div class="edu-icon ${def.iconClass}">${def.icon}</div>
-        <div class="edu-meta">
-          <div class="edu-name">${key === 'ai' ? 'AI 교육' : key === 'notion' ? '노션 교육' : '기타 교육'} 전체</div>
-          <div class="edu-sub">총 ${sessions.length}회차 · 완료 ${latestDone} / 예정 ${latestPlan}</div>
+  // 회차별 카드 1장씩
+  grid.innerHTML = sessions.map((s, i) => {
+    const canOpen = s.status === 'done';
+    const delay = (i * 0.07).toFixed(2);
+    return `
+      <div class="edu-card" style="animation-delay:${delay}s;${canOpen ? 'cursor:pointer;' : 'opacity:0.65;cursor:default;'}"
+           ${canOpen ? `onclick="goSession('${s.path}')"` : ''}>
+        <div class="edu-card-head">
+          <div class="edu-icon ${def.iconClass}">${def.icon}</div>
+          <div class="edu-meta">
+            <div class="edu-name">${s.round}회차 &nbsp;·&nbsp; ${s.title}</div>
+            <div class="edu-sub">${s.subtitle}</div>
+          </div>
+          ${statusBadge(s.status)}
         </div>
-        <div class="edu-badge ${def.badgeClass}">${def.badgeText}</div>
+        <div class="edu-body" style="display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:11px;color:var(--text3);">${s.date}</span>
+          ${canOpen
+            ? `<span style="font-size:11px;color:var(--cyan);font-weight:700;letter-spacing:0.3px;">열기 →</span>`
+            : `<span style="font-size:11px;color:var(--text3);">준비 중</span>`}
+        </div>
       </div>
-      <div class="edu-body">
-        ${rowsHtml}
-      </div>
-    </div>
-  `;
+    `;
+  }).join('');
 }
 
 function goSession(path) {
-  window.parent.postMessage({ type: 'TRAINING_NAV', path }, '*');
+  // window.parent, window.top 둘 다 시도 (중첩 iframe 대응)
+  try { window.parent.postMessage({ type: 'TRAINING_NAV', path }, '*'); } catch(e) {}
+  try { if (window.top !== window.parent) window.top.postMessage({ type: 'TRAINING_NAV', path }, '*'); } catch(e) {}
 }
 
 function renderAll() {

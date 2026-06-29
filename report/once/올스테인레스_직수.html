@@ -212,6 +212,152 @@ body {
   font-family: 'Noto Sans KR', sans-serif;
 }
 
+/* ── 가동테스트 탭 ── */
+.test-conclusion {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: var(--green-lt);
+  border: 1px solid #6EE7B7;
+  border-left: 4px solid var(--green);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 28px;
+}
+.test-conclusion-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+.test-conclusion-title { font-size: 15px; font-weight: 700; color: var(--text-1); margin-bottom: 5px; }
+.test-conclusion-desc { font-size: 13px; color: var(--text-2); line-height: 1.65; }
+.test-conclusion-desc strong { color: var(--text-1); }
+
+.test-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.test-photo-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.test-photo {
+  width: 100%;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  display: block;
+}
+.test-photo-placeholder {
+  width: 100%; aspect-ratio: 3/4;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-3); font-size: 11px;
+}
+.test-photo-label {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-2);
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  line-height: 1.4;
+}
+
+.test-result-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+.test-result-card {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.test-result-card.highlight { background: var(--indigo-lt); border-color: var(--indigo-md); }
+.test-result-card.green { background: var(--green-lt); border-color: #6EE7B7; }
+.test-result-label { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-3); margin-bottom: 6px; }
+.test-result-val { font-size: 13px; color: var(--text-1); line-height: 1.45; }
+.test-result-val strong { font-size: 15px; font-weight: 700; color: var(--indigo); }
+.test-result-card.green .test-result-val strong { color: var(--green); }
+.test-result-arrow { font-size: 18px; color: var(--text-3); flex-shrink: 0; }
+
+.video-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.video-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.video-label-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.video-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  background: var(--indigo);
+  color: #fff;
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+.video-title { font-size: 13px; font-weight: 600; color: var(--text-1); }
+.video-wrap {
+  position: relative;
+  width: 100%;
+  padding-top: 65%;
+  background: #000;
+}
+.video-wrap iframe {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  border: none;
+}
+.video-desc {
+  padding: 10px 14px;
+  font-size: 11px;
+  color: var(--text-2);
+  border-top: 1px solid var(--border);
+  line-height: 1.5;
+}
+
+.ai-opinion-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.ai-opinion-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  background: var(--text-1);
+  color: #fff;
+}
+.ai-tag-icon { font-size: 14px; }
+.ai-opinion-title { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; }
+.ai-opinion-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 0; }
+.ai-opinion-block { padding: 4px 0 14px; }
+.ai-opinion-block-title { font-size: 13px; font-weight: 700; color: var(--indigo); margin-bottom: 8px; line-height: 1.4; }
+.ai-opinion-block-desc { font-size: 13px; color: var(--text-2); line-height: 1.75; }
+.ai-opinion-block-desc strong { color: var(--text-1); font-weight: 600; }
+.ai-opinion-divider { height: 1px; background: var(--border); margin: 8px 0 16px; }
+
 /* ── 사전작업 탭 ── */
 .prep-overview {
   display: grid;
@@ -698,17 +844,17 @@ body {
 
   <!-- 상태 바 -->
   <div class="status-bar">
-    <div class="status-dot"></div>
-    <span class="status-text">진행중</span>
+    <div class="status-dot" style="background:var(--green);box-shadow:0 0 0 3px rgba(5,150,105,.2)"></div>
+    <span class="status-text" style="color:var(--green)">완료</span>
     <span class="status-sep">·</span>
-    <span class="status-sub">현재 단계 — 자재선정 확보 / 입고 후 가동테스트 예정</span>
+    <span class="status-sub">가동테스트 완료 — 직수 공급 정상 작동 확인 / 일반 사용자 설치 가능 결론 도출</span>
   </div>
 
   <!-- 탭 -->
   <div class="tab-nav">
     <button class="tab-btn active" onclick="switchTab('material', this)">자재선정</button>
     <button class="tab-btn" onclick="switchTab('prep', this)">사전작업</button>
-    <button class="tab-btn disabled" title="가동 테스트 후 등록 예정">가동테스트 <span class="tab-badge">예정</span></button>
+    <button class="tab-btn" onclick="switchTab('test', this)">가동테스트</button>
   </div>
 
   <!-- 탭 패널 : 자재선정 -->
@@ -1124,7 +1270,7 @@ body {
           <div class="prep-mat-body">
             <div class="prep-mat-name">1/4 × 3/4" 피메일 어댑터</div>
             <div class="prep-mat-spec">Female Adapter · 1/4"(약 6.3mm) ↔ 3/4"(내경 약 24.2mm)</div>
-            <div class="prep-mat-desc">정수기 측 3/4" 배관과 1/4" PE 호스를 연결하는 핵심 변환 부품. 암나사(Female) 방식으로 세척기 포트에 직결.</div>
+            <div class="prep-mat-desc">세척기 포트는 하향 설치 구조로 직결이 어려워 기본 포함 급수관(L형 단말 내장)을 활용. 해당 급수관의 반대쪽 단말에 니플을 체결한 뒤 본 어댑터로 1/4" PE 호스와 연결. 3/4" → 1/4" 구경 변환 역할.</div>
             <div class="prep-mat-price">단가 <strong>3,000원</strong> · 1ea</div>
           </div>
         </div>
@@ -1136,7 +1282,7 @@ body {
           <div class="prep-mat-body">
             <div class="prep-mat-name">3/4" 니플 (Nipple)</div>
             <div class="prep-mat-spec">BSP 3/4" (20A) · 수나사 양단</div>
-            <div class="prep-mat-desc">정수기 급수 포트 연결부에 사용하는 양방향 수나사 연결 부품. 피메일 어댑터와 체결하여 배관 시작점 구성.</div>
+            <div class="prep-mat-desc">세척기 기본 포함 급수관(L형 단말)의 직선 반대쪽 단말에 체결. 급수관과 피메일 어댑터 사이의 3/4" 수나사 연결 부품으로, 두 자재의 중간 연결 역할.</div>
             <div class="prep-mat-price">단가 <strong>3,600원</strong> · 1ea</div>
           </div>
         </div>
@@ -1194,6 +1340,129 @@ body {
     </section>
 
   </div><!-- /tab-prep -->
+
+  <!-- 가동테스트 탭 패널 -->
+  <div id="tab-test" class="tab-panel">
+
+    <!-- 결론 요약 배너 -->
+    <div class="test-conclusion">
+      <div class="test-conclusion-icon">✅</div>
+      <div class="test-conclusion-body">
+        <div class="test-conclusion-title">직수 공급 연결 — 정상 작동 확인</div>
+        <div class="test-conclusion-desc">
+          정수기 기존 급수라인에 T형 피팅으로 분기, 세척기 직수 연결 성공.
+          <strong>사전작업에서 준비한 자재만 제공하면 일반 사용자도 손쉽게 설치 가능</strong>하다는 결론 도출.
+        </div>
+      </div>
+    </div>
+
+    <!-- 설치 현황 사진 -->
+    <section class="section">
+      <div class="section-title">설치 현황</div>
+      <div class="test-photo-grid">
+        <div class="test-photo-card">
+          <img src="image/정수기급수관.jpg" alt="정수기 급수관 연결 전경" class="test-photo"
+            style="object-fit:cover;object-position:center top"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="test-photo-placeholder" style="display:none">이미지 준비중</div>
+          <div class="test-photo-label">정수기 급수관 — T형 분기 연결 전경</div>
+        </div>
+        <div class="test-photo-card">
+          <img src="image/정수기급수관탈거.jpg" alt="급수관 탈거 상태" class="test-photo"
+            style="object-fit:cover;object-position:center top"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="test-photo-placeholder" style="display:none">이미지 준비중</div>
+          <div class="test-photo-label">세척기 급수관 탈거 상태 — 볼밸브 차단 확인</div>
+        </div>
+        <div class="test-photo-card">
+          <img src="image/정수기급수관-세척기급수관연결.jpg" alt="정수기-세척기 급수관 연결" class="test-photo"
+            style="object-fit:cover;object-position:center"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="test-photo-placeholder" style="display:none">이미지 준비중</div>
+          <div class="test-photo-label">정수기 급수관 ↔ 세척기 급수관 연결 완료</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 수량 테스트 결과 -->
+    <section class="section">
+      <div class="section-title">수량 테스트 결과</div>
+      <div class="test-result-wrap">
+        <div class="test-result-card">
+          <div class="test-result-label">측정 목표</div>
+          <div class="test-result-val">1,300cc 급수 소요시간 측정</div>
+        </div>
+        <div class="test-result-arrow">→</div>
+        <div class="test-result-card highlight">
+          <div class="test-result-label">측정 결과</div>
+          <div class="test-result-val"><strong>17초</strong>에 1,300cc 보충 완료</div>
+        </div>
+        <div class="test-result-arrow">→</div>
+        <div class="test-result-card green">
+          <div class="test-result-label">판정</div>
+          <div class="test-result-val"><strong>실전 사용 충분</strong> — 실제 가동 무리 없음 확인</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 테스트 영상 -->
+    <section class="section">
+      <div class="section-title">테스트 영상</div>
+      <div class="video-grid">
+        <div class="video-card">
+          <div class="video-label-wrap">
+            <span class="video-badge">TEST 01</span>
+            <span class="video-title">수량 테스트</span>
+          </div>
+          <div class="video-wrap">
+            <iframe src="https://drive.google.com/file/d/1k723GFjJw_a4v2J-wov8mYMc1a574FXW/preview"
+              allow="autoplay" allowfullscreen></iframe>
+          </div>
+          <div class="video-desc">17초 내 1,300cc 급수 완료 · 정수기 라인 수압 충분 확인</div>
+        </div>
+        <div class="video-card">
+          <div class="video-label-wrap">
+            <span class="video-badge">TEST 02</span>
+            <span class="video-title">가동 테스트</span>
+          </div>
+          <div class="video-wrap">
+            <iframe src="https://drive.google.com/file/d/1COmP0T7Z2Dmij8YXeRG6X3jkSwQPt2JU/preview"
+              allow="autoplay" allowfullscreen></iframe>
+          </div>
+          <div class="video-desc">직수 연결 후 세척기 실제 가동 — 누수 없음, 정상 작동 확인</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI 종합 의견 -->
+    <section class="section">
+      <div class="section-title">AI 종합 의견</div>
+      <div class="ai-opinion-card">
+        <div class="ai-opinion-header">
+          <span class="ai-tag-icon">🤖</span>
+          <span class="ai-opinion-title">AI 분석 의견</span>
+        </div>
+        <div class="ai-opinion-body">
+          <div class="ai-opinion-block">
+            <div class="ai-opinion-block-title">① 설치 접근성 — 일반 사용자 자가 설치 가능</div>
+            <div class="ai-opinion-block-desc">
+              이번 테스트에서 확인된 배관 구성은 특수 공구 없이 원터치 피팅만으로 체결 가능한 구조로, 별도의 전문 시공 인력 없이 자재 키트 제공만으로 일반 사용자가 직접 설치할 수 있는 수준임이 검증되었습니다. 향후 제품 동봉 또는 별도 옵션 키트 형태의 상품화 가능성이 있습니다.
+            </div>
+          </div>
+          <div class="ai-opinion-divider"></div>
+          <div class="ai-opinion-block">
+            <div class="ai-opinion-block-title">② 수조 용량 한계 해소 — 펌웨어 개선과 연계 시 실질적 효과</div>
+            <div class="ai-opinion-block-desc">
+              기존 세척기는 내장 수조 용량 한계로 인해 <strong>세척 1회 + 헹굼 4회 이상</strong> 구성 시 수조 부족 현상이 발생하는 문제가 있었습니다. 직수 공급 방식 적용 시 수조 충전 의존도가 제거되어 급수량 제약이 해소됩니다. 이번 수량 테스트에서 확인된 <strong>17초/1,300cc 급수 속도</strong>는 세척기의 실제 코스 진행 사이클 내에서 충분한 급수가 가능함을 뒷받침합니다.
+              <br><br>
+              따라서 <strong>직수 공급 구조 + 펌웨어 수정(세척 1회 · 헹굼 4회 이상 대응)</strong>이 병행될 경우, 수조 용량 한계로 인한 헹굼 횟수 제약 문제가 실질적으로 해결 가능합니다.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /tab-test -->
 
   <footer class="report-footer">
     <span>정수기라인 활용 직수공급 자재선정 보고 · 엄마감동팀 심우승 SQ</span>

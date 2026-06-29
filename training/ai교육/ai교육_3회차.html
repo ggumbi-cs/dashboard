@@ -238,9 +238,59 @@ body.light-mode .cc-good .compare-head{background:rgba(0,122,80,0.04);}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
 .anim{animation:fadeUp 0.45s ease both;}
 .d1{animation-delay:0.05s;}.d2{animation-delay:0.10s;}.d3{animation-delay:0.15s;}.d4{animation-delay:0.20s;}.d5{animation-delay:0.25s;}.d6{animation-delay:0.30s;}
+
+/* ════════════ 회차 네비게이션 ════════════ */
+.nav-prev, .nav-next {
+  position:fixed;top:50%;transform:translateY(-50%);
+  width:44px;height:80px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg2);border:1px solid var(--border2);
+  cursor:pointer;z-index:999;
+  transition:background 0.15s,border-color 0.2s,opacity 0.2s,box-shadow 0.2s;
+  font-size:18px;color:var(--text2);
+  user-select:none;
+}
+.nav-prev{left:0;border-radius:0 10px 10px 0;border-left:none;}
+.nav-next{right:0;border-radius:10px 0 0 10px;border-right:none;}
+.nav-prev:hover:not(.disabled), .nav-next:hover:not(.disabled){
+  background:var(--bg3);border-color:var(--blue);color:var(--blue);
+  box-shadow:0 4px 20px rgba(74,143,255,0.15);
+}
+.nav-prev.disabled, .nav-next.disabled{
+  opacity:0.2;cursor:default;pointer-events:none;
+}
+.nav-prev .nav-tooltip, .nav-next .nav-tooltip{
+  position:absolute;
+  background:var(--bg4);border:1px solid var(--border2);
+  border-radius:8px;padding:6px 10px;
+  font-size:10px;color:var(--text2);white-space:nowrap;
+  pointer-events:none;opacity:0;transition:opacity 0.15s;
+  line-height:1.5;
+}
+.nav-prev .nav-tooltip{left:52px;top:50%;transform:translateY(-50%);}
+.nav-next .nav-tooltip{right:52px;top:50%;transform:translateY(-50%);}
+.nav-prev:hover .nav-tooltip, .nav-next:hover .nav-tooltip{opacity:1;}
+.nav-tooltip-round{display:block;font-weight:700;color:var(--text);}
+
 </style>
 </head>
 <body>
+<!-- ════════════ 회차 네비게이션 ════════════ -->
+<div class="nav-prev" id="navPrev" onclick="navGo('prev')">
+  ‹
+  <div class="nav-tooltip">
+    <span class="nav-tooltip-round">2회차</span>
+    GitHub 게시하기
+  </div>
+</div>
+<div class="nav-next disabled" id="navNext" onclick="navGo('next')">
+  ›
+  <div class="nav-tooltip">
+    <span class="nav-tooltip-round"></span>
+    
+  </div>
+</div>
+
 
 <!-- ════════════ 1. 히어로 ════════════ -->
 <div id="hero">
@@ -604,6 +654,26 @@ body.light-mode .cc-good .compare-head{background:rgba(0,122,80,0.04);}
 </div>
 
 <script>
+
+// ── 회차 네비게이션 ──
+const NAV_CONFIG = {
+  prev: 'training/ai교육/ai교육_2회차.html',
+  next: null
+};
+function navGo(dir) {
+  const path = NAV_CONFIG[dir];
+  if (!path) return;
+  // index iframe 안에서 실행 중이면 parent에게 전달
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'TRAINING_NAV', path }, '*');
+      return;
+    }
+  } catch(e) {}
+  // 직접 열린 경우 상대경로 이동
+  window.location.href = path;
+}
+
 window.addEventListener('message', e => {
   if (!e.data) return;
   if (e.data.type === 'THEME') {

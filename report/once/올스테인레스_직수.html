@@ -212,6 +212,146 @@ body {
   font-family: 'Noto Sans KR', sans-serif;
 }
 
+/* ── 사전작업 탭 ── */
+.prep-overview {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+.prep-photo-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.prep-photo {
+  width: 100%;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+.prep-photo-placeholder {
+  width: 100%;
+  aspect-ratio: 3/4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  color: var(--text-3);
+  font-size: 11px;
+}
+.prep-photo-label {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+.prep-cost-summary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.prep-cost-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.prep-cost-rows { padding: 8px 14px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.prep-cost-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-2);
+  padding: 3px 0;
+  border-bottom: 1px solid var(--bg);
+}
+.prep-cost-val { font-weight: 500; color: var(--text-1); }
+.prep-cost-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-top: 2px solid var(--border);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--indigo);
+  background: var(--indigo-lt);
+}
+
+/* 자재 상세 카드 */
+.prep-mat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.prep-mat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.prep-mat-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background: var(--bg);
+  display: block;
+  padding: 12px;
+}
+.prep-mat-placeholder {
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  color: var(--text-3);
+  font-size: 11px;
+}
+.prep-mat-body {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+.prep-mat-name { font-size: 12px; font-weight: 700; color: var(--text-1); line-height: 1.35; }
+.prep-mat-spec {
+  font-size: 10px;
+  color: var(--indigo);
+  background: var(--indigo-lt);
+  border-radius: 4px;
+  padding: 2px 7px;
+  display: inline-block;
+  align-self: flex-start;
+}
+.prep-mat-desc { font-size: 11px; color: var(--text-2); line-height: 1.6; margin-top: 2px; }
+.prep-mat-price {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+.prep-mat-price strong { color: var(--text-1); }
+
 /* ── 핵심 자재 후보 사진 ── */
 .key-material-grid {
   display: grid;
@@ -567,7 +707,7 @@ body {
   <!-- 탭 -->
   <div class="tab-nav">
     <button class="tab-btn active" onclick="switchTab('material', this)">자재선정</button>
-    <button class="tab-btn disabled" title="자재 입고 후 등록 예정">사전작업 <span class="tab-badge">예정</span></button>
+    <button class="tab-btn" onclick="switchTab('prep', this)">사전작업</button>
     <button class="tab-btn disabled" title="가동 테스트 후 등록 예정">가동테스트 <span class="tab-badge">예정</span></button>
   </div>
 
@@ -916,6 +1056,144 @@ body {
     </section>
 
   </div><!-- /tab-material -->
+
+  <!-- 사전작업 탭 패널 -->
+  <div id="tab-prep" class="tab-panel">
+
+    <!-- 비용 요약 + 조립 완성 사진 -->
+    <section class="section">
+      <div class="section-title">투입 자재 개요</div>
+      <div class="prep-overview">
+        <div class="prep-photo-wrap">
+          <img src="image/투입자재_조립.jpg" alt="자재 조립 완성" class="prep-photo"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="prep-photo-placeholder" style="display:none">조립 사진 준비중</div>
+          <div class="prep-photo-label">조립 완성 — 정수기 연결 구성</div>
+        </div>
+        <div class="prep-photo-wrap">
+          <img src="image/투입자재_all.jpg" alt="전체 자재 배치" class="prep-photo"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="prep-photo-placeholder" style="display:none">전체 자재 사진 준비중</div>
+          <div class="prep-photo-label">투입 자재 전체 구성</div>
+        </div>
+        <div class="prep-cost-summary">
+          <div class="prep-cost-title">자재 비용 요약</div>
+          <div class="prep-cost-rows">
+            <div class="prep-cost-row">
+              <span>1/4" 호스 5cm × 4ea</span>
+              <span class="prep-cost-val">100원</span>
+            </div>
+            <div class="prep-cost-row">
+              <span>1/4" 체크밸브 × 1ea</span>
+              <span class="prep-cost-val">2,500원</span>
+            </div>
+            <div class="prep-cost-row">
+              <span>1/4" T형 피팅 × 1ea</span>
+              <span class="prep-cost-val">1,000원</span>
+            </div>
+            <div class="prep-cost-row">
+              <span>1/4" 볼밸브 × 1ea</span>
+              <span class="prep-cost-val">2,600원</span>
+            </div>
+            <div class="prep-cost-row">
+              <span>1/4:3/4 피메일 어댑터 × 1ea</span>
+              <span class="prep-cost-val">3,000원</span>
+            </div>
+            <div class="prep-cost-row">
+              <span>3/4" 니플 × 1ea</span>
+              <span class="prep-cost-val">3,600원</span>
+            </div>
+          </div>
+          <div class="prep-cost-total">
+            <span>총 자재 비용</span>
+            <span>12,800원</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 자재 상세 카드 -->
+    <section class="section">
+      <div class="section-title">확정 자재 상세</div>
+      <div class="prep-mat-grid">
+
+        <div class="prep-mat-card">
+          <img src="image/투입자재_암나사피메일어댑터.PNG" alt="피메일 어댑터" class="prep-mat-img"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="prep-mat-placeholder" style="display:none">이미지 준비중</div>
+          <div class="prep-mat-body">
+            <div class="prep-mat-name">1/4 × 3/4" 피메일 어댑터</div>
+            <div class="prep-mat-spec">Female Adapter · 1/4"(약 6.3mm) ↔ 3/4"(내경 약 24.2mm)</div>
+            <div class="prep-mat-desc">정수기 측 3/4" 배관과 1/4" PE 호스를 연결하는 핵심 변환 부품. 암나사(Female) 방식으로 세척기 포트에 직결.</div>
+            <div class="prep-mat-price">단가 <strong>3,000원</strong> · 1ea</div>
+          </div>
+        </div>
+
+        <div class="prep-mat-card">
+          <img src="image/투입자재_34니플.PNG" alt="3/4 니플" class="prep-mat-img"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="prep-mat-placeholder" style="display:none">이미지 준비중</div>
+          <div class="prep-mat-body">
+            <div class="prep-mat-name">3/4" 니플 (Nipple)</div>
+            <div class="prep-mat-spec">BSP 3/4" (20A) · 수나사 양단</div>
+            <div class="prep-mat-desc">정수기 급수 포트 연결부에 사용하는 양방향 수나사 연결 부품. 피메일 어댑터와 체결하여 배관 시작점 구성.</div>
+            <div class="prep-mat-price">단가 <strong>3,600원</strong> · 1ea</div>
+          </div>
+        </div>
+
+        <div class="prep-mat-card">
+          <img src="image/투입자재_볼밸프.PNG" alt="볼밸브" class="prep-mat-img"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="prep-mat-placeholder" style="display:none">이미지 준비중</div>
+          <div class="prep-mat-body">
+            <div class="prep-mat-name">1/4" 볼밸브 (Ball Valve)</div>
+            <div class="prep-mat-spec">원터치 피팅 · OD 1/4"</div>
+            <div class="prep-mat-desc">물 흐름의 차단 및 개방을 제어하는 수동 밸브. 세척기 미사용 시 급수를 완전 차단하여 누수 위험 방지.</div>
+            <div class="prep-mat-price">단가 <strong>2,600원</strong> · 1ea</div>
+          </div>
+        </div>
+
+        <div class="prep-mat-card">
+          <img src="image/투입자재_체크밸브.PNG" alt="체크밸브" class="prep-mat-img"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="prep-mat-placeholder" style="display:none">이미지 준비중</div>
+          <div class="prep-mat-body">
+            <div class="prep-mat-name">1/4" 체크밸브 (Check Valve)</div>
+            <div class="prep-mat-spec">원터치 피팅 · OD 1/4" · 단방향 흐름</div>
+            <div class="prep-mat-desc">역류를 방지하여 안전한 단방향 물 흐름을 유지. 정수기 라인의 압력 변동 시 세척기 측으로의 역류 차단.</div>
+            <div class="prep-mat-price">단가 <strong>2,500원</strong> · 1ea</div>
+          </div>
+        </div>
+
+        <div class="prep-mat-card">
+          <img src="image/투입자재_T형.PNG" alt="T형 피팅" class="prep-mat-img"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="prep-mat-placeholder" style="display:none">이미지 준비중</div>
+          <div class="prep-mat-body">
+            <div class="prep-mat-name">1/4" T형 피팅 (Tee Fitting)</div>
+            <div class="prep-mat-spec">원터치 피팅 · OD 1/4" · 3방향</div>
+            <div class="prep-mat-desc">호스를 3방향으로 분기 연결. 정수기 라인에서 세척기 급수 분기점 구성에 사용.</div>
+            <div class="prep-mat-price">단가 <strong>1,000원</strong> · 1ea</div>
+          </div>
+        </div>
+
+        <div class="prep-mat-card">
+          <img src="image/투입자재_14호스.PNG" alt="PE 호스" class="prep-mat-img"
+            style="object-fit:cover;object-position:center"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="prep-mat-placeholder" style="display:none">이미지 준비중</div>
+          <div class="prep-mat-body">
+            <div class="prep-mat-name">1/4" PE 호스 (5cm)</div>
+            <div class="prep-mat-spec">OD 6mm (1/4") · 폴리에틸렌 · 절단 사용</div>
+            <div class="prep-mat-desc">각 피팅 간 연결에 사용하는 단관(短管). 5cm 단위로 절단하여 체결부 간격 조정에 활용. 총 4ea 사용.</div>
+            <div class="prep-mat-price">단가 <strong>25원</strong> · 4ea = 100원</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div><!-- /tab-prep -->
 
   <footer class="report-footer">
     <span>정수기라인 활용 직수공급 자재선정 보고 · 엄마감동팀 심우승 SQ</span>

@@ -554,15 +554,10 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
     </div>
   </div>
 
-  <!-- 팀Tool / 개발자 (하위메뉴 없는 단독탭) -->
+  <!-- 팀Tool (하위메뉴 없는 단독탭) -->
   <div class="nav-group" id="ng-tool">
     <div class="nav-parent" data-tab="팀Tool" onclick="switchTabDirect('팀Tool')" style="cursor:pointer;">
       팀Tool ✓
-    </div>
-  </div>
-  <div class="nav-group" id="ng-dev">
-    <div class="nav-parent" data-tab="개발자" onclick="switchTabDirect('개발자')" style="cursor:pointer;">
-      개발자
     </div>
   </div>
 
@@ -576,6 +571,20 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
         <span class="nav-item-label">📚 교육자료 모음</span>
         <button class="vis-btn" data-tab="팀원교육" onclick="openVisModal(event,'팀원교육')">⚙</button>
       </div>
+    </div>
+  </div>
+
+  <!-- 지식DB (하위메뉴 없는 단독탭) -->
+  <div class="nav-group" id="ng-knowledge">
+    <div class="nav-parent" data-tab="지식DB" onclick="switchTabDirect('지식DB')" style="cursor:pointer;">
+      🗃️ 지식DB
+    </div>
+  </div>
+
+  <!-- 개발자 (하위메뉴 없는 단독탭) -->
+  <div class="nav-group" id="ng-dev">
+    <div class="nav-parent" data-tab="개발자" onclick="switchTabDirect('개발자')" style="cursor:pointer;">
+      개발자
     </div>
   </div>
 
@@ -731,6 +740,7 @@ const TAB_MAP = {
   '주피미':     'report/week/',
   '월피미':     'report/month/',
   '팀원교육':   'training/training_main.html',
+  '지식DB':     '지식db/지식db.html',
 };
 
 // ── 계정 정보 ──
@@ -748,9 +758,9 @@ const ROLE_LEVEL = { admin: 0, leader: 1, ggumbi: 2, affiliate: 3 };
 // ── 역할별 기본 허용 탭 (null = 전체허용) ──
 const ROLE_TABS = {
   'admin':     null,
-  'leader':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','스마트스토어','건별Issue','건별보고','팀Tool','개발자','주피미','월피미','팀원교육'],
-  'ggumbi':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','스마트스토어','건별Issue','건별보고','팀Tool','주피미','월피미','팀원교육'],
-  'affiliate': ['팀Tool'],
+  'leader':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','스마트스토어','건별Issue','건별보고','팀Tool','개발자','주피미','월피미','팀원교육','지식DB'],
+  'ggumbi':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','스마트스토어','건별Issue','건별보고','팀Tool','주피미','월피미','팀원교육','지식DB'],
+  'affiliate': ['팀Tool','지식DB'],
 };
 
 // ── 공개설정: 각 탭별로 어느 role까지 비공개 처리할지
@@ -910,6 +920,12 @@ function applyRolePermissions(role) {
   const trainingNG = document.getElementById('ng-training');
   if (trainingNG) {
     trainingNG.style.display = (allowed === null || allowed.includes('팀원교육')) ? '' : 'none';
+  }
+
+  // 지식DB탭 (nav-parent 단독)
+  const knowledgeNG = document.getElementById('ng-knowledge');
+  if (knowledgeNG) {
+    knowledgeNG.style.display = (allowed === null || allowed.includes('지식DB')) ? '' : 'none';
   }
 
   // 계열사: 팀Tool로 바로 이동
@@ -1190,6 +1206,7 @@ function _applyTab(tabName, role) {
   const isSmtTab   = tabName === '스마트스토어';
   const isMeetTab  = tabName === '주피미' || tabName === '월피미';
   const isTrainingTab = tabName === '팀원교육';
+  const isKnowledgeTab = tabName === '지식DB';
 
   if (isTrainingTab) {
     const frame = document.getElementById('mainFrame');
@@ -1200,6 +1217,17 @@ function _applyTab(tabName, role) {
       } catch(e) {}
     };
     frame.src = 'training/training_main.html?' + Date.now();
+  } else if (isKnowledgeTab) {
+    const frame = document.getElementById('mainFrame');
+    frame.onload = () => {
+      try {
+        const role = sessionStorage.getItem('userRole') || '';
+        frame.contentWindow.postMessage({ type:'SCRIPT_URL', url:SCRIPT_URL, userRole:role }, '*');
+        const t = localStorage.getItem('ggumbi-theme');
+        frame.contentWindow.postMessage({ type:'THEME', mode: t || 'dark' }, '*');
+      } catch(e) {}
+    };
+    frame.src = (TAB_MAP['지식DB'] || '지식db/지식db.html') + '?' + Date.now();
   } else if (isIssueTab) {
     const firstItem = document.querySelector('#issueSidebar .sb-item');
     if (firstItem) onceNav(firstItem.getAttribute('onclick').match(/'([^']+)'/)[1], firstItem);
@@ -1262,9 +1290,10 @@ function _switchSidebar(tabName) {
   const isMeetTab   = tabName === '주피미' || tabName === '월피미';
   const isStatusTab = tabName === '주요kpi' || tabName === '스마트스토어' || tabName === '상담분석';
   const isTrainingTab = tabName === '팀원교육';
+  const isKnowledgeTab = tabName === '지식DB';
 
-  // 팀원교육: 사이드바 완전 숨김
-  if (isTrainingTab) {
+  // 팀원교육 / 지식DB: 사이드바 완전 숨김
+  if (isTrainingTab || isKnowledgeTab) {
     if (sb) sb.style.display = 'none';
     return;
   }

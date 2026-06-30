@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>거래처 등록기 — 영수증 일괄 추출</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/SheetJS/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<style>
+  :root{
+    --ink:#1c2526;
+    --paper:#f7f5f1;
+    --paper-dim:#efece6;
+    --line:#d8d3c8;
+    --accent:#0f6b5c;
+    --accent-soft:#e3efec;
+    --warn:#b5481f;
+    --warn-soft:#fbe9e1;
+    --mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    --serif: 'Noto Serif KR', Georgia, serif;
+    --sans: 'Pretendard', -apple-system, 'Malgun Gothic', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--accent); color:#fff;}
+
+  /* ---------- Header ---------- */
+  header{
+    padding:28px 36px 20px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .brand{
+    font-family:var(--serif);
+    font-size:22px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .brand span{color:var(--accent);}
+  .sub{
+    font-size:12.5px;
+    color:#6b6358;
+    margin-top:2px;
+    font-family:var(--mono);
+  }
+  .stat-pill{
+    font-family:var(--mono);
+    font-size:12px;
+    background:var(--paper-dim);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:5px 14px;
+    color:#52483c;
+  }
+
+  /* ---------- Layout ---------- */
+  .workspace{
+    display:grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap:0;
+    min-height:calc(100vh - 92px);
+  }
+  @media (max-width: 980px){
+    .workspace{grid-template-columns:1fr;}
+  }
+  .left, .right{padding:28px 32px;}
+  .left{border-right:1px solid var(--line);}
+  .right{background:var(--paper-dim);}
+
+  /* ---------- Dropzone ---------- */
+  .dropzone{
+    border:2px dashed var(--line);
+    border-radius:14px;
+    padding:38px 24px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+    background:#fff;
+  }
+  .dropzone.dragover{
+    border-color:var(--accent);
+    background:var(--accent-soft);
+  }
+  .dropzone h3{
+    margin:0 0 6px;
+    font-family:var(--serif);
+    font-size:17px;
+  }
+  .dropzone p{
+    margin:0;
+    font-size:12.5px;
+    color:#8a8275;
+  }
+  .dropzone input{display:none;}
+
+  .toolbar{
+    display:flex;
+    gap:10px;
+    margin:18px 0 22px;
+    flex-wrap:wrap;
+  }
+  button{
+    font-family:var(--sans);
+    font-weight:600;
+    font-size:13px;
+    border:1px solid var(--ink);
+    background:var(--ink);
+    color:#fff;
+    padding:10px 18px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:transform .08s, opacity .15s;
+  }
+  button:hover{opacity:.85;}
+  button:active{transform:scale(.97);}
+  button.secondary{
+    background:transparent;
+    color:var(--ink);
+  }
+  button.accent{
+    background:var(--accent);
+    border-color:var(--accent);
+  }
+  button:disabled{
+    opacity:.35;
+    cursor:not-allowed;
+  }
+
+  /* ---------- Cards ---------- */
+  .card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:12px;
+    margin-bottom:18px;
+    overflow:hidden;
+    animation: rise .3s ease both;
+  }
+  @keyframes rise{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+
+  .card-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 14px;
+    background:var(--paper-dim);
+    border-bottom:1px solid var(--line);
+  }
+  .card-filename{
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:#6b6358;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    max-width:60%;
+  }
+  .confidence{
+    font-family:var(--mono);
+    font-size:11px;
+    font-weight:700;
+    padding:3px 9px;
+    border-radius:20px;
+  }
+  .conf-high{background:var(--accent-soft); color:var(--accent);}
+  .conf-low{background:var(--warn-soft); color:var(--warn);}
+
+  .card-body{
+    display:flex;
+    gap:0;
+  }
+  @media (max-width: 640px){
+    .card-body{flex-direction:column;}
+  }
+  .crop-wrap{
+    flex:0 0 70%;
+    max-width:70%;
+    background:#000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    max-height:420px;
+  }
+  .crop-wrap img{
+    width:100%;
+    height:auto;
+    max-height:420px;
+    object-fit:contain;
+    display:block;
+  }
+  .card-fields{
+    flex:0 0 30%;
+    max-width:30%;
+    padding:12px 14px;
+    font-size:12px;
+  }
+  .field-row{
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    padding:6px 0;
+    border-bottom:1px dotted var(--line);
+  }
+  .field-row:last-child{border-bottom:none;}
+  .field-label{
+    color:#8a8275;
+    font-size:10.5px;
+    font-family:var(--mono);
+    white-space:nowrap;
+    flex:0 0 auto;
+  }
+  .field-value{
+    text-align:right;
+    font-weight:600;
+    word-break:break-word;
+    font-size:12.5px;
+    flex:1;
+  }
+  .field-value.empty{color:#c2bbac; font-weight:400; font-style:italic;}
+  .field-value.low-conf{color:var(--warn);}
+  .field-value.low-conf::after{
+    content:" ⚠";
+  }
+
+  .card-error{
+    padding:14px 16px;
+    color:var(--warn);
+    font-size:13px;
+  }
+
+  /* ---------- Status / progress ---------- */
+  .status-line{
+    font-family:var(--mono);
+    font-size:12px;
+    color:#8a8275;
+    margin-bottom:14px;
+    min-height:16px;
+  }
+  .spinner{
+    display:inline-block;
+    width:10px; height:10px;
+    border:2px solid var(--line);
+    border-top-color:var(--accent);
+    border-radius:50%;
+    animation:spin .7s linear infinite;
+    margin-right:6px;
+    vertical-align:middle;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ---------- Right panel: result table ---------- */
+  .right h2{
+    font-family:var(--serif);
+    font-size:18px;
+    margin:0 0 4px;
+  }
+  .right .sub{margin-bottom:18px;}
+  table{
+    width:100%;
+    border-collapse:collapse;
+    background:#fff;
+    font-size:12px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    overflow:hidden;
+  }
+  thead th{
+    background:var(--ink);
+    color:#fff;
+    font-family:var(--mono);
+    font-weight:600;
+    text-align:left;
+    padding:8px 10px;
+    font-size:10.5px;
+    letter-spacing:.02em;
+    white-space:nowrap;
+  }
+  tbody td{
+    padding:8px 10px;
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+    max-width:160px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  tbody tr:hover{background:var(--accent-soft);}
+  tbody tr.dup-row{background:var(--warn-soft);}
+  .table-scroll{
+    overflow-x:auto;
+    border-radius:8px;
+  }
+  .empty-state{
+    text-align:center;
+    padding:60px 20px;
+    color:#aaa394;
+  }
+  .empty-state .glyph{
+    font-size:34px;
+    margin-bottom:10px;
+    opacity:.5;
+  }
+  .checkbox-cell{text-align:center; width:30px;}
+
+  .row-count{
+    font-family:var(--mono);
+    font-size:11px;
+    color:#8a8275;
+    margin:10px 0;
+  }
+  .dup-tag{
+    display:inline-block;
+    font-family:var(--mono);
+    font-size:9.5px;
+    background:var(--warn);
+    color:#fff;
+    padding:1px 6px;
+    border-radius:10px;
+    margin-left:6px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="brand">거래처 등록기<span>.</span></div>
+    <div class="sub">RECEIPT → ERP TRANSFER SHEET (OCR)</div>
+  </div>
+  <div class="stat-pill" id="globalStat">0건 처리됨</div>
+</header>
+
+<div class="workspace">
+
+  <!-- LEFT: upload + cards -->
+  <div class="left">
+    <div class="dropzone" id="dropzone">
+      <h3>영수증 파일을 끌어다 놓으세요</h3>
+      <p>PDF · JPG · PNG · 여러 장 동시 업로드 가능</p>
+      <input type="file" id="fileInput" multiple accept=".pdf,.png,.jpg,.jpeg">
+    </div>
+
+    <div class="toolbar">
+      <button class="accent" id="extractBtn" disabled>추출 실행</button>
+      <button class="secondary" id="dedupeBtn" disabled>중복 제거</button>
+      <button class="secondary" id="excelBtn" disabled>엑셀 다운로드</button>
+      <button class="secondary" id="clearBtn" disabled>전체 지우기</button>
+    </div>
+
+    <div class="status-line" id="statusLine"></div>
+
+    <div id="cardList"></div>
+  </div>
+
+  <!-- RIGHT: result table -->
+  <div class="right">
+    <h2>등록 대상 리스트</h2>
+    <div class="sub" style="font-family:var(--mono); font-size:12px; color:#8a8275; margin-bottom:18px;">캡처 양식 헤더 그대로 — 엑셀 복붙용</div>
+
+    <div id="resultArea">
+      <div class="empty-state">
+        <div class="glyph">⌗</div>
+        파일을 추출하면<br>여기에 결과가 쌓입니다
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================
+   설정
+   ========================================================= */
+const HEADERS = ["상호","사업자번호","대표자성명","업태","종목","법인/개인","거래처종류","국가","국내외구분","유통구조"];
+
+let tesseractWorker = null;
+async function getWorker(){
+  if(tesseractWorker) return tesseractWorker;
+  tesseractWorker = await Tesseract.createWorker('kor+eng');
+  return tesseractWorker;
+}
+
+/* =========================================================
+   상태
+   ========================================================= */
+let items = []; // { id, filename, fullImageDataUrl, cropDataUrl, fields:{...}, confidence:{...}, overallConfidence, error }
+let idSeq = 0;
+
+/* =========================================================
+   DOM refs
+   ========================================================= */
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const cardList = document.getElementById('cardList');
+const resultArea = document.getElementById('resultArea');
+const statusLine = document.getElementById('statusLine');
+const globalStat = document.getElementById('globalStat');
+
+const extractBtn = document.getElementById('extractBtn');
+const dedupeBtn = document.getElementById('dedupeBtn');
+const excelBtn = document.getElementById('excelBtn');
+const clearBtn = document.getElementById('clearBtn');
+
+/* =========================================================
+   드래그앤드롭 / 파일 선택
+   ========================================================= */
+dropzone.addEventListener('click', () => fileInput.click());
+['dragenter','dragover'].forEach(ev=>{
+  dropzone.addEventListener(ev, e=>{ e.preventDefault(); dropzone.classList.add('dragover'); });
+});
+['dragleave','drop'].forEach(ev=>{
+  dropzone.addEventListener(ev, e=>{ e.preventDefault(); dropzone.classList.remove('dragover'); });
+});
+dropzone.addEventListener('drop', e=>{
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', e=>{
+  handleFiles(e.target.files);
+  fileInput.value = "";
+});
+
+async function handleFiles(fileList){
+  const files = Array.from(fileList);
+  for(const file of files){
+    const id = ++idSeq;
+    let imageDataUrl;
+    try{
+      if(file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')){
+        imageDataUrl = await pdfFirstPageToImage(file);
+      } else {
+        imageDataUrl = await fileToDataUrl(file);
+      }
+    }catch(err){
+      items.push({id, filename:file.name, fullImageDataUrl:null, cropDataUrl:null, fields:{}, confidence:{}, overallConfidence:0, error:"파일을 읽을 수 없습니다: " + err.message});
+      continue;
+    }
+    items.push({
+      id, filename:file.name,
+      fullImageDataUrl: imageDataUrl,
+      cropDataUrl: null,
+      fields: {}, confidence: {}, overallConfidence: null,
+      error: null, extracted:false
+    });
+  }
+  renderCards();
+  updateButtons();
+}
+
+function fileToDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const r = new FileReader();
+    r.onload = ()=>resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+async function pdfFirstPageToImage(file){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+  const page = await pdf.getPage(1);
+  const viewport = page.getViewport({scale: 2.0});
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  const ctx = canvas.getContext('2d');
+  await page.render({canvasContext: ctx, viewport}).promise;
+  return canvas.toDataURL('image/jpeg', 0.92);
+}
+
+/* =========================================================
+   카드 렌더링
+   ========================================================= */
+function renderCards(){
+  cardList.innerHTML = "";
+  items.forEach(item=>{
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = `card-${item.id}`;
+
+    if(item.error){
+      card.innerHTML = `
+        <div class="card-head">
+          <span class="card-filename">${escapeHtml(item.filename)}</span>
+        </div>
+        <div class="card-error">⚠ ${escapeHtml(item.error)}</div>
+      `;
+      cardList.appendChild(card);
+      return;
+    }
+
+    const confClass = (item.overallConfidence===null) ? '' : (item.overallConfidence>=75 ? 'conf-high':'conf-low');
+    const confLabel = (item.overallConfidence===null) ? '대기중' : `${item.overallConfidence}% 신뢰도`;
+
+    const cropImg = item.cropDataUrl || item.fullImageDataUrl;
+
+    let fieldsHtml = '';
+    if(item.extracted){
+      HEADERS.forEach(h=>{
+        const val = item.fields[h] || '';
+        const conf = item.confidence[h] !== undefined ? item.confidence[h] : 100;
+        const isLow = conf < 75;
+        const cls = val ? (isLow ? 'field-value low-conf' : 'field-value') : 'field-value empty';
+        fieldsHtml += `<div class="field-row">
+            <span class="field-label">${h}</span>
+            <span class="${cls}">${val ? escapeHtml(val) : '—'}</span>
+          </div>`;
+      });
+    } else {
+      fieldsHtml = `<div style="color:#aaa39d; font-size:12.5px; padding:8px 0;">추출 실행 버튼을 눌러주세요</div>`;
+    }
+
+    card.innerHTML = `
+      <div class="card-head">
+        <span class="card-filename">${escapeHtml(item.filename)}</span>
+        ${item.extracted ? `<span class="confidence ${confClass}">${confLabel}</span>` : ''}
+      </div>
+      <div class="card-body">
+        <div class="crop-wrap">${cropImg ? `<img src="${cropImg}">` : ''}</div>
+        <div class="card-fields">${fieldsHtml}</div>
+      </div>
+    `;
+    cardList.appendChild(card);
+  });
+}
+
+function escapeHtml(s){
+  if(typeof s !== 'string') return s;
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* =========================================================
+   OCR — Tesseract.js 기반 추출 + 영역 추정
+   ========================================================= */
+
+// 사업자등록번호 패턴: 000-00-00000 (붙어있는 숫자 10자리도 허용)
+const BIZ_NO_RE = /(\d{3})\s*-?\s*(\d{2})\s*-?\s*(\d{5})/;
+
+// 키워드 사전: 항목별로 등장 가능한 라벨들
+const LABELS = {
+  상호: ["판매자상호","판매자 상호","가맹점명","가맹점","상호","상점명","업체명"],
+  사업자번호: ["사업자등록번호","사업자 등록번호","사업자번호","판매자 사업자등록번호","사업자 번호"],
+  대표자성명: ["대표자명","대표자","대표","대표자 명"],
+  주소: ["판매자주소","판매자 주소","주소","사업장주소"]
+};
+
+function cleanValue(s){
+  return (s||"").replace(/^[:\s]+/,'').trim();
+}
+
+async function runOCR(imageDataUrl){
+  const worker = await getWorker();
+  const { data } = await worker.recognize(imageDataUrl);
+  return data; // { text, lines: [{text, bbox:{x0,y0,x1,y1}}, ...], ... }
+}
+
+function findLabelLine(lines, labelList){
+  for(let i=0;i<lines.length;i++){
+    const lineText = lines[i].text.replace(/\s/g,'');
+    for(const label of labelList){
+      const labelNoSpace = label.replace(/\s/g,'');
+      if(lineText.includes(labelNoSpace)){
+        return {index:i, line:lines[i], label};
+      }
+    }
+  }
+  return null;
+}
+
+function extractValueNearLabel(lines, match, fieldType){
+  if(!match) return {value:"", confidence:0, bbox:null};
+
+  const line = match.line;
+  const rawAfterLabel = line.text.split(match.label).length > 1
+    ? line.text.split(match.label).slice(1).join(match.label)
+    : line.text;
+  let value = cleanValue(rawAfterLabel.replace(/^[:\-\s]+/, ''));
+
+  // 같은 줄에 라벨만 있고 값이 없으면, 다음 줄 사용 (표 형태 영수증 대응)
+  let bbox = line.bbox;
+  if(!value || value.length < 2){
+    const next = lines[match.index+1];
+    if(next){
+      value = cleanValue(next.text);
+      bbox = next.bbox;
+    }
+  }
+
+  // 사업자번호는 패턴으로 한번 더 정제
+  if(fieldType === 'biz'){
+    const m = value.match(BIZ_NO_RE) || line.text.match(BIZ_NO_RE);
+    if(m){
+      value = `${m[1]}-${m[2]}-${m[3]}`;
+    } else {
+      // 라인 전체에서 패턴 탐색 실패 시 다음 줄들도 탐색
+      for(let k=match.index; k<Math.min(match.index+3, lines.length); k++){
+        const mm = lines[k].text.match(BIZ_NO_RE);
+        if(mm){ value = `${mm[1]}-${mm[2]}-${mm[3]}`; bbox = lines[k].bbox; break; }
+      }
+    }
+  }
+
+  const confidence = value ? Math.round(Math.min(98, 60 + line.confidence*0.4)) : 0;
+  return {value, confidence, bbox};
+}
+
+function searchBizNoAnywhere(lines){
+  for(const line of lines){
+    const m = line.text.match(BIZ_NO_RE);
+    if(m){
+      return {value:`${m[1]}-${m[2]}-${m[3]}`, confidence:55, bbox:line.bbox};
+    }
+  }
+  return {value:"", confidence:0, bbox:null};
+}
+
+function mergeBoxes(boxes, imgW, imgH){
+  const valid = boxes.filter(Boolean);
+  if(valid.length===0) return null;
+  const x0 = Math.min(...valid.map(b=>b.x0));
+  const y0 = Math.min(...valid.map(b=>b.y0));
+  const x1 = Math.max(...valid.map(b=>b.x1));
+  const y1 = Math.max(...valid.map(b=>b.y1));
+  return {
+    x_min: x0/imgW, y_min: y0/imgH,
+    x_max: x1/imgW, y_max: y1/imgH
+  };
+}
+
+async function getImageDims(dataUrl){
+  return new Promise(resolve=>{
+    const img = new Image();
+    img.onload = ()=>resolve({w:img.width, h:img.height});
+    img.src = dataUrl;
+  });
+}
+
+async function extractOne(item){
+  const ocrData = await runOCR(item.fullImageDataUrl);
+
+  // tesseract.js v5: data.lines 배열 (bbox: x0,y0,x1,y1)
+  const lines = (ocrData.lines || []).filter(l=>l.text && l.text.trim().length>0);
+  if(lines.length === 0){
+    throw new Error("텍스트를 인식하지 못했습니다 (사진이 흐릿하거나 회전되어 있을 수 있습니다)");
+  }
+
+  const dims = await getImageDims(item.fullImageDataUrl);
+
+  const nameMatch = findLabelLine(lines, LABELS.상호);
+  const bizMatch = findLabelLine(lines, LABELS.사업자번호);
+  const ceoMatch = findLabelLine(lines, LABELS.대표자성명);
+  const addrMatch = findLabelLine(lines, LABELS.주소);
+
+  const nameRes = extractValueNearLabel(lines, nameMatch, 'name');
+  let bizRes = extractValueNearLabel(lines, bizMatch, 'biz');
+  if(!bizRes.value){
+    bizRes = searchBizNoAnywhere(lines); // 라벨을 못찾아도 패턴으로라도 시도
+  }
+  const ceoRes = extractValueNearLabel(lines, ceoMatch, 'ceo');
+  const addrRes = extractValueNearLabel(lines, addrMatch, 'addr');
+
+  const boxes = [nameRes.bbox, bizRes.bbox, ceoRes.bbox, addrRes.bbox].filter(Boolean);
+  const cropBox = mergeBoxes(boxes, dims.w, dims.h);
+
+  return {
+    fields: {
+      상호: nameRes.value,
+      사업자번호: bizRes.value,
+      대표자성명: ceoRes.value,
+      주소: addrRes.value
+    },
+    confidence: {
+      상호: nameRes.confidence,
+      사업자번호: bizRes.confidence,
+      대표자성명: ceoRes.confidence
+    },
+    cropBox
+  };
+}
+
+async function cropImage(dataUrl, box){
+  return new Promise((resolve)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      try{
+        let {x_min,y_min,x_max,y_max} = box;
+        const padX = 0.04, padY = 0.02;
+        x_min = Math.max(0, x_min - padX);
+        y_min = Math.max(0, y_min - padY);
+        x_max = Math.min(1, x_max + padX);
+        y_max = Math.min(1, y_max + padY);
+        if(x_max<=x_min || y_max<=y_min || isNaN(x_min)){
+          resolve(dataUrl); return;
+        }
+        const sx = x_min*img.width, sy = y_min*img.height;
+        const sw = (x_max-x_min)*img.width, sh = (y_max-y_min)*img.height;
+        const canvas = document.createElement('canvas');
+        canvas.width = sw; canvas.height = sh;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+        resolve(canvas.toDataURL('image/jpeg', 0.9));
+      }catch(e){
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = ()=>resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
+/* =========================================================
+   추출 실행 (일괄)
+   ========================================================= */
+extractBtn.addEventListener('click', async ()=>{
+  const targets = items.filter(it=>!it.error && !it.extracted);
+  if(targets.length===0) return;
+  setButtonsBusy(true);
+
+  for(let i=0;i<targets.length;i++){
+    const item = targets[i];
+    statusLine.innerHTML = `<span class="spinner"></span>OCR 처리 중 (${i+1}/${targets.length}) — ${escapeHtml(item.filename)}`;
+    try{
+      const result = await extractOne(item);
+      item.fields = {
+        "상호": result.fields["상호"] || "",
+        "사업자번호": result.fields["사업자번호"] || "",
+        "대표자성명": result.fields["대표자성명"] || "",
+        "업태": "",
+        "종목": "",
+        "법인/개인": "",
+        "거래처종류": "",
+        "국가": result.fields["주소"] ? "대한민국" : "",
+        "국내외구분": result.fields["주소"] ? "국내" : "",
+        "유통구조": ""
+      };
+      item.confidence = result.confidence || {};
+      const confVals = Object.values(item.confidence).filter(v=>typeof v === 'number' && v>0);
+      item.overallConfidence = confVals.length ? Math.round(confVals.reduce((a,b)=>a+b,0)/confVals.length) : 0;
+
+      if(result.cropBox){
+        item.cropDataUrl = await cropImage(item.fullImageDataUrl, result.cropBox);
+      }
+      item.extracted = true;
+    }catch(err){
+      item.error = "추출 실패: " + err.message;
+    }
+    renderCards();
+    renderTable();
+  }
+
+  statusLine.textContent = `완료 — 총 ${targets.length}건 처리 (OCR 기반 — 결과를 반드시 육안 대조해주세요)`;
+  setButtonsBusy(false);
+  updateButtons();
+});
+
+function setButtonsBusy(busy){
+  extractBtn.disabled = busy;
+  dedupeBtn.disabled = busy;
+  excelBtn.disabled = busy;
+  clearBtn.disabled = busy;
+}
+
+/* =========================================================
+   결과 테이블
+   ========================================================= */
+let dupIds = new Set();
+
+function renderTable(){
+  const validItems = items.filter(it=>it.extracted && !it.error);
+  globalStat.textContent = `${validItems.length}건 처리됨`;
+
+  if(validItems.length===0){
+    resultArea.innerHTML = `<div class="empty-state"><div class="glyph">⌗</div>파일을 추출하면<br>여기에 결과가 쌓입니다</div>`;
+    return;
+  }
+
+  let html = `<div class="row-count">${validItems.length}개 행 ${dupIds.size>0 ? `· 중복 의심 ${dupIds.size}건` : ''}</div>`;
+  html += `<div class="table-scroll"><table><thead><tr><th class="checkbox-cell"></th>`;
+  HEADERS.forEach(h=> html += `<th>${h}</th>`);
+  html += `</tr></thead><tbody>`;
+
+  validItems.forEach(item=>{
+    const isDup = dupIds.has(item.id);
+    html += `<tr class="${isDup?'dup-row':''}" data-id="${item.id}">
+      <td class="checkbox-cell"><input type="checkbox" class="row-check" checked></td>`;
+    HEADERS.forEach(h=>{
+      const v = item.fields[h] || '';
+      html += `<td title="${escapeHtml(v)}">${escapeHtml(v)}${(h==='상호' && isDup) ? '<span class="dup-tag">중복의심</span>':''}</td>`;
+    });
+    html += `</tr>`;
+  });
+  html += `</tbody></table></div>`;
+  resultArea.innerHTML = html;
+}
+
+/* =========================================================
+   중복 제거 로직
+   ========================================================= */
+dedupeBtn.addEventListener('click', ()=>{
+  const validItems = items.filter(it=>it.extracted && !it.error);
+  dupIds = new Set();
+
+  for(let i=0;i<validItems.length;i++){
+    for(let j=i+1;j<validItems.length;j++){
+      const a = validItems[i], b = validItems[j];
+      const bizA = normalizeBiz(a.fields["사업자번호"]);
+      const bizB = normalizeBiz(b.fields["사업자번호"]);
+      if(!bizA || !bizB) continue;
+      if(bizA !== bizB) continue; // 사업자번호 무조건 일치해야 함
+
+      const nameA = normalizeName(a.fields["상호"]);
+      const nameB = normalizeName(b.fields["상호"]);
+      if(!nameA || !nameB) continue;
+
+      if(nameA === nameB || isSimilar(nameA, nameB)){
+        dupIds.add(a.id);
+        dupIds.add(b.id);
+      }
+    }
+  }
+
+  renderTable();
+  statusLine.textContent = dupIds.size>0
+    ? `중복 의심 ${dupIds.size}건 발견 — 표에서 빨간 배경으로 표시됨`
+    : `중복 없음`;
+});
+
+function normalizeBiz(s){
+  return (s||'').replace(/[^0-9]/g,'');
+}
+function normalizeName(s){
+  return (s||'').replace(/\s|\(주\)|주식회사|㈜|\(.*?\)/g,'').toLowerCase();
+}
+function isSimilar(a,b){
+  if(!a || !b) return false;
+  if(a.includes(b) || b.includes(a)) return true;
+  // 간단한 레벤슈타인 유사도
+  const dist = levenshtein(a,b);
+  const maxLen = Math.max(a.length,b.length);
+  return maxLen>0 && (1 - dist/maxLen) >= 0.7;
+}
+function levenshtein(a,b){
+  const m=a.length,n=b.length;
+  const dp = Array.from({length:m+1},()=>new Array(n+1).fill(0));
+  for(let i=0;i<=m;i++) dp[i][0]=i;
+  for(let j=0;j<=n;j++) dp[0][j]=j;
+  for(let i=1;i<=m;i++){
+    for(let j=1;j<=n;j++){
+      dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j-1],dp[i-1][j],dp[i][j-1]);
+    }
+  }
+  return dp[m][n];
+}
+
+/* =========================================================
+   엑셀 다운로드
+   ========================================================= */
+excelBtn.addEventListener('click', ()=>{
+  const validItems = items.filter(it=>it.extracted && !it.error);
+  if(validItems.length===0) return;
+
+  const rows = validItems.map(item=>{
+    const row = {};
+    HEADERS.forEach(h=> row[h] = item.fields[h] || '');
+    return row;
+  });
+
+  const ws = XLSX.utils.json_to_sheet(rows, {header: HEADERS});
+  ws['!cols'] = HEADERS.map(()=>({wch:16}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "거래처등록");
+  const today = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  XLSX.writeFile(wb, `거래처등록_${today}.xlsx`);
+});
+
+/* =========================================================
+   전체 지우기
+   ========================================================= */
+clearBtn.addEventListener('click', ()=>{
+  if(!confirm("업로드한 파일과 추출 결과를 모두 지울까요?")) return;
+  items = [];
+  dupIds = new Set();
+  renderCards();
+  renderTable();
+  statusLine.textContent = "";
+  updateButtons();
+});
+
+/* =========================================================
+   버튼 상태
+   ========================================================= */
+function updateButtons(){
+  const hasItems = items.length>0;
+  const hasExtracted = items.some(it=>it.extracted && !it.error);
+  extractBtn.disabled = !items.some(it=>!it.error && !it.extracted);
+  dedupeBtn.disabled = !hasExtracted;
+  excelBtn.disabled = !hasExtracted;
+  clearBtn.disabled = !hasItems;
+}
+</script>
+</body>
+</html>

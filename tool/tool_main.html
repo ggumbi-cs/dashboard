@@ -170,7 +170,7 @@ body.is-admin .admin-gear{display:flex;}
     </div>
     <div class="wb-right">
       <div class="wb-stat">
-        <div class="wb-stat-val c-cyan">11</div>
+        <div class="wb-stat-val c-cyan">12</div>
         <div class="wb-stat-lbl">TOTAL TOOLS</div>
       </div>
       <div class="wb-stat">
@@ -190,7 +190,7 @@ body.is-admin .admin-gear{display:flex;}
   <div class="sec-head">
     <div class="sec-bar" style="background:var(--cyan)"></div>
     <div class="sec-label">일반 업무 Tool</div>
-    <div class="sec-desc">· 진단 · 접수 · 분류 · 변환</div>
+    <div class="sec-desc">· 진단 · 접수 · 분류 · 관리</div>
   </div>
   <div class="slider-outer"><div class="slider-track" id="track-work">
 
@@ -248,6 +248,38 @@ body.is-admin .admin-gear{display:flex;}
       </div>
     </div>
 
+    <!-- AS4 -->
+    <div class="t-card" onclick="goTool('tool/as4.html')">
+      <div class="admin-gear">⚙</div>
+      <div class="t-card-head">
+        <div class="t-icon ic-purple">📋</div>
+        <div class="t-meta"><div class="t-name">AS4</div><div class="t-sub">업무 도구</div></div>
+        <div class="t-badge bd-purple">AS4</div>
+      </div>
+      <div class="t-body">
+        <div class="m-menu on"><div class="m-mdot" style="background:var(--purple)"></div><div class="m-mtxt">항목 1</div></div>
+        <div class="m-menu"><div class="m-mdot" style="background:var(--text3)"></div><div class="m-mtxt">항목 2</div></div>
+        <div class="m-menu"><div class="m-mdot" style="background:var(--text3)"></div><div class="m-mtxt">항목 3</div></div>
+      </div>
+    </div>
+
+  </div></div>
+  <div class="slider-controls">
+    <button class="sl-btn" id="btn-work-prev" onclick="slide('work',-1)">◀</button>
+    <div class="sl-dots" id="dots-work"></div>
+    <button class="sl-btn" id="btn-work-next" onclick="slide('work',1)">▶</button>
+  </div>
+</div>
+
+<!-- 섹션2: 마감 업무 Tool -->
+<div class="sec" style="margin-top:20px;">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--gold)"></div>
+    <div class="sec-label">마감 업무 Tool</div>
+    <div class="sec-desc">· 분류 · 변환 · 추출 · 수집</div>
+  </div>
+  <div class="slider-outer"><div class="slider-track" id="track-close">
+
     <!-- AS5 어드민분류기 -->
     <div class="t-card" onclick="goTool('tool/as5.html')">
       <div class="admin-gear">⚙</div>
@@ -302,6 +334,27 @@ body.is-admin .admin-gear{display:flex;}
       </div>
     </div>
 
+    <!-- AS8 거래처 등록기 -->
+    <div class="t-card" onclick="goTool('tool/as8.html')">
+      <div class="admin-gear">⚙</div>
+      <div class="t-card-head">
+        <div class="t-icon ic-blue">🧾</div>
+        <div class="t-meta"><div class="t-name">거래처 등록기</div><div class="t-sub">영수증 → ERP 전표 변환 (OCR)</div></div>
+        <div class="t-badge bd-cyan">AS8</div>
+      </div>
+      <div class="t-body">
+        <div class="m-file">
+          <div style="font-size:18px;margin-bottom:3px;">🧾</div>
+          <div>영수증 파일을 끌어다 놓으세요</div>
+          <div style="color:var(--text3);margin-top:2px;font-size:8px;">PDF · JPG · PNG · 여러 장 동시 업로드</div>
+        </div>
+        <div class="m-stat-grid" style="margin-top:5px;">
+          <div class="m-stat-box"><div class="m-stat-val" style="color:var(--cyan);">12건</div><div class="m-stat-lbl">처리됨</div></div>
+          <div class="m-stat-box"><div class="m-stat-val" style="color:var(--orange);">6건</div><div class="m-stat-lbl">중복의심</div></div>
+        </div>
+      </div>
+    </div>
+
     <!-- CSV 다운로더 -->
     <div class="t-card" onclick="goTool('tool/downloader.html')">
       <div class="admin-gear">⚙</div>
@@ -320,38 +373,20 @@ body.is-admin .admin-gear{display:flex;}
 
   </div></div>
   <div class="slider-controls">
-    <button class="sl-btn" id="btn-work-prev" onclick="slide('work',-1)">◀</button>
-    <div class="sl-dots" id="dots-work"></div>
-    <button class="sl-btn" id="btn-work-next" onclick="slide('work',1)">▶</button>
+    <button class="sl-btn" id="btn-close-prev" onclick="slide('close',-1)">◀</button>
+    <div class="sl-dots" id="dots-close"></div>
+    <button class="sl-btn" id="btn-close-next" onclick="slide('close',1)">▶</button>
   </div>
 </div>
 
-<!-- 섹션2: 반품·현장 Tool -->
+<!-- 섹션3: 품질 업무 Tool -->
 <div class="sec" style="margin-top:20px;">
   <div class="sec-head">
     <div class="sec-bar" style="background:var(--orange)"></div>
-    <div class="sec-label">반품 · 현장 Tool</div>
-    <div class="sec-desc">· 소통 · 검사 · 수리</div>
+    <div class="sec-label">품질 업무 Tool</div>
+    <div class="sec-desc">· 검사 · 수리</div>
   </div>
   <div class="slider-outer"><div class="slider-track" id="track-return">
-
-    <!-- 소통챗 -->
-    <div class="t-card" onclick="goTool('chat/chat_main.html')">
-      <div class="admin-gear">⚙</div>
-      <div class="t-card-head">
-        <div class="t-icon ic-cyan">💬</div>
-        <div class="t-meta"><div class="t-name">CS 소통챗</div><div class="t-sub">팀 내부 소통 + 개선요청</div></div>
-        <div class="t-badge bd-cyan">LIVE</div>
-      </div>
-      <div class="t-body">
-        <div class="m-chat">박솔아에 <span style="color:var(--text3);font-size:8.5px;">· 010-7432-6625 언제출고...</span></div>
-        <div class="m-chat r">주말에 대시보드 공사좀 해서<span style="color:var(--text3);font-size:8.5px;"> · 심우승 14:05</span></div>
-        <div style="display:flex;gap:4px;margin-top:5px;">
-          <div style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:3px 6px;font-size:8.5px;color:var(--text3);">메세지 입력...</div>
-          <div class="m-mini-btn" style="background:var(--gold);color:#000;">전송</div>
-        </div>
-      </div>
-    </div>
 
     <!-- 반품검사 기록 -->
     <div class="t-card" onclick="goExternal('https://cs-as-app.vercel.app/')">
@@ -438,7 +473,7 @@ body.is-admin .admin-gear{display:flex;}
 <script>
 // ─── 상태 ───
 let _isAdmin = false;
-const sliderState = { work:{idx:0}, return:{idx:0}, welfare:{idx:0} };
+const sliderState = { work:{idx:0}, close:{idx:0}, return:{idx:0}, welfare:{idx:0} };
 
 // ─── postMessage ───
 window.addEventListener('message', e => {
@@ -519,7 +554,7 @@ function slide(sec, dir) {
 }
 
 function initSliders() {
-  ['work','return','welfare'].forEach(sec => {
+  ['work','close','return','welfare'].forEach(sec => {
     const track = document.getElementById('track-'+sec);
     const cards = track.querySelectorAll('.t-card');
     const outer = track.parentElement;
@@ -534,7 +569,7 @@ function initSliders() {
 }
 
 window.addEventListener('resize', () => {
-  ['work','return','welfare'].forEach(sec => {
+  ['work','close','return','welfare'].forEach(sec => {
     sliderState[sec].idx = 0;
     const track = document.getElementById('track-'+sec);
     track.style.transform = 'translateX(0)';

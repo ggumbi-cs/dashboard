@@ -337,14 +337,19 @@
     gap:3px;
     font-family:var(--mono);
     font-size:10px;
-    font-weight:700;
-    background:var(--accent-soft);
-    color:var(--accent);
-    padding:2px 8px;
+    font-weight:800;
+    letter-spacing:.03em;
+    background:var(--warn);
+    color:#fff;
+    padding:2px 9px;
     border-radius:10px;
     margin-left:6px;
     cursor:default;
-    border:1px solid transparent;
+    animation: pulse-new 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse-new{
+    0%,100%{box-shadow:0 0 0 0 rgba(181,72,31,0.35);}
+    50%{box-shadow:0 0 0 4px rgba(181,72,31,0);}
   }
   .reg-badge .tooltip{
     display:none;
@@ -375,7 +380,6 @@
     border-top-color:var(--ink);
   }
   .reg-badge:hover .tooltip{display:block;}
-  .reg-badge:hover{border-color:var(--accent);}
 </style>
 </head>
 <body>
@@ -634,9 +638,10 @@ function renderCards(){
     const confLabel = (item.overallConfidence===null) ? '대기중' : `${item.overallConfidence}% 신뢰도`;
 
     const regInfo = item.extracted ? checkRegistered(item.fields["사업자번호"]) : null;
-    const regBadgeHtml = regInfo ? `
-      <span class="reg-badge">✓ 등록됨
-        <span class="tooltip">상호: ${escapeHtml(regInfo.상호)}<br>사업자번호: ${escapeHtml(regInfo.사업자번호)}<br>대표자: ${escapeHtml(regInfo.대표자성명 || '—')}</span>
+    const isNew = item.extracted && item.fields["사업자번호"] && !regInfo;
+    const regBadgeHtml = isNew ? `
+      <span class="reg-badge">NEW 신규
+        <span class="tooltip">거래처조회.xlsx에 없는 사업자번호입니다.<br>신규 거래처 등록이 필요합니다.</span>
       </span>` : '';
 
     const cropImg = item.cropDataUrl || item.fullImageDataUrl;
@@ -921,7 +926,8 @@ function renderTable(){
     return;
   }
 
-  let html = `<div class="row-count">${validItems.length}개 행 ${dupIds.size>0 ? `· 중복 의심 ${dupIds.size}건` : ''}</div>`;
+  const newCount = validItems.filter(it=> it.fields["사업자번호"] && !checkRegistered(it.fields["사업자번호"])).length;
+  let html = `<div class="row-count">${validItems.length}개 행 ${newCount>0 ? `· <span style="color:var(--warn); font-weight:700;">신규 ${newCount}건</span>` : ''} ${dupIds.size>0 ? `· 중복 의심 ${dupIds.size}건` : ''}</div>`;
   html += `<div class="table-scroll"><table><thead><tr><th class="checkbox-cell"></th>`;
   HEADERS.forEach(h=> html += `<th>${h}</th>`);
   html += `</tr></thead><tbody>`;
@@ -929,9 +935,10 @@ function renderTable(){
   validItems.forEach(item=>{
     const isDup = dupIds.has(item.id);
     const regInfo = checkRegistered(item.fields["사업자번호"]);
-    const regBadgeHtml = regInfo ? `
-      <span class="reg-badge">✓
-        <span class="tooltip">상호: ${escapeHtml(regInfo.상호)}<br>사업자번호: ${escapeHtml(regInfo.사업자번호)}<br>대표자: ${escapeHtml(regInfo.대표자성명 || '—')}</span>
+    const isNew = item.fields["사업자번호"] && !regInfo;
+    const regBadgeHtml = isNew ? `
+      <span class="reg-badge">NEW
+        <span class="tooltip">거래처조회.xlsx에 없는 사업자번호<br>신규 등록 필요</span>
       </span>` : '';
     html += `<tr class="${isDup?'dup-row':''}" data-id="${item.id}">
       <td class="checkbox-cell"><input type="checkbox" class="row-check" checked></td>`;

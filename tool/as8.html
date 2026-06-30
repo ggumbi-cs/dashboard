@@ -291,8 +291,9 @@
     border-bottom:1px solid var(--line);
     white-space:nowrap;
     max-width:160px;
-    overflow:hidden;
+    overflow:visible;
     text-overflow:ellipsis;
+    position:relative;
   }
   tbody tr:hover{background:var(--accent-soft);}
   tbody tr.dup-row{background:var(--warn-soft);}
@@ -328,6 +329,53 @@
     border-radius:10px;
     margin-left:6px;
   }
+
+  .reg-badge{
+    position:relative;
+    display:inline-flex;
+    align-items:center;
+    gap:3px;
+    font-family:var(--mono);
+    font-size:10px;
+    font-weight:700;
+    background:var(--accent-soft);
+    color:var(--accent);
+    padding:2px 8px;
+    border-radius:10px;
+    margin-left:6px;
+    cursor:default;
+    border:1px solid transparent;
+  }
+  .reg-badge .tooltip{
+    display:none;
+    position:absolute;
+    bottom:130%;
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--ink);
+    color:#fff;
+    font-family:var(--sans);
+    font-weight:400;
+    font-size:11px;
+    padding:8px 11px;
+    border-radius:8px;
+    white-space:nowrap;
+    z-index:20;
+    box-shadow:0 4px 14px rgba(0,0,0,.25);
+    text-align:left;
+    line-height:1.6;
+  }
+  .reg-badge .tooltip::after{
+    content:"";
+    position:absolute;
+    top:100%;
+    left:50%;
+    transform:translateX(-50%);
+    border:5px solid transparent;
+    border-top-color:var(--ink);
+  }
+  .reg-badge:hover .tooltip{display:block;}
+  .reg-badge:hover{border-color:var(--accent);}
 </style>
 </head>
 <body>
@@ -338,6 +386,7 @@
     <div class="sub">RECEIPT → ERP TRANSFER SHEET (OCR)</div>
   </div>
   <div class="stat-pill" id="globalStat">0건 처리됨</div>
+  <div class="stat-pill" id="dataVersionStat" style="font-family:var(--mono);">데이터 버전 확인 중…</div>
 </header>
 
 <div class="workspace">
@@ -383,6 +432,14 @@
    ========================================================= */
 const HEADERS = ["상호","사업자번호","대표자성명","업태","종목","법인/개인","거래처종류","국가","국내외구분","유통구조"];
 
+const GH_OWNER = "Ggumbi-cs";
+const GH_REPO = "Dashboard";
+const GH_PATH = "tool/data/거래처조회.xlsx";
+const GH_API_COMMITS = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/commits?path=${encodeURIComponent(GH_PATH)}&page=1&per_page=1`;
+const GH_RAW_URL = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/main/${GH_PATH}`;
+
+let registeredMap = new Map(); // normalizedBizNo -> {상호, 사업자번호(원본), 대표자성명}
+
 let tesseractWorker = null;
 async function getWorker(){
   if(tesseractWorker) return tesseractWorker;
@@ -412,8 +469,78 @@ const excelBtn = document.getElementById('excelBtn');
 const clearBtn = document.getElementById('clearBtn');
 
 /* =========================================================
-   드래그앤드롭 / 파일 선택
+   GitHub 거래처조회.xlsx 로딩 — 기존 등록 여부 매칭용
    ========================================================= */
+function normalizeBizNoForMatch(s){
+  return (s||'').toString().replace(/[^0-9]/g,'');
+}
+
+async function loadRegisteredVendors(){
+  // 1) 최근 커밋 시각 조회
+  try{
+    const commitRes = await fetch(GH_API_COMMITS);
+    if(commitRes.ok){
+      const commits = await commitRes.json();
+      if(Array.isArray(commits) && commits.length>0){
+        const dateStr = commits[0]?.commit?.author?.date || commits[0]?.commit?.committer?.date;
+        if(dateStr){
+          const d = new Date(dateStr);
+          const pad = n=>String(n).padStart(2,'0');
+          const formatted = `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+          document.getElementById('dataVersionStat').textContent = `데이터 버전: ${formatted}`;
+        } else {
+          document.getElementById('dataVersionStat').textContent = `데이터 버전: 확인 불가`;
+        }
+      } else {
+        document.getElementById('dataVersionStat').textContent = `데이터 버전: 파일 없음`;
+      }
+    } else {
+      document.getElementById('dataVersionStat').textContent = `데이터 버전: API 오류(${commitRes.status})`;
+    }
+  }catch(e){
+    document.getElementById('dataVersionStat').textContent = `데이터 버전: 조회 실패`;
+  }
+
+  // 2) 엑셀 파일 로딩 + 파싱
+  try{
+    const fileRes = await fetch(GH_RAW_URL);
+    if(!fileRes.ok) throw new Error(`raw 파일 응답 ${fileRes.status}`);
+    const buf = await fileRes.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array'});
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, {header:1, range:2}); // 2행이 헤더 → 3행부터 데이터 (0-indexed range:2)
+
+    registeredMap = new Map();
+    rows.forEach(row=>{
+      // A:거래처 B:거래처번호 C:상호 D:관리자 E:관리부서 F:거래처상태 G:신용등급 H:사업자번호 I:대표자성명
+      const sangho = row[2];
+      const bizNoRaw = row[7];
+      const ceo = row[8];
+      const norm = normalizeBizNoForMatch(bizNoRaw);
+      if(norm){
+        registeredMap.set(norm, {
+          상호: sangho || '',
+          사업자번호: bizNoRaw || '',
+          대표자성명: ceo || ''
+        });
+      }
+    });
+  }catch(e){
+    console.error("거래처조회 로딩 실패:", e);
+    const stat = document.getElementById('dataVersionStat');
+    stat.textContent = stat.textContent + ' (파일 로딩 실패)';
+  }
+}
+
+function checkRegistered(bizNo){
+  const norm = normalizeBizNoForMatch(bizNo);
+  if(!norm) return null;
+  return registeredMap.get(norm) || null;
+}
+
+loadRegisteredVendors();
+
+
 dropzone.addEventListener('click', () => fileInput.click());
 ['dragenter','dragover'].forEach(ev=>{
   dropzone.addEventListener(ev, e=>{ e.preventDefault(); dropzone.classList.add('dragover'); });
@@ -502,6 +629,12 @@ function renderCards(){
     const confClass = (item.overallConfidence===null) ? '' : (item.overallConfidence>=75 ? 'conf-high':'conf-low');
     const confLabel = (item.overallConfidence===null) ? '대기중' : `${item.overallConfidence}% 신뢰도`;
 
+    const regInfo = item.extracted ? checkRegistered(item.fields["사업자번호"]) : null;
+    const regBadgeHtml = regInfo ? `
+      <span class="reg-badge">✓ 등록됨
+        <span class="tooltip">상호: ${escapeHtml(regInfo.상호)}<br>사업자번호: ${escapeHtml(regInfo.사업자번호)}<br>대표자: ${escapeHtml(regInfo.대표자성명 || '—')}</span>
+      </span>` : '';
+
     const cropImg = item.cropDataUrl || item.fullImageDataUrl;
 
     let fieldsHtml = '';
@@ -523,7 +656,7 @@ function renderCards(){
     card.innerHTML = `
       <div class="card-head">
         <span class="card-filename">${escapeHtml(item.filename)}</span>
-        ${item.extracted ? `<span class="confidence ${confClass}">${confLabel}</span>` : ''}
+        ${item.extracted ? `<span>${regBadgeHtml}<span class="confidence ${confClass}">${confLabel}</span></span>` : ''}
       </div>
       <div class="card-body">
         <div class="crop-wrap">${cropImg ? `<img src="${cropImg}">` : ''}</div>
@@ -791,11 +924,16 @@ function renderTable(){
 
   validItems.forEach(item=>{
     const isDup = dupIds.has(item.id);
+    const regInfo = checkRegistered(item.fields["사업자번호"]);
+    const regBadgeHtml = regInfo ? `
+      <span class="reg-badge">✓
+        <span class="tooltip">상호: ${escapeHtml(regInfo.상호)}<br>사업자번호: ${escapeHtml(regInfo.사업자번호)}<br>대표자: ${escapeHtml(regInfo.대표자성명 || '—')}</span>
+      </span>` : '';
     html += `<tr class="${isDup?'dup-row':''}" data-id="${item.id}">
       <td class="checkbox-cell"><input type="checkbox" class="row-check" checked></td>`;
     HEADERS.forEach(h=>{
       const v = item.fields[h] || '';
-      html += `<td title="${escapeHtml(v)}">${escapeHtml(v)}${(h==='상호' && isDup) ? '<span class="dup-tag">중복의심</span>':''}</td>`;
+      html += `<td title="${escapeHtml(v)}">${escapeHtml(v)}${(h==='상호' && isDup) ? '<span class="dup-tag">중복의심</span>':''}${(h==='사업자번호') ? regBadgeHtml : ''}</td>`;
     });
     html += `</tr>`;
   });

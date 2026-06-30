@@ -538,7 +538,7 @@ function checkRegistered(bizNo){
   return registeredMap.get(norm) || null;
 }
 
-loadRegisteredVendors();
+window.addEventListener('load', loadRegisteredVendors);
 
 
 dropzone.addEventListener('click', () => fileInput.click());

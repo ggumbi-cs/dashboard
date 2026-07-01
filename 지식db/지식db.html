@@ -909,8 +909,11 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   function formatDate(v){
     if(!v) return '';
     const d = new Date(v);
-    if(isNaN(d.getTime())) return v;
-    return d.toISOString().slice(0,10);
+    if(isNaN(d.getTime())) return String(v).slice(0,10);
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
   }
 </script>
 </body>

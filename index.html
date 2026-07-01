@@ -747,6 +747,7 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
 //  중앙 설정
 // ═══════════════════════════════════════════
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec';
+const KNOWLEDGE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyRPA9ceQu53kgvy8_ulb8BqRcoJw8ezsxlLSKijbw9d1n48JrDU8w4gDZdUaVdfgizpw/exec';
 
 // ── 탭 → 파일 매핑 ──
 const TAB_MAP = {
@@ -1249,7 +1250,7 @@ function _applyTab(tabName, role) {
     frame.onload = () => {
       try {
         const role = sessionStorage.getItem('userRole') || '';
-        frame.contentWindow.postMessage({ type:'SCRIPT_URL', url:SCRIPT_URL, userRole:role }, '*');
+        frame.contentWindow.postMessage({ type:'SCRIPT_URL', url:KNOWLEDGE_SCRIPT_URL, userRole:role }, '*');
         const t = localStorage.getItem('ggumbi-theme');
         frame.contentWindow.postMessage({ type:'THEME', mode: t || 'dark' }, '*');
       } catch(e) {}

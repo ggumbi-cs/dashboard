@@ -517,7 +517,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     document.getElementById('summaryMonth').value = currentYYYYMM();
     document.getElementById('nonwriterMonth').value = currentYYYYMM();
     document.getElementById('knowMonth').value = currentYYYYMM();
-    document.getElementById('awardMonth').value = currentYYYYMM();
+    // awardMonth는 기본값 없음 → 전체 조회
     // 단독 실행(테스트) 시에도 동작하도록, SCRIPT_URL이 이미 세션에 있으면 바로 로드
     if (_scriptUrl) { _bootLoaded = true; loadSummary(); loadSyncStatus(); }
   };
@@ -854,7 +854,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   }
 
   /* ⑥ 수상작 관리 */
-  /* ⑥ 수상작 관리 — 지식왕선정 속성이 있는 항목을 KnowledgeCache에서 직접 조회 */
+  /* ⑥ 수상작 관리 — KnowledgeCache 지식왕선정(K열) 직접 조회 */
   const AWARD_ICON = {
     '👑 이달의 지식왕 👑':'👑', '이달의 지식왕':'👑',
     '부문별 우수 지식상':'🏅', '우수 기여자':'⭐',
@@ -862,12 +862,9 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     '전사추천':'📣', '🚀 시작':'🚀', '시작':'🚀'
   };
   function loadAwards(){
-    const ym = document.getElementById('awardMonth').value || '';
-    callApi('getKnowledgeList', { filter: { yyyymm: ym } })
-      .then(list => {
-        const awards = list.filter(k => k.지식왕선정 && k.지식왕선정.trim() !== '');
-        renderAwards(awards);
-      })
+    const ym = document.getElementById('awardMonth').value || '';  // 비어있으면 전체 조회
+    callApi('getAwardList', { yyyymm: ym })
+      .then(renderAwards)
       .catch(err => showToast('실패: ' + err.message));
   }
   function renderAwards(list){

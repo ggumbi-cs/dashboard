@@ -89,6 +89,8 @@ body {
 <div id="app" style="display:none;"></div>
 
 <script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwn8m-r1UB1tYD3MSjq9D2Kt13R79a74w0wA2Lm60hTaavwL3IOgd4H2Rm258lv-xEW/exec';
+
 const REASON_COLORS = [
   '#1e40af','#3b82f6','#0f766e','#10b981',
   '#f59e0b','#fd8d3c','#e74c3c','#9b59b6',
@@ -105,6 +107,74 @@ window.addEventListener('message', function(e) {
 const params = new URLSearchParams(window.location.search);
 const TYPE   = params.get('type')   || 'monthly';
 const PERIOD = params.get('period') || '';
+
+let AGG_BANHUM = null;
+let LAST_SYNCED = null;
+
+async function loadData(forceSync) {
+  try {
+    if (forceSync) {
+      const sr = await fetch(`${GAS_URL}?action=sync`);
+      const sj = await sr.json();
+      if (sj && sj.error) throw new Error('동기화 오류: ' + sj.error);
+      LAST_SYNCED = sj.lastSynced ? new Date(sj.lastSynced).toLocaleString('ko-KR') : '-';
+    }
+
+    const period = PERIOD.replace(/월$/, '');
+    const res = await fetch(`${GAS_URL}?tab=banhum&type=${TYPE}&period=${encodeURIComponent(period)}`);
+    const json = await res.json();
+    if (json && json.error) throw new Error(json.error);
+    if (!forceSync) LAST_SYNCED = json.lastSynced ? new Date(json.lastSynced).toLocaleString('ko-KR') : '동기화 기록 없음';
+
+    AGG_BANHUM = json.agg;
+    if (!AGG_BANHUM) {
+      document.getElementById('loading').textContent = '해당 기간 집계 데이터가 없습니다. 동기화 후 다시 시도해 주세요.';
+      return;
+    }
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    renderAll();
+    injectControlBar();
+  } catch(e) {
+    document.getElementById('error-msg').style.display = 'block';
+    document.getElementById('error-msg').textContent = '⚠️ ' + e.message;
+    document.getElementById('loading').style.display = 'none';
+  }
+}
+
+function injectControlBar() {
+  const old = document.getElementById('control-bar');
+  if (old) old.remove();
+  const bar = document.createElement('div');
+  bar.id = 'control-bar';
+  bar.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;';
+  bar.innerHTML = `
+    <div style="font-size:10px;color:#888;">📅 마지막 노션 동기화: ${LAST_SYNCED||'-'} <span style="color:#bbb;">(매일 자정 자동 동기화)</span></div>
+    <div style="display:flex;gap:8px;">
+      <button id="btn-sync-notion" onclick="manualSync()" style="font-size:12px;font-weight:600;padding:7px 16px;background:#1e40af;color:#fff;border:none;border-radius:6px;cursor:pointer;">🔄 노션 수동 동기화</button>
+      <button id="btn-save-summary" onclick="saveSummaryToSheet()" style="font-size:12px;font-weight:600;padding:7px 16px;background:#1e40af;color:#fff;border:none;border-radius:6px;cursor:pointer;">☁ 이번 마감 데이터 AI에 전달</button>
+    </div>
+  `;
+  document.getElementById('app').insertAdjacentElement('beforebegin', bar);
+}
+
+let syncTimer = null;
+async function manualSync() {
+  const btn = document.getElementById('btn-sync-notion');
+  if (btn) btn.disabled = true;
+  let elapsed = 0;
+  syncTimer = setInterval(() => { elapsed++; if(btn) btn.textContent=`🔄 동기화 중... (${elapsed}초)`; }, 1000);
+  try {
+    await loadData(true);
+    showToast('✓ 노션 동기화 완료', '#1e40af');
+  } catch(e) {
+    showToast('⚠ 동기화 실패: '+e.message, '#991b1b');
+  } finally {
+    clearInterval(syncTimer);
+    if (btn) { btn.disabled=false; btn.textContent='🔄 노션 수동 동기화'; }
+  }
+}
 
 function parsePeriod() {
   if (TYPE === 'monthly') {
@@ -417,6 +487,91 @@ function renderBrand(brand, left, right, mgmt, color) {
     </div>`;
 }
 
+// ── AGG 기반 렌더 ─────────────────────────────────────────
+function renderAll() {
+  if (!AGG_BANHUM) return;
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="period-badge">📅 ${pInfo.label}</div>
+    <div class="brands-grid">
+      ${renderBrandAgg('꿈비', '#1e40af')}
+      ${renderBrandAgg('소브', '#0f766e')}
+    </div>`;
+}
+
+function renderBrandAgg(brand, color) {
+  const b = (AGG_BANHUM && AGG_BANHUM[brand]) || {};
+  const exchCnt = b.교환 || 0;
+  const retCnt  = b.반품 || 0;
+  const total   = exchCnt + retCnt;
+  const ga      = b.가전 || 0;
+  const gaOth   = b.가전외 || 0;
+  const gaTotal = ga + gaOth || 1;
+  const gaPct   = Math.round(ga/gaTotal*100);
+  const rate    = b.반품교환율 != null ? b.반품교환율.toFixed(2) + '%' : '-';
+
+  // 사유 파이
+  const reasonMap = {};
+  (b.사유 || []).forEach(d => { reasonMap[d.name] = d.val; });
+
+  // 추이 라인
+  const trend = (b.trend || []).map(t => [t.label, (t.교환||0)+(t.반품||0)]);
+  const trendTitle = pInfo.mode === 'monthly' ? '월별 추이' : '주별 추이';
+  const trendSub   = pInfo.mode === 'monthly' ? '반품/교환건 월별 추이' : '반품/교환건 주별 추이';
+
+  return `
+    <div class="brand-box">
+      <div class="section-title" style="background:${color};">${brand}</div>
+      <div class="inner">
+        <div class="leftCol">
+          <div class="kpi-card" style="border-top:3px solid #991b1b;">
+            <div class="kpi-label">반품/교환율</div>
+            <div class="kpi-value" style="color:#991b1b;">${rate}</div>
+            <div class="kpi-sub">${pInfo.label}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">반품/교환 총계</div>
+            <div class="kpi-value">${fmtN(total)}<span style="font-size:13px;font-weight:400;color:#64748b;"> 건</span></div>
+            <div class="kpi-sub">교환 ${fmtN(exchCnt)} · 반품 ${fmtN(retCnt)}</div>
+          </div>
+          <div class="gaug-card">
+            <div class="gaug-label">가전 / 가전외</div>
+            <div class="gaug-num">${fmtN(ga)} <span style="font-size:12px;font-weight:400;color:#64748b;">/ ${fmtN(gaOth)}</span></div>
+            <div class="bar-track">
+              <div style="width:${gaPct}%;background:${color};"></div>
+              <div style="width:${100-gaPct}%;background:#bbb;"></div>
+            </div>
+            <div class="bar-pct">
+              <span style="color:${color};">가전 ${gaPct}%</span>
+              <span style="color:#64748b;">가전외 ${100-gaPct}%</span>
+            </div>
+          </div>
+          <div class="kpi-card" style="flex:1;">
+            <div class="kpi-label">교환 / 반품</div>
+            ${buildDonut(exchCnt, retCnt, color)}
+          </div>
+        </div>
+        <div class="rightCol">
+          <div class="trendCard">
+            <div class="card-header">
+              <div class="card-title">${trendTitle}</div>
+              <div class="card-sub">${trendSub}</div>
+            </div>
+            ${buildLineChart(trend, color)}
+          </div>
+          <div class="pieCard">
+            <div class="card-header">
+              <div class="card-title">반품 사유 비율</div>
+            </div>
+            ${Object.keys(reasonMap).length
+              ? buildReasonPie(reasonMap, color)
+              : '<div class="no-data">데이터 없음</div>'}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
 // ── AI 전달 ───────────────────────────────────────────────
 function showToast(msg, bg) {
   const el = document.getElementById('summary-toast');
@@ -428,27 +583,15 @@ async function saveSummaryToSheet() {
   const btn = document.getElementById('btn-save-summary');
   btn.disabled = true; btn.textContent = '저장 중...';
   try {
-    const { mgmt, rate } = await loadData();
-    const { left, right } = filterRows({ mgmt, rate });
+    if (!AGG_BANHUM) throw new Error('집계 데이터 없음. 먼저 동기화해 주세요.');
     const brandData = {};
     ['꿈비','소브'].forEach(brand => {
-      const bRows = left.filter(r => r.brand === brand);
-      const exchCnt = bRows.filter(r=>r.type==='교환').reduce((s,r)=>s+r.cnt,0);
-      const retCnt  = bRows.filter(r=>r.type==='반품').reduce((s,r)=>s+r.cnt,0);
-      const reasonMap = {};
-      bRows.forEach(r => { reasonMap[r.reason] = (reasonMap[r.reason]||0)+r.cnt; });
-      const topReasons = Object.entries(reasonMap).sort((a,b)=>b[1]-a[1]).slice(0,5)
-        .reduce((obj,[k,v])=>{ obj[k]=v; return obj; }, {});
-      let rateMatchPeriod = pInfo.mode==='monthly'
-        ? String(pInfo.key)
-        : String(pInfo.key).slice(0,2)+'.'+String(pInfo.key).slice(2,4)+'월';
-      const rateRow = right.find(r=>r.brand===brand&&r.period===rateMatchPeriod);
+      const b = AGG_BANHUM[brand] || {};
       brandData[brand] = {
-        교환: exchCnt, 반품: retCnt, 합계: exchCnt+retCnt,
-        반품교환율: rateRow ? +(rateRow.rate*100).toFixed(2) : null,
-        사유TOP5: topReasons,
-        가전: bRows.filter(r=>r.item==='가전').reduce((s,r)=>s+r.cnt,0),
-        가전외: bRows.filter(r=>r.item==='가전외').reduce((s,r)=>s+r.cnt,0),
+        교환: b.교환||0, 반품: b.반품||0, 합계: (b.교환||0)+(b.반품||0),
+        반품교환율: b.반품교환율,
+        사유TOP5: Object.fromEntries((b.사유||[]).slice(0,5).map(d=>[d.name,d.val])),
+        가전: b.가전||0, 가전외: b.가전외||0,
       };
     });
     const resp = await fetch(SCRIPT_URL, {
@@ -469,34 +612,7 @@ async function saveSummaryToSheet() {
 }
 
 // ── 실행 ─────────────────────────────────────────────────
-async function main() {
-  let mgmt = [], rate = [];
-  try {
-    const data = await loadData();
-    mgmt = data.mgmt; rate = data.rate;
-  } catch(e) {
-    const el = document.getElementById('error-msg');
-    el.style.display = 'block';
-    el.textContent = '⚠️ ' + e.message;
-  }
-  document.getElementById('loading').style.display = 'none';
-  const { left, right } = filterRows({ mgmt, rate });
-  const app = document.getElementById('app');
-  app.innerHTML = `
-    <div class="period-badge">📅 ${pInfo.label}</div>
-    <div class="brands-grid">
-      ${renderBrand('꿈비', left, right, mgmt, '#1e40af')}
-      ${renderBrand('소브',  left, right, mgmt, '#0f766e')}
-    </div>`;
-  app.style.display = 'block';
-}
-
-main().then(() => {
-  const btn = document.createElement('div');
-  btn.style.cssText = 'display:flex;justify-content:flex-end;margin-bottom:10px;';
-  btn.innerHTML = `<button id="btn-save-summary" onclick="saveSummaryToSheet()" style="font-size:12px;font-weight:600;padding:7px 16px;background:#1e40af;color:#fff;border:none;border-radius:6px;cursor:pointer;">☁ 이번 마감 데이터 AI에 전달</button>`;
-  document.getElementById('app').insertAdjacentElement('beforebegin', btn);
-});
+loadData(false);
 </script>
 </body>
 </html>

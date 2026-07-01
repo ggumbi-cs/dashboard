@@ -161,6 +161,20 @@ button.btn.small{ padding:5px 12px; font-size:11px; border-radius:7px; }
 .modal .field input,.modal .field select,.modal .field textarea{ width:100%; }
 .modal .actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:18px; }
 
+/* ───────── 지식DB 상세 팝업 ───────── */
+.kd-modal{ background:var(--bg2); border:1px solid var(--border2); border-radius:18px; width:560px; max-width:94vw; max-height:88vh; display:flex; flex-direction:column; overflow:hidden; }
+.kd-modal-head{ padding:22px 26px 16px; border-bottom:1px solid var(--border); }
+.kd-modal-eyebrow{ font-size:9.5px; font-weight:700; color:var(--cyan); text-transform:uppercase; letter-spacing:2px; margin-bottom:8px; display:flex; align-items:center; gap:7px; }
+.kd-modal-eyebrow::before{ content:''; width:14px; height:1px; background:var(--cyan); }
+.kd-modal-title{ font-size:16px; font-weight:700; color:var(--text); line-height:1.4; }
+.kd-modal-body{ padding:20px 26px; overflow-y:auto; flex:1; }
+.kd-row{ display:flex; gap:12px; margin-bottom:13px; align-items:flex-start; }
+.kd-row-label{ font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; width:72px; flex-shrink:0; padding-top:2px; }
+.kd-row-val{ font-size:13px; color:var(--text2); flex:1; line-height:1.5; }
+.kd-row-val .chip{ display:inline-flex; align-items:center; background:var(--bg3); border:1px solid var(--border); border-radius:20px; padding:2px 9px; font-size:11px; margin:2px 3px 2px 0; color:var(--text2); }
+.kd-modal-foot{ padding:16px 26px; border-top:1px solid var(--border); display:flex; gap:8px; justify-content:flex-end; }
+table tr.clickable:hover td{ background:rgba(0,200,255,0.04); cursor:pointer; }
+
 .empty{ color:var(--text3); padding:38px; text-align:center; font-size:12.5px; }
 .toast{ position:fixed; bottom:24px; right:24px; z-index:998; background:var(--bg3); border:1px solid var(--border2); color:var(--text); font-size:12px; padding:11px 19px; border-radius:11px; opacity:0; transform:translateY(8px); transition:all .3s; pointer-events:none; }
 .toast.show{ opacity:1; transform:translateY(0); }
@@ -436,6 +450,21 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- 지식DB 상세 팝업 -->
+<div class="modal-bg" id="kdModalBg" onclick="if(event.target===this)closeModal('kdModalBg')">
+  <div class="kd-modal">
+    <div class="kd-modal-head">
+      <div class="kd-modal-eyebrow">Knowledge Detail</div>
+      <div class="kd-modal-title" id="kdTitle"></div>
+    </div>
+    <div class="kd-modal-body" id="kdBody"></div>
+    <div class="kd-modal-foot">
+      <button class="btn secondary" onclick="closeModal('kdModalBg')">닫기</button>
+      <button class="btn" id="kdNotionBtn" onclick="openNotionPage()">노션에서 열기 ↗</button>
+    </div>
+  </div>
+</div>
 
 <script>
   /* ---------------- 시계 ---------------- */
@@ -854,9 +883,50 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   function renderKnowledge(list){
     const body = document.getElementById('knowledgeBody');
     if(!list.length){ body.innerHTML = '<tr><td colspan="6" class="empty">조회된 데이터가 없습니다.</td></tr>'; return; }
-    body.innerHTML = list.map(k => `
-      <tr><td>${k.작성자}</td><td>${k.주제}</td><td>${formatDate(k.등록일)}</td><td>${coTag(k['회사+부서'])}</td><td>${k.태그}</td><td>${k.지식단계}</td></tr>
+    body.innerHTML = list.map((k,i) => `
+      <tr class="clickable" onclick="openKdDetail(${i})" data-idx="${i}">
+        <td>${k.작성자}</td><td>${k.주제}</td><td>${formatDate(k.등록일)}</td>
+        <td>${coTag(k['회사+부서'])}</td><td>${k.태그||''}</td><td>${k.지식단계||''}</td>
+      </tr>
     `).join('');
+    _knowledgeCache = list;
+  }
+
+  let _knowledgeCache = [];
+  let _currentPageId = '';
+
+  function openKdDetail(idx){
+    const k = _knowledgeCache[idx];
+    if(!k) return;
+    _currentPageId = k.NotionPageId || '';
+
+    document.getElementById('kdTitle').textContent = k.주제 || '(제목 없음)';
+
+    const chips = (val) => (val||'').split(',').filter(Boolean)
+      .map(v=>`<span class="chip">${v.trim()}</span>`).join('');
+
+    document.getElementById('kdBody').innerHTML = `
+      <div class="kd-row"><div class="kd-row-label">작성자</div><div class="kd-row-val">${k.작성자||'-'}</div></div>
+      <div class="kd-row"><div class="kd-row-label">회사·부서</div><div class="kd-row-val">${coTag(k['회사+부서'])}</div></div>
+      <div class="kd-row"><div class="kd-row-label">등록일</div><div class="kd-row-val">${formatDate(k.등록일)||'-'}</div></div>
+      <div class="kd-row"><div class="kd-row-label">지식단계</div><div class="kd-row-val">${k.지식단계 ? `<span class="chip">${k.지식단계}</span>` : '-'}</div></div>
+      <div class="kd-row"><div class="kd-row-label">지식툴</div><div class="kd-row-val">${chips(k.지식툴)||'-'}</div></div>
+      <div class="kd-row"><div class="kd-row-label">적용업무</div><div class="kd-row-val">${chips(k.적용업무)||'-'}</div></div>
+      <div class="kd-row"><div class="kd-row-label">태그</div><div class="kd-row-val">${chips(k.태그)||'-'}</div></div>
+      <div class="kd-row"><div class="kd-row-label">지식왕</div><div class="kd-row-val">${k.지식왕선정||'-'}</div></div>
+      <div class="kd-row"><div class="kd-row-label">생성자</div><div class="kd-row-val">${k.생성자||'-'}</div></div>
+    `;
+
+    const notionBtn = document.getElementById('kdNotionBtn');
+    notionBtn.style.display = _currentPageId ? '' : 'none';
+
+    openModal('kdModalBg');
+  }
+
+  function openNotionPage(){
+    if(!_currentPageId) return;
+    const id = _currentPageId.replace(/-/g,'');
+    window.open(`https://www.notion.so/${id}`, '_blank');
   }
 
   /* ⑥ 수상작 관리 */

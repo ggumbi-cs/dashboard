@@ -324,13 +324,11 @@ function renderSection(key, gridId, countId) {
             <div class="edu-name">${s.round}회차 &nbsp;·&nbsp; ${s.title}</div>
             <div class="edu-sub">${s.subtitle}</div>
           </div>
-          ${statusBadge(s.status)}
         </div>
-        <div class="edu-body" style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="edu-body" style="display:flex;align-items:center;gap:8px;">
+          ${statusBadge(s.status)}
           <span style="font-size:11px;color:var(--text3);">${s.date}</span>
-          ${canOpen
-            ? `<span style="font-size:11px;color:var(--cyan);font-weight:700;letter-spacing:0.3px;">열기 →</span>`
-            : `<span style="font-size:11px;color:var(--text3);">준비 중</span>`}
+          <span style="margin-left:auto;font-size:11px;${canOpen ? 'color:var(--cyan);font-weight:700;letter-spacing:0.3px;' : 'color:var(--text3);'}">${canOpen ? '열기 →' : '준비 중'}</span>
         </div>
       </div>
     `;

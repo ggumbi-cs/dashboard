@@ -121,25 +121,35 @@ async function loadData(forceSync) {
     }
 
     const period = PERIOD.replace(/월$/, '');
-    const res = await fetch(`${GAS_URL}?tab=banhum&type=${TYPE}&period=${encodeURIComponent(period)}`);
+    const fetchUrl = `${GAS_URL}?tab=banhum&type=${TYPE}&period=${encodeURIComponent(period)}`;
+    console.log('[반품현황] fetch URL:', fetchUrl);
+    console.log('[반품현황] TYPE:', TYPE, 'PERIOD:', PERIOD, 'period:', period);
+
+    const res = await fetch(fetchUrl);
+    console.log('[반품현황] res.ok:', res.ok, 'status:', res.status);
     const json = await res.json();
+    console.log('[반품현황] json:', JSON.stringify(json).slice(0,200));
+
     if (json && json.error) throw new Error(json.error);
     if (!forceSync) LAST_SYNCED = json.lastSynced ? new Date(json.lastSynced).toLocaleString('ko-KR') : '동기화 기록 없음';
 
+    document.getElementById('loading').style.display = 'none';
+
     AGG_BANHUM = json.agg;
     if (!AGG_BANHUM) {
-      document.getElementById('loading').textContent = '해당 기간 집계 데이터가 없습니다. 동기화 후 다시 시도해 주세요.';
+      document.getElementById('error-msg').style.display = 'block';
+      document.getElementById('error-msg').textContent = '⚠️ 해당 기간 집계 데이터가 없습니다. 노션 동기화 후 다시 시도해 주세요.';
       return;
     }
 
-    document.getElementById('loading').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     renderAll();
     injectControlBar();
   } catch(e) {
+    console.error('[반품현황] 에러:', e);
+    document.getElementById('loading').style.display = 'none';
     document.getElementById('error-msg').style.display = 'block';
     document.getElementById('error-msg').textContent = '⚠️ ' + e.message;
-    document.getElementById('loading').style.display = 'none';
   }
 }
 
@@ -226,15 +236,7 @@ async function fetchCSV(filename) {
 // ── 데이터 로드 ───────────────────────────────────────────
 // 클로드_반품관리.csv  : 주/월, 마감회차, 구분, 사유, 품목, 교환/반품, 건수
 // 클로드_반품율.csv    : 구분, 마감월, 항목, 월간 배송수량, 월간 교환/반품 수량, 반품/교환율
-async function loadData() {
-  const [mgmt, rate] = await Promise.all([
-    fetchCSV('클로드_반품관리.csv'),
-    fetchCSV('클로드_반품율.csv')
-  ]);
-  return { mgmt, rate };
-}
-
-// ── 필터링 ────────────────────────────────────────────────
+// ── 필터링 (구버전 — 참조용으로만 유지, 실제 데이터는 GAS에서 수신) ────
 function filterRows({ mgmt, rate }) {
   const periodType = pInfo.mode === 'monthly' ? '월간' : '주간';
 

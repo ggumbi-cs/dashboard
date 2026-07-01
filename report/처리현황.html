@@ -337,59 +337,6 @@ async function manualSync() {
   }
 }
 
-    // ── B. 클로드_가전외마감.csv 파싱 ──
-    // 컬럼: 1접수일자, 2완료일자, 3소요기간, 5상품명, 9유/무상, 10비용
-    const resGe = await fetch(BASE + '클로드_가전외마감.csv' + ts);
-    if (resGe.ok) {
-      const textGe = await resGe.text();
-      const rawGe  = parseCSV(textGe);
-      RAW_GE = [];
-      for (let i = 1; i < rawGe.length; i++) {
-        const r = rawGe[i];
-        if (!r || r.length < 6) continue;
-        const 완료일 = parseKoDate(r[2]);
-        if (!완료일) continue; // 완료일 없으면 미처리 → 제외
-        RAW_GE.push({
-          접수일: parseKoDate(r[1]),
-          완료일,
-          소요일: parseFloat(r[3]) || 0,
-          상품명: r[5]  ? String(r[5]).trim() : '',
-          유무상: r[9]  ? String(r[9]).trim() : '',
-          비용:   parseFloat(String(r[10]||'').replace(/,/g,'')) || 0
-        });
-      }
-    }
-
-    const label = document.getElementById('sync-label');
-    if (label) label.innerHTML = `📅 마지막 노션 동기화: ${LAST_SYNCED_LABEL || '-'} <span style="color:#bbb;">(매일 자정 자동 동기화)</span>`;
-
-    render();
-  } catch(e) {
-    document.getElementById('root').innerHTML +=
-      `<div class="no-data" style="color:red;">⚠ 데이터 로드 실패: ${e.message}</div>`;
-  }
-}
-
-// ── 노션 수동 동기화 ──
-let syncTimerInterval2 = null;
-async function manualSync() {
-  const btn = document.getElementById('btn-sync-notion');
-  if (btn) btn.disabled = true;
-  let elapsed = 0;
-  syncTimerInterval2 = setInterval(() => {
-    elapsed += 1;
-    if (btn) btn.textContent = `🔄 동기화 중... (${elapsed}초)`;
-  }, 1000);
-  try {
-    await loadXlsx(true);
-    showToast('✓ 노션 동기화 완료', '#0f766e');
-  } catch (e) {
-    showToast('⚠ 동기화 실패: ' + e.message, '#991b1b');
-  } finally {
-    clearInterval(syncTimerInterval2);
-    if (btn) { btn.disabled = false; btn.textContent = '🔄 노션 수동 동기화'; }
-  }
-}
 
 function fmtRound(v) {
   if (v == null) return null;

@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI 교육 5회차 · 업무 자동화 로드맵</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root{
+  --bg:#070d1a;--bg2:#0c1628;--bg3:#111e35;--bg4:#172240;
+  --border:rgba(80,140,255,0.12);--border2:rgba(80,140,255,0.25);
+  --blue:#4a8fff;--blue-dim:rgba(74,143,255,0.10);
+  --cyan:#00d4ff;--green:#00e5a0;--red:#ff5a5a;
+  --orange:#ffaa40;--gold:#f0c060;--purple:#a07aff;--teal:#00c8a0;
+  --text:#e4eeff;--text2:#8aaad0;--text3:#4a6a90;
+  --radius:14px;
+}
+body.light-mode{
+  --bg:#f0f4fa;--bg2:#ffffff;--bg3:#e8f0fb;--bg4:#dce8f7;
+  --border:rgba(26,78,180,0.12);--border2:rgba(26,78,180,0.28);
+  --blue:#1a5fd4;--blue-dim:rgba(26,95,212,0.08);
+  --cyan:#0090b8;--green:#007a50;--red:#c02020;--orange:#b06010;
+  --gold:#8a6000;--purple:#5030b0;--teal:#007a62;
+  --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6090;
+}
+body.light-mode .hero-glow{background:radial-gradient(ellipse,rgba(26,95,212,0.07) 0%,transparent 65%);}
+body.light-mode .hero-glow2{background:radial-gradient(ellipse,rgba(0,144,184,0.05) 0%,transparent 65%);}
+body.light-mode #summary::before{background:radial-gradient(ellipse at 50% 0%,rgba(26,95,212,0.06) 0%,transparent 60%);}
+body.light-mode .roadmap-connector{background:linear-gradient(90deg,var(--border2),var(--border2));}
+body.light-mode .house-step{background:var(--bg2);}
+
+html,body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo',sans-serif;font-size:14px;line-height:1.6;overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── 공통 ── */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-blue  {background:var(--blue-dim);color:var(--blue);border:1px solid var(--border2);}
+.badge-green {background:rgba(0,229,160,0.10);color:var(--green);border:1px solid rgba(0,229,160,0.25);}
+.badge-gold  {background:rgba(240,192,96,0.10);color:var(--gold);border:1px solid rgba(240,192,96,0.25);}
+.badge-purple{background:rgba(160,122,255,0.10);color:var(--purple);border:1px solid rgba(160,122,255,0.25);}
+.hl-blue{color:var(--blue);}
+.hl-gold{color:var(--gold);}
+.hl-green{color:var(--green);}
+.hl-cyan{color:var(--cyan);}
+
+.wrap{max-width:960px;margin:0 auto;padding:0 24px;}
+
+/* ════════════ 네비게이션 ════════════ */
+.nav-prev,.nav-next{
+  position:fixed;top:50%;transform:translateY(-50%);
+  width:44px;height:80px;display:flex;align-items:center;justify-content:center;
+  background:var(--bg2);border:1px solid var(--border2);cursor:pointer;z-index:999;
+  transition:background 0.15s,border-color 0.2s,opacity 0.2s,box-shadow 0.2s;
+  font-size:18px;color:var(--text2);user-select:none;
+}
+.nav-prev{left:0;border-radius:0 10px 10px 0;border-left:none;}
+.nav-next{right:0;border-radius:10px 0 0 10px;border-right:none;}
+.nav-prev:hover:not(.disabled),.nav-next:hover:not(.disabled){
+  background:var(--bg3);border-color:var(--blue);color:var(--blue);
+  box-shadow:0 4px 20px rgba(74,143,255,0.15);
+}
+.nav-prev.disabled,.nav-next.disabled{opacity:0.2;cursor:default;pointer-events:none;}
+.nav-prev .nav-tooltip,.nav-next .nav-tooltip{
+  position:absolute;background:var(--bg4);border:1px solid var(--border2);
+  border-radius:8px;padding:6px 10px;font-size:10px;color:var(--text2);
+  white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.15s;line-height:1.5;
+}
+.nav-prev .nav-tooltip{left:52px;top:50%;transform:translateY(-50%);}
+.nav-next .nav-tooltip{right:52px;top:50%;transform:translateY(-50%);}
+.nav-prev:hover .nav-tooltip,.nav-next:hover .nav-tooltip{opacity:1;}
+.nav-tooltip-round{display:block;font-weight:700;color:var(--text);}
+
+/* ════════════ 1. 히어로 ════════════ */
+#hero{
+  position:relative;
+  background:linear-gradient(160deg,var(--bg) 0%,var(--bg2) 55%,var(--bg) 100%);
+  border-bottom:1px solid var(--border);padding:48px 0 42px;overflow:hidden;
+}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:44px 44px;}
+.hero-glow{position:absolute;top:-80px;right:-40px;width:440px;height:320px;background:radial-gradient(ellipse,rgba(240,192,96,0.07) 0%,transparent 65%);pointer-events:none;}
+.hero-glow2{position:absolute;bottom:-60px;left:10%;width:340px;height:220px;background:radial-gradient(ellipse,rgba(74,143,255,0.05) 0%,transparent 65%);pointer-events:none;}
+.hero-inner{position:relative;z-index:1;}
+.hero-top{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.hero-eyebrow{font-size:11px;font-weight:700;color:var(--gold);letter-spacing:2.5px;text-transform:uppercase;}
+.hero-title{font-size:clamp(26px,4vw,38px);font-weight:800;line-height:1.15;margin-bottom:10px;letter-spacing:-0.5px;color:var(--text);}
+.hero-sub{font-size:15px;color:var(--text2);max-width:580px;line-height:1.7;margin-bottom:20px;}
+.hero-pills{display:flex;gap:12px;flex-wrap:wrap;}
+.hero-pill{display:flex;align-items:center;gap:7px;padding:7px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:30px;font-size:12px;color:var(--text2);}
+
+/* ════════════ 공통 섹션 ════════════ */
+.sec{padding:40px 0 0;}
+.sec-head{display:flex;align-items:center;gap:10px;margin-bottom:24px;}
+.sec-bar{width:3px;height:16px;border-radius:2px;flex-shrink:0;}
+.sec-title{font-size:15px;font-weight:700;color:var(--text);}
+.sec-sub{font-size:11px;color:var(--text3);margin-left:2px;}
+
+/* ════════════ 2. 전체 로드맵 ════════════ */
+.roadmap-wrap{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:32px 24px;overflow-x:auto;
+}
+.roadmap-track{
+  display:flex;align-items:center;justify-content:center;
+  min-width:700px;gap:0;
+}
+.roadmap-node{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  flex:1;min-width:100px;max-width:130px;text-align:center;position:relative;
+}
+.rm-icon-wrap{
+  width:64px;height:64px;border-radius:20px;
+  display:flex;align-items:center;justify-content:center;font-size:30px;
+  border:2px solid transparent;position:relative;z-index:1;
+  transition:transform 0.2s;
+}
+.roadmap-node:hover .rm-icon-wrap{transform:translateY(-3px);}
+.rm-1{background:rgba(160,122,255,0.15);border-color:rgba(160,122,255,0.4);}
+.rm-2{background:rgba(74,143,255,0.15);border-color:rgba(74,143,255,0.4);}
+.rm-3{background:rgba(240,192,96,0.15);border-color:rgba(240,192,96,0.4);}
+.rm-4{background:rgba(0,200,160,0.15);border-color:rgba(0,200,160,0.4);}
+.rm-5{background:rgba(0,229,160,0.15);border-color:rgba(0,229,160,0.4);}
+.rm-6{background:rgba(255,170,64,0.15);border-color:rgba(255,170,64,0.4);}
+.rm-label{font-size:12px;font-weight:700;color:var(--text);}
+.rm-sub{font-size:10px;color:var(--text3);line-height:1.4;}
+.rm-round{
+  font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;
+  background:var(--bg3);color:var(--text3);border:1px solid var(--border);
+}
+
+/* 연결선 */
+.roadmap-connector{
+  flex-shrink:0;height:2px;width:32px;
+  background:linear-gradient(90deg,var(--border2),var(--blue));
+  position:relative;margin-bottom:20px;
+}
+.roadmap-connector::after{
+  content:'';position:absolute;right:-6px;top:-4px;
+  width:0;height:0;
+  border-top:5px solid transparent;border-bottom:5px solid transparent;
+  border-left:7px solid var(--blue);
+}
+
+/* ════════════ 3. 퍼즐 카드 ════════════ */
+.puzzle-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.puzzle-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;transition:border-color 0.2s,transform 0.15s;
+  position:relative;
+}
+.puzzle-card:hover{border-color:var(--border2);transform:translateY(-3px);}
+/* 퍼즐 연결 표시 */
+.puzzle-card::after{
+  content:'';position:absolute;right:-13px;top:50%;transform:translateY(-50%);
+  width:0;height:0;z-index:2;
+}
+.puzzle-card:not(:last-child)::after{
+  border-top:8px solid transparent;border-bottom:8px solid transparent;
+  border-left:12px solid var(--border2);
+}
+.puzzle-head{padding:16px 16px 10px;text-align:center;}
+.puzzle-num{
+  width:28px;height:28px;border-radius:50%;margin:0 auto 8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;
+}
+.pn1{background:rgba(160,122,255,0.15);color:var(--purple);border:1px solid rgba(160,122,255,0.3);}
+.pn2{background:rgba(74,143,255,0.15);color:var(--blue);border:1px solid rgba(74,143,255,0.3);}
+.pn3{background:rgba(240,192,96,0.15);color:var(--gold);border:1px solid rgba(240,192,96,0.3);}
+.pn4{background:rgba(0,200,160,0.15);color:var(--teal);border:1px solid rgba(0,200,160,0.3);}
+.puzzle-icon{font-size:28px;margin-bottom:6px;}
+.puzzle-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.puzzle-tool{font-size:10px;color:var(--text3);}
+.puzzle-body{
+  padding:10px 14px 14px;border-top:1px solid var(--border);
+  font-size:11.5px;color:var(--text2);text-align:center;line-height:1.5;
+}
+
+/* ════════════ 4. 실제 흐름도 ════════════ */
+.flow-full{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:28px 24px;
+}
+.flow-full-inner{
+  display:flex;align-items:center;justify-content:center;
+  flex-wrap:wrap;gap:0;
+}
+.ff-node{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:0 8px;text-align:center;min-width:90px;
+}
+.ff-icon{
+  width:52px;height:52px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;font-size:24px;
+  border:1px solid var(--border2);
+}
+.ffi-user  {background:rgba(74,143,255,0.10);}
+.ffi-idea  {background:rgba(240,192,96,0.10);}
+.ffi-gpt   {background:rgba(160,122,255,0.12);}
+.ffi-claude{background:rgba(74,143,255,0.12);}
+.ffi-git   {background:rgba(240,192,96,0.12);}
+.ffi-gas   {background:rgba(0,200,160,0.12);}
+.ffi-dash  {background:rgba(0,229,160,0.12);}
+.ffi-team  {background:rgba(255,170,64,0.12);}
+.ff-label{font-size:11px;font-weight:700;color:var(--text);}
+.ff-sub{font-size:9.5px;color:var(--text3);}
+.ff-arr{font-size:16px;color:var(--border2);padding:0 2px;align-self:center;margin-bottom:12px;}
+
+/* ════════════ 5. 집 비유 ════════════ */
+.house-wrap{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
+}
+.house-step{
+  background:var(--bg2);border:1px solid var(--border);border-radius:12px;
+  padding:18px 16px;text-align:center;position:relative;
+  transition:border-color 0.2s,transform 0.15s;
+}
+.house-step:hover{border-color:var(--border2);transform:translateY(-2px);}
+.hs-icon{font-size:30px;margin-bottom:8px;}
+.hs-tech{font-size:11px;font-weight:700;margin-bottom:4px;}
+.hs-eq{font-size:10px;color:var(--text3);margin-bottom:4px;}
+.hs-house{font-size:12px;color:var(--text2);font-weight:600;}
+/* 마지막 칸 강조 */
+.house-step.hs-final{
+  background:linear-gradient(135deg,rgba(0,229,160,0.06),rgba(74,143,255,0.06));
+  border-color:rgba(0,229,160,0.3);grid-column:1/-1;
+}
+
+/* ════════════ 6. 핵심 메시지 ════════════ */
+.core-msg{
+  background:linear-gradient(135deg,var(--bg2),var(--bg4));
+  border:1px solid var(--border2);border-radius:var(--radius);
+  padding:36px 32px;text-align:center;position:relative;overflow:hidden;
+}
+.core-msg::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(240,192,96,0.06) 0%,transparent 60%);
+}
+.core-msg-inner{position:relative;z-index:1;}
+.core-quote{
+  font-size:clamp(16px,2.5vw,22px);font-weight:800;
+  line-height:1.5;color:var(--text);margin-bottom:20px;
+}
+.core-quote .hl{color:var(--gold);}
+.core-cards{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;}
+.core-card{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 16px;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:10px;font-size:12.5px;font-weight:600;color:var(--text2);
+}
+.core-card-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* ════════════ 7. 체크리스트 ════════════ */
+.checklist-wrap{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;
+}
+.checklist-head{
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  font-size:12px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:8px;
+}
+.checklist-body{padding:20px;}
+.checklist-items{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.cl-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;border-radius:10px;border:1px solid var(--border);
+  background:var(--bg3);
+}
+.cl-check{
+  width:22px;height:22px;border-radius:6px;
+  background:rgba(0,229,160,0.15);border:1px solid rgba(0,229,160,0.4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;flex-shrink:0;color:var(--green);
+}
+.cl-icon{font-size:18px;flex-shrink:0;}
+.cl-text{font-size:13px;font-weight:600;color:var(--text);}
+.cl-sub{font-size:10.5px;color:var(--text3);margin-top:1px;}
+.cl-result{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  padding:16px;background:linear-gradient(135deg,rgba(0,229,160,0.08),rgba(74,143,255,0.06));
+  border:1px solid rgba(0,229,160,0.25);border-radius:10px;
+}
+.cl-result-icon{font-size:28px;}
+.cl-result-text{font-size:15px;font-weight:800;color:var(--green);}
+
+/* ════════════ 요약 ════════════ */
+#summary{
+  margin:40px 0 0;padding:32px;
+  background:linear-gradient(135deg,var(--bg2) 0%,var(--bg4) 100%);
+  border:1px solid var(--border2);border-radius:var(--radius);
+  text-align:center;position:relative;overflow:hidden;
+}
+#summary::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(240,192,96,0.06) 0%,transparent 60%);}
+.summary-inner{position:relative;z-index:1;}
+.summary-quote{font-size:clamp(12px,1.8vw,15px);font-weight:700;line-height:1.7;color:var(--text);max-width:680px;margin:0 auto 16px;}
+.summary-author{font-size:11px;color:var(--text3);}
+
+.sec-bottom{height:48px;}
+
+@media(max-width:720px){
+  .puzzle-grid{grid-template-columns:1fr 1fr;}
+  .puzzle-card::after{display:none;}
+  .house-wrap{grid-template-columns:1fr 1fr;}
+  .house-step.hs-final{grid-column:1/-1;}
+  .roadmap-wrap{padding:20px 12px;}
+  #summary{padding:22px 16px;}
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+@keyframes popIn{from{opacity:0;transform:scale(0.92);}to{opacity:1;transform:scale(1);}}
+.anim{animation:fadeUp 0.45s ease both;}
+.anim-pop{animation:popIn 0.4s ease both;}
+.d1{animation-delay:0.05s;}.d2{animation-delay:0.10s;}.d3{animation-delay:0.15s;}
+.d4{animation-delay:0.20s;}.d5{animation-delay:0.25s;}.d6{animation-delay:0.30s;}
+</style>
+</head>
+<body>
+
+<!-- 네비게이션 -->
+<div class="nav-prev" id="navPrev" onclick="navGo('prev')">
+  ‹
+  <div class="nav-tooltip">
+    <span class="nav-tooltip-round">4회차</span>
+    Google Apps Script
+  </div>
+</div>
+<div class="nav-next disabled" id="navNext">
+  ›
+  <div class="nav-tooltip"></div>
+</div>
+
+<!-- ════════════ 1. 히어로 ════════════ -->
+<div id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="wrap hero-inner anim d1">
+    <div class="hero-top">
+      <div class="hero-eyebrow">AI 교육 5회차</div>
+      <div class="badge badge-gold">⏱ 3분 완성</div>
+      <div class="badge badge-green">🎯 종합</div>
+    </div>
+    <div class="hero-title">
+      업무 자동화 <span class="hl-gold">로드맵</span><br>
+      <span style="font-size:0.62em;font-weight:500;color:var(--text2);">지금까지 배운 내용을 하나의 그림으로</span>
+    </div>
+    <div class="hero-sub">
+      1~4회차에서 배운 내용들이 어떻게 연결되는지 한눈에 봅니다.<br>
+      생각 하나가 팀 전체가 쓰는 업무 시스템이 되기까지의 여정이에요.
+    </div>
+    <div class="hero-pills">
+      <div class="hero-pill"><span>🗺</span> 전체 흐름 한눈에</div>
+      <div class="hero-pill"><span>🔗</span> 1~4회차 연결</div>
+      <div class="hero-pill"><span>🏠</span> 집 짓기 비유</div>
+      <div class="hero-pill"><span>🎯</span> 업무 자동화 완성</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ════════════ 2. 전체 로드맵 ════════════ -->
+<div class="sec anim d2">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--gold);"></div>
+    <div class="sec-title">업무 자동화, 이 순서로 만들어져요</div>
+    <div class="sec-sub">· 전체 로드맵</div>
+  </div>
+  <div class="roadmap-wrap">
+    <div class="roadmap-track">
+
+      <div class="roadmap-node">
+        <div class="rm-round">시작</div>
+        <div class="rm-icon-wrap rm-1">💡</div>
+        <div class="rm-label">아이디어</div>
+        <div class="rm-sub">만들고 싶은 것을 생각</div>
+      </div>
+      <div class="roadmap-connector"></div>
+
+      <div class="roadmap-node">
+        <div class="rm-round">1회차</div>
+        <div class="rm-icon-wrap rm-2">🤖</div>
+        <div class="rm-label">AI와 대화</div>
+        <div class="rm-sub">ChatGPT로 정리</div>
+      </div>
+      <div class="roadmap-connector"></div>
+
+      <div class="roadmap-node">
+        <div class="rm-round">2회차</div>
+        <div class="rm-icon-wrap rm-3">📝</div>
+        <div class="rm-label">HTML 제작</div>
+        <div class="rm-sub">Claude로 화면 제작</div>
+      </div>
+      <div class="roadmap-connector"></div>
+
+      <div class="roadmap-node">
+        <div class="rm-round">3회차</div>
+        <div class="rm-icon-wrap rm-4">☁</div>
+        <div class="rm-label">GitHub 게시</div>
+        <div class="rm-sub">인터넷에 올리기</div>
+      </div>
+      <div class="roadmap-connector"></div>
+
+      <div class="roadmap-node">
+        <div class="rm-round">4회차</div>
+        <div class="rm-icon-wrap rm-5">⚙</div>
+        <div class="rm-label">GAS 연결</div>
+        <div class="rm-sub">자동화 시스템 구축</div>
+      </div>
+      <div class="roadmap-connector" style="background:linear-gradient(90deg,var(--green),var(--green));"></div>
+      <div class="roadmap-connector" style="background:linear-gradient(90deg,var(--green),var(--green));display:none;"></div>
+
+      <div class="roadmap-node">
+        <div class="rm-round" style="background:rgba(0,229,160,0.12);color:var(--green);border-color:rgba(0,229,160,0.3);">완성</div>
+        <div class="rm-icon-wrap rm-6" style="border-color:rgba(255,170,64,0.6);">🚀</div>
+        <div class="rm-label" style="color:var(--green);">업무 자동화!</div>
+        <div class="rm-sub">팀 전체가 사용</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 3. 퍼즐 카드 ════════════ -->
+<div class="sec anim d3">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--blue);"></div>
+    <div class="sec-title">1~4회차가 퍼즐처럼 맞춰져요</div>
+    <div class="sec-sub">· 각 회차의 역할</div>
+  </div>
+  <div class="puzzle-grid">
+
+    <div class="puzzle-card">
+      <div class="puzzle-head">
+        <div class="puzzle-num pn1">①</div>
+        <div class="puzzle-icon">🤖</div>
+        <div class="puzzle-title">AI 활용하기</div>
+        <div class="puzzle-tool" style="color:var(--purple);">ChatGPT · Claude</div>
+      </div>
+      <div class="puzzle-body">"생각을 정리하고<br>AI와 대화한다."</div>
+    </div>
+
+    <div class="puzzle-card">
+      <div class="puzzle-head">
+        <div class="puzzle-num pn2">②</div>
+        <div class="puzzle-icon">📝</div>
+        <div class="puzzle-title">바이브 코딩</div>
+        <div class="puzzle-tool" style="color:var(--blue);">Claude</div>
+      </div>
+      <div class="puzzle-body">"AI가 HTML을<br>만들어준다."</div>
+    </div>
+
+    <div class="puzzle-card">
+      <div class="puzzle-head">
+        <div class="puzzle-num pn3">③</div>
+        <div class="puzzle-icon">☁</div>
+        <div class="puzzle-title">GitHub 게시</div>
+        <div class="puzzle-tool" style="color:var(--gold);">GitHub Pages</div>
+      </div>
+      <div class="puzzle-body">"만든 HTML을<br>인터넷에 게시한다."</div>
+    </div>
+
+    <div class="puzzle-card">
+      <div class="puzzle-head">
+        <div class="puzzle-num pn4">④</div>
+        <div class="puzzle-icon">⚙</div>
+        <div class="puzzle-title">GAS 연결</div>
+        <div class="puzzle-tool" style="color:var(--teal);">Google Apps Script</div>
+      </div>
+      <div class="puzzle-body">"HTML을 업무<br>시스템으로 만든다."</div>
+    </div>
+
+  </div>
+
+  <!-- 퍼즐 완성 배너 -->
+  <div style="margin-top:12px;padding:14px 20px;background:linear-gradient(90deg,rgba(0,229,160,0.07),rgba(74,143,255,0.07));border:1px solid rgba(0,229,160,0.2);border-radius:10px;display:flex;align-items:center;gap:12px;">
+    <span style="font-size:22px;">🧩</span>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);">4개의 퍼즐이 맞춰지면 → 업무 자동화 완성</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">각 조각이 없으면 완성되지 않아요 — 하나하나가 모두 중요합니다</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 4. 실제 업무 흐름도 ════════════ -->
+<div class="sec anim d4">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--cyan);"></div>
+    <div class="sec-title">실제 우리 팀에서는 이렇게 만들었어요</div>
+    <div class="sec-sub">· CS 담당자 → 팀 대시보드까지</div>
+  </div>
+  <div class="flow-full">
+    <div class="flow-full-inner">
+
+      <div class="ff-node">
+        <div class="ff-icon ffi-user">👤</div>
+        <div class="ff-label">CS 담당자</div>
+        <div class="ff-sub">아이디어 발생</div>
+      </div>
+      <div class="ff-arr">→</div>
+
+      <div class="ff-node">
+        <div class="ff-icon ffi-idea">💬</div>
+        <div class="ff-label">"이런 거 있으면<br>좋겠다"</div>
+        <div class="ff-sub">업무 흐름 설명</div>
+      </div>
+      <div class="ff-arr">→</div>
+
+      <div class="ff-node">
+        <div class="ff-icon ffi-gpt">🤖</div>
+        <div class="ff-label">ChatGPT</div>
+        <div class="ff-sub">프롬프트 정리</div>
+      </div>
+      <div class="ff-arr">→</div>
+
+      <div class="ff-node">
+        <div class="ff-icon ffi-claude">🤖</div>
+        <div class="ff-label">Claude</div>
+        <div class="ff-sub">HTML 제작</div>
+      </div>
+      <div class="ff-arr">→</div>
+
+      <div class="ff-node">
+        <div class="ff-icon ffi-git">☁</div>
+        <div class="ff-label">GitHub</div>
+        <div class="ff-sub">인터넷 게시</div>
+      </div>
+      <div class="ff-arr">→</div>
+
+      <div class="ff-node">
+        <div class="ff-icon ffi-gas">⚙</div>
+        <div class="ff-label">GAS</div>
+        <div class="ff-sub">데이터 연결</div>
+      </div>
+      <div class="ff-arr">→</div>
+
+      <div class="ff-node">
+        <div class="ff-icon ffi-dash" style="border-color:rgba(0,229,160,0.4);">📊</div>
+        <div class="ff-label" style="color:var(--green);">팀 대시보드</div>
+        <div class="ff-sub">업무 자동화 완성</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 5. 집 짓기 비유 ════════════ -->
+<div class="sec anim d5">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--gold);"></div>
+    <div class="sec-title">집 짓기로 이해해요</div>
+    <div class="sec-sub">· 어르신도 이해하는 비유</div>
+  </div>
+  <div class="house-wrap">
+
+    <div class="house-step">
+      <div class="hs-icon">💡</div>
+      <div class="hs-tech" style="color:var(--purple);">아이디어</div>
+      <div class="hs-eq">= 어떤 집을 만들지 생각</div>
+      <div class="hs-house" style="color:var(--text3);">종이에 그림 그리기</div>
+    </div>
+
+    <div class="house-step">
+      <div class="hs-icon">🤖</div>
+      <div class="hs-tech" style="color:var(--blue);">AI (ChatGPT · Claude)</div>
+      <div class="hs-eq">= 설계사</div>
+      <div class="hs-house" style="color:var(--text3);">설계도 그려주는 사람</div>
+    </div>
+
+    <div class="house-step">
+      <div class="hs-icon">📝</div>
+      <div class="hs-tech" style="color:var(--cyan);">HTML</div>
+      <div class="hs-eq">= 집 짓기</div>
+      <div class="hs-house" style="color:var(--text3);">벽, 창문, 문 만들기</div>
+    </div>
+
+    <div class="house-step">
+      <div class="hs-icon">☁</div>
+      <div class="hs-tech" style="color:var(--gold);">GitHub</div>
+      <div class="hs-eq">= 사람들이 찾아올 수 있는 주소</div>
+      <div class="hs-house" style="color:var(--text3);">도로명 주소 등록</div>
+    </div>
+
+    <div class="house-step">
+      <div class="hs-icon">⚙</div>
+      <div class="hs-tech" style="color:var(--teal);">GAS</div>
+      <div class="hs-eq">= 전기 · 수도 · 인터넷 연결</div>
+      <div class="hs-house" style="color:var(--text3);">집이 제대로 작동하게</div>
+    </div>
+
+    <div class="house-step hs-final">
+      <div class="hs-icon">🏠</div>
+      <div class="hs-tech" style="color:var(--green);font-size:15px;">완성된 집</div>
+      <div class="hs-eq">= 업무 자동화 시스템</div>
+      <div class="hs-house" style="color:var(--text2);">팀 전체가 편리하게 사용하는 우리 팀 대시보드</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════ 6. 핵심 메시지 ════════════ -->
+<div class="sec anim d6">
+  <div class="core-msg">
+    <div class="core-msg-inner">
+      <div style="font-size:24px;margin-bottom:16px;">🎯</div>
+      <div class="core-quote">
+        어려운 것은 <span class="hl">코딩이 아니라</span><br>
+        <span class="hl">무엇을 만들지 생각하는 것</span>이다.
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;">이 세 가지만 AI에게 설명하면 나머지는 AI가 도와줄 수 있어요</div>
+      <div class="core-cards">
+        <div class="core-card">
+          <div class="core-card-dot" style="background:var(--purple);"></div>
+          💭 생각 · 아이디어
+        </div>
+        <div class="core-card">
+          <div class="core-card-dot" style="background:var(--blue);"></div>
+          🔄 업무 흐름
+        </div>
+        <div class="core-card">
+          <div class="core-card-dot" style="background:var(--teal);"></div>
+          📋 반복되는 일
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 7. 체크리스트 ════════════ -->
+<div class="sec anim d6">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--green);"></div>
+    <div class="sec-title">지금까지 이걸 배웠어요</div>
+    <div class="sec-sub">· 1~4회차 성취 체크</div>
+  </div>
+  <div class="checklist-wrap">
+    <div class="checklist-head">
+      <span>🏆</span> 우리 팀이 완성한 것들
+    </div>
+    <div class="checklist-body">
+      <div class="checklist-items">
+        <div class="cl-item">
+          <div class="cl-check">✓</div>
+          <div class="cl-icon">🤖</div>
+          <div>
+            <div class="cl-text">AI와 대화하기</div>
+            <div class="cl-sub">ChatGPT로 생각 정리, Claude에게 제작 요청</div>
+          </div>
+          <div class="badge badge-purple" style="margin-left:auto;font-size:9px;">1회차</div>
+        </div>
+        <div class="cl-item">
+          <div class="cl-check">✓</div>
+          <div class="cl-icon">📝</div>
+          <div>
+            <div class="cl-text">HTML 만들기</div>
+            <div class="cl-sub">바이브 코딩으로 업무툴 제작</div>
+          </div>
+          <div class="badge badge-blue" style="margin-left:auto;font-size:9px;">2회차</div>
+        </div>
+        <div class="cl-item">
+          <div class="cl-check">✓</div>
+          <div class="cl-icon">☁</div>
+          <div>
+            <div class="cl-text">GitHub 게시하기</div>
+            <div class="cl-sub">인터넷 어디서나 접속 가능한 웹페이지로</div>
+          </div>
+          <div class="badge badge-gold" style="margin-left:auto;font-size:9px;">3회차</div>
+        </div>
+        <div class="cl-item">
+          <div class="cl-check">✓</div>
+          <div class="cl-icon">⚙</div>
+          <div>
+            <div class="cl-text">GAS 연결하기</div>
+            <div class="cl-sub">데이터 저장·자동화·서비스 연결</div>
+          </div>
+          <div class="badge badge-green" style="margin-left:auto;font-size:9px;">4회차</div>
+        </div>
+      </div>
+      <div class="cl-result">
+        <div class="cl-result-icon">🎯</div>
+        <div class="cl-result-text">업무 자동화 시스템 완성!</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 요약 ════════════ -->
+<div id="summary" class="anim" style="animation-delay:0.35s;">
+  <div class="summary-inner">
+    <div style="font-size:28px;margin-bottom:14px;">🏆</div>
+    <div class="summary-quote">
+      좋은 업무 자동화는 <span class="hl-gold">뛰어난 개발 실력</span>이 아니라,<br>
+      <span class="hl-green">좋은 아이디어</span>와 <span class="hl-cyan">AI를 활용하는 능력</span>에서 시작된다.
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+      <div class="badge badge-purple">💡 아이디어</div>
+      <div style="color:var(--text3);">→</div>
+      <div class="badge badge-blue">🤖 AI 대화</div>
+      <div style="color:var(--text3);">→</div>
+      <div class="badge badge-gold">📝 HTML</div>
+      <div style="color:var(--text3);">→</div>
+      <div class="badge badge-green">☁ GitHub</div>
+      <div style="color:var(--text3);">→</div>
+      <div class="badge" style="background:rgba(0,200,160,0.10);color:var(--teal);border:1px solid rgba(0,200,160,0.25);">⚙ GAS</div>
+      <div style="color:var(--text3);">→</div>
+      <div class="badge badge-green">🚀 완성!</div>
+    </div>
+    <div class="summary-author">AI 교육 5회차 · 엄마감동팀</div>
+  </div>
+</div>
+
+<div class="sec-bottom"></div>
+</div>
+
+<script>
+const NAV_CONFIG = {
+  prev: 'training/ai교육/ai교육_4회차.html',
+  next: null
+};
+function navGo(dir) {
+  const path = NAV_CONFIG[dir];
+  if (!path) return;
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'TRAINING_NAV', path }, '*');
+      return;
+    }
+  } catch(e) {}
+  window.location.href = path;
+}
+
+window.addEventListener('message', e => {
+  if (!e.data) return;
+  if (e.data.type === 'THEME') {
+    if (e.data.mode === 'light') document.body.classList.add('light-mode');
+    else document.body.classList.remove('light-mode');
+  }
+});
+</script>
+</body>
+</html>

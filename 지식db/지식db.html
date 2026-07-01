@@ -361,7 +361,6 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       <div class="toolbar">
         <input type="month" id="awardMonth">
         <button class="btn secondary" onclick="loadAwards()">조회</button>
-        <button class="btn gold" onclick="openAwardModal()">+ 수상작 등록</button>
       </div>
       <div class="award-grid" id="awardGrid"></div>
     </div>
@@ -419,24 +418,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   </div>
 </div>
 
-<!-- 수상작 등록 모달 -->
-<div class="modal-bg" id="awardModalBg">
-  <div class="modal">
-    <h3>수상작 등록</h3>
-    <div class="field"><label>월 (YYYY-MM)</label><input type="month" id="awardMonthInput"></div>
-    <div class="field"><label>부문</label>
-      <select id="awardCategory"><option>지식왕</option><option>지식 적용왕</option><option>지식 제안왕</option><option>지식 참여왕</option></select>
-    </div>
-    <div class="field"><label>수상자</label><input type="text" id="awardWinner"></div>
-    <div class="field"><label>주제</label><input type="text" id="awardTopic"></div>
-    <div class="field"><label>선정사유</label><textarea id="awardReason" rows="2"></textarea></div>
-    <div class="field"><label>연결할 노션 페이지 ID (선택)</label><input type="text" id="awardPageId" placeholder="노션 반영 시 필요"></div>
-    <div class="actions">
-      <button class="btn secondary" onclick="closeModal('awardModalBg')">취소</button>
-      <button class="btn gold" onclick="saveAward()">저장</button>
-    </div>
-  </div>
-</div>
+
 
 <div class="toast" id="toast"></div>
 
@@ -623,10 +605,13 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     const wrap = document.getElementById('unmatchedList');
     if(!list.length){ wrap.innerHTML = '<div class="empty">미매칭 건이 없습니다.</div>'; return; }
     const options = employeeCache.map(e=>`<option value="${e.직원ID}">${e.이름} (${e.회사})</option>`).join('');
-    wrap.innerHTML = list.map(u => `
+    wrap.innerHTML = list.map(u => {
+      const pageId = (u.NotionPageId||'').replace(/-/g,'');
+      const notionUrl = pageId ? `https://app.notion.com/p/${pageId}` : '';
+      return `
       <div class="list-row">
         <div class="list-dot" style="background:var(--gold);"></div>
-        <div class="list-main">
+        <div class="list-main" style="${notionUrl?'cursor:pointer;':''}" ${notionUrl?`onclick="window.open('${notionUrl}','_blank')"`:''}> 
           <div class="list-name">${u.주제}</div>
           <div class="list-meta"><span>등록 ${formatDate(u.등록일)}</span><span>생성자 ${u['생성자(노션계정)']}</span><span>${u['회사+부서(원문)']}</span></div>
         </div>
@@ -634,8 +619,8 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
           <select id="sel_${u.NotionPageId}"><option value="">선택</option>${options}</select>
           <button class="btn small" onclick="resolveUnmatched('${u.NotionPageId}')">지정</button>
         </div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   }
   function resolveUnmatched(pageId){
     const sel = document.getElementById('sel_' + pageId);
@@ -869,56 +854,43 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   }
 
   /* ⑥ 수상작 관리 */
+  /* ⑥ 수상작 관리 — 지식왕선정 속성이 있는 항목을 KnowledgeCache에서 직접 조회 */
+  const AWARD_ICON = {
+    '👑 이달의 지식왕 👑':'👑', '이달의 지식왕':'👑',
+    '부문별 우수 지식상':'🏅', '우수 기여자':'⭐',
+    '😊 연간지식왕 😊':'😊', '연간지식왕':'😊',
+    '전사추천':'📣', '🚀 시작':'🚀', '시작':'🚀'
+  };
   function loadAwards(){
-    const ym = document.getElementById('awardMonth').value || currentYYYYMM();
-    callApi('getAwards', { yyyymm: ym }).then(renderAwards).catch(err => showToast('실패: ' + err.message));
+    const ym = document.getElementById('awardMonth').value || '';
+    callApi('getKnowledgeList', { filter: { yyyymm: ym } })
+      .then(list => {
+        const awards = list.filter(k => k.지식왕선정 && k.지식왕선정.trim() !== '');
+        renderAwards(awards);
+      })
+      .catch(err => showToast('실패: ' + err.message));
   }
-  const AWARD_ICON = { '지식왕':'🏆', '지식 적용왕':'⚙️', '지식 제안왕':'💡', '지식 참여왕':'🙌' };
   function renderAwards(list){
     document.getElementById('awardSub').textContent = list.length + '건';
     const grid = document.getElementById('awardGrid');
-    if(!list.length){ grid.innerHTML = '<div class="empty">등록된 수상작이 없습니다.</div>'; return; }
-    grid.innerHTML = list.map(a => {
-      const isGold = a.부문 === '지식왕';
-      const done = a.노션반영여부 === 'Y';
+    if(!list.length){ grid.innerHTML = '<div class="empty">지식왕 선정 항목이 없습니다.</div>'; return; }
+    grid.innerHTML = list.map(k => {
+      const pageId = (k.NotionPageId||'').replace(/-/g,'');
+      const notionUrl = pageId ? `https://app.notion.com/p/${pageId}` : '';
+      const icon = AWARD_ICON[k.지식왕선정] || '🎖️';
+      const isTop = k.지식왕선정.includes('지식왕');
       return `
-      <div class="award-card ${isGold ? 'gold' : ''}">
-        <div class="award-icon">${AWARD_ICON[a.부문] || '🎖️'}</div>
-        <div class="award-cat">${a.부문}</div>
-        <div class="award-name">${a.수상자}</div>
-        <div class="award-topic">${a.주제 || ''}${a.선정사유 ? ' — ' + a.선정사유 : ''}</div>
+      <div class="award-card ${isTop?'gold':''}" style="${notionUrl?'cursor:pointer;':''}" ${notionUrl?`onclick="window.open('${notionUrl}','_blank')"`:''}>
+        <div class="award-icon">${icon}</div>
+        <div class="award-cat">${k.지식왕선정}</div>
+        <div class="award-name">${k.작성자||'-'}</div>
+        <div class="award-topic">${k.주제||''}</div>
         <div class="award-foot">
-          <span class="award-status ${done ? 'done' : 'pending'}">${done ? '✅ 노션 반영됨' : '노션 미반영'}</span>
-          ${!done ? `<button class="btn small gold" onclick="pushAward('${a.수상ID}')">반영하기</button>` : ''}
+          <span style="font-size:11px; color:var(--text3);">${coTag(k['회사+부서'])} · ${formatDate(k.등록일)}</span>
+          ${notionUrl ? `<span style="font-size:10px; color:var(--cyan);">열기 ↗</span>` : ''}
         </div>
       </div>`;
     }).join('');
-  }
-  function openAwardModal(){
-    document.getElementById('awardMonthInput').value = document.getElementById('awardMonth').value || currentYYYYMM();
-    document.getElementById('awardWinner').value = '';
-    document.getElementById('awardTopic').value = '';
-    document.getElementById('awardReason').value = '';
-    document.getElementById('awardPageId').value = '';
-    openModal('awardModalBg');
-  }
-  function saveAward(){
-    const obj = {
-      월: document.getElementById('awardMonthInput').value,
-      부문: document.getElementById('awardCategory').value,
-      수상자: document.getElementById('awardWinner').value,
-      주제: document.getElementById('awardTopic').value,
-      선정사유: document.getElementById('awardReason').value,
-      NotionPageId: document.getElementById('awardPageId').value
-    };
-    callApi('upsertAward', { award: obj })
-      .then(()=>{ showToast('수상작이 등록되었습니다.'); closeModal('awardModalBg'); loadAwards(); })
-      .catch(err => showToast('실패: ' + err.message));
-  }
-  function pushAward(awardId){
-    callApi('pushAwardToNotion', { awardId })
-      .then(()=>{ showToast('노션에 반영되었습니다.'); loadAwards(); })
-      .catch(err => showToast('실패: ' + err.message));
   }
 
   /* ⑦ 동기화 설정 */

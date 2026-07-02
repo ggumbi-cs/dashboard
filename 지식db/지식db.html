@@ -321,6 +321,12 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
 
       <div class="sec-title">계열사별 작성률<span class="sec-sub" id="coCount"></span></div>
       <div class="co-grid" id="coGrid"></div>
+
+      <!-- [임시 디버그] 대상자 필터링 단계별 진단 패널 -->
+      <div class="sec-title" style="margin-top:24px; cursor:pointer;" onclick="const d=document.getElementById('summaryDebugBox'); d.style.display = d.style.display==='none' ? 'block' : 'none';">
+        🔧 디버그 정보 (임시)<span class="sec-sub">클릭해서 펼치기/접기</span>
+      </div>
+      <pre id="summaryDebugBox" style="display:none; background:var(--bg2); border:1px solid var(--border2); border-radius:10px; padding:16px; font-size:11.5px; line-height:1.6; white-space:pre-wrap; word-break:break-all; color:var(--text2);"></pre>
     </div>
 
     <!-- ② 명단 제출 (구: 직원 관리) -->
@@ -713,6 +719,13 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     `;
 
     document.getElementById('coCount').textContent = data.companyStats.length + '개 계열사';
+
+    // [임시 디버그] 원인 파악용 — 콘솔 + 화면 패널 둘 다 출력
+    if (data._debug) {
+      console.log('[요약 대시보드 디버그]', data._debug);
+      document.getElementById('summaryDebugBox').textContent = JSON.stringify(data._debug, null, 2);
+    }
+
     const grid = document.getElementById('coGrid');
     if(!data.companyStats.length){ grid.innerHTML = '<div class="empty">데이터가 없습니다.</div>'; return; }
     grid.innerHTML = data.companyStats.map(c => {

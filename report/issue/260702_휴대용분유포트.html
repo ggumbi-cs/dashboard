@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>휴대용 분유포트 불량 현황 — 26.03 이후 최신버전</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F5F6F8;--surface:#FFFFFF;--border:#E2E5EA;--border-md:#C8CDD6;
+  --t1:#0D1117;--t2:#4A5568;--t3:#8A93A2;
+  --blue:#2563EB;--blue-lt:#EFF4FF;--blue-md:#BFCEF8;
+  --red:#DC2626;--red-lt:#FEF2F2;
+  --amber:#D97706;--amber-lt:#FFFBEB;
+  --green:#059669;--green-lt:#ECFDF5;
+  --purple:#7C3AED;--slate:#64748B;
+}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--t1);font-size:14px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.page{max-width:960px;margin:0 auto;padding:44px 28px 80px}
+
+.rpt-header{border-bottom:2px solid var(--t1);padding-bottom:18px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px}
+.hd-eyebrow{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+.hd-title{font-size:21px;font-weight:700;letter-spacing:-.02em;line-height:1.25}
+.hd-sub{font-size:12px;color:var(--t2);margin-top:5px}
+.hd-meta{text-align:right;font-size:11px;color:var(--t2);line-height:1.9;flex-shrink:0}
+.hd-meta strong{display:block;font-size:13px;color:var(--t1);font-weight:600}
+
+.section{margin-bottom:36px}
+.sec-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.kpi-banner{display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr 1px 1fr;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 0;margin-bottom:10px}
+.kpi-div{background:var(--border);height:40px;width:1px}
+.kpi-item{text-align:center;padding:0 16px}
+.kpi-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--t3);margin-bottom:5px}
+.kpi-val{font-size:27px;font-weight:700;letter-spacing:-.04em;color:var(--t1);line-height:1}
+.kpi-val.red{color:var(--red)}.kpi-val.blue{color:var(--blue)}
+.kpi-sub{font-size:11px;color:var(--t2);margin-top:3px}
+
+.sum-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.sum-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+.sum-card .sl{font-size:10px;color:var(--t3);font-weight:600;letter-spacing:.04em;margin-bottom:5px}
+.sum-card .sv{font-size:22px;font-weight:700;letter-spacing:-.03em;line-height:1}
+.sum-card .ss{font-size:11px;color:var(--t2);margin-top:3px}
+.sum-card.accent{background:var(--blue);border-color:var(--blue)}
+.sum-card.accent .sl,.sum-card.accent .sv,.sum-card.accent .ss{color:#fff}
+
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px}
+.cc-title{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t2);margin-bottom:18px}
+
+.donut-block{display:flex;flex-direction:column;align-items:center;gap:18px}
+.donut-wrap{position:relative;width:180px;height:180px;flex-shrink:0}
+.donut-svg{width:100%;height:100%;overflow:visible}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.dc-num{font-size:20px;font-weight:700;letter-spacing:-.04em;color:var(--t1);line-height:1}
+.dc-label{font-size:10px;color:var(--t3);margin-top:2px}
+
+.legend-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 14px;width:100%}
+.lg-item{display:flex;align-items:center;gap:6px;min-width:0}
+.lg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.lg-text{display:flex;flex-direction:column;min-width:0;flex:1}
+.lg-name{font-size:11px;font-weight:500;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lg-row2{display:flex;align-items:center;gap:5px;margin-top:2px}
+.lg-pct{font-size:10px;font-weight:600;color:var(--t2);white-space:nowrap;min-width:30px}
+.lg-bar-bg{flex:1;background:var(--border);border-radius:2px;height:3px;overflow:hidden}
+.lg-bar-fill{height:100%;border-radius:2px}
+
+.bar-chart{display:flex;flex-direction:column;gap:7px}
+.bar-row{display:grid;grid-template-columns:90px 1fr 38px;align-items:center;gap:10px}
+.bar-label{color:var(--t1);font-weight:500;text-align:right;white-space:nowrap;font-size:11px}
+.bar-track{background:var(--bg);border-radius:3px;height:6px;overflow:hidden;border:1px solid var(--border)}
+.bar-fill{height:100%;border-radius:3px}
+.bar-val{font-size:11px;color:var(--t2);font-weight:600}
+
+.group-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.group-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}
+.group-card.g1{border-top:3px solid var(--blue)}
+.group-card.g2{border-top:3px solid var(--red)}
+.group-card.g3{border-top:3px solid var(--slate)}
+.group-card.g4{border-top:3px solid var(--amber)}
+.gc-label{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin-bottom:6px}
+.gc-name{font-size:12px;font-weight:700;color:var(--t1);margin-bottom:8px;line-height:1.4}
+.gc-val{font-size:24px;font-weight:700;letter-spacing:-.03em;line-height:1;color:var(--t1)}
+.gc-pct{font-size:11px;color:var(--t2);margin-top:3px}
+.gc-items{font-size:10px;color:var(--t3);margin-top:6px;padding-top:6px;border-top:1px solid var(--border);line-height:1.6}
+
+.month-table{width:100%;border-collapse:collapse;font-size:13px}
+.month-table thead tr{background:var(--bg)}
+.month-table th{text-align:left;font-weight:600;font-size:10px;color:var(--t3);padding:8px 12px;border-bottom:1px solid var(--border);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.month-table th.r,.month-table td.r{text-align:right}
+.month-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.month-table tr:last-child td{border-bottom:none}
+.month-table .total-row td{font-weight:700;border-top:2px solid var(--border);border-bottom:none;background:var(--bg)}
+.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;white-space:nowrap}
+.tag-b{background:var(--blue-lt);color:var(--blue)}
+.tag-r{background:var(--red-lt);color:var(--red)}
+.tag-g{background:var(--green-lt);color:var(--green)}
+.tag-nd{background:var(--bg);color:var(--t3);border:1px solid var(--border)}
+
+.ai-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.ai-header{background:var(--t1);color:#fff;padding:11px 18px;display:flex;align-items:center;gap:8px}
+.ai-header-icon{font-size:14px}
+.ai-header-title{font-size:11px;font-weight:700;letter-spacing:.05em}
+.ai-body{padding:18px 20px;display:flex;flex-direction:column;gap:0}
+.ai-block{padding:4px 0 14px}
+.ai-block-title{font-size:13px;font-weight:700;color:var(--blue);margin-bottom:7px;line-height:1.4}
+.ai-block-desc{font-size:13px;color:var(--t2);line-height:1.75}
+.ai-block-desc strong{color:var(--t1);font-weight:600}
+.ai-divider{height:1px;background:var(--border);margin:6px 0 16px}
+
+.note-box{background:var(--blue-lt);border:1px solid var(--blue-md);border-radius:8px;padding:13px 17px;font-size:12.5px;color:#1e3a8a;line-height:1.75}
+.note-box strong{font-weight:600}
+
+.rpt-footer{margin-top:52px;padding-top:14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:11px;color:var(--t3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="rpt-header">
+    <div>
+      <div class="hd-eyebrow">Issue Report · 품질관리</div>
+      <div class="hd-title">휴대용 분유포트 불량 현황</div>
+      <div class="hd-sub">2026년 3월 이후 제조 최신버전 기준 · 데이터 기준일 2026.07.02</div>
+    </div>
+    <div class="hd-meta">
+      <strong>2026년 7월 2일</strong>
+      작성 : 엄마감동팀<br>
+      출고 기준 : 26.03.01 ~ 26.07.02
+    </div>
+  </header>
+
+  <!-- 핵심 수치 -->
+  <section class="section">
+    <div class="sec-title">핵심 수치</div>
+    <div class="kpi-banner">
+      <div class="kpi-item">
+        <div class="kpi-label">총 불량 접수</div>
+        <div class="kpi-val blue">390</div>
+        <div class="kpi-sub">건 · 26.03 이후 제조분</div>
+      </div>
+      <div class="kpi-div"></div>
+      <div class="kpi-item">
+        <div class="kpi-label">출고 수량</div>
+        <div class="kpi-val">15,688</div>
+        <div class="kpi-sub">EA (13,033 + 슬리브 2,655)</div>
+      </div>
+      <div class="kpi-div"></div>
+      <div class="kpi-item">
+        <div class="kpi-label">불량율</div>
+        <div class="kpi-val red">2.49%</div>
+        <div class="kpi-sub">390 / 15,688</div>
+      </div>
+      <div class="kpi-div"></div>
+      <div class="kpi-item">
+        <div class="kpi-label">무상수리 비중</div>
+        <div class="kpi-val">91.8%</div>
+        <div class="kpi-sub">358건 / 390건</div>
+      </div>
+    </div>
+    <div class="sum-grid">
+      <div class="sum-card accent">
+        <div class="sl">기본 출고</div>
+        <div class="sv">13,033</div>
+        <div class="ss">EA · 26.03 제조분 불량율 1.56%</div>
+      </div>
+      <div class="sum-card">
+        <div class="sl">슬리브 결합 출고</div>
+        <div class="sv">2,655</div>
+        <div class="ss">EA · 26.04 제조분 불량율 5.57%</div>
+      </div>
+      <div class="sum-card">
+        <div class="sl">무상수리</div>
+        <div class="sv">358</div>
+        <div class="ss">건 · 91.8% · 품질 결함 주도</div>
+      </div>
+      <div class="sum-card">
+        <div class="sl">유상수리</div>
+        <div class="sv">32</div>
+        <div class="ss">건 · 8.2% · 대부분 파손</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 불량 유형 분석 -->
+  <section class="section">
+    <div class="sec-title">불량 유형 분석</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="chart-card">
+        <div class="cc-title">세부 유형 구성비</div>
+        <div class="donut-block">
+          <div class="donut-wrap">
+            <svg id="donutSvg" viewBox="0 0 180 180" class="donut-svg"></svg>
+            <div class="donut-center">
+              <div class="dc-num">390</div>
+              <div class="dc-label">총 접수</div>
+            </div>
+          </div>
+          <div class="legend-grid" id="donutLegend"></div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="cc-title">상위 10개 항목</div>
+        <div class="bar-chart" id="barChart"></div>
+      </div>
+    </div>
+
+    <div class="group-grid">
+      <div class="group-card g1">
+        <div class="gc-label">그룹 A</div>
+        <div class="gc-name">수분유입<br>의심 불량</div>
+        <div class="gc-val">282</div>
+        <div class="gc-pct">72.3% · 전기·기능계열 주도</div>
+        <div class="gc-items">충전불량·전원불량·소음·디스플레이불량·온도센서불량·미작동·배터리불량·오작동·E1 외</div>
+      </div>
+      <div class="group-card g2">
+        <div class="gc-label">그룹 B</div>
+        <div class="gc-name">뚜껑불량<br>(누수+기구불량)</div>
+        <div class="gc-val">43</div>
+        <div class="gc-pct">11.0% · 뚜껑 구조 관련</div>
+        <div class="gc-items">누수 19건 · 기구불량 24건</div>
+      </div>
+      <div class="group-card g4">
+        <div class="gc-label">그룹 C</div>
+        <div class="gc-name">외관 ·<br>마감 불량</div>
+        <div class="gc-val">36</div>
+        <div class="gc-pct">9.2% · 외관 품질</div>
+        <div class="gc-items">스크래치·마감불량·오염·이물질·부식·조립불량·자재누락</div>
+      </div>
+      <div class="group-card g3">
+        <div class="gc-label">그룹 D</div>
+        <div class="gc-name">파손</div>
+        <div class="gc-val">29</div>
+        <div class="gc-pct">7.4% · 물리적 파손</div>
+        <div class="gc-items">유상수리 처리 비중 높음</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 접수월별 현황 -->
+  <section class="section">
+    <div class="sec-title">접수월별 현황</div>
+    <div class="chart-card">
+      <table class="month-table">
+        <thead>
+          <tr>
+            <th>접수월</th>
+            <th class="r">접수 건수</th>
+            <th class="r">무상</th>
+            <th class="r">유상</th>
+            <th class="r">무상 비중</th>
+            <th>비고</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>2026.03</strong></td>
+            <td class="r">24</td><td class="r">23</td><td class="r">1</td>
+            <td class="r">95.8%</td>
+            <td><span class="tag tag-g">초기 접수</span></td>
+          </tr>
+          <tr>
+            <td><strong>2026.04</strong></td>
+            <td class="r">114</td><td class="r">104</td><td class="r">10</td>
+            <td class="r">91.2%</td>
+            <td><span class="tag tag-b">본격 접수 시작</span></td>
+          </tr>
+          <tr>
+            <td><strong>2026.05</strong></td>
+            <td class="r">124</td><td class="r">117</td><td class="r">7</td>
+            <td class="r">94.4%</td>
+            <td><span class="tag tag-b">최다 접수월</span></td>
+          </tr>
+          <tr>
+            <td><strong>2026.06</strong></td>
+            <td class="r">126</td><td class="r">113</td><td class="r">13</td>
+            <td class="r">89.7%</td>
+            <td><span class="tag tag-r">유상 비중 소폭 증가</span></td>
+          </tr>
+          <tr>
+            <td><strong>2026.07</strong></td>
+            <td class="r">2</td><td class="r">1</td><td class="r">1</td>
+            <td class="r">50.0%</td>
+            <td><span class="tag tag-nd">기준일(07.02) 집계</span></td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td><strong>합계</strong></td>
+            <td class="r"><strong>390</strong></td>
+            <td class="r"><strong>358</strong></td>
+            <td class="r"><strong>32</strong></td>
+            <td class="r"><strong>91.8%</strong></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </section>
+
+  <!-- AI 분석 의견 -->
+  <section class="section">
+    <div class="sec-title">AI 분석 의견</div>
+    <div class="ai-card">
+      <div class="ai-header">
+        <span class="ai-header-icon">🤖</span>
+        <span class="ai-header-title">AI 분석 의견 — 확정 데이터 기준</span>
+      </div>
+      <div class="ai-body">
+
+        <div class="ai-block">
+          <div class="ai-block-title">① 수분유입이 불량의 핵심 원인</div>
+          <div class="ai-block-desc">
+            전체 390건 중 <strong>72.3%(282건)</strong>가 수분유입 의심 그룹으로 분류됩니다.
+            이 중 충전불량(69건)·전원불량(62건)만 합산해도 <strong>전체의 33.6%(131건)</strong>를 차지하며,
+            이는 수분이 충전 단자 또는 전원 회로부에 침투하여 전기적 이상을 유발하는 패턴으로 해석됩니다.
+            소음(41건)·디스플레이불량(30건)·미작동(18건) 역시 내부 수분 침투로 인한 부품 손상 가능성이 높습니다.
+            <br><br>
+            뚜껑불량 그룹(B, 11.0%)은 <strong>뚜껑 구조의 실링 불량</strong>이 직접 누수를 일으키고,
+            이것이 다시 그룹 A의 전기계 불량으로 연결되는 연쇄 구조일 가능성이 있습니다.
+            실질적 수분 유입 관련 건수는 보고된 수치보다 더 클 수 있어 주의가 필요합니다.
+          </div>
+        </div>
+        <div class="ai-divider"></div>
+
+        <div class="ai-block">
+          <div class="ai-block-title">② 26.04 제조분 불량율 급등 — 원인 규명 필요</div>
+          <div class="ai-block-desc">
+            26.03 제조분 불량율 <strong>1.56%</strong>(203건/13,033출고)에 비해
+            26.04 제조분은 <strong>5.57%</strong>(148건/2,655출고)로 약 <strong>3.6배</strong> 높게 나타납니다.
+            출고 규모가 작음에도 불구하고 불량 건수 비율이 급격히 상승한 점은 단순 출고량 차이로 설명되지 않습니다.
+            <br><br>
+            26.04 제조분의 공정 변경 이력, 자재 로트 변경, 조립 라인 변동 등을 우선 검토할 것을 권고합니다.
+            특히 O링 2종 혼용 사용이 26.06.09 확인된 점을 고려하면, 해당 시기 제조분에 불량 자재가 집중 투입되었을 가능성을 배제할 수 없습니다.
+          </div>
+        </div>
+        <div class="ai-divider"></div>
+
+        <div class="ai-block">
+          <div class="ai-block-title">③ 접수 추이 및 향후 전망</div>
+          <div class="ai-block-desc">
+            접수 건수는 26.04(114건) → 26.05(124건) → 26.06(126건)으로 <strong>완만하지만 지속적인 증가 추세</strong>를 보입니다.
+            출고 이후 평균 1~3개월 시차를 고려하면, 26.04~05 제조분의 불량이 26.06~07월에 집중 접수되는 패턴이 예상됩니다.
+            <br><br>
+            현재 제조사의 조립공정 및 검사 강화 방침(26.06.15 답변)이 실제 제조 현장에 적용되기 전 출고분의 불량은
+            향후 수개월간 추가 접수될 가능성이 높습니다. 개선 조치 적용 시점 이후 제조분과의 불량율 비교 모니터링이 필요합니다.
+            무상수리 비중 <strong>91.8%</strong>는 제품 결함이 명확한 사례가 대다수임을 의미하며,
+            고객 신뢰도 및 서비스 비용 측면에서 조기 구조적 개선이 요구됩니다.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 비고 -->
+  <section class="section">
+    <div class="sec-title">비고</div>
+    <div class="note-box">
+      출고수량 15,688 EA는 기본 출고 13,033 EA + 슬리브 결합 2,655 EA 합산 기준이며, <strong>월별 분리 집계 없음</strong>.
+      접수월별 현황은 CS 접수 시점 기준이며, 제조(출고)월과 무관하게 당월 접수 건수로 집계.
+      제조월별 불량율(26.03 → 1.56%, 26.04 → 5.57%)은 각 제조월의 접수 건수 ÷ 해당 제조월 출고수량으로 산출.
+      유형 그룹 분류는 복합 불량의 경우 행 단위 우선순위(뚜껑불량 → 파손 → 외관/마감 → 수분유입의심) 기준으로 단일 계상.
+    </div>
+  </section>
+
+  <footer class="rpt-footer">
+    <span>휴대용 분유포트 불량 현황 · 엄마감동팀</span>
+    <span>2026.07.02 기준 · 26.03 이후 제조 최신버전 확정</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  const GAP=0.018;
+  function toRad(d){return(d-90)*Math.PI/180}
+  function pt(cx,cy,r,d){const a=toRad(d);return[cx+r*Math.cos(a),cy+r*Math.sin(a)]}
+  function shade(hex,p){
+    const n=parseInt(hex.replace('#',''),16);
+    return'#'+[n>>16,(n>>8)&255,n&255].map(v=>Math.min(255,Math.max(0,v+p)).toString(16).padStart(2,'0')).join('')
+  }
+  function seg(svg,cx,cy,R,r,s,e,color){
+    const ns='http://www.w3.org/2000/svg';
+    const gD=GAP*180/Math.PI,ss=s+gD/2,ee=e-gD/2;
+    if(ee-ss<0.3)return;
+    const lg=(ee-ss)>180?1:0;
+    function arc(R2,r2,ox,oy){
+      const[x1,y1]=pt(cx+ox,cy+oy,R2,ss),[x2,y2]=pt(cx+ox,cy+oy,R2,ee);
+      const[x3,y3]=pt(cx+ox,cy+oy,r2,ee),[x4,y4]=pt(cx+ox,cy+oy,r2,ss);
+      return`M${x1},${y1} A${R2},${R2} 0 ${lg},1 ${x2},${y2} L${x3},${y3} A${r2},${r2} 0 ${lg},0 ${x4},${y4} Z`
+    }
+    const sh=document.createElementNS(ns,'path');
+    sh.setAttribute('d',arc(R,r,0,3));sh.setAttribute('fill',shade(color,-22));sh.setAttribute('opacity','0.4');
+    svg.appendChild(sh);
+    const bd=document.createElementNS(ns,'path');
+    bd.setAttribute('d',arc(R,r,0,0));bd.setAttribute('fill',color);
+    svg.appendChild(bd);
+    const hlR=(R+r)/2,hlW=(R-r)*0.28,hle=Math.min(ss+(ee-ss)*0.5,ee);
+    if(hle>ss+1){
+      const hl=document.createElementNS(ns,'path');
+      const[hx1,hy1]=pt(cx,cy,hlR+hlW/2,ss),[hx2,hy2]=pt(cx,cy,hlR+hlW/2,hle);
+      const[hx3,hy3]=pt(cx,cy,hlR-hlW/2,hle),[hx4,hy4]=pt(cx,cy,hlR-hlW/2,ss);
+      const hl2=(hle-ss)>180?1:0;
+      hl.setAttribute('d',`M${hx1},${hy1} A${hlR+hlW/2},${hlR+hlW/2} 0 ${hl2},1 ${hx2},${hy2} L${hx3},${hy3} A${hlR-hlW/2},${hlR-hlW/2} 0 ${hl2},0 ${hx4},${hy4} Z`);
+      hl.setAttribute('fill','white');hl.setAttribute('opacity','0.11');
+      svg.appendChild(hl);
+    }
+  }
+
+  const data=[
+    {name:'충전불량',      val:69, color:'#2563EB'},
+    {name:'전원불량',      val:62, color:'#7C3AED'},
+    {name:'소음',          val:41, color:'#0891B2'},
+    {name:'디스플레이불량',val:30, color:'#0D9488'},
+    {name:'파손',          val:29, color:'#9CA3AF'},
+    {name:'기구불량',      val:24, color:'#D97706'},
+    {name:'온도센서불량',  val:21, color:'#EA580C'},
+    {name:'누수',          val:19, color:'#DC2626'},
+    {name:'미작동',        val:18, color:'#BE185D'},
+    {name:'배터리불량',    val:13, color:'#65A30D'},
+    {name:'기타',          val:64, color:'#E2E8F0'},
+  ];
+  const total=data.reduce((s,d)=>s+d.val,0);
+  const ns='http://www.w3.org/2000/svg';
+  const svg=document.getElementById('donutSvg');
+  const cx=90,cy=90,R=74,r=48;
+
+  const iSh=document.createElementNS(ns,'circle');
+  iSh.setAttribute('cx',cx);iSh.setAttribute('cy',cy+2);iSh.setAttribute('r',r-1);iSh.setAttribute('fill','rgba(0,0,0,0.04)');
+  svg.appendChild(iSh);
+
+  let cur=0;
+  data.forEach(d=>{const deg=(d.val/total)*360;seg(svg,cx,cy,R,r,cur,cur+deg,d.color);cur+=deg});
+
+  const inner=document.createElementNS(ns,'circle');
+  inner.setAttribute('cx',cx);inner.setAttribute('cy',cy);inner.setAttribute('r',r-1);inner.setAttribute('fill','#fff');
+  svg.appendChild(inner);
+
+  const legend=document.getElementById('donutLegend');
+  data.slice(0,10).forEach(d=>{
+    const pct=((d.val/total)*100).toFixed(1);
+    const bw=Math.round((d.val/total)*100);
+    const item=document.createElement('div');item.className='lg-item';
+    item.innerHTML=`<div class="lg-dot" style="background:${d.color}"></div>
+      <div class="lg-text">
+        <div class="lg-name">${d.name}</div>
+        <div class="lg-row2"><span class="lg-pct">${pct}%</span>
+          <div class="lg-bar-bg"><div class="lg-bar-fill" style="width:${bw}%;background:${d.color}"></div></div>
+        </div>
+      </div>`;
+    legend.appendChild(item);
+  });
+
+  const barChart=document.getElementById('barChart');
+  const maxV=data[0].val;
+  data.slice(0,10).forEach(d=>{
+    const bw=Math.round((d.val/maxV)*100);
+    const row=document.createElement('div');row.className='bar-row';
+    row.innerHTML=`<div class="bar-label">${d.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${bw}%;background:${d.color}"></div></div>
+      <div class="bar-val">${d.val}건</div>`;
+    barChart.appendChild(row);
+  });
+})();
+</script>
+</body>
+</html>

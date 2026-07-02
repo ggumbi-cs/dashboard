@@ -179,8 +179,16 @@ button.btn.small{ padding:5px 12px; font-size:11px; border-radius:7px; }
 .mgmt-title:hover{ color:var(--cyan); }
 .mgmt-meta{ font-size:11px; color:var(--text3); display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
 .mgmt-action{ flex-shrink:0; display:flex; gap:6px; align-items:center; }
-.dup-group{ background:var(--bg3); border-bottom:1px solid var(--border); }
-.dup-group-title{ padding:9px 20px; font-size:11px; color:var(--text3); font-weight:700; letter-spacing:.5px; }
+.dup-group{ border-bottom:2px solid var(--border); }
+.dup-group:last-child{ border-bottom:none; }
+.dup-group-title{
+  padding:10px 20px; font-size:11px; font-weight:700; letter-spacing:.4px;
+  color:var(--cyan);
+  background:linear-gradient(90deg, rgba(0,200,255,0.08) 0%, var(--bg3) 60%);
+  border-bottom:1px solid var(--border);
+}
+.dup-group .mgmt-row{ background:var(--bg2); }
+.dup-group .mgmt-row:hover{ background:rgba(0,200,255,0.03); }
 /* ───────── 직원 검색 팝업 ───────── */
 .emp-search-modal{ background:var(--bg2); border:1px solid var(--border2); border-radius:14px; width:340px; max-height:80vh; display:flex; flex-direction:column; overflow:hidden; }
 .emp-search-modal h3{ font-size:14px; font-weight:700; color:var(--text); padding:18px 18px 12px; border-bottom:1px solid var(--border); margin:0; }

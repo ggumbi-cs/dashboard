@@ -52,7 +52,7 @@ body{ background-image:radial-gradient(circle at 15% 0%, rgba(0,200,255,0.05) 0%
 
 #sidebar-foot{ margin-top:auto; padding:14px 10px 4px; border-top:1px solid var(--border); font-size:10px; color:var(--text3); line-height:1.6; }
 
-#main{ flex:1; min-width:0; padding:28px 32px 70px; max-width:1280px; }
+#main{ flex:1; min-width:0; padding:28px 32px 70px; }
 .page{ display:none; }
 .page.active{ display:block; animation:fadeUp .35s ease both; }
 @keyframes fadeUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
@@ -105,6 +105,7 @@ body{ background-image:radial-gradient(circle at 15% 0%, rgba(0,200,255,0.05) 0%
 table{ width:100%; border-collapse:collapse; font-size:12.3px; }
 th,td{ padding:11px 16px; text-align:left; white-space:nowrap; border-bottom:1px solid var(--border); }
 th{ font-size:9.5px; color:#8ab0cc; font-weight:700; text-transform:uppercase; letter-spacing:1px; background:var(--bg3); }
+.sticky-thead-table thead th{ position:sticky; top:38px; z-index:5; box-shadow:0 1px 0 var(--border); }
 td{ color:var(--text2); font-variant-numeric:tabular-nums; }
 tr:last-child td{ border-bottom:none; }
 tr:hover td{ background:rgba(0,200,255,0.025); color:var(--text); }
@@ -142,9 +143,21 @@ button.btn.danger{ background:var(--red); color:#fff; }
 button.btn.small{ padding:5px 12px; font-size:11px; border-radius:7px; }
 
 .award-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; }
+
+/* 수상작 — 월별 보드형 가로 스크롤 (노션 보드뷰 스타일) */
+.award-board-wrap{ position:relative; display:flex; align-items:stretch; gap:0; }
+.award-board{ display:flex; gap:18px; overflow-x:auto; scroll-behavior:smooth; padding:2px 4px 14px; flex:1; min-width:0; scrollbar-width:thin; }
+.award-board::-webkit-scrollbar{ height:7px; }
+.award-board::-webkit-scrollbar-thumb{ background:var(--border2); border-radius:6px; }
+.award-board-nav{ flex-shrink:0; width:34px; height:34px; border-radius:50%; border:1px solid var(--border2); background:var(--bg2); color:var(--text2); font-size:15px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .15s; z-index:2; position:sticky; top:50vh; transform:translateY(-50%); box-shadow:0 2px 10px rgba(0,0,0,0.15); }
+.award-board-nav:hover{ background:var(--bg3); color:var(--text); border-color:var(--cyan); }
+.award-board-nav.left{ margin-right:10px; }
+.award-board-nav.right{ margin-left:10px; }
 .award-card{ background:var(--bg2); border:1px solid var(--border); border-radius:15px; padding:18px 20px; position:relative; overflow:hidden; }
 .award-card.gold{ border-color:rgba(240,192,96,0.35); background:linear-gradient(160deg,var(--bg2) 0%, rgba(240,192,96,0.06) 100%); }
 .award-icon{ width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:18px; background:var(--gold-dim); margin-bottom:12px; }
+.award-top-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:12px; }
+.award-tool-tag{ font-size:10px; font-weight:700; color:var(--cyan); background:var(--cyan-dim); padding:5px 10px; border-radius:8px; white-space:nowrap; border:1px solid var(--border2); max-width:110px; overflow:hidden; text-overflow:ellipsis; }
 .award-cat{ font-size:9.5px; color:var(--text3); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
 .award-name{ font-size:15px; font-weight:700; color:var(--text); margin-bottom:6px; }
 .award-topic{ font-size:11.5px; color:var(--text2); line-height:1.5; margin-bottom:10px; min-height:32px; }
@@ -206,9 +219,10 @@ table tr.clickable:hover td{ background:rgba(0,200,255,0.04); cursor:pointer; }
 .ready-icon{ font-size:48px; opacity:.5; }
 .ready-title{ font-size:18px; font-weight:700; color:var(--text2); }
 .ready-desc{ font-size:13px; color:var(--text3); line-height:1.7; }
-/* ───────── 수상작 월별 소분류 ───────── */
-.award-month-group{ margin-bottom:28px; }
+/* ───────── 수상작 월별 소분류 (가로 보드 컬럼) ───────── */
+.award-month-group{ flex:1 1 260px; min-width:260px; }
 .award-month-label{ font-size:11px; font-weight:700; color:var(--text3); letter-spacing:1px; text-transform:uppercase; padding:6px 2px; border-bottom:1px solid var(--border); margin-bottom:14px; }
+.award-month-group .award-grid{ display:flex; flex-direction:column; grid-template-columns:none; }
 .award-card.top-award{ border-color:rgba(240,192,96,0.7) !important; background:linear-gradient(140deg, rgba(240,192,96,0.16) 0%, var(--bg2) 65%) !important; box-shadow:0 0 22px rgba(240,192,96,0.18), 0 2px 8px rgba(0,0,0,0.06) !important; }
 
 .empty{ color:var(--text3); padding:38px; text-align:center; font-size:12.5px; }
@@ -267,15 +281,15 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     </div>
     <div class="nav-item active" data-tab="summary"><div class="nav-icon">01</div><div class="nav-label">요약 대시보드</div></div>
     <div class="nav-item" data-tab="knowledge"><div class="nav-icon">02</div><div class="nav-label">작성현황</div></div>
-    <div class="nav-item" data-tab="cases"><div class="nav-icon">03</div><div class="nav-label">조별우수사례</div></div>
-    <div class="nav-item" data-tab="employees"><div class="nav-icon">04</div><div class="nav-label">명단 제출</div></div>
-    <div class="nav-item" data-tab="groups"><div class="nav-icon">05</div><div class="nav-label">조편성</div></div>
-    <div class="nav-item" data-tab="nonwriters"><div class="nav-icon">06</div><div class="nav-label">미제출자 현황</div></div>
-    <div class="nav-item" data-tab="unmatched"><div class="nav-icon">07</div><div class="nav-label">관리대상 건</div></div>
-    <div class="nav-item" data-tab="awards"><div class="nav-icon">08</div><div class="nav-label">수상작 관리</div></div>
+    <div class="nav-item" data-tab="employees"><div class="nav-icon">03</div><div class="nav-label">명단 제출</div></div>
+    <div class="nav-item" data-tab="groups"><div class="nav-icon">04</div><div class="nav-label">조편성</div></div>
+    <div class="nav-item" data-tab="cases"><div class="nav-icon">05</div><div class="nav-label">조별우수사례</div></div>
+    <div class="nav-item" data-tab="awards"><div class="nav-icon">06</div><div class="nav-label">수상작 관리</div></div>
+    <div class="nav-item" data-tab="nonwriters"><div class="nav-icon">07</div><div class="nav-label">미제출자 현황</div></div>
+    <div class="nav-item" data-tab="unmatched"><div class="nav-icon">08</div><div class="nav-label">관리대상 건</div></div>
     </nav>
-    <div class="nav-item" data-tab="sync" style="margin:4px 4px 0;"><div class="nav-icon">99</div><div class="nav-label">동기화 설정</div></div>
-    <div id="sidebar-foot">노션 원본 속성은 동기화 시<br>절대 덮어쓰지 않습니다.</div>
+    <div class="nav-item" data-tab="sync" style="margin:auto 4px 4px;"><div class="nav-icon">99</div><div class="nav-label">동기화 설정</div></div>
+    <div id="sidebar-foot" style="margin-top:0;">노션 원본 속성은 동기화 시<br>절대 덮어쓰지 않습니다.</div>
   </div>
 
   <div id="main">
@@ -348,7 +362,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
 
       <div class="note-box" style="margin-bottom:20px;">
         <div>
-          <b>양식 안내</b> — 필수: 계열사명 · 팀명 · 이름 · 입사일 &nbsp;|&nbsp; 선택: 퇴사일<br>
+          <b>양식 안내</b> — 필수: 계열사명 · 팀명 · 이름 · 입사일 &nbsp;|&nbsp; 선택: 근무지 · 퇴사일<br>
           <span style="font-size:11px;">• 입사일 형식: YYYY-MM-DD 또는 YYYY/MM/DD<br>
           • 퇴사일 미입력 시 재직중으로 처리됩니다. 퇴사자는 퇴사일을 입력해주세요.<br>
           • 동일 계열사 재업로드 시 기존 명단은 덮어씁니다.</span>
@@ -366,7 +380,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
           <span id="compareResult" style="font-size:11.5px; color:var(--text3);"></span>
         </div>
         <table>
-          <thead><tr><th>이름</th><th>회사</th><th>팀/부서</th><th>입사일</th><th>퇴사일</th><th>상태</th><th>비고</th><th>수정</th><th>상태변경</th></tr></thead>
+          <thead><tr><th>이름</th><th>회사</th><th>팀/부서</th><th>근무지</th><th>입사일</th><th>퇴사일</th><th>상태</th><th>비고</th><th>수정</th><th>상태변경</th></tr></thead>
           <tbody id="employeeBody"></tbody>
         </table>
       </div>
@@ -465,7 +479,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
           <input type="text" id="knowWriter" placeholder="작성자 검색">
           <button class="btn secondary" onclick="loadKnowledgeList()">검색</button>
         </div>
-        <table>
+        <table class="sticky-thead-table">
           <thead><tr><th>작성자</th><th>주제</th><th>등록일</th><th>회사+부서</th><th>태그</th><th>지식단계</th></tr></thead>
           <tbody id="knowledgeBody"></tbody>
         </table>
@@ -497,7 +511,11 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
         <input type="month" id="awardMonth">
         <button class="btn secondary" onclick="loadAwards()">조회</button>
       </div>
-      <div class="award-grid" id="awardGrid"></div>
+      <div class="award-board-wrap" id="awardBoardWrap">
+        <button class="award-board-nav left" id="awardPrevBtn" onclick="scrollAwardBoard(-1)" style="display:none;">‹</button>
+        <div class="award-board" id="awardGrid"></div>
+        <button class="award-board-nav right" id="awardNextBtn" onclick="scrollAwardBoard(1)" style="display:none;">›</button>
+      </div>
     </div>
 
     <!-- ⑦ 동기화 설정 -->
@@ -525,6 +543,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     <div class="field"><label>이름</label><input type="text" id="empName"></div>
     <div class="field"><label>회사</label><input type="text" id="empCompany"></div>
     <div class="field"><label>부서</label><input type="text" id="empDept"></div>
+    <div class="field"><label>근무지</label><input type="text" id="empWorkplace"></div>
     <div class="field"><label>입사일</label><input type="date" id="empJoin"></div>
     <div class="field"><label>상태</label>
       <select id="empStatus"><option>재직</option><option>퇴사</option><option>휴직</option><option>열외</option></select>
@@ -932,10 +951,10 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   /* --- 양식 다운로드 (SheetJS로 클라이언트에서 직접 생성) --- */
   function downloadTemplate(){
     const wb = XLSX.utils.book_new();
-    const headers = [['계열사명','팀명','이름','입사일','퇴사일(선택)']];
-    const example = [['꿈비','마케팅팀','홍길동','2024-03-01',''],['꿈비','물류팀','김철수','2022-07-15','2026-05-31']];
+    const headers = [['계열사명','팀명','근무지','이름','입사일','퇴사일(선택)']];
+    const example = [['꿈비','마케팅팀','본사','홍길동','2024-03-01',''],['꿈비','물류팀','물류센터','김철수','2022-07-15','2026-05-31']];
     const ws = XLSX.utils.aoa_to_sheet([...headers, ...example]);
-    ws['!cols'] = [{wch:14},{wch:14},{wch:10},{wch:14},{wch:14}];
+    ws['!cols'] = [{wch:14},{wch:14},{wch:12},{wch:10},{wch:14},{wch:14}];
     XLSX.utils.book_append_sheet(wb, ws, '명단');
     XLSX.writeFile(wb, '지식DB_명단양식.xlsx');
   }
@@ -965,6 +984,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
         const FIELD_MAP = {
           '계열사명': '계열사명', '계열사': '계열사명',
           '팀명': '팀명', '부서': '팀명', '팀/부서': '팀명',
+          '근무지': '근무지',
           '이름': '이름', '성명': '이름',
           '입사일': '입사일',
           '퇴사일': '퇴사일', '퇴사일(선택)': '퇴사일',
@@ -979,7 +999,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
         _parsedRoster = rows.slice(1)
           .filter(r => r.some(c => c !== ''))
           .map(r => {
-            const obj = { 퇴사일: '' };
+            const obj = { 퇴사일: '', 근무지: '' };
             Object.entries(colMap).forEach(([i, field]) => {
               let val = String(r[i] || '').trim();
               if(field === '입사일' && val){
@@ -1007,7 +1027,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     document.getElementById('previewSection').style.display = 'block';
     document.getElementById('previewCount').textContent = rows.length + '명';
     document.getElementById('previewAffiliate').textContent = '계열사: ' + affiliates.join(' · ');
-    const cols = ['계열사명','팀명','이름','입사일','퇴사일'];
+    const cols = ['계열사명','팀명','근무지','이름','입사일','퇴사일'];
     document.getElementById('previewHead').innerHTML = '<tr>' + cols.map(c=>`<th>${c}</th>`).join('') + '</tr>';
     document.getElementById('previewBody').innerHTML = rows.slice(0,20).map(r=>
       '<tr>' + cols.map(c=>`<td>${r[c]||''}</td>`).join('') + '</tr>'
@@ -1055,10 +1075,10 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   function renderEmployees(list){
     employeeCache = list;
     const body = document.getElementById('employeeBody');
-    if(!list.length){ body.innerHTML = '<tr><td colspan="9" class="empty">등록된 직원이 없습니다.</td></tr>'; return; }
+    if(!list.length){ body.innerHTML = '<tr><td colspan="10" class="empty">등록된 직원이 없습니다.</td></tr>'; return; }
     body.innerHTML = list.map(e => `
       <tr>
-        <td>${e.이름}</td><td>${coTag(e.회사)}</td><td>${e.부서||''}</td><td>${formatDate(e.입사일)}</td>
+        <td>${e.이름}</td><td>${coTag(e.회사)}</td><td>${e.부서||''}</td><td>${e.근무지||''}</td><td>${formatDate(e.입사일)}</td>
         <td>${e.퇴사일||''}</td>
         <td><span class="badge ${e.상태}">${e.상태}</span></td><td>${e.비고||''}</td>
         <td><button class="btn small secondary" onclick='openEmployeeModal(${JSON.stringify(e)})'>수정</button></td>
@@ -1072,6 +1092,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     document.getElementById('empName').value = emp ? emp.이름 : '';
     document.getElementById('empCompany').value = emp ? emp.회사 : '';
     document.getElementById('empDept').value = emp ? emp.부서 : '';
+    document.getElementById('empWorkplace').value = emp ? (emp.근무지||'') : '';
     document.getElementById('empJoin').value = emp ? formatDate(emp.입사일) : '';
     document.getElementById('empStatus').value = emp ? emp.상태 : '재직';
     document.getElementById('empMemo').value = emp ? (emp.비고||'') : '';
@@ -1083,6 +1104,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       이름: document.getElementById('empName').value,
       회사: document.getElementById('empCompany').value,
       부서: document.getElementById('empDept').value,
+      근무지: document.getElementById('empWorkplace').value,
       입사일: document.getElementById('empJoin').value,
       상태: document.getElementById('empStatus').value,
       비고: document.getElementById('empMemo').value
@@ -1152,7 +1174,10 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     const isTop = k.지식왕선정.includes('이달의 지식왕');
     return `
     <div class="award-card ${isTop ? 'gold top-award' : ''}" style="${notionUrl?'cursor:pointer;':''}" ${notionUrl?`onclick="window.open('${notionUrl}','_blank')"`:''}>
-      <div class="award-icon">${icon}</div>
+      <div class="award-top-row">
+        <div class="award-icon" style="margin-bottom:0;">${icon}</div>
+        ${k.지식툴 ? `<div class="award-tool-tag">${k.지식툴}</div>` : ''}
+      </div>
       <div class="award-cat">${k.지식왕선정}</div>
       <div class="award-name">${k.작성자||'-'}</div>
       <div class="award-topic">${k.주제||''}</div>
@@ -1173,16 +1198,29 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   function renderAwards(list, ym){
     document.getElementById('awardSub').textContent = list.length + '건';
     const grid = document.getElementById('awardGrid');
-    if(!list.length){ grid.innerHTML = '<div class="empty">지식왕 선정 항목이 없습니다.</div>'; return; }
+    const prevBtn = document.getElementById('awardPrevBtn');
+    const nextBtn = document.getElementById('awardNextBtn');
+
+    if(!list.length){
+      grid.className = 'award-grid';
+      grid.innerHTML = '<div class="empty">지식왕 선정 항목이 없습니다.</div>';
+      prevBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
+      return;
+    }
 
     if(ym){
-      // 월 선택 시 — 단순 그리드
+      // 월 선택 시 — 단순 그리드 (좌우 이동 버튼 불필요)
+      grid.className = 'award-grid';
       grid.innerHTML = list.map(_awardCardHtml).join('');
+      prevBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
     } else {
-      // 월 미선택 — 등록일 기준 월별 소분류
+      // 월 미선택 — 등록일 기준 월별 보드(가로 스크롤), 최신월이 왼쪽
+      grid.className = 'award-board';
       const monthMap = {};
       list.forEach(k => {
-        const m = (k.등록일 || '').slice(0, 7) || '날짜미상';
+        const m = k.등록일 ? formatDate(k.등록일).slice(0, 7) : '날짜미상';
         if(!monthMap[m]) monthMap[m] = [];
         monthMap[m].push(k);
       });
@@ -1195,7 +1233,20 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
           <div class="award-grid">${cards}</div>
         </div>`;
       }).join('');
+
+      // 컬럼이 화면 폭보다 넓을 때만 좌우 버튼 노출
+      requestAnimationFrame(() => {
+        const needsScroll = grid.scrollWidth > grid.clientWidth + 4;
+        prevBtn.style.display = needsScroll ? 'flex' : 'none';
+        nextBtn.style.display = needsScroll ? 'flex' : 'none';
+      });
     }
+  }
+
+  function scrollAwardBoard(dir){
+    const grid = document.getElementById('awardGrid');
+    const colWidth = 260 + 18; // .award-month-group 폭 + gap
+    grid.scrollBy({ left: dir * colWidth * 2, behavior: 'smooth' });
   }
 
   /* ⑦ 동기화 설정 */

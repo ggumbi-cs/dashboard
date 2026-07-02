@@ -181,7 +181,17 @@ button.btn.small{ padding:5px 12px; font-size:11px; border-radius:7px; }
 .mgmt-action{ flex-shrink:0; display:flex; gap:6px; align-items:center; }
 .dup-group{ background:var(--bg3); border-bottom:1px solid var(--border); }
 .dup-group-title{ padding:9px 20px; font-size:11px; color:var(--text3); font-weight:700; letter-spacing:.5px; }
-/* ───────── 지식DB 행 클릭 ───────── */
+/* ───────── 직원 검색 팝업 ───────── */
+.emp-search-modal{ background:var(--bg2); border:1px solid var(--border2); border-radius:14px; width:340px; max-height:80vh; display:flex; flex-direction:column; overflow:hidden; }
+.emp-search-modal h3{ font-size:14px; font-weight:700; color:var(--text); padding:18px 18px 12px; border-bottom:1px solid var(--border); margin:0; }
+.emp-search-input-wrap{ padding:12px 14px; border-bottom:1px solid var(--border); }
+.emp-search-input-wrap input{ width:100%; background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:8px; font-size:12.5px; font-family:var(--font-kr); outline:none; }
+.emp-search-input-wrap input:focus{ border-color:var(--border2); }
+.emp-search-list{ overflow-y:auto; flex:1; }
+.emp-search-item{ display:flex; align-items:center; gap:10px; padding:10px 14px; cursor:pointer; border-bottom:1px solid var(--border); font-size:12.5px; color:var(--text2); }
+.emp-search-item:hover{ background:var(--bg3); color:var(--text); }
+.emp-search-item:last-child{ border-bottom:none; }
+.emp-search-item .emp-dept{ font-size:10.5px; color:var(--text3); margin-left:auto; }
 table tr.clickable:hover td{ background:rgba(0,200,255,0.04); cursor:pointer; }
 
 .empty{ color:var(--text3); padding:38px; text-align:center; font-size:12.5px; }
@@ -400,8 +410,24 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
           <span class="accord-arrow" id="arrow-dup">▶</span>
         </div>
         <div class="accord-body" id="accord-dup" style="display:none;">
-          <div class="accord-desc">복사본 표기 (1) 제외 시 제목이 100% 동일한 건 — 중복 여부를 직접 확인해주세요.</div>
+          <div class="accord-desc">복사본 표기 (1) 제외 시 같은 계열사·부서에서 제목이 100% 동일한 건 — 중복 여부를 직접 확인해주세요.</div>
           <div id="list-dup"></div>
+        </div>
+      </div>
+
+      <!-- 공페이지 여부 확인필요 -->
+      <div class="accord-block">
+        <div class="accord-head" onclick="toggleAccord('accord-empty')">
+          <div class="accord-title">
+            <span class="accord-dot" style="background:var(--orange)"></span>
+            공페이지 여부 확인필요
+            <span class="accord-badge" id="badge-empty">0</span>
+          </div>
+          <span class="accord-arrow" id="arrow-empty">▶</span>
+        </div>
+        <div class="accord-body" id="accord-empty" style="display:none;">
+          <div class="accord-desc">제목이 "지식DB 기본 템플릿"인 건 — 기본 이름 그대로 내용이 작성되지 않은 공페이지일 수 있습니다.</div>
+          <div id="list-empty"></div>
         </div>
       </div>
     </div>
@@ -489,6 +515,17 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
 
 
 <div class="toast" id="toast"></div>
+
+<!-- 직원 검색 팝업 -->
+<div class="modal-bg" id="empSearchModalBg" onclick="if(event.target===this)closeModal('empSearchModalBg')">
+  <div class="emp-search-modal">
+    <h3>직원 검색</h3>
+    <div class="emp-search-input-wrap">
+      <input type="text" id="empSearchInput" placeholder="이름 · 회사 · 부서 검색..." oninput="filterEmpSearch()" autocomplete="off">
+    </div>
+    <div class="emp-search-list" id="empSearchList"></div>
+  </div>
+</div>
 
 <script>
   /* ---------------- 시계 ---------------- */
@@ -682,11 +719,12 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   function mgmtInfoLine(item){
     const date = item.생성일시 ? formatDate(item.생성일시) : (item.등록일 ? formatDate(item.등록일) : '-');
     const creator = item.생성자 || '-';
-    return `페이지생성일: ${date.replace(/-/g,'.')}&nbsp;&nbsp;생성자: ${creator}`;
+    return `생성일: ${date.replace(/-/g,'.')}&nbsp;&nbsp;생성자: ${creator}`;
   }
 
   function renderMgmtItems(data){
-    const total = data.noAuthor.length + data.noDate.length + data.duplicates.reduce((s,g)=>s+g.length,0);
+    const total = data.noAuthor.length + data.noDate.length +
+      data.duplicates.reduce((s,g)=>s+g.length,0) + (data.emptyPages||[]).length;
     document.getElementById('mgmtSub').textContent = `총 ${total}건`;
 
     // 작성자 미등록
@@ -695,7 +733,6 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     if(!data.noAuthor.length){
       noAuthList.innerHTML = '<div class="empty">해당 건 없음</div>';
     } else {
-      const options = employeeCache.map(e=>`<option value="${e.직원ID}">${e.이름} (${e.회사})</option>`).join('');
       noAuthList.innerHTML = data.noAuthor.map(u=>{
         const pageId = (u.NotionPageId||'').replace(/-/g,'');
         const url = pageId ? `https://app.notion.com/p/${pageId}` : '';
@@ -704,9 +741,9 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
             <div class="mgmt-title" ${url?`onclick="window.open('${url}','_blank')"`:''}>${u.주제||'(제목없음)'}</div>
             <div class="mgmt-meta">${coTag(u['회사+부서']||u['회사+부서(원문)']||'')}<span>${mgmtInfoLine(u)}</span></div>
           </div>
-          <div class="mgmt-action">
-            <select id="sel_${u.NotionPageId}"><option value="">직원 선택</option>${options}</select>
-            <button class="btn small" onclick="resolveUnmatched('${u.NotionPageId}')">지정</button>
+          <div class="mgmt-action" style="display:flex; gap:6px; align-items:center; flex-shrink:0;">
+            <button id="empSearchBtn_${u.NotionPageId}" class="btn small secondary" onclick="openEmpSearch('${u.NotionPageId}')">직원 선택 ▾</button>
+            <button class="btn small" onclick="resolveUnmatchedSearch('${u.NotionPageId}')">지정</button>
           </div>
         </div>`;
       }).join('');
@@ -749,9 +786,79 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
             </div>
           </div>`;
         }).join('');
-        return `<div class="dup-group"><div class="dup-group-title">📌 "${normTitle}" — ${group.length}건</div>${items}</div>`;
+        return `<div class="dup-group"><div class="dup-group-title">📌 "${normTitle}" — ${group.length}건 (${group[0]['회사+부서']||''})</div>${items}</div>`;
       }).join('');
     }
+
+    // 공페이지 여부 확인필요
+    const emptyPages = data.emptyPages || [];
+    document.getElementById('badge-empty').textContent = emptyPages.length;
+    const emptyList = document.getElementById('list-empty');
+    if(!emptyPages.length){
+      emptyList.innerHTML = '<div class="empty">해당 건 없음</div>';
+    } else {
+      emptyList.innerHTML = emptyPages.map(k=>{
+        const pageId = (k.NotionPageId||'').replace(/-/g,'');
+        const url = pageId ? `https://app.notion.com/p/${pageId}` : '';
+        return `<div class="mgmt-row">
+          <div class="mgmt-info">
+            <div class="mgmt-title" ${url?`onclick="window.open('${url}','_blank')"`:''}>${k.주제||'(제목없음)'}</div>
+            <div class="mgmt-meta">${coTag(k['회사+부서']||'')}<span>${mgmtInfoLine(k)}</span></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  /* ───────── 직원 검색 팝업 ───────── */
+  let _empSearchTarget = '';
+  const _empSelectedMap = {}; // pageId → { empId, label }
+
+  function openEmpSearch(pageId) {
+    _empSearchTarget = pageId;
+    const input = document.getElementById('empSearchInput');
+    input.value = '';
+    filterEmpSearch();
+    setTimeout(()=> input.focus(), 100);
+    openModal('empSearchModalBg');
+  }
+
+  function filterEmpSearch() {
+    const q = document.getElementById('empSearchInput').value.toLowerCase();
+    const list = document.getElementById('empSearchList');
+    const filtered = employeeCache
+      .filter(e => e.상태 !== '퇴사')
+      .filter(e =>
+        (e.이름||'').toLowerCase().includes(q) ||
+        (e.회사||'').toLowerCase().includes(q) ||
+        (e.부서||'').toLowerCase().includes(q)
+      );
+    if(!filtered.length){
+      list.innerHTML = '<div class="empty">검색 결과 없음</div>';
+      return;
+    }
+    list.innerHTML = filtered.slice(0, 80).map(e => `
+      <div class="emp-search-item" onclick="selectEmpFromSearch('${e.직원ID}','${(e.이름||'').replace(/'/g,"\\'")} (${(e.회사||'').replace(/'/g,"\\'")})')">
+        ${coTag(e.회사||'')}
+        <span>${e.이름||''}</span>
+        <span class="emp-dept">${e.부서||''}</span>
+      </div>
+    `).join('');
+  }
+
+  function selectEmpFromSearch(empId, label) {
+    _empSelectedMap[_empSearchTarget] = { empId, label };
+    const btn = document.getElementById('empSearchBtn_' + _empSearchTarget);
+    if(btn){ btn.textContent = label; btn.style.color = 'var(--cyan)'; }
+    closeModal('empSearchModalBg');
+  }
+
+  function resolveUnmatchedSearch(pageId) {
+    const selected = _empSelectedMap[pageId];
+    if(!selected){ showToast('직원을 먼저 선택해주세요.'); return; }
+    callApi('resolveUnmatched', { pageId, empId: selected.empId })
+      .then(()=>{ showToast('매칭 완료 및 노션 반영되었습니다.'); loadUnmatched(); })
+      .catch(err => showToast('실패: ' + err.message));
   }
 
   function resolveUnmatched(pageId){

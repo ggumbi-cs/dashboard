@@ -201,6 +201,15 @@ button.btn.small{ padding:5px 12px; font-size:11px; border-radius:7px; }
 .emp-search-item:last-child{ border-bottom:none; }
 .emp-search-item .emp-dept{ font-size:10.5px; color:var(--text3); margin-left:auto; }
 table tr.clickable:hover td{ background:rgba(0,200,255,0.04); cursor:pointer; }
+/* ───────── 준비중 페이지 ───────── */
+.ready-wrap{ display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:320px; gap:14px; text-align:center; }
+.ready-icon{ font-size:48px; opacity:.5; }
+.ready-title{ font-size:18px; font-weight:700; color:var(--text2); }
+.ready-desc{ font-size:13px; color:var(--text3); line-height:1.7; }
+/* ───────── 수상작 월별 소분류 ───────── */
+.award-month-group{ margin-bottom:28px; }
+.award-month-label{ font-size:11px; font-weight:700; color:var(--text3); letter-spacing:1px; text-transform:uppercase; padding:6px 2px; border-bottom:1px solid var(--border); margin-bottom:14px; }
+.award-card.top-award{ border-color:rgba(240,192,96,0.7) !important; background:linear-gradient(140deg, rgba(240,192,96,0.16) 0%, var(--bg2) 65%) !important; box-shadow:0 0 22px rgba(240,192,96,0.18), 0 2px 8px rgba(0,0,0,0.06) !important; }
 
 .empty{ color:var(--text3); padding:38px; text-align:center; font-size:12.5px; }
 .toast{ position:fixed; bottom:24px; right:24px; z-index:998; background:var(--bg3); border:1px solid var(--border2); color:var(--text); font-size:12px; padding:11px 19px; border-radius:11px; opacity:0; transform:translateY(8px); transition:all .3s; pointer-events:none; }
@@ -257,11 +266,13 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       <div class="sub">Group Dashboard</div>
     </div>
     <div class="nav-item active" data-tab="summary"><div class="nav-icon">01</div><div class="nav-label">요약 대시보드</div></div>
-    <div class="nav-item" data-tab="employees"><div class="nav-icon">02</div><div class="nav-label">명단 제출</div></div>
-    <div class="nav-item" data-tab="nonwriters"><div class="nav-icon">03</div><div class="nav-label">미제출자 현황</div></div>
-    <div class="nav-item" data-tab="unmatched"><div class="nav-icon">04</div><div class="nav-label">관리대상 건</div></div>
-    <div class="nav-item" data-tab="knowledge"><div class="nav-icon">05</div><div class="nav-label">작성현황</div></div>
-    <div class="nav-item" data-tab="awards"><div class="nav-icon">06</div><div class="nav-label">수상작 관리</div></div>
+    <div class="nav-item" data-tab="knowledge"><div class="nav-icon">02</div><div class="nav-label">작성현황</div></div>
+    <div class="nav-item" data-tab="cases"><div class="nav-icon">03</div><div class="nav-label">조별우수사례</div></div>
+    <div class="nav-item" data-tab="employees"><div class="nav-icon">04</div><div class="nav-label">명단 제출</div></div>
+    <div class="nav-item" data-tab="groups"><div class="nav-icon">05</div><div class="nav-label">조편성</div></div>
+    <div class="nav-item" data-tab="nonwriters"><div class="nav-icon">06</div><div class="nav-label">미제출자 현황</div></div>
+    <div class="nav-item" data-tab="unmatched"><div class="nav-icon">07</div><div class="nav-label">관리대상 건</div></div>
+    <div class="nav-item" data-tab="awards"><div class="nav-icon">08</div><div class="nav-label">수상작 관리</div></div>
     </nav>
     <div class="nav-item" data-tab="sync" style="margin:4px 4px 0;"><div class="nav-icon">99</div><div class="nav-label">동기화 설정</div></div>
     <div id="sidebar-foot">노션 원본 속성은 동기화 시<br>절대 덮어쓰지 않습니다.</div>
@@ -337,9 +348,9 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
 
       <div class="note-box" style="margin-bottom:20px;">
         <div>
-          <b>양식 안내</b> — 필수: 계열사명 · 팀명 · 이름 · 입사일 &nbsp;|&nbsp; 선택: 이메일 · 재직상태<br>
+          <b>양식 안내</b> — 필수: 계열사명 · 팀명 · 이름 · 입사일 &nbsp;|&nbsp; 선택: 퇴사일<br>
           <span style="font-size:11px;">• 입사일 형식: YYYY-MM-DD 또는 YYYY/MM/DD<br>
-          • 재직상태 미입력 시 자동으로 "재직"으로 처리됩니다.<br>
+          • 퇴사일 미입력 시 재직중으로 처리됩니다. 퇴사자는 퇴사일을 입력해주세요.<br>
           • 동일 계열사 재업로드 시 기존 명단은 덮어씁니다.</span>
         </div>
       </div>
@@ -355,7 +366,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
           <span id="compareResult" style="font-size:11.5px; color:var(--text3);"></span>
         </div>
         <table>
-          <thead><tr><th>이름</th><th>회사</th><th>팀/부서</th><th>입사일</th><th>이메일</th><th>상태</th><th>비고</th><th>수정</th><th>상태변경</th></tr></thead>
+          <thead><tr><th>이름</th><th>회사</th><th>팀/부서</th><th>입사일</th><th>퇴사일</th><th>상태</th><th>비고</th><th>수정</th><th>상태변경</th></tr></thead>
           <tbody id="employeeBody"></tbody>
         </table>
       </div>
@@ -374,6 +385,10 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     <!-- ④ 관리대상 건 -->
     <div class="page" id="page-unmatched">
       <div class="sec-title">관리대상 건<span class="sec-sub" id="mgmtSub"></span></div>
+      <div class="toolbar" style="margin-bottom:16px;">
+        <input type="month" id="mgmtMonth">
+        <button class="btn secondary" onclick="loadUnmatched()">조회</button>
+      </div>
 
       <!-- 작성자 미등록 -->
       <div class="accord-block">
@@ -454,6 +469,24 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
           <thead><tr><th>작성자</th><th>주제</th><th>등록일</th><th>회사+부서</th><th>태그</th><th>지식단계</th></tr></thead>
           <tbody id="knowledgeBody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- 03 조별우수사례 (준비중) -->
+    <div class="page" id="page-cases">
+      <div class="ready-wrap">
+        <div class="ready-icon">📊</div>
+        <div class="ready-title">조별우수사례</div>
+        <div class="ready-desc">조별 우수 지식 사례를 수집·관리하는 페이지입니다.<br>현재 준비 중입니다.</div>
+      </div>
+    </div>
+
+    <!-- 05 조편성 (준비중) -->
+    <div class="page" id="page-groups">
+      <div class="ready-wrap">
+        <div class="ready-icon">🗂️</div>
+        <div class="ready-title">조편성</div>
+        <div class="ready-desc">명단 기반으로 조를 편성하고 관리하는 페이지입니다.<br>현재 준비 중입니다.</div>
       </div>
     </div>
 
@@ -623,6 +656,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       if(btn.dataset.tab==='knowledge') loadKnowledgeList();
       if(btn.dataset.tab==='awards') loadAwards();
       if(btn.dataset.tab==='sync') loadSyncStatus();
+      // 준비중 탭들은 별도 로드 없음 (page-cases, page-groups)
     });
   });
 
@@ -706,8 +740,9 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
 
   /* ③ 관리대상 건 */
   function loadUnmatched(){
+    const ym = document.getElementById('mgmtMonth').value || '';
     Promise.all([
-      callApi('getMgmtItems'),
+      callApi('getMgmtItems', { yyyymm: ym }),
       callApi('getEmployees')
     ]).then(([data, emps])=>{
       employeeCache = emps;
@@ -897,10 +932,10 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   /* --- 양식 다운로드 (SheetJS로 클라이언트에서 직접 생성) --- */
   function downloadTemplate(){
     const wb = XLSX.utils.book_new();
-    const headers = [['계열사명','팀명','이름','입사일','이메일(선택)','재직상태(선택)']];
-    const example = [['꿈비','마케팅팀','홍길동','2024-03-01','hong@ggumbi.com','재직']];
+    const headers = [['계열사명','팀명','이름','입사일','퇴사일(선택)']];
+    const example = [['꿈비','마케팅팀','홍길동','2024-03-01',''],['꿈비','물류팀','김철수','2022-07-15','2026-05-31']];
     const ws = XLSX.utils.aoa_to_sheet([...headers, ...example]);
-    ws['!cols'] = [{wch:14},{wch:14},{wch:10},{wch:14},{wch:24},{wch:14}];
+    ws['!cols'] = [{wch:14},{wch:14},{wch:10},{wch:14},{wch:14}];
     XLSX.utils.book_append_sheet(wb, ws, '명단');
     XLSX.writeFile(wb, '지식DB_명단양식.xlsx');
   }
@@ -932,8 +967,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
           '팀명': '팀명', '부서': '팀명', '팀/부서': '팀명',
           '이름': '이름', '성명': '이름',
           '입사일': '입사일',
-          '이메일': '이메일', '이메일(선택)': '이메일',
-          '재직상태': '재직상태', '재직상태(선택)': '재직상태', '상태': '재직상태'
+          '퇴사일': '퇴사일', '퇴사일(선택)': '퇴사일',
         };
         const colMap = {};
         headers.forEach((h, i) => { if(FIELD_MAP[h]) colMap[i] = FIELD_MAP[h]; });
@@ -945,7 +979,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
         _parsedRoster = rows.slice(1)
           .filter(r => r.some(c => c !== ''))
           .map(r => {
-            const obj = { 재직상태: '재직', 이메일: '' };
+            const obj = { 퇴사일: '' };
             Object.entries(colMap).forEach(([i, field]) => {
               let val = String(r[i] || '').trim();
               if(field === '입사일' && val){
@@ -973,7 +1007,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     document.getElementById('previewSection').style.display = 'block';
     document.getElementById('previewCount').textContent = rows.length + '명';
     document.getElementById('previewAffiliate').textContent = '계열사: ' + affiliates.join(' · ');
-    const cols = ['계열사명','팀명','이름','입사일','이메일','재직상태'];
+    const cols = ['계열사명','팀명','이름','입사일','퇴사일'];
     document.getElementById('previewHead').innerHTML = '<tr>' + cols.map(c=>`<th>${c}</th>`).join('') + '</tr>';
     document.getElementById('previewBody').innerHTML = rows.slice(0,20).map(r=>
       '<tr>' + cols.map(c=>`<td>${r[c]||''}</td>`).join('') + '</tr>'
@@ -1025,7 +1059,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     body.innerHTML = list.map(e => `
       <tr>
         <td>${e.이름}</td><td>${coTag(e.회사)}</td><td>${e.부서||''}</td><td>${formatDate(e.입사일)}</td>
-        <td>${e.이메일||''}</td>
+        <td>${e.퇴사일||''}</td>
         <td><span class="badge ${e.상태}">${e.상태}</span></td><td>${e.비고||''}</td>
         <td><button class="btn small secondary" onclick='openEmployeeModal(${JSON.stringify(e)})'>수정</button></td>
         <td><button class="btn small secondary" onclick="openStatusModal('${e.직원ID}')">상태변경</button></td>
@@ -1110,33 +1144,58 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     '😊 연간지식왕 😊':'😊', '연간지식왕':'😊',
     '전사추천':'📣', '🚀 시작':'🚀', '시작':'🚀'
   };
+
+  function _awardCardHtml(k) {
+    const pageId = (k.NotionPageId||'').replace(/-/g,'');
+    const notionUrl = pageId ? `https://app.notion.com/p/${pageId}` : '';
+    const icon = AWARD_ICON[k.지식왕선정] || '🎖️';
+    const isTop = k.지식왕선정.includes('이달의 지식왕');
+    return `
+    <div class="award-card ${isTop ? 'gold top-award' : ''}" style="${notionUrl?'cursor:pointer;':''}" ${notionUrl?`onclick="window.open('${notionUrl}','_blank')"`:''}>
+      <div class="award-icon">${icon}</div>
+      <div class="award-cat">${k.지식왕선정}</div>
+      <div class="award-name">${k.작성자||'-'}</div>
+      <div class="award-topic">${k.주제||''}</div>
+      <div class="award-foot">
+        <span style="font-size:11px; color:var(--text3);">${coTag(k['회사+부서'])} · ${formatDate(k.등록일)}</span>
+        ${notionUrl ? `<span style="font-size:10px; color:var(--cyan);">열기 ↗</span>` : ''}
+      </div>
+    </div>`;
+  }
+
   function loadAwards(){
-    const ym = document.getElementById('awardMonth').value || '';  // 비어있으면 전체 조회
+    const ym = document.getElementById('awardMonth').value || '';
     callApi('getAwardList', { yyyymm: ym })
-      .then(renderAwards)
+      .then(list => renderAwards(list, ym))
       .catch(err => showToast('실패: ' + err.message));
   }
-  function renderAwards(list){
+
+  function renderAwards(list, ym){
     document.getElementById('awardSub').textContent = list.length + '건';
     const grid = document.getElementById('awardGrid');
     if(!list.length){ grid.innerHTML = '<div class="empty">지식왕 선정 항목이 없습니다.</div>'; return; }
-    grid.innerHTML = list.map(k => {
-      const pageId = (k.NotionPageId||'').replace(/-/g,'');
-      const notionUrl = pageId ? `https://app.notion.com/p/${pageId}` : '';
-      const icon = AWARD_ICON[k.지식왕선정] || '🎖️';
-      const isTop = k.지식왕선정.includes('지식왕');
-      return `
-      <div class="award-card ${isTop?'gold':''}" style="${notionUrl?'cursor:pointer;':''}" ${notionUrl?`onclick="window.open('${notionUrl}','_blank')"`:''}>
-        <div class="award-icon">${icon}</div>
-        <div class="award-cat">${k.지식왕선정}</div>
-        <div class="award-name">${k.작성자||'-'}</div>
-        <div class="award-topic">${k.주제||''}</div>
-        <div class="award-foot">
-          <span style="font-size:11px; color:var(--text3);">${coTag(k['회사+부서'])} · ${formatDate(k.등록일)}</span>
-          ${notionUrl ? `<span style="font-size:10px; color:var(--cyan);">열기 ↗</span>` : ''}
-        </div>
-      </div>`;
-    }).join('');
+
+    if(ym){
+      // 월 선택 시 — 단순 그리드
+      grid.innerHTML = list.map(_awardCardHtml).join('');
+    } else {
+      // 월 미선택 — 등록일 기준 월별 소분류
+      const monthMap = {};
+      list.forEach(k => {
+        const m = (k.등록일 || '').slice(0, 7) || '날짜미상';
+        if(!monthMap[m]) monthMap[m] = [];
+        monthMap[m].push(k);
+      });
+      const sortedMonths = Object.keys(monthMap).sort((a,b) => b.localeCompare(a));
+      grid.innerHTML = sortedMonths.map(m => {
+        const label = m === '날짜미상' ? '날짜 미지정' : m.replace('-', '.') + '월';
+        const cards = monthMap[m].map(_awardCardHtml).join('');
+        return `<div class="award-month-group">
+          <div class="award-month-label">${label} &nbsp;· ${monthMap[m].length}건</div>
+          <div class="award-grid">${cards}</div>
+        </div>`;
+      }).join('');
+    }
   }
 
   /* ⑦ 동기화 설정 */

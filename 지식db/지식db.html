@@ -302,7 +302,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
           <div>
             <div class="hero-eyebrow">Monthly Report</div>
             <div class="hero-title">이번 달 <span class="hl" id="heroMonth">--</span> 지식 작성 현황</div>
-            <div class="hero-sub">계열사 전체 작성 대상자 대비 작성률을 실시간으로 보여줍니다.</div>
+            <div class="hero-sub">그룹사 전체 작성 대상자 대비 작성률을 실시간으로 보여줍니다.</div>
           </div>
           <div class="hero-stats">
             <div class="hero-stat"><div class="hero-stat-val" id="heroRate">--<span class="unit">%</span></div><div class="hero-stat-label">작성률</div></div>
@@ -319,7 +319,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       <div class="sec-title">Key Metrics</div>
       <div class="kpi-row" id="summaryKpiRow"></div>
 
-      <div class="sec-title">계열사별 작성률<span class="sec-sub" id="coCount"></span></div>
+      <div class="sec-title">그룹사별 작성률<span class="sec-sub" id="coCount"></span></div>
       <div class="co-grid" id="coGrid"></div>
 
       <!-- [임시 디버그] 대상자 필터링 단계별 진단 패널 -->
@@ -331,21 +331,28 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
 
     <!-- ② 명단 제출 (구: 직원 관리) -->
     <div class="page" id="page-employees">
-      <div class="sec-title">명단 제출<span class="sec-sub">계열사별 인원 명단을 엑셀로 업로드합니다.</span></div>
+      <div class="sec-title">명단 제출<span class="sec-sub">그룹사별 인원 명단을 엑셀로 업로드합니다. (월 1회 제출)</span></div>
 
-      <!-- 업로드 영역 -->
-      <div class="upload-zone" id="uploadZone">
-        <div class="upload-icon">📋</div>
-        <div class="upload-title">명단 엑셀 파일 업로드</div>
-        <div class="upload-desc">지정된 양식(.xlsx)을 작성 후 드래그하거나 버튼으로 선택해주세요.</div>
-        <div style="display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap;">
-          <button class="btn secondary" onclick="downloadTemplate()">📥 양식 다운로드</button>
-          <label class="btn" style="cursor:pointer;">
-            📤 파일 선택
-            <input type="file" id="rosterFile" accept=".xlsx,.xls" style="display:none" onchange="handleFileSelect(this)">
-          </label>
+      <!-- 업로드 영역(1/4) + 그룹사별 제출일(3/4) -->
+      <div style="display:flex; gap:16px; align-items:stretch; flex-wrap:wrap;">
+        <div class="upload-zone" id="uploadZone" style="flex:0 0 25%; min-width:220px;">
+          <div class="upload-icon">📋</div>
+          <div class="upload-title">명단 엑셀 파일 업로드</div>
+          <div class="upload-desc">지정된 양식(.xlsx)을 작성 후 드래그하거나 버튼으로 선택해주세요.</div>
+          <div style="display:flex; gap:8px; justify-content:center; margin-top:16px; flex-wrap:wrap;">
+            <button class="btn secondary" onclick="downloadTemplate()">📥 양식 다운로드</button>
+            <label class="btn" style="cursor:pointer;">
+              📤 파일 선택
+              <input type="file" id="rosterFile" accept=".xlsx,.xls" style="display:none" onchange="handleFileSelect(this)">
+            </label>
+          </div>
+          <div id="uploadStatus" style="margin-top:12px; font-size:11.5px; color:var(--text3);"></div>
         </div>
-        <div id="uploadStatus" style="margin-top:12px; font-size:12px; color:var(--text3);"></div>
+
+        <div class="panel" style="flex:1; min-width:280px; margin:0;">
+          <div class="panel-toolbar"><b style="font-size:12.5px;">그룹사별 제출 현황</b></div>
+          <div id="rosterSubmitLog" style="padding:14px 16px; display:flex; gap:12px; flex-wrap:wrap;"></div>
+        </div>
       </div>
 
       <!-- 미리보기 + 제출 -->
@@ -368,10 +375,12 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
 
       <div class="note-box" style="margin-bottom:20px;">
         <div>
-          <b>양식 안내</b> — 필수: 계열사명 · 팀명 · 이름 · 입사일 &nbsp;|&nbsp; 선택: 근무지 · 퇴사일<br>
-          <span style="font-size:11px;">• 입사일 형식: YYYY-MM-DD 또는 YYYY/MM/DD<br>
+          <b>양식 안내</b> — 필수: 그룹사명 · 팀명 · 이름 · 입사일 &nbsp;|&nbsp; 선택: 퇴사일 · 근무지 · 휴직시작 · 휴직종료 · 비고<br>
+          <span style="font-size:11px;">• 입사일/퇴사일/휴직시작/휴직종료 형식: YYYY-MM-DD 또는 YYYY/MM/DD<br>
           • 퇴사일 미입력 시 재직중으로 처리됩니다. 퇴사자는 퇴사일을 입력해주세요.<br>
-          • 동일 계열사 재업로드 시 기존 명단은 덮어씁니다.</span>
+          • 휴직시작만 입력하고 휴직종료를 비우면 종료 시점 미정(무기한 휴직)으로 처리됩니다.<br>
+          • 그룹사별로 업로드할 때마다 해당 그룹사의 기존 명단 전체를 새 파일 내용으로 덮어씁니다. (다른 그룹사는 영향 없음)<br>
+          • 명단은 그룹사별로 월 1회 제출을 원칙으로 합니다.</span>
         </div>
       </div>
 
@@ -379,17 +388,19 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       <div class="panel">
         <div class="panel-toolbar">
           <select id="filterAffiliate" onchange="loadEmployees()" style="min-width:120px;">
-            <option value="">전체 계열사</option>
+            <option value="">전체 그룹사</option>
           </select>
           <button class="btn secondary" onclick="loadEmployees()">새로고침</button>
           <button class="btn secondary" onclick="openEmployeeModal()">+ 개별 추가</button>
-          <button class="btn secondary" onclick="repairEmployeeStatus()" style="color:var(--gold);">🔧 상태 데이터 정리 (1회성)</button>
+          <button class="btn secondary" onclick="resetEmployeeSheet()" style="color:var(--red); border-color:var(--red);">⚠️ 시트 구조 초기화 (전체 삭제)</button>
           <span id="compareResult" style="font-size:11.5px; color:var(--text3);"></span>
         </div>
+        <div style="overflow-x:auto;">
         <table>
-          <thead><tr><th>이름</th><th>회사</th><th>팀/부서</th><th>근무지</th><th>입사일</th><th>퇴사일</th><th>상태</th><th>비고</th><th>수정</th><th>상태변경</th></tr></thead>
+          <thead><tr><th>이름</th><th>그룹사</th><th>팀/부서</th><th>근무지</th><th>입사일</th><th>퇴사일</th><th>휴직시작</th><th>휴직종료</th><th>상태</th><th>비고</th><th>수정</th><th>상태변경</th></tr></thead>
           <tbody id="employeeBody"></tbody>
         </table>
+        </div>
       </div>
     </div>
 
@@ -454,7 +465,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
           <span class="accord-arrow" id="arrow-dup">▶</span>
         </div>
         <div class="accord-body" id="accord-dup" style="display:none;">
-          <div class="accord-desc">복사본 표기 (1) 제외 시 같은 계열사·부서에서 제목이 100% 동일한 건 — 중복 여부를 직접 확인해주세요.</div>
+          <div class="accord-desc">복사본 표기 (1) 제외 시 같은 그룹사·부서에서 제목이 100% 동일한 건 — 중복 여부를 직접 확인해주세요.</div>
           <div id="list-dup"></div>
         </div>
       </div>
@@ -552,6 +563,8 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     <div class="field"><label>부서</label><input type="text" id="empDept"></div>
     <div class="field"><label>근무지</label><input type="text" id="empWorkplace"></div>
     <div class="field"><label>입사일</label><input type="date" id="empJoin"></div>
+    <div class="field"><label>휴직시작</label><input type="date" id="empLeaveStart"></div>
+    <div class="field"><label>휴직종료</label><input type="date" id="empLeaveEnd"></div>
     <div class="field"><label>상태</label>
       <select id="empStatus"><option>재직</option><option>퇴사</option><option>휴직</option><option>열외</option></select>
     </div>
@@ -676,7 +689,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       btn.classList.add('active');
       document.getElementById('page-' + btn.dataset.tab).classList.add('active');
       if(btn.dataset.tab==='summary') loadSummary();
-      if(btn.dataset.tab==='employees') loadEmployees();
+      if(btn.dataset.tab==='employees'){ loadEmployees(); loadRosterSubmitLog(); }
       if(btn.dataset.tab==='nonwriters') loadNonWriters();
       if(btn.dataset.tab==='unmatched') loadUnmatched();
       if(btn.dataset.tab==='knowledge') loadKnowledgeList();
@@ -719,7 +732,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       <div class="kpi-card"><div class="kpi-label">미매칭 건</div><div class="kpi-val red">${data.unmatchedCount}</div></div>
     `;
 
-    document.getElementById('coCount').textContent = data.companyStats.length + '개 계열사';
+    document.getElementById('coCount').textContent = data.companyStats.length + '개 그룹사';
 
     // [임시 디버그] 원인 파악용 — 콘솔 + 화면 패널 둘 다 출력
     if (data._debug) {
@@ -965,10 +978,13 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   /* --- 양식 다운로드 (SheetJS로 클라이언트에서 직접 생성) --- */
   function downloadTemplate(){
     const wb = XLSX.utils.book_new();
-    const headers = [['계열사명','팀명','근무지','이름','입사일','퇴사일(선택)']];
-    const example = [['꿈비','마케팅팀','본사','홍길동','2024-03-01',''],['꿈비','물류팀','물류센터','김철수','2022-07-15','2026-05-31']];
+    const headers = [['그룹사명','팀명','이름','입사일','퇴사일','근무지','휴직시작','휴직종료','비고']];
+    const example = [
+      ['꿈비','마케팅팀','홍길동','2024-03-01','','본사','',''  ,''],
+      ['꿈비','물류팀','김철수','2022-07-15','2026-05-31','물류센터','',''  ,'']
+    ];
     const ws = XLSX.utils.aoa_to_sheet([...headers, ...example]);
-    ws['!cols'] = [{wch:14},{wch:14},{wch:12},{wch:10},{wch:14},{wch:14}];
+    ws['!cols'] = [{wch:14},{wch:14},{wch:10},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:18}];
     XLSX.utils.book_append_sheet(wb, ws, '명단');
     XLSX.writeFile(wb, '지식DB_명단양식.xlsx');
   }
@@ -996,27 +1012,30 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
 
         const headers = rows[0].map(h => String(h).trim());
         const FIELD_MAP = {
-          '계열사명': '계열사명', '계열사': '계열사명',
+          '그룹사명': '그룹사명', '그룹사': '그룹사명', '계열사명': '그룹사명', '계열사': '그룹사명',
           '팀명': '팀명', '부서': '팀명', '팀/부서': '팀명',
-          '근무지': '근무지',
           '이름': '이름', '성명': '이름',
           '입사일': '입사일',
           '퇴사일': '퇴사일', '퇴사일(선택)': '퇴사일',
+          '근무지': '근무지',
+          '휴직시작': '휴직시작', '휴직시작일': '휴직시작',
+          '휴직종료': '휴직종료', '휴직종료일': '휴직종료',
+          '비고': '비고',
         };
         const colMap = {};
         headers.forEach((h, i) => { if(FIELD_MAP[h]) colMap[i] = FIELD_MAP[h]; });
 
-        const required = ['계열사명','팀명','이름','입사일'];
+        const required = ['그룹사명','팀명','이름','입사일'];
         const missing = required.filter(r => !Object.values(colMap).includes(r));
         if(missing.length){ status.textContent = '❌ 필수 컬럼 누락: ' + missing.join(', '); return; }
 
         _parsedRoster = rows.slice(1)
           .filter(r => r.some(c => c !== ''))
           .map(r => {
-            const obj = { 퇴사일: '', 근무지: '' };
+            const obj = { 퇴사일: '', 근무지: '', 휴직시작: '', 휴직종료: '', 비고: '' };
             Object.entries(colMap).forEach(([i, field]) => {
               let val = String(r[i] || '').trim();
-              if(field === '입사일' && val){
+              if((field === '입사일' || field === '퇴사일' || field === '휴직시작' || field === '휴직종료') && val){
                 val = val.replace(/\//g, '-');
                 if(!/^\d{4}-\d{2}/.test(val) && typeof r[i] === 'number'){
                   const d = XLSX.SSF.parse_date_code(r[i]);
@@ -1028,8 +1047,8 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
             return obj;
           });
 
-        const affiliates = [...new Set(_parsedRoster.map(r=>r.계열사명).filter(Boolean))];
-        status.textContent = `✅ ${_parsedRoster.length}명 파싱 완료 (계열사: ${affiliates.join(', ')})`;
+        const affiliates = [...new Set(_parsedRoster.map(r=>r.그룹사명).filter(Boolean))];
+        status.textContent = `✅ ${_parsedRoster.length}명 파싱 완료 (그룹사: ${affiliates.join(', ')})`;
         renderPreview(_parsedRoster, affiliates);
       } catch(err){ status.textContent = '❌ 파일 읽기 실패: ' + err.message; }
     };
@@ -1040,8 +1059,8 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   function renderPreview(rows, affiliates){
     document.getElementById('previewSection').style.display = 'block';
     document.getElementById('previewCount').textContent = rows.length + '명';
-    document.getElementById('previewAffiliate').textContent = '계열사: ' + affiliates.join(' · ');
-    const cols = ['계열사명','팀명','근무지','이름','입사일','퇴사일'];
+    document.getElementById('previewAffiliate').textContent = '그룹사: ' + affiliates.join(' · ');
+    const cols = ['그룹사명','팀명','이름','입사일','퇴사일','근무지','휴직시작','휴직종료','비고'];
     document.getElementById('previewHead').innerHTML = '<tr>' + cols.map(c=>`<th>${c}</th>`).join('') + '</tr>';
     document.getElementById('previewBody').innerHTML = rows.slice(0,20).map(r=>
       '<tr>' + cols.map(c=>`<td>${r[c]||''}</td>`).join('') + '</tr>'
@@ -1054,7 +1073,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     document.getElementById('uploadStatus').textContent = '';
   }
 
-  /* --- GAS에 제출 (계열사별 저장) --- */
+  /* --- GAS에 제출 (그룹사별로 전체 덮어쓰기 저장) --- */
   function submitRoster(){
     if(!_parsedRoster.length){ showToast('업로드된 데이터가 없습니다.'); return; }
     const btn = event.target;
@@ -1064,17 +1083,46 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
         showToast(`저장 완료: ${r.savedCount}명 (${r.affiliates.join(', ')})`);
         cancelPreview();
         loadEmployees();
+        loadRosterSubmitLog();
       })
       .catch(err=>{ showToast('실패: ' + err.message); })
       .finally(()=>{ btn.disabled=false; btn.textContent='구글시트에 저장'; });
   }
 
-  /* --- [1회성] 상태/비고 밀림 데이터 정리 --- */
-  function repairEmployeeStatus(){
-    if(!confirm('상태 칸에 날짜가, 비고 칸에 상태 텍스트가 밀려 들어간 행을 자동으로 찾아서\n제자리로 옮깁니다. 일반 메모가 있는 비고는 건드리지 않습니다.\n계속할까요?')) return;
-    callApi('repairEmployeeStatus').then(r=>{
-      showToast(`${r.repaired}건 정리 완료 (전체 ${r.total}명 중)`);
+  /* --- 그룹사별 제출 현황 (업로드 카드 옆 3/4 공간) --- */
+  function loadRosterSubmitLog(){
+    const box = document.getElementById('rosterSubmitLog');
+    if(!box) return;
+    callApi('getRosterSubmitLog').then(list=>{
+      const byCompany = {};
+      list.forEach(l => byCompany[l.그룹사] = l);
+      const allCompanies = [...new Set([...GROUP_COMPANIES_HINT, ...list.map(l=>l.그룹사)])];
+      if(!allCompanies.length){ box.innerHTML = '<div class="empty" style="padding:0;">제출 이력이 없습니다.</div>'; return; }
+      box.innerHTML = allCompanies.map(c => {
+        const log = byCompany[c];
+        const submitted = !!log;
+        return `
+        <div style="flex:1; min-width:140px; border:1px solid var(--border2); border-radius:10px; padding:10px 14px; background:${submitted?'var(--bg2)':'transparent'};">
+          <div style="font-size:11.5px; font-weight:700; margin-bottom:4px;">${coTag(c)}</div>
+          ${submitted
+            ? `<div style="font-size:12px; color:var(--text);">${formatDate(log.최종제출일시)}</div><div style="font-size:10.5px; color:var(--text3);">${log.제출건수}명 제출</div>`
+            : `<div style="font-size:11.5px; color:var(--text3);">아직 미제출</div>`}
+        </div>`;
+      }).join('');
+    }).catch(()=>{ box.innerHTML = '<div class="empty" style="padding:0;">불러오기 실패</div>'; });
+  }
+  // 화면에 항상 노출할 그룹사 힌트 목록(미제출 그룹사도 카드로 보여주기 위함)
+  const GROUP_COMPANIES_HINT = ['꿈비','에르모어','가이아','옥토아이앤씨'];
+
+  /* --- [1회성] 그룹사별 명단 시트 구조 초기화 (기존 데이터 전체 삭제) --- */
+  function resetEmployeeSheet(){
+    if(!confirm('⚠️ 그룹사별 명단 시트(꿈비/에르모어/가이아/옥토아이앤씨)의 기존 데이터가 전부 삭제되고,\n올바른 헤더(근무지·퇴사일·휴직시작·휴직종료 포함)로 새로 만들어집니다.\n\n정말 계속하시겠습니까?')) return;
+    if(!confirm('마지막 확인입니다. 되돌릴 수 없습니다.\n초기화를 진행할까요?')) return;
+    callApi('resetEmployeeSheet').then(r=>{
+      console.log('[시트 초기화 결과]', r);
+      showToast('시트 초기화 완료. 새 명단을 업로드해주세요.');
       loadEmployees();
+      loadRosterSubmitLog();
     }).catch(err => showToast('실패: ' + err.message));
   }
 
@@ -1087,7 +1135,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       if(sel){
         const affiliates = [...new Set(list.map(e=>e.회사).filter(Boolean))];
         const current = sel.value;
-        sel.innerHTML = '<option value="">전체 계열사</option>' +
+        sel.innerHTML = '<option value="">전체 그룹사</option>' +
           affiliates.map(a=>`<option value="${a}" ${a===current?'selected':''}>${a}</option>`).join('');
       }
       const filtered = af ? list.filter(e=>e.회사===af) : list;
@@ -1098,11 +1146,12 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   function renderEmployees(list){
     employeeCache = list;
     const body = document.getElementById('employeeBody');
-    if(!list.length){ body.innerHTML = '<tr><td colspan="10" class="empty">등록된 직원이 없습니다.</td></tr>'; return; }
+    if(!list.length){ body.innerHTML = '<tr><td colspan="12" class="empty">등록된 직원이 없습니다.</td></tr>'; return; }
     body.innerHTML = list.map(e => `
       <tr>
         <td>${e.이름}</td><td>${coTag(e.회사)}</td><td>${e.부서||''}</td><td>${e.근무지||''}</td><td>${formatDate(e.입사일)}</td>
-        <td>${e.퇴사일||''}</td>
+        <td>${e.퇴사일?formatDate(e.퇴사일):''}</td>
+        <td>${e.휴직시작?formatDate(e.휴직시작):''}</td><td>${e.휴직종료?formatDate(e.휴직종료):''}</td>
         <td><span class="badge ${e.상태}">${e.상태}</span></td><td>${e.비고||''}</td>
         <td><button class="btn small secondary" onclick='openEmployeeModal(${JSON.stringify(e)})'>수정</button></td>
         <td><button class="btn small secondary" onclick="openStatusModal('${e.직원ID}')">상태변경</button></td>
@@ -1117,6 +1166,8 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     document.getElementById('empDept').value = emp ? emp.부서 : '';
     document.getElementById('empWorkplace').value = emp ? (emp.근무지||'') : '';
     document.getElementById('empJoin').value = emp ? formatDate(emp.입사일) : '';
+    document.getElementById('empLeaveStart').value = emp && emp.휴직시작 ? formatDate(emp.휴직시작) : '';
+    document.getElementById('empLeaveEnd').value = emp && emp.휴직종료 ? formatDate(emp.휴직종료) : '';
     document.getElementById('empStatus').value = emp ? emp.상태 : '재직';
     document.getElementById('empMemo').value = emp ? (emp.비고||'') : '';
     openModal('employeeModalBg');
@@ -1129,6 +1180,8 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       부서: document.getElementById('empDept').value,
       근무지: document.getElementById('empWorkplace').value,
       입사일: document.getElementById('empJoin').value,
+      휴직시작: document.getElementById('empLeaveStart').value,
+      휴직종료: document.getElementById('empLeaveEnd').value,
       상태: document.getElementById('empStatus').value,
       비고: document.getElementById('empMemo').value
     };

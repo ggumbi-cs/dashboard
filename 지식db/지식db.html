@@ -161,6 +161,26 @@ button.btn.small{ padding:5px 12px; font-size:11px; border-radius:7px; }
 .modal .field input,.modal .field select,.modal .field textarea{ width:100%; }
 .modal .actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:18px; }
 
+/* ───────── 관리대상 건 아코디언 ───────── */
+.accord-block{ border:1px solid var(--border); border-radius:13px; overflow:hidden; margin-bottom:12px; }
+.accord-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 20px; background:var(--bg2); cursor:pointer; user-select:none; }
+.accord-head:hover{ background:var(--bg3); }
+.accord-title{ display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600; color:var(--text); }
+.accord-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.accord-badge{ background:var(--bg3); border:1px solid var(--border); border-radius:20px; padding:1px 9px; font-size:11px; font-weight:700; color:var(--text2); font-family:var(--font-mono); }
+.accord-arrow{ font-size:11px; color:var(--text3); transition:transform .2s; }
+.accord-arrow.open{ transform:rotate(90deg); }
+.accord-body{ border-top:1px solid var(--border); }
+.accord-desc{ padding:10px 20px; font-size:11.5px; color:var(--text3); background:var(--bg3); border-bottom:1px solid var(--border); }
+.mgmt-row{ display:flex; align-items:flex-start; gap:14px; padding:13px 20px; border-bottom:1px solid var(--border); }
+.mgmt-row:last-child{ border-bottom:none; }
+.mgmt-info{ flex:1; min-width:0; }
+.mgmt-title{ font-size:13px; font-weight:600; color:var(--text); margin-bottom:4px; cursor:pointer; }
+.mgmt-title:hover{ color:var(--cyan); }
+.mgmt-meta{ font-size:11px; color:var(--text3); display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.mgmt-action{ flex-shrink:0; display:flex; gap:6px; align-items:center; }
+.dup-group{ background:var(--bg3); border-bottom:1px solid var(--border); }
+.dup-group-title{ padding:9px 20px; font-size:11px; color:var(--text3); font-weight:700; letter-spacing:.5px; }
 /* ───────── 지식DB 행 클릭 ───────── */
 table tr.clickable:hover td{ background:rgba(0,200,255,0.04); cursor:pointer; }
 
@@ -221,10 +241,11 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     <div class="nav-item active" data-tab="summary"><div class="nav-icon">01</div><div class="nav-label">요약 대시보드</div></div>
     <div class="nav-item" data-tab="employees"><div class="nav-icon">02</div><div class="nav-label">명단 제출</div></div>
     <div class="nav-item" data-tab="nonwriters"><div class="nav-icon">03</div><div class="nav-label">미제출자 현황</div></div>
-    <div class="nav-item" data-tab="unmatched"><div class="nav-icon">04</div><div class="nav-label">미매칭 건</div></div>
+    <div class="nav-item" data-tab="unmatched"><div class="nav-icon">04</div><div class="nav-label">관리대상 건</div></div>
     <div class="nav-item" data-tab="knowledge"><div class="nav-icon">05</div><div class="nav-label">작성현황</div></div>
     <div class="nav-item" data-tab="awards"><div class="nav-icon">06</div><div class="nav-label">수상작 관리</div></div>
-    <div class="nav-item" data-tab="sync"><div class="nav-icon">07</div><div class="nav-label">동기화 설정</div></div>
+    </nav>
+    <div class="nav-item" data-tab="sync" style="margin:4px 4px 0;"><div class="nav-icon">99</div><div class="nav-label">동기화 설정</div></div>
     <div id="sidebar-foot">노션 원본 속성은 동기화 시<br>절대 덮어쓰지 않습니다.</div>
   </div>
 
@@ -332,10 +353,57 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       <div class="list-card" id="nonwriterList"></div>
     </div>
 
-    <!-- ④ 미매칭 건 (구: ③) -->
+    <!-- ④ 관리대상 건 -->
     <div class="page" id="page-unmatched">
-      <div class="sec-title">미매칭 건 — 주인 찾기<span class="sec-sub">작성자 속성이 비어있는 건. 지정 시 노션에 자동 반영됩니다.</span></div>
-      <div class="list-card" id="unmatchedList"></div>
+      <div class="sec-title">관리대상 건<span class="sec-sub" id="mgmtSub"></span></div>
+
+      <!-- 작성자 미등록 -->
+      <div class="accord-block">
+        <div class="accord-head" onclick="toggleAccord('accord-noauthor')">
+          <div class="accord-title">
+            <span class="accord-dot" style="background:var(--gold)"></span>
+            작성자 미등록
+            <span class="accord-badge" id="badge-noauthor">0</span>
+          </div>
+          <span class="accord-arrow" id="arrow-noauthor">▶</span>
+        </div>
+        <div class="accord-body" id="accord-noauthor" style="display:none;">
+          <div class="accord-desc">작성자 속성이 비어있는 건 — 직원을 지정하면 노션에 자동 반영됩니다.</div>
+          <div id="list-noauthor"></div>
+        </div>
+      </div>
+
+      <!-- 등록일 미등록 -->
+      <div class="accord-block">
+        <div class="accord-head" onclick="toggleAccord('accord-nodate')">
+          <div class="accord-title">
+            <span class="accord-dot" style="background:var(--red)"></span>
+            등록일 미등록
+            <span class="accord-badge" id="badge-nodate">0</span>
+          </div>
+          <span class="accord-arrow" id="arrow-nodate">▶</span>
+        </div>
+        <div class="accord-body" id="accord-nodate" style="display:none;">
+          <div class="accord-desc">등록일 속성이 비어있는 건 — 해당 월 작성 현황 집계에서 제외됩니다.</div>
+          <div id="list-nodate"></div>
+        </div>
+      </div>
+
+      <!-- 중복등록 -->
+      <div class="accord-block">
+        <div class="accord-head" onclick="toggleAccord('accord-dup')">
+          <div class="accord-title">
+            <span class="accord-dot" style="background:var(--purple)"></span>
+            중복등록 확인필요
+            <span class="accord-badge" id="badge-dup">0</span>
+          </div>
+          <span class="accord-arrow" id="arrow-dup">▶</span>
+        </div>
+        <div class="accord-body" id="accord-dup" style="display:none;">
+          <div class="accord-desc">복사본 표기 (1) 제외 시 제목이 100% 동일한 건 — 중복 여부를 직접 확인해주세요.</div>
+          <div id="list-dup"></div>
+        </div>
+      </div>
     </div>
 
     <!-- ⑤ 지식DB 작성현황 -->
@@ -591,46 +659,112 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       .catch(err => showToast('실패: ' + err.message));
   }
 
-  /* ③ 미매칭 건 */
-  let employeeCache = [];
+  /* ③ 관리대상 건 */
   function loadUnmatched(){
-    callApi('getUnmatched').then(list=>{
-      callApi('getEmployees').then(emps=>{
-        employeeCache = emps;
-        renderUnmatched(list);
-      }).catch(err => showToast('실패: ' + err.message));
+    Promise.all([
+      callApi('getMgmtItems'),
+      callApi('getEmployees')
+    ]).then(([data, emps])=>{
+      employeeCache = emps;
+      renderMgmtItems(data);
     }).catch(err => showToast('실패: ' + err.message));
   }
-  function renderUnmatched(list){
-    const wrap = document.getElementById('unmatchedList');
-    if(!list.length){ wrap.innerHTML = '<div class="empty">미매칭 건이 없습니다.</div>'; return; }
-    const options = employeeCache.map(e=>`<option value="${e.직원ID}">${e.이름} (${e.회사})</option>`).join('');
-    wrap.innerHTML = list.map(u => {
-      const pageId = (u.NotionPageId||'').replace(/-/g,'');
-      const notionUrl = pageId ? `https://app.notion.com/p/${pageId}` : '';
-      return `
-      <div class="list-row">
-        <div class="list-dot" style="background:var(--gold);"></div>
-        <div class="list-main" style="${notionUrl?'cursor:pointer;':''}" ${notionUrl?`onclick="window.open('${notionUrl}','_blank')"`:''}> 
-          <div class="list-name">${u.주제}</div>
-          <div class="list-meta"><span>등록 ${formatDate(u.등록일)}</span><span>생성자 ${u['생성자(노션계정)']}</span><span>${u['회사+부서(원문)']}</span></div>
-        </div>
-        <div class="list-action" style="display:flex; gap:6px;">
-          <select id="sel_${u.NotionPageId}"><option value="">선택</option>${options}</select>
-          <button class="btn small" onclick="resolveUnmatched('${u.NotionPageId}')">지정</button>
-        </div>
-      </div>`;
-    }).join('');
+
+  function toggleAccord(id){
+    const body = document.getElementById(id);
+    const arrow = document.getElementById('arrow-' + id.replace('accord-',''));
+    if(!body) return;
+    const open = body.style.display !== 'none';
+    body.style.display = open ? 'none' : 'block';
+    if(arrow) arrow.classList.toggle('open', !open);
   }
+
+  function mgmtInfoLine(item){
+    const date = item.생성일시 ? formatDate(item.생성일시) : (item.등록일 ? formatDate(item.등록일) : '-');
+    const creator = item.생성자 || '-';
+    return `페이지생성일: ${date.replace(/-/g,'.')}&nbsp;&nbsp;생성자: ${creator}`;
+  }
+
+  function renderMgmtItems(data){
+    const total = data.noAuthor.length + data.noDate.length + data.duplicates.reduce((s,g)=>s+g.length,0);
+    document.getElementById('mgmtSub').textContent = `총 ${total}건`;
+
+    // 작성자 미등록
+    document.getElementById('badge-noauthor').textContent = data.noAuthor.length;
+    const noAuthList = document.getElementById('list-noauthor');
+    if(!data.noAuthor.length){
+      noAuthList.innerHTML = '<div class="empty">해당 건 없음</div>';
+    } else {
+      const options = employeeCache.map(e=>`<option value="${e.직원ID}">${e.이름} (${e.회사})</option>`).join('');
+      noAuthList.innerHTML = data.noAuthor.map(u=>{
+        const pageId = (u.NotionPageId||'').replace(/-/g,'');
+        const url = pageId ? `https://app.notion.com/p/${pageId}` : '';
+        return `<div class="mgmt-row">
+          <div class="mgmt-info">
+            <div class="mgmt-title" ${url?`onclick="window.open('${url}','_blank')"`:''}>${u.주제||'(제목없음)'}</div>
+            <div class="mgmt-meta">${coTag(u['회사+부서']||u['회사+부서(원문)']||'')}<span>${mgmtInfoLine(u)}</span></div>
+          </div>
+          <div class="mgmt-action">
+            <select id="sel_${u.NotionPageId}"><option value="">직원 선택</option>${options}</select>
+            <button class="btn small" onclick="resolveUnmatched('${u.NotionPageId}')">지정</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // 등록일 미등록
+    document.getElementById('badge-nodate').textContent = data.noDate.length;
+    const noDateList = document.getElementById('list-nodate');
+    if(!data.noDate.length){
+      noDateList.innerHTML = '<div class="empty">해당 건 없음</div>';
+    } else {
+      noDateList.innerHTML = data.noDate.map(k=>{
+        const pageId = (k.NotionPageId||'').replace(/-/g,'');
+        const url = pageId ? `https://app.notion.com/p/${pageId}` : '';
+        return `<div class="mgmt-row">
+          <div class="mgmt-info">
+            <div class="mgmt-title" ${url?`onclick="window.open('${url}','_blank')"`:''}>${k.주제||'(제목없음)'}</div>
+            <div class="mgmt-meta">${coTag(k['회사+부서']||'')}<span>${mgmtInfoLine(k)}</span></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // 중복등록
+    const dupTotal = data.duplicates.reduce((s,g)=>s+g.length,0);
+    document.getElementById('badge-dup').textContent = dupTotal + `건 (${data.duplicates.length}그룹)`;
+    const dupList = document.getElementById('list-dup');
+    if(!data.duplicates.length){
+      dupList.innerHTML = '<div class="empty">해당 건 없음</div>';
+    } else {
+      dupList.innerHTML = data.duplicates.map(group=>{
+        const normTitle = group[0].주제.replace(/\s*\(\d+\)\s*$/, '').trim();
+        const items = group.map(k=>{
+          const pageId = (k.NotionPageId||'').replace(/-/g,'');
+          const url = pageId ? `https://app.notion.com/p/${pageId}` : '';
+          return `<div class="mgmt-row">
+            <div class="mgmt-info">
+              <div class="mgmt-title" ${url?`onclick="window.open('${url}','_blank')"`:''}>${k.주제}</div>
+              <div class="mgmt-meta">${coTag(k['회사+부서']||'')}<span>${mgmtInfoLine(k)}</span></div>
+            </div>
+          </div>`;
+        }).join('');
+        return `<div class="dup-group"><div class="dup-group-title">📌 "${normTitle}" — ${group.length}건</div>${items}</div>`;
+      }).join('');
+    }
+  }
+
   function resolveUnmatched(pageId){
     const sel = document.getElementById('sel_' + pageId);
-    if(!sel.value){ showToast('직원을 선택해주세요.'); return; }
+    if(!sel || !sel.value){ showToast('직원을 선택해주세요.'); return; }
     callApi('resolveUnmatched', { pageId, empId: sel.value })
       .then(()=>{ showToast('매칭 완료 및 노션 반영되었습니다.'); loadUnmatched(); })
       .catch(err => showToast('실패: ' + err.message));
   }
 
-  /* ④ 직원 관리 / 명단 제출 */
+  let employeeCache = [];
+
+  /* ② 명단 제출 / 직원 관리 */
 
   /* --- 드래그앤드롭 --- */
   (function(){

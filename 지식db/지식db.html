@@ -100,7 +100,16 @@ body{ background-image:radial-gradient(circle at 15% 0%, rgba(0,200,255,0.05) 0%
 .co-meta b{ color:var(--text2); font-weight:600; }
 
 .panel{ background:var(--bg2); border:1px solid var(--border); border-radius:15px; overflow:hidden; }
-.panel.no-clip{ overflow:visible; } /* sticky thead가 있는 패널은 overflow:hidden이 sticky를 무력화하므로 해제 */
+.panel.no-clip{ overflow:visible; } /* (구) sticky thead 대응용 — 현재는 로컬 스크롤박스 방식으로 대체되어 사실상 불필요 */
+.sticky-scroll-box{ max-height:65vh; overflow:auto; } /* 가로/세로 스크롤을 한 박스에서 처리 → sticky 기준점이 명확해짐 */
+.sticky-scroll-box .sticky-thead-table thead th{ top:0; } /* 로컬 스크롤 기준이므로 상태바 오프셋(38px) 불필요 */
+.group-scroll-box{ max-height:65vh; overflow:auto; }
+.group-scroll-box .sticky-thead-table thead th{ top:0; }
+.group-table th, .group-table td{ padding:7px 10px; }
+.group-table select{ padding:3px 4px; font-size:11.5px; border-radius:6px; }
+.group-table tr.pick-row td{ background:var(--cyan-dim); }
+.pick-action{ cursor:pointer; color:var(--gold); font-size:11px; text-decoration:underline; white-space:nowrap; }
+.pick-badge{ font-size:11px; font-weight:700; color:var(--gold); white-space:nowrap; }
 .panel-toolbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:16px 18px; border-bottom:1px solid var(--border); background:var(--bg3); }
 
 table{ width:100%; border-collapse:collapse; font-size:12.3px; }
@@ -511,16 +520,20 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     <!-- ⑤ 지식DB 작성현황 -->
     <div class="page" id="page-knowledge">
       <div class="sec-title">지식DB 작성현황</div>
-      <div class="panel no-clip">
+      <div class="panel">
         <div class="panel-toolbar">
           <input type="month" id="knowMonth">
           <input type="text" id="knowCompany" placeholder="회사/부서 검색">
           <input type="text" id="knowWriter" placeholder="작성자 검색">
           <button class="btn secondary" onclick="loadKnowledgeList()">검색</button>
         </div>
+        <div class="sticky-scroll-box">
         <table class="sticky-thead-table">
           <thead><tr><th>작성자</th><th>주제</th><th>등록일</th><th>회사+부서</th><th>태그</th><th>지식단계</th></tr></thead>
           <tbody id="knowledgeBody"></tbody>
+        </table>
+        </div>
+      </div>
         </table>
       </div>
     </div>
@@ -553,11 +566,13 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
         <div class="tab-item" data-groupfilter="absent" onclick="setGroupFilter('absent', this)">🚫 불참자 명단</div>
       </div>
 
-      <div class="panel no-clip">
-        <div style="overflow-x:auto;">
-        <table class="sticky-thead-table">
+      <div class="panel">
+        <div class="group-scroll-box">
+        <table class="sticky-thead-table group-table">
           <thead><tr>
-            <th>참석여부</th><th>조장</th><th>조번호</th><th>그룹사</th><th>팀/부서</th><th>이름</th><th>근무지</th><th>상태</th><th>불참사유</th>
+            <th style="width:64px;">참석</th><th style="width:64px;">조장</th><th style="width:52px;">조번호</th>
+            <th>그룹사</th><th>팀/부서</th><th>이름</th><th>근무지</th><th style="width:52px;">상태</th>
+            <th>불참사유</th><th style="width:96px;">조별우수사례</th>
           </tr></thead>
           <tbody id="groupBody"></tbody>
         </table>
@@ -1337,13 +1352,13 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       ? `${new Set(rows.map(r=>r.조번호)).size}개 조 · ${rows.length}명` : '';
 
     if(!rows.length){
-      body.innerHTML = '<tr><td colspan="9" class="empty">편성된 조가 없습니다. 관리자에게 자동 조편성 생성을 요청해주세요.</td></tr>';
+      body.innerHTML = '<tr><td colspan="10" class="empty">편성된 조가 없습니다. 관리자에게 자동 조편성 생성을 요청해주세요.</td></tr>';
       return;
     }
 
     const filtered = _groupFilter === 'absent' ? rows.filter(r=>r.참석여부==='불참') : rows;
     if(!filtered.length){
-      body.innerHTML = '<tr><td colspan="9" class="empty">불참자가 없습니다 🎉</td></tr>';
+      body.innerHTML = '<tr><td colspan="10" class="empty">불참자가 없습니다 🎉</td></tr>';
       return;
     }
 
@@ -1358,20 +1373,25 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       if(Number(r.조번호) !== curGroup){
         curGroup = Number(r.조번호);
         const memberCount = rows.filter(x=>Number(x.조번호)===curGroup).length;
-        html += `<tr class="group-header-row"><td colspan="9">${curGroup}조 · ${memberCount}명</td></tr>`;
+        html += `<tr class="group-header-row"><td colspan="10">${curGroup}조 · ${memberCount}명</td></tr>`;
       }
 
       const isLeader = r.조장여부 === 'Y';
       const isAbsent = r.참석여부 === '불참';
+      const isPicked = r.우수사례 === 'Y';
       const groupNoCell = isAdmin
         ? `<select onchange="changeGroupNo('${r.직원ID}','${ym}', this.value)">${groupNos.map(n=>`<option value="${n}" ${Number(r.조번호)===n?'selected':''}>${n}조</option>`).join('')}</select>`
         : `${r.조번호}조`;
       const leaderCell = isLeader
-        ? `<span class="leader-crown">👑</span>`
+        ? `<span class="leader-crown">👑 조장</span>`
         : (isAdmin ? `<span class="leader-action" onclick="setLeader('${r.직원ID}','${ym}')">변경</span>` : '');
+      const pickCell = isPicked
+        ? `<span class="pick-badge">⭐ 추천됨</span>`
+        : `<span class="pick-action" onclick="pickCase(event,'${r.직원ID}','${ym}')">추천</span>`;
 
+      const rowStyle = isAbsent ? 'background:var(--red-dim);' : '';
       html += `
-      <tr style="${isAbsent?'background:var(--red-dim);':''}">
+      <tr class="${isPicked?'pick-row':''}" style="${rowStyle}" onclick="handleGroupRowClick(event,'${r.이름}','${r.회사}','${ym}')">
         <td>
           <select onchange="onAttendanceChange('${r.직원ID}','${ym}', this.value)" title="불참 시 조장이 변경해주세요">
             <option value="참석" ${!isAbsent?'selected':''}>참석</option>
@@ -1386,9 +1406,23 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
         <td>${r.근무지||''}</td>
         <td><span class="badge ${r.상태}">${r.상태}</span></td>
         <td style="color:${isAbsent?'var(--red)':'var(--text3)'}; font-size:11.5px;">${r.불참사유||''}</td>
+        <td>${pickCell}</td>
       </tr>`;
     });
     body.innerHTML = html;
+  }
+
+  // 행 클릭 시 해당 인원이 그 달에 올린 지식 게시물을 노션에서 열기 (드롭다운/버튼 클릭은 제외)
+  function handleGroupRowClick(e, name, company, ym){
+    const t = e.target;
+    if(t.tagName === 'SELECT' || t.tagName === 'OPTION') return;
+    if(t.closest('.leader-action') || t.closest('.pick-action') || t.closest('.pick-badge')) return;
+    callApi('getKnowledgeList', { filter: { yyyymm: ym, writer: name, company: company } }).then(list=>{
+      if(!list.length){ showToast(`${name}님이 ${ym}에 등록한 게시물이 없습니다.`); return; }
+      const pageId = (list[0].NotionPageId||'').replace(/-/g,'');
+      if(pageId) window.open(`https://app.notion.com/p/${pageId}`, '_blank');
+      else showToast('노션 페이지 정보가 없습니다.');
+    }).catch(err => showToast('실패: ' + err.message));
   }
 
   function changeGroupNo(empId, ym, newNo){
@@ -1401,6 +1435,12 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     if(!_isGroupAdmin()){ showToast('권한이 없습니다.'); return; }
     callApi('updateGroupAssignment', { 직원ID: empId, 조편성월: ym, 조장여부: 'Y' })
       .then(()=>{ showToast('조장이 변경되었습니다.'); loadGroups(); })
+      .catch(err => showToast('실패: ' + err.message));
+  }
+  function pickCase(e, empId, ym){
+    e.stopPropagation();
+    callApi('updateGroupAssignment', { 직원ID: empId, 조편성월: ym, 우수사례: 'Y' })
+      .then(()=>{ showToast('조별우수사례로 추천되었습니다.'); loadGroups(); })
       .catch(err => showToast('실패: ' + err.message));
   }
   function onAttendanceChange(empId, ym, value){

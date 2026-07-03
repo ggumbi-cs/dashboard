@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>260626 주간 회의자료 · 엄마감동팀</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f0f4f8; --card:#fff; --card2:#f8fafc;
+  --border:#dde3ea; --border2:#e8ecf0;
+  --navy:#0c1e3c; --blue:#1a56db; --blue2:#2563eb;
+  --teal:#0d9488;
+  --red:#c81e1e; --red2:#b91c1c;
+  --redbg:rgba(200,30,30,0.05); --redborder:rgba(200,30,30,0.18);
+  --amber:#b45309; --amber2:#d97706; --amberbg:rgba(180,83,9,0.05);
+  --green:#166534; --green2:#15803d; --greenbg:rgba(22,101,52,0.05);
+  --text:#0f172a; --text2:#334155; --text3:#64748b; --text4:#94a3b8;
+  --ai1:#4338ca; --ai2:#0f766e;
+}
+html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto Sans KR',sans-serif;color:var(--text);font-size:13px;line-height:1.5;}
+
+/* ── 헤더 ── */
+.header{background:linear-gradient(118deg,#0c1e3c 0%,#1a3a6c 45%,#0d4f6e 100%);padding:22px 32px 18px;position:relative;overflow:hidden;}
+.header::after{content:'';position:absolute;right:-60px;top:-60px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(26,86,219,0.22) 0%,transparent 70%);pointer-events:none;}
+.header::before{content:'';position:absolute;left:0;bottom:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);}
+.hdr-row{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;position:relative;z-index:1;}
+.hdr-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:10px;}
+.hdr-eyebrow::before{content:'';width:20px;height:1px;background:rgba(255,255,255,0.3);}
+.hdr-title{font-size:26px;font-weight:900;color:#fff;letter-spacing:-0.8px;line-height:1.1;}
+.hdr-title em{font-style:normal;color:#7dd3fc;}
+.hdr-range{font-size:12px;color:rgba(255,255,255,0.5);margin-top:6px;}
+.hdr-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+.hdr-chip{font-size:10px;color:rgba(255,255,255,0.72);background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);padding:3px 10px;border-radius:20px;display:flex;align-items:center;gap:4px;}
+.hdr-chip b{color:#fff;}
+
+/* ── 월피미 안내 배너 ── */
+.monthly-banner{background:linear-gradient(90deg,rgba(67,56,202,0.08),rgba(15,118,110,0.05));border-left:4px solid #4338ca;border-bottom:1px solid rgba(67,56,202,0.15);padding:16px 32px;display:flex;align-items:center;gap:16px;}
+.monthly-icon{font-size:28px;flex-shrink:0;}
+.monthly-txt{flex:1;}
+.monthly-ttl{font-size:14px;font-weight:800;color:var(--navy);margin-bottom:3px;}
+.monthly-sub{font-size:12px;color:var(--text3);line-height:1.5;}
+.monthly-sub b{color:var(--text2);}
+
+/* ── 월피미 링크 버튼 ── */
+.monthly-btn{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px;}
+.go-btn{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#4338ca,#0f766e);color:#fff;text-decoration:none;padding:14px 28px;border-radius:12px;font-size:14px;font-weight:800;box-shadow:0 4px 20px rgba(67,56,202,0.35);transition:opacity .2s;letter-spacing:-0.3px;}
+.go-btn:hover{opacity:0.9;}
+.go-btn-icon{font-size:22px;}
+.go-btn-label{line-height:1.2;}
+.go-btn-label span{display:block;font-size:10px;font-weight:400;opacity:.75;margin-top:1px;}
+.go-btn-arrow{font-size:18px;margin-left:4px;}
+
+/* ── 본문 ── */
+.body{padding:20px 24px;display:grid;gap:16px;}
+.sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.sec-acc{width:3px;height:20px;border-radius:2px;flex-shrink:0;}
+.sec-ttl{font-size:13.5px;font-weight:700;color:var(--text);}
+.sec-sub{font-size:10px;color:var(--text4);margin-left:auto;background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.07);padding:2px 8px;border-radius:3px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.card-ttl{font-size:9.5px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+@media(max-width:780px){.grid2,.grid3{grid-template-columns:1fr;}.monthly-banner{flex-direction:column;}.monthly-btn{width:100%;}}
+
+/* ── 수치 카드 ── */
+.kpi-card{background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:12px 14px;text-align:center;}
+.kpi-num{font-size:24px;font-weight:900;font-family:'Inter',sans-serif;color:var(--navy);line-height:1;}
+.kpi-lbl{font-size:9.5px;color:var(--text4);margin-top:3px;}
+.kpi-d{font-size:10.5px;font-weight:600;margin-top:4px;}
+.kpi-d.good{color:var(--green2);}.kpi-d.bad{color:var(--red2);}.kpi-d.neu{color:var(--text4);}
+
+/* ── 태그 바 ── */
+.brow{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.blbl{font-size:10.5px;color:var(--text2);width:110px;flex-shrink:0;}
+.btrk{flex:1;height:8px;background:rgba(0,0,0,0.07);border-radius:4px;overflow:hidden;}
+.bfil{height:100%;border-radius:4px;}
+.bval{font-size:10.5px;font-weight:600;color:var(--text);width:32px;text-align:right;flex-shrink:0;}
+.bdelta{font-size:10px;color:var(--text4);width:36px;flex-shrink:0;}
+
+/* ── CX 토픽 ── */
+.topic-item{padding:8px 10px;border-radius:6px;margin-bottom:6px;font-size:11.5px;color:var(--text2);display:flex;align-items:center;gap:8px;}
+.topic-item:last-child{margin-bottom:0;}
+.topic-item.neg{background:var(--redbg);border:1px solid var(--redborder);}
+.topic-item.warn{background:var(--amberbg);border:1px solid rgba(180,83,9,0.15);}
+
+/* ── 비교 테이블 ── */
+.cmp-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border2);font-size:11.5px;}
+.cmp-row:last-child{border-bottom:none;}
+.cmp-lbl{color:var(--text2);}
+.cmp-vals{display:flex;gap:16px;align-items:center;}
+.cmp-prev{color:var(--text4);font-size:10.5px;font-family:'Inter',sans-serif;}
+.cmp-cur{font-weight:700;font-family:'Inter',sans-serif;color:var(--navy);}
+.cmp-delta{font-size:10px;font-weight:600;min-width:48px;text-align:right;}
+
+/* ── AI 배너 ── */
+.ai-banner{padding:14px 24px;background:linear-gradient(90deg,rgba(67,56,202,0.04),rgba(15,118,110,0.02));border-bottom:1px solid rgba(67,56,202,0.08);display:flex;align-items:flex-start;gap:12px;}
+.ai-orb{flex-shrink:0;width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--ai1),var(--ai2));display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 3px 10px rgba(67,56,202,0.2);margin-top:1px;}
+.ai-lbl{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(90deg,var(--ai1),var(--ai2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;}
+.ai-body{font-size:12px;color:var(--text2);line-height:1.65;}
+.ai-body strong{color:var(--text);font-weight:600;}
+.ai-body .good{color:var(--green2);font-weight:600;}
+.ai-body .warn{color:var(--red2);font-weight:600;}
+.ai-body .hl{color:var(--amber);font-weight:600;}
+
+/* ── 푸터 ── */
+.footer{text-align:center;padding:16px;font-size:10px;color:var(--text4);border-top:1px solid var(--border);background:var(--card2);}
+</style>
+</head>
+<body>
+
+<!-- ══ 헤더 ══ -->
+<div class="header">
+  <div class="hdr-row">
+    <div>
+      <div class="hdr-eyebrow">Weekly Report · 엄마감동팀</div>
+      <div class="hdr-title">주간 보고 <em>#25</em></div>
+      <div class="hdr-range">2026.06.26 마감 &nbsp;·&nbsp; 06.22(월) ~ 06.26(금)</div>
+      <div class="hdr-chips">
+        <div class="hdr-chip">📅 <b>이번 주 회의</b> · 7/2 월간피드백미팅(월피미)으로 대체</div>
+        <div class="hdr-chip">📞 <b>상담</b> · 2,022건</div>
+        <div class="hdr-chip">📋 <b>월간 보고</b> · 5월 회의자료 링크 참조</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 월피미 대체 안내 배너 ══ -->
+<div class="monthly-banner">
+  <div class="monthly-icon">📅</div>
+  <div class="monthly-txt">
+    <div class="monthly-ttl">이번 주 주간 회의 → 7월 2일 월간피드백미팅(월피미)으로 대체 진행</div>
+    <div class="monthly-sub">
+      260626 주간 상담 실적은 아래 요약으로 갈음하며,<br>
+      <b>5월 월간 회의자료(월피미)</b>를 이번 회의 주자료로 사용합니다. 우측 버튼을 통해 바로 열람 가능합니다.
+    </div>
+  </div>
+  <div class="monthly-btn">
+    <a class="go-btn"
+       href="https://ggumbi-cs.github.io/dashboard/report/month/2605.html"
+       target="_blank">
+      <span class="go-btn-icon">📊</span>
+      <span class="go-btn-label">
+        5월 월간 회의자료 열기
+        <span>report/month/2605.html →</span>
+      </span>
+      <span class="go-btn-arrow">↗</span>
+    </a>
+  </div>
+</div>
+
+<!-- ══ AI 요약 ══ -->
+<div class="ai-banner">
+  <div class="ai-orb">🤖</div>
+  <div>
+    <div class="ai-lbl">✦ AI 분석 · 260626주 요약</div>
+    <div class="ai-body">
+      이번 주(6/22~6/26) 채널톡 총 상담 <strong>2,022건</strong>으로 전주(2,037건) 대비 소폭 안정세. 첫 응답시간이 전주 15분 18초 → <span class="good">20분 39초로 표시되나 채널톡 기준 변경에 따른 집계 방식 차이</span>로 해석 필요. 전화 응답률이 <span class="good">72.7%로 전주(60.3%) 대비 ▲12.4%p 개선</span>되어 CS 처리 안정화 흐름이 확인됩니다. 교환·AS접수 태그가 여전히 상위권 유지 중이며, 분유포트 관련 VOC 93건으로 비중 소폭 감소 추세.
+    </div>
+  </div>
+</div>
+
+<div class="body">
+
+  <!-- § 상담 실적 요약 -->
+  <div>
+    <div class="sec-hdr">
+      <div class="sec-acc" style="background:#1a56db;"></div>
+      <div class="sec-ttl">📞 상담 실적 요약</div>
+      <div class="sec-sub">06.22 ~ 06.26 · 채널톡 API</div>
+    </div>
+
+    <!-- 핵심 KPI 6개 -->
+    <div class="grid3" style="margin-bottom:12px;">
+      <div class="kpi-card">
+        <div class="kpi-num">2,022</div>
+        <div class="kpi-lbl">전체 상담 건수</div>
+        <div class="kpi-d neu">▼15건 전주比</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-num">20분 39초</div>
+        <div class="kpi-lbl">첫 응답까지</div>
+        <div class="kpi-d neu">집계 기준 변경 참고</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-num">6h 34m</div>
+        <div class="kpi-lbl">상담 종료까지</div>
+        <div class="kpi-d bad">▲3분 26초</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-num">72.7%</div>
+        <div class="kpi-lbl">전화 응답률</div>
+        <div class="kpi-d good">▲12.4%p 개선</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-num">330건</div>
+        <div class="kpi-lbl">전화 수</div>
+        <div class="kpi-d neu">▲10건</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-num">4.3%</div>
+        <div class="kpi-lbl">담당자 이관율</div>
+        <div class="kpi-d bad">▲1.8%p</div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <!-- 상담 태그 -->
+      <div class="card">
+        <div class="card-ttl">상담 태그 TOP 5</div>
+        <div class="brow"><div class="blbl">교환</div><div class="btrk"><div class="bfil" style="width:100%;background:#1a56db;"></div></div><div class="bval">204</div><div class="bdelta" style="color:var(--green2);">▲51</div></div>
+        <div class="brow"><div class="blbl">AS접수</div><div class="btrk"><div class="bfil" style="width:81%;background:#0d9488;"></div></div><div class="bval">166</div><div class="bdelta" style="color:var(--green2);">▲41</div></div>
+        <div class="brow"><div class="blbl">상품</div><div class="btrk"><div class="bfil" style="width:78%;background:#7c3aed;"></div></div><div class="bval">160</div><div class="bdelta" style="color:var(--green2);">▲34</div></div>
+        <div class="brow"><div class="blbl">AS</div><div class="btrk"><div class="bfil" style="width:75%;background:#d97706;"></div></div><div class="bval">152</div><div class="bdelta" style="color:var(--green2);">▲12</div></div>
+        <div class="brow"><div class="blbl">휴대용분유포트</div><div class="btrk"><div class="bfil" style="width:46%;background:#ef4444;"></div></div><div class="bval">93</div><div class="bdelta" style="color:var(--green2);">▲22</div></div>
+        <div style="margin-top:8px;padding:7px 9px;background:var(--greenbg);border:1px solid rgba(22,101,52,0.15);border-radius:5px;font-size:10px;color:var(--green2);">
+          ✅ 휴대용분유포트 태그 비율 3.7% — 전주(4.3%) 대비 소폭 감소. 자재 입고 후 CS 처리 재개 효과 기대.
+        </div>
+      </div>
+
+      <!-- 전화 + CX 낮은 토픽 -->
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card">
+          <div class="card-ttl">전화별 통계 (6/22~6/26)</div>
+          <div class="cmp-row"><div class="cmp-lbl">응답률</div><div class="cmp-vals"><span class="cmp-prev">전주 60.3%</span><span class="cmp-cur" style="color:var(--green2);">72.7%</span><span class="cmp-delta" style="color:var(--green2);">▲12.4%p</span></div></div>
+          <div class="cmp-row"><div class="cmp-lbl">서비스레벨</div><div class="cmp-vals"><span class="cmp-prev">전주 44.1%</span><span class="cmp-cur">48.3%</span><span class="cmp-delta" style="color:var(--green2);">▲4.2%p</span></div></div>
+          <div class="cmp-row"><div class="cmp-lbl">연결률</div><div class="cmp-vals"><span class="cmp-prev">전주 75.9%</span><span class="cmp-cur">66.7%</span><span class="cmp-delta" style="color:var(--red2);">▼9.2%p</span></div></div>
+          <div class="cmp-row"><div class="cmp-lbl">전화 수</div><div class="cmp-vals"><span class="cmp-prev">전주 374건</span><span class="cmp-cur">330건</span><span class="cmp-delta" style="color:var(--green2);">▼44건</span></div></div>
+          <div class="cmp-row"><div class="cmp-lbl">통화 시간</div><div class="cmp-vals"><span class="cmp-prev">전주 737분</span><span class="cmp-cur">670분</span><span class="cmp-delta" style="color:var(--green2);">▼67분</span></div></div>
+        </div>
+        <div class="card">
+          <div class="card-ttl">CX Score 낮은 토픽</div>
+          <div class="topic-item neg"><span>🔴</span>교환·반품·AS 제품 수거 일정 및 포장 안내</div>
+          <div class="topic-item neg"><span>🔴</span>주문 배송 상태 및 운송장 번호 조회</div>
+          <div class="topic-item neg"><span>🔴</span>부속품 및 소모품 별도 구매 문의</div>
+          <div class="topic-item warn"><span>🟡</span>휴대용 분유포트 충전 및 전원 작동 불량</div>
+          <div class="topic-item warn"><span>🟡</span>A·S 수리 진행 상황 및 재배송 일정 확인</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- § 월피미 바로가기 (하단 강조) -->
+  <div style="background:linear-gradient(135deg,#0c1e3c,#1a3a6c,#0d4f6e);border-radius:14px;padding:28px 32px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:200px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-bottom:8px;">이번 회의 주자료</div>
+      <div style="font-size:20px;font-weight:900;color:#fff;margin-bottom:6px;line-height:1.2;">2026년 5월 월간 회의자료</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.55);">report/month/2605.html · 혁신상품본부 월간피드백미팅 7/2</div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);padding:3px 10px;border-radius:20px;">📊 월간 추이 분석</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);padding:3px 10px;border-radius:20px;">🔧 품질 이슈 현황</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);padding:3px 10px;border-radius:20px;">📦 반품 동향</div>
+      </div>
+    </div>
+    <a href="https://ggumbi-cs.github.io/dashboard/report/month/2605.html"
+       target="_blank"
+       style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,#4338ca,#0f766e);color:#fff;text-decoration:none;padding:20px 36px;border-radius:14px;font-weight:800;box-shadow:0 6px 28px rgba(67,56,202,0.45);transition:opacity .2s;text-align:center;">
+      <span style="font-size:32px;">📊</span>
+      <span style="font-size:15px;letter-spacing:-0.3px;">월피미 자료 열기</span>
+      <span style="font-size:11px;font-weight:400;opacity:.75;">report/month/2605.html ↗</span>
+    </a>
+  </div>
+
+</div>
+
+<div class="footer">엄마감동팀 AI 주간회의자료 · 260626 마감 · 이번 회의 7/2 월간피드백미팅으로 대체</div>
+
+</body>
+</html>

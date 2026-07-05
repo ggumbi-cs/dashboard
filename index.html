@@ -1019,6 +1019,32 @@ window.addEventListener('message', e => {
   }
   if (e.data.type === 'TRAINING_NAV' && e.data.path) {
     const frame = document.getElementById('mainFrame');
+
+    // checkOnly: training_main에 존재 여부만 물어보고 결과를 요청자에게 돌려줌
+    if (e.data.checkOnly) {
+      const requester = e.source;
+      // training_main이 현재 frame에 로드되어 있으면 직접 물어봄
+      // 아니면 path 기준으로 TRAINING_DATA 체크 요청
+      try {
+        frame.contentWindow.postMessage({
+          type: 'CHECK_NEXT', path: e.data.path, _reply: true
+        }, '*');
+      } catch(err) {}
+      // 응답을 받아서 requester에게 전달하는 리스너 (1회용)
+      const _checkHandler = function(ev) {
+        if (!ev.data || ev.data.type !== 'CHECK_NEXT_RESULT') return;
+        window.removeEventListener('message', _checkHandler);
+        try { requester.postMessage({ type:'NAV_CHECK_RESULT', exists: ev.data.exists, path: e.data.path }, '*'); } catch(err2) {}
+      };
+      window.addEventListener('message', _checkHandler);
+      // 타임아웃 — training_main이 없으면 200ms 후 false 반환
+      setTimeout(() => {
+        window.removeEventListener('message', _checkHandler);
+        try { requester.postMessage({ type:'NAV_CHECK_RESULT', exists: false, path: e.data.path }, '*'); } catch(err2) {}
+      }, 200);
+      return;
+    }
+
     const _tHandler = function() {
       frame.removeEventListener('load', _tHandler);
       try {

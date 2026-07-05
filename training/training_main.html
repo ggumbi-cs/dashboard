@@ -253,6 +253,14 @@ const TRAINING_DATA = {
         status: 'done',
         path: 'training/ai교육/ai교육_5회차.html'
       },
+      {
+        round: 6,
+        title: 'AI 협업 프로세스',
+        subtitle: '내가 어떻게 시켰는지 실제 과정 공개',
+        date: '2026-06',
+        status: 'done',
+        path: 'training/ai교육/ai교육_6회차.html'
+      },
     ]
   },
 
@@ -374,6 +382,17 @@ window.addEventListener('message', e => {
   if (e.data.type === 'THEME') {
     if (e.data.mode === 'light') document.body.classList.add('light-mode');
     else document.body.classList.remove('light-mode');
+  }
+  // index로부터 "이 경로 다음 회차 존재해?" 질문
+  if (e.data.type === 'CHECK_NEXT' && e.data.path) {
+    const allPaths = [];
+    Object.values(TRAINING_DATA).forEach(def => {
+      def.sessions.forEach(s => {
+        if (s.status === 'done') allPaths.push(s.path);
+      });
+    });
+    const exists = allPaths.includes(e.data.path);
+    window.parent.postMessage({ type: 'CHECK_NEXT_RESULT', exists, path: e.data.path }, '*');
   }
 });
 

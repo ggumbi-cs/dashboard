@@ -673,20 +673,62 @@ const NAV_CONFIG = {
   prev: 'training/ai교육/ai교육_2회차.html',
   next: 'training/ai교육/ai교육_4회차.html'
 };
+
+// ── 회차 네비게이션 ──
 function navGo(dir) {
   const path = NAV_CONFIG[dir];
   if (!path) return;
-  // index iframe 안에서 실행 중이면 parent에게 전달
-  try {
-    if (window.parent && window.parent !== window) {
+
+  const isInIframe = (function() {
+    try { return window.parent && window.parent !== window; } catch(e) { return false; }
+  })();
+
+  if (isInIframe) {
+    if (dir === 'next') {
+      // index에 먼저 존재 여부 확인 요청
+      window.parent.postMessage({ type: 'TRAINING_NAV', path, checkOnly: true }, '*');
+      // 결과 수신 (1회용)
+      const _h = function(e) {
+        if (!e.data || e.data.type !== 'NAV_CHECK_RESULT' || e.data.path !== path) return;
+        window.removeEventListener('message', _h);
+        if (e.data.exists) {
+          window.parent.postMessage({ type: 'TRAINING_NAV', path }, '*');
+        } else {
+          showNavToast();
+        }
+      };
+      window.addEventListener('message', _h);
+      setTimeout(() => window.removeEventListener('message', _h), 500);
+    } else {
       window.parent.postMessage({ type: 'TRAINING_NAV', path }, '*');
-      return;
     }
-  } catch(e) {}
-  // 직접 열린 경우 상대경로 이동
-  window.location.href = path;
+  } else {
+    // 직접 열린 경우 — prev는 바로 이동, next는 토스트
+    if (dir === 'next') { showNavToast(); return; }
+    window.location.href = path;
+  }
 }
 
+function showNavToast() {
+  let t = document.getElementById('navToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'navToast';
+    t.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(12px);'+
+      'background:#172240;border:1px solid rgba(80,140,255,0.35);color:#8aaad0;'+
+      'font-size:12px;font-weight:600;padding:10px 20px;border-radius:30px;'+
+      'z-index:9999;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;';
+    t.textContent = '📋 다음 회차는 준비 중입니다';
+    document.body.appendChild(t);
+  }
+  t.style.opacity = '1';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateX(-50%) translateY(12px)';
+  }, 2200);
+}
 window.addEventListener('message', e => {
   if (!e.data) return;
   if (e.data.type === 'THEME') {

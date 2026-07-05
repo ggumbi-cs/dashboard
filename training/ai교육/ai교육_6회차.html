@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI 교육 6회차 · AI로 AI 활용하기 실전</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#070d1a;--bg2:#0c1628;--bg3:#111e35;--bg4:#172240;
+  --border:rgba(80,140,255,0.12);--border2:rgba(80,140,255,0.25);
+  --blue:#4a8fff;--blue-dim:rgba(74,143,255,0.10);
+  --cyan:#00d4ff;--green:#00e5a0;--red:#ff5a5a;
+  --orange:#ffaa40;--gold:#f0c060;--purple:#a07aff;--teal:#00c8a0;
+  --text:#e4eeff;--text2:#8aaad0;--text3:#4a6a90;
+  --radius:14px;
+}
+body.light-mode{
+  --bg:#f0f4fa;--bg2:#ffffff;--bg3:#e8f0fb;--bg4:#dce8f7;
+  --border:rgba(26,78,180,0.12);--border2:rgba(26,78,180,0.28);
+  --blue:#1a5fd4;--blue-dim:rgba(26,95,212,0.08);
+  --cyan:#0090b8;--green:#007a50;--red:#c02020;--orange:#b06010;
+  --gold:#8a6000;--purple:#5030b0;--teal:#007a62;
+  --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6090;
+}
+body.light-mode .hero-glow{background:radial-gradient(ellipse,rgba(26,95,212,0.07) 0%,transparent 65%);}
+body.light-mode .hero-glow2{background:radial-gradient(ellipse,rgba(0,144,184,0.05) 0%,transparent 65%);}
+body.light-mode #summary::before{background:radial-gradient(ellipse at 50% 0%,rgba(26,95,212,0.06) 0%,transparent 60%);}
+
+html,body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo',sans-serif;font-size:14px;line-height:1.6;overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-blue  {background:var(--blue-dim);color:var(--blue);border:1px solid var(--border2);}
+.badge-green {background:rgba(0,229,160,0.10);color:var(--green);border:1px solid rgba(0,229,160,0.25);}
+.badge-gold  {background:rgba(240,192,96,0.10);color:var(--gold);border:1px solid rgba(240,192,96,0.25);}
+.badge-cyan  {background:rgba(0,212,255,0.10);color:var(--cyan);border:1px solid rgba(0,212,255,0.25);}
+.badge-teal  {background:rgba(0,200,160,0.10);color:var(--teal);border:1px solid rgba(0,200,160,0.25);}
+.hl-blue{color:var(--blue);}
+.hl-cyan{color:var(--cyan);}
+.hl-green{color:var(--green);}
+.hl-gold{color:var(--gold);}
+.hl-teal{color:var(--teal);}
+
+.wrap{max-width:960px;margin:0 auto;padding:0 24px;}
+
+/* ══ 네비게이션 ══ */
+.nav-prev,.nav-next{
+  position:fixed;top:50%;transform:translateY(-50%);
+  width:44px;height:80px;display:flex;align-items:center;justify-content:center;
+  background:var(--bg2);border:1px solid var(--border2);cursor:pointer;z-index:999;
+  transition:background 0.15s,border-color 0.2s,box-shadow 0.2s;
+  font-size:18px;color:var(--text2);user-select:none;
+}
+.nav-prev{left:0;border-radius:0 10px 10px 0;border-left:none;}
+.nav-next{right:0;border-radius:10px 0 0 10px;border-right:none;}
+.nav-prev:hover,.nav-next:hover{background:var(--bg3);border-color:var(--blue);color:var(--blue);box-shadow:0 4px 20px rgba(74,143,255,0.15);}
+.nav-prev.disabled,.nav-next.disabled{opacity:0.2;cursor:default;pointer-events:none;}
+.nav-prev .nav-tooltip,.nav-next .nav-tooltip{
+  position:absolute;background:var(--bg4);border:1px solid var(--border2);
+  border-radius:8px;padding:6px 10px;font-size:10px;color:var(--text2);
+  white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.15s;line-height:1.5;
+}
+.nav-prev .nav-tooltip{left:52px;top:50%;transform:translateY(-50%);}
+.nav-next .nav-tooltip{right:52px;top:50%;transform:translateY(-50%);}
+.nav-prev:hover .nav-tooltip,.nav-next:hover .nav-tooltip{opacity:1;}
+.nav-tooltip-round{display:block;font-weight:700;color:var(--text);}
+
+/* ══ 히어로 ══ */
+#hero{
+  position:relative;
+  background:linear-gradient(160deg,var(--bg) 0%,var(--bg2) 55%,var(--bg) 100%);
+  border-bottom:1px solid var(--border);padding:48px 0 42px;overflow:hidden;
+}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:44px 44px;}
+.hero-glow{position:absolute;top:-80px;right:-40px;width:440px;height:320px;background:radial-gradient(ellipse,rgba(0,212,255,0.07) 0%,transparent 65%);pointer-events:none;}
+.hero-glow2{position:absolute;bottom:-60px;left:10%;width:340px;height:220px;background:radial-gradient(ellipse,rgba(160,122,255,0.05) 0%,transparent 65%);pointer-events:none;}
+.hero-inner{position:relative;z-index:1;}
+.hero-top{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.hero-eyebrow{font-size:11px;font-weight:700;color:var(--cyan);letter-spacing:2.5px;text-transform:uppercase;}
+.hero-title{font-size:clamp(26px,4vw,38px);font-weight:800;line-height:1.15;margin-bottom:10px;letter-spacing:-0.5px;color:var(--text);}
+.hero-sub{font-size:15px;color:var(--text2);max-width:580px;line-height:1.7;margin-bottom:20px;}
+.hero-pills{display:flex;gap:12px;flex-wrap:wrap;}
+.hero-pill{display:flex;align-items:center;gap:7px;padding:7px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:30px;font-size:12px;color:var(--text2);}
+
+/* ══ 공통 섹션 ══ */
+.sec{padding:40px 0 0;}
+.sec-head{display:flex;align-items:center;gap:10px;margin-bottom:24px;}
+.sec-bar{width:3px;height:16px;border-radius:2px;flex-shrink:0;}
+.sec-title{font-size:15px;font-weight:700;color:var(--text);}
+.sec-sub{font-size:11px;color:var(--text3);margin-left:2px;}
+
+/* ══ GPT 역할 설명 ══ */
+.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.role-col{padding:20px;border-right:1px solid var(--border);}
+.role-col:last-child{border-right:none;}
+.role-icon{font-size:28px;margin-bottom:8px;}
+.role-who{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;}
+.role-name{font-size:14px;font-weight:800;margin-bottom:8px;}
+.role-desc{font-size:11.5px;color:var(--text2);line-height:1.6;}
+.role-tag{display:inline-block;margin-top:8px;font-size:10px;padding:2px 8px;border-radius:5px;font-weight:700;}
+
+/* ══ 말투 변환 카드 ══ */
+.translate-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;
+}
+.tc-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.tc-body{display:grid;grid-template-columns:1fr auto 1fr;gap:0;}
+.tc-col{padding:18px 20px;}
+.tc-col-divider{display:flex;align-items:center;justify-content:center;padding:0 8px;border-left:1px solid var(--border);border-right:1px solid var(--border);}
+.tc-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;}
+.speech-bubble{
+  padding:10px 13px;border-radius:10px;font-size:11.5px;line-height:1.6;
+  margin-bottom:6px;
+}
+.sb-human{background:var(--blue-dim);border:1px solid var(--border2);color:var(--text);border-radius:10px 10px 4px 10px;}
+.sb-gpt  {background:rgba(0,200,160,0.08);border:1px solid rgba(0,200,160,0.2);color:var(--text2);border-radius:10px 10px 10px 4px;}
+.struct-block{
+  background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+  padding:10px 13px;font-size:11px;color:var(--text2);
+}
+.struct-row{display:flex;align-items:center;gap:7px;padding:3px 0;border-bottom:1px solid var(--border);}
+.struct-row:last-child{border-bottom:none;}
+.struct-key{font-size:10px;font-weight:700;color:var(--teal);width:68px;flex-shrink:0;}
+.struct-val{font-size:10.5px;color:var(--text2);}
+.arrow-label{font-size:20px;color:var(--teal);font-weight:700;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.arrow-label span{font-size:9px;color:var(--text3);font-weight:400;white-space:nowrap;}
+
+/* ══ 회차별 4단계 카드 ══ */
+.process-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;margin-bottom:16px;
+}
+.pc-head{
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+}
+.pc-round{
+  font-size:10px;font-weight:800;padding:3px 9px;border-radius:6px;
+  letter-spacing:0.5px;flex-shrink:0;
+}
+.pc-title{font-size:14px;font-weight:700;color:var(--text);}
+.pc-body{display:grid;grid-template-columns:repeat(4,1fr);gap:0;}
+.pc-step{padding:16px 16px;border-right:1px solid var(--border);}
+.pc-step:last-child{border-right:none;}
+.pc-step-label{
+  font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  margin-bottom:8px;display:flex;align-items:center;gap:5px;
+}
+.pc-step-icon{font-size:14px;}
+.pc-step-content{font-size:11px;color:var(--text2);line-height:1.6;}
+.pc-step-content .quote{
+  background:var(--bg3);border-left:2px solid var(--border2);
+  padding:7px 10px;border-radius:0 6px 6px 0;
+  font-size:10.5px;color:var(--text2);line-height:1.5;
+  margin-bottom:5px;font-style:italic;
+}
+.pc-step-content .tag{
+  display:inline-block;font-size:9.5px;padding:1px 6px;
+  border-radius:4px;margin:1px 1px 0 0;font-weight:600;font-style:normal;
+}
+.pc-step-content .result{
+  font-size:11px;color:var(--green);font-weight:600;
+  padding:4px 8px;background:rgba(0,229,160,0.07);
+  border-radius:5px;border:1px solid rgba(0,229,160,0.15);
+}
+
+/* ══ 역할 분담 최종 ══ */
+.final-flow{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);
+  padding:28px 24px;
+}
+.ff-row{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;}
+.ff-item{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:12px 16px;text-align:center;min-width:120px;
+}
+.ff-icon{font-size:28px;}
+.ff-who{font-size:11px;font-weight:800;color:var(--text);}
+.ff-does{font-size:10px;color:var(--text3);}
+.ff-arr{font-size:18px;color:var(--border2);align-self:center;}
+
+/* ══ 요약 ══ */
+#summary{
+  margin:40px 0 0;padding:32px;
+  background:linear-gradient(135deg,var(--bg2) 0%,var(--bg4) 100%);
+  border:1px solid var(--border2);border-radius:var(--radius);
+  text-align:center;position:relative;overflow:hidden;
+}
+#summary::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(0,212,255,0.06) 0%,transparent 60%);}
+.summary-inner{position:relative;z-index:1;}
+.summary-quote{font-size:clamp(12px,1.8vw,15px);font-weight:700;line-height:1.8;color:var(--text);max-width:680px;margin:0 auto 16px;}
+.summary-author{font-size:11px;color:var(--text3);}
+
+.sec-bottom{height:48px;}
+
+@media(max-width:700px){
+  .role-grid{grid-template-columns:1fr;}
+  .role-col{border-right:none;border-bottom:1px solid var(--border);}
+  .tc-body{grid-template-columns:1fr;}
+  .tc-col-divider{border:none;padding:8px 20px;}
+  .pc-body{grid-template-columns:1fr 1fr;}
+  .pc-step{border-bottom:1px solid var(--border);}
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.anim{animation:fadeUp 0.45s ease both;}
+.d1{animation-delay:0.05s;}.d2{animation-delay:0.10s;}.d3{animation-delay:0.15s;}
+.d4{animation-delay:0.20s;}.d5{animation-delay:0.25s;}.d6{animation-delay:0.30s;}
+</style>
+</head>
+<body>
+
+<div class="nav-prev" id="navPrev" onclick="navGo('prev')">
+  ‹
+  <div class="nav-tooltip">
+    <span class="nav-tooltip-round">5회차</span>
+    업무 자동화 로드맵
+  </div>
+</div>
+<div class="nav-next" id="navNext" onclick="navGo('next')">
+  ›
+  <div class="nav-tooltip">
+    <span class="nav-tooltip-round">다음 회차</span>
+    준비 중
+  </div>
+</div>
+
+<!-- 히어로 -->
+<div id="hero">
+  <div class="hero-grid"></div><div class="hero-glow"></div><div class="hero-glow2"></div>
+  <div class="wrap hero-inner anim d1">
+    <div class="hero-top">
+      <div class="hero-eyebrow">AI 교육 6회차</div>
+      <div class="badge badge-cyan">⏱ 3분 완성</div>
+      <div class="badge badge-gold">🎯 실전 프로세스</div>
+    </div>
+    <div class="hero-title">
+      <span class="hl-cyan">AI로 AI 활용하기</span> 실전<br>
+      <span style="font-size:0.62em;font-weight:500;color:var(--text2);">1회차 내용, 실제로 이렇게 써먹었습니다</span>
+    </div>
+    <div class="hero-sub">
+      1~5회차 교육자료가 만들어진 진짜 과정이에요.<br>
+      ChatGPT로 생각을 정리하고, Claude에게 전달해서 교육자료를 만든 실제 과정을 공개합니다.
+    </div>
+    <div class="hero-pills">
+      <div class="hero-pill"><span>🗣</span> 내 말투 그대로</div>
+      <div class="hero-pill"><span>🤖</span> GPT가 번역</div>
+      <div class="hero-pill"><span>🎨</span> Claude가 제작</div>
+      <div class="hero-pill"><span>✅ 실제 대화 공개</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- GPT의 역할 -->
+<div class="sec anim d2">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--teal);"></div>
+    <div class="sec-title">GPT는 번역기 역할을 했습니다</div>
+    <div class="sec-sub">· 사람의 말 → AI가 이해하는 구조로</div>
+  </div>
+  <div class="role-grid">
+    <div class="role-col">
+      <div class="role-icon">👤</div>
+      <div class="role-who">나 (사람)</div>
+      <div class="role-name" style="color:var(--blue);">방향을 정한다</div>
+      <div class="role-desc">
+        "이런 거 만들고 싶어"<br>
+        "저것도 넣고, 이것도 넣고..."<br>
+        두서없이 생각나는 대로 말함
+      </div>
+      <div class="role-tag" style="background:var(--blue-dim);color:var(--blue);border:1px solid var(--border2);">기획자</div>
+    </div>
+    <div class="role-col">
+      <div class="role-icon">🤖</div>
+      <div class="role-who">ChatGPT</div>
+      <div class="role-name" style="color:var(--teal);">생각을 정리한다</div>
+      <div class="role-desc">
+        흩어진 말을 구조화된<br>
+        프롬프트로 재구성.<br>
+        Claude가 이해할 수 있는 형태로 변환
+      </div>
+      <div class="role-tag" style="background:rgba(0,200,160,0.10);color:var(--teal);border:1px solid rgba(0,200,160,0.25);">번역가 · 기획 보조</div>
+    </div>
+    <div class="role-col">
+      <div class="role-icon">🎨</div>
+      <div class="role-who">Claude</div>
+      <div class="role-name" style="color:var(--purple);">결과물을 만든다</div>
+      <div class="role-desc">
+        구조화된 프롬프트를 받아<br>
+        HTML 교육자료로 제작.<br>
+        디자인·코드 모두 담당
+      </div>
+      <div class="role-tag" style="background:rgba(160,122,255,0.10);color:var(--purple);border:1px solid rgba(160,122,255,0.2);">제작자</div>
+    </div>
+  </div>
+</div>
+
+<!-- 말투 변환 시각화 -->
+<div class="sec anim d3">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--cyan);"></div>
+    <div class="sec-title">이렇게 말해도 됩니다</div>
+    <div class="sec-sub">· 내 말 vs GPT가 정리한 구조</div>
+  </div>
+  <div class="translate-card">
+    <div class="tc-head">
+      <span style="font-size:18px;">🔄</span>
+      <span style="font-size:13px;font-weight:700;">말투 변환 예시 — 1회차 교육자료 요청 당시</span>
+    </div>
+    <div class="tc-body">
+      <!-- 내 말 -->
+      <div class="tc-col">
+        <div class="tc-label" style="color:var(--blue);">👤 내가 한 말</div>
+        <div class="speech-bubble sb-human">"AI 교육자료 하나 만들자. 바이브코딩 주제로 하고, HTML로 만드는 이유도 넣어주고, Python이랑 비교해서 편한 점도 넣고, CSV 압축 푸는 툴 예시랑, 이미지 PDF 변환 예시도 넣어줘. 아 대시보드용 미니 툴 사례도."</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:6px;padding:6px 8px;background:var(--bg3);border-radius:6px;">두서없이 생각나는 대로 말함<br>완벽한 설명 아님 — 이래도 충분</div>
+      </div>
+
+      <!-- 화살표 -->
+      <div class="tc-col-divider">
+        <div class="arrow-label">→<span>GPT 정리</span></div>
+      </div>
+
+      <!-- 구조화 결과 -->
+      <div class="tc-col">
+        <div class="tc-label" style="color:var(--teal);">🤖 GPT가 정리한 구조</div>
+        <div class="struct-block">
+          <div class="struct-row"><div class="struct-key">교육 목표</div><div class="struct-val">바이브코딩 개념 이해</div></div>
+          <div class="struct-row"><div class="struct-key">핵심 메시지</div><div class="struct-val">말로 설명하면 AI가 제작</div></div>
+          <div class="struct-row"><div class="struct-key">비교 내용</div><div class="struct-val">Python 배포 vs HTML 웹툴</div></div>
+          <div class="struct-row"><div class="struct-key">실무 사례</div><div class="struct-val">CSV 해제 / 이미지 PDF / 미니툴</div></div>
+          <div class="struct-row"><div class="struct-key">화면 구성</div><div class="struct-val">히어로·흐름도·비교·카드·요약</div></div>
+          <div class="struct-row"><div class="struct-key">디자인</div><div class="struct-val">다크 네이비·카드형·시각화 중심</div></div>
+          <div class="struct-row"><div class="struct-key">기술 요건</div><div class="struct-val">HTML 1파일·외부라이브러리 금지</div></div>
+          <div class="struct-row"><div class="struct-key">금지 사항</div><div class="struct-val">긴 문단·개발자 용어·과장</div></div>
+        </div>
+        <div style="margin-top:8px;font-size:10px;color:var(--teal);padding:6px 8px;background:rgba(0,200,160,0.07);border-radius:6px;border:1px solid rgba(0,200,160,0.15);">Claude는 이 구조를 보고 바로 이해 → HTML 제작</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 회차별 4단계 -->
+<div class="sec anim d4">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--purple);"></div>
+    <div class="sec-title">1~5회차 실제 협업 과정</div>
+    <div class="sec-sub">· 내 요청 → GPT 정리 → Claude 전달 → 결과</div>
+  </div>
+
+  <!-- 1회차 -->
+  <div class="process-card">
+    <div class="pc-head">
+      <div class="pc-round" style="background:rgba(160,122,255,0.12);color:var(--purple);border:1px solid rgba(160,122,255,0.25);">1회차</div>
+      <div class="pc-title">AI로 AI 활용하기</div>
+    </div>
+    <div class="pc-body">
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--blue);">
+          <span class="pc-step-icon">👤</span> 내 요청
+        </div>
+        <div class="pc-step-content">
+          <div class="quote">"AI 활용 교육인데, 프롬프트 못 써도 된다는 걸 보여주고 싶어. 대화로 발전시키는 과정. ChatGPT → Claude 흐름도 넣어줘."</div>
+        </div>
+      </div>
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--teal);">
+          <span class="pc-step-icon">🤖</span> GPT 정리
+        </div>
+        <div class="pc-step-content">
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">말풍선 대화 UI</span>
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">Before/After 비교</span>
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">순환 다이어그램</span>
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">응원 메시지</span>
+        </div>
+      </div>
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--purple);">
+          <span class="pc-step-icon">🎨</span> Claude 전달
+        </div>
+        <div class="pc-step-content">
+          구조화된 프롬프트 그대로 전달 → "AI 교육 3회차 HTML을 만들어줘"
+        </div>
+      </div>
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--green);">
+          <span class="pc-step-icon">✅</span> 결과
+        </div>
+        <div class="pc-step-content">
+          <span class="result">말풍선·순환 다이어그램 HTML 완성</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2회차 -->
+  <div class="process-card">
+    <div class="pc-head">
+      <div class="pc-round" style="background:var(--blue-dim);color:var(--blue);border:1px solid var(--border2);">2회차</div>
+      <div class="pc-title">바이브 코딩</div>
+    </div>
+    <div class="pc-body">
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--blue);"><span class="pc-step-icon">👤</span> 내 요청</div>
+        <div class="pc-step-content"><div class="quote">"바이브코딩 설명, HTML vs Python 비교, CSV 압축 해제·이미지 PDF 변환 사례 넣어줘."</div></div>
+      </div>
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--teal);"><span class="pc-step-icon">🤖</span> GPT 정리</div>
+        <div class="pc-step-content">
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">4단계 흐름도</span>
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">좌우 비교 카드</span>
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">미니 흐름도</span>
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">실무 사례 3종</span>
+        </div>
+      </div>
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--purple);"><span class="pc-step-icon">🎨</span> Claude 전달</div>
+        <div class="pc-step-content">완성 프롬프트 + 화면구성 5단계 구체 명시</div>
+      </div>
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--green);"><span class="pc-step-icon">✅</span> 결과</div>
+        <div class="pc-step-content"><span class="result">비교 카드·미니 플로우 HTML 완성</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3회차 -->
+  <div class="process-card">
+    <div class="pc-head">
+      <div class="pc-round" style="background:rgba(240,192,96,0.10);color:var(--gold);border:1px solid rgba(240,192,96,0.25);">3회차</div>
+      <div class="pc-title">GitHub 게시하기</div>
+    </div>
+    <div class="pc-body">
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--blue);"><span class="pc-step-icon">👤</span> 내 요청</div>
+        <div class="pc-step-content"><div class="quote">"GitHub가 뭔지 설명, 집 비유, 어디서든 접속 가능, index 역할도."</div></div>
+      </div>
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--teal);"><span class="pc-step-icon">🤖</span> GPT 정리</div>
+        <div class="pc-step-content">
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">집·건물 비유</span>
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">폴더 트리 구조</span>
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">기기별 접속 시각화</span>
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">Git 용어 금지</span>
+        </div>
+      </div>
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--purple);"><span class="pc-step-icon">🎨</span> Claude 전달</div>
+        <div class="pc-step-content">비유 2종 + 저장소 구조 + 기기별 접속 화면 구성 포함</div>
+      </div>
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--green);"><span class="pc-step-icon">✅</span> 결과</div>
+        <div class="pc-step-content"><span class="result">집 구조도·저장소 트리 HTML 완성</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4회차 -->
+  <div class="process-card">
+    <div class="pc-head">
+      <div class="pc-round" style="background:rgba(0,200,160,0.10);color:var(--teal);border:1px solid rgba(0,200,160,0.25);">4회차</div>
+      <div class="pc-title">Google Apps Script</div>
+    </div>
+    <div class="pc-body">
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--blue);"><span class="pc-step-icon">👤</span> 내 요청</div>
+        <div class="pc-step-content"><div class="quote">"GAS 실제 사례: 설정 저장, 노션 속도 개선, 채팅 시스템, 상담 자동화. 코드 설명 없이."</div></div>
+      </div>
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--teal);"><span class="pc-step-icon">🤖</span> GPT 정리</div>
+        <div class="pc-step-content">
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">허브 다이어그램</span>
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">속도 막대 비교</span>
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">실무 카드 6종</span>
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">4단계 구조</span>
+        </div>
+      </div>
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--purple);"><span class="pc-step-icon">🎨</span> Claude 전달</div>
+        <div class="pc-step-content">사례를 교육용 스토리로 재배치 + 코드 설명 금지 명시</div>
+      </div>
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--green);"><span class="pc-step-icon">✅</span> 결과</div>
+        <div class="pc-step-content"><span class="result">허브 다이어그램·속도 개선 HTML 완성</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5회차 -->
+  <div class="process-card">
+    <div class="pc-head">
+      <div class="pc-round" style="background:rgba(240,192,96,0.10);color:var(--gold);border:1px solid rgba(240,192,96,0.25);">5회차</div>
+      <div class="pc-title">업무 자동화 로드맵</div>
+    </div>
+    <div class="pc-body">
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--blue);"><span class="pc-step-icon">👤</span> 내 요청</div>
+        <div class="pc-step-content"><div class="quote">"1~4회차 내용을 하나로 묶어줘. 어르신도 이해할 수 있게."</div></div>
+      </div>
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--teal);"><span class="pc-step-icon">🤖</span> GPT 정리</div>
+        <div class="pc-step-content">
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">로드맵 구조 제안</span>
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">집 짓기 비유</span>
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">퍼즐 카드 4종</span>
+          <span class="tag" style="background:rgba(0,200,160,0.08);color:var(--teal);border:1px solid rgba(0,200,160,0.2);">체크리스트</span>
+        </div>
+      </div>
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--purple);"><span class="pc-step-icon">🎨</span> Claude 전달</div>
+        <div class="pc-step-content">로드맵 인포그래픽 + "어르신도 이해" 요구 명시</div>
+      </div>
+      <div class="pc-step">
+        <div class="pc-step-label" style="color:var(--green);"><span class="pc-step-icon">✅</span> 결과</div>
+        <div class="pc-step-content"><span class="result">퍼즐 카드·집 비유 인포그래픽 완성</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 핵심 포인트 -->
+<div class="sec anim d5">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--gold);"></div>
+    <div class="sec-title">1회차에서 배운 것, 바로 써먹기</div>
+    <div class="sec-sub">· 오늘부터 적용할 수 있는 3가지</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;">
+      <div style="font-size:24px;margin-bottom:10px;">💬</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;">생각나는 대로 ChatGPT에 말하기</div>
+      <div style="font-size:11.5px;color:var(--text2);line-height:1.6;">완벽하지 않아도 됩니다. "이런 거 만들고 싶어, 저것도 넣고..." 두서없이 말해도 GPT가 정리해줍니다.</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;">
+      <div style="font-size:24px;margin-bottom:10px;">📋</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;">GPT가 정리한 내용을 Claude에 전달</div>
+      <div style="font-size:11.5px;color:var(--text2);line-height:1.6;">GPT가 구조화해준 프롬프트를 그대로 Claude에게 붙여넣으면 됩니다. 수정 없이도 충분합니다.</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;">
+      <div style="font-size:24px;margin-bottom:10px;">🔄</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;">결과 보고 수정 요청하기</div>
+      <div style="font-size:11.5px;color:var(--text2);line-height:1.6;">"이 부분 바꿔줘", "이거 더 크게" 한 마디면 됩니다. 반복할수록 원하는 결과에 가까워집니다.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 요약 -->
+<div id="summary" class="anim" style="animation-delay:0.35s;">
+  <div class="summary-inner">
+    <div style="font-size:28px;margin-bottom:14px;">🤝</div>
+    <div class="summary-quote">
+      좋은 결과는 <span class="hl-gold">완벽한 프롬프트</span>가 아니라,<br>
+      <span class="hl-cyan">AI와의 좋은 대화</span>에서 시작됩니다.
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+      <div class="badge badge-blue">💬 두서없이 말하기</div>
+      <div style="color:var(--text3);">→</div>
+      <div class="badge badge-teal">🤖 GPT가 정리</div>
+      <div style="color:var(--text3);">→</div>
+      <div class="badge" style="background:rgba(160,122,255,0.10);color:var(--purple);border:1px solid rgba(160,122,255,0.25);">🎨 Claude가 제작</div>
+      <div style="color:var(--text3);">→</div>
+      <div class="badge badge-green">✅ 완성</div>
+    </div>
+    <div class="summary-author">AI 교육 6회차 · 엄마감동팀</div>
+  </div>
+</div>
+
+<div class="sec-bottom"></div>
+</div>
+
+<script>
+const NAV_CONFIG = {
+  prev: 'training/ai교육/ai교육_5회차.html',
+  next: 'training/ai교육/ai교육_7회차.html'
+};
+
+// ── 회차 네비게이션 ──
+function navGo(dir) {
+  const path = NAV_CONFIG[dir];
+  if (!path) return;
+
+  const isInIframe = (function() {
+    try { return window.parent && window.parent !== window; } catch(e) { return false; }
+  })();
+
+  if (isInIframe) {
+    if (dir === 'next') {
+      // index에 먼저 존재 여부 확인 요청
+      window.parent.postMessage({ type: 'TRAINING_NAV', path, checkOnly: true }, '*');
+      // 결과 수신 (1회용)
+      const _h = function(e) {
+        if (!e.data || e.data.type !== 'NAV_CHECK_RESULT' || e.data.path !== path) return;
+        window.removeEventListener('message', _h);
+        if (e.data.exists) {
+          window.parent.postMessage({ type: 'TRAINING_NAV', path }, '*');
+        } else {
+          showNavToast();
+        }
+      };
+      window.addEventListener('message', _h);
+      setTimeout(() => window.removeEventListener('message', _h), 500);
+    } else {
+      window.parent.postMessage({ type: 'TRAINING_NAV', path }, '*');
+    }
+  } else {
+    // 직접 열린 경우 — prev는 바로 이동, next는 토스트
+    if (dir === 'next') { showNavToast(); return; }
+    window.location.href = path;
+  }
+}
+
+function showNavToast() {
+  let t = document.getElementById('navToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'navToast';
+    t.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(12px);'+
+      'background:#172240;border:1px solid rgba(80,140,255,0.35);color:#8aaad0;'+
+      'font-size:12px;font-weight:600;padding:10px 20px;border-radius:30px;'+
+      'z-index:9999;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;';
+    t.textContent = '📋 다음 회차는 준비 중입니다';
+    document.body.appendChild(t);
+  }
+  t.style.opacity = '1';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateX(-50%) translateY(12px)';
+  }, 2200);
+}
+window.addEventListener('message', e => {
+  if (!e.data) return;
+  if (e.data.type === 'THEME') {
+    if (e.data.mode === 'light') document.body.classList.add('light-mode');
+    else document.body.classList.remove('light-mode');
+  }
+});
+</script>
+</body>
+</html>

@@ -25,6 +25,8 @@ body{ background-image:radial-gradient(circle at 15% 0%, rgba(0,200,255,0.05) 0%
 ::-webkit-scrollbar{ width:5px; height:5px; } ::-webkit-scrollbar-track{ background:transparent; } ::-webkit-scrollbar-thumb{ background:var(--border2); border-radius:3px; }
 
 #statusBar{ position:sticky; top:0; z-index:200; display:flex; align-items:center; justify-content:space-between; padding:0 26px; height:38px; background:rgba(13,24,48,0.85); border-bottom:1px solid var(--border); backdrop-filter:blur(14px); font-family:var(--font-en); }
+#globalBusyBar{ position:sticky; top:38px; z-index:201; height:2px; width:100%; background:linear-gradient(90deg, transparent, var(--cyan), transparent); background-size:200% 100%; opacity:0; transition:opacity .2s; animation:busySweep 1.1s linear infinite; pointer-events:none; }
+@keyframes busySweep{ 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
 .sb-left{ display:flex; align-items:center; gap:14px; }
 .sb-brand{ font-size:11px; font-weight:700; color:var(--cyan); letter-spacing:2.5px; text-transform:uppercase; }
 .sb-dot{ width:5px; height:5px; border-radius:50%; background:var(--green); animation:pulse-dot 2s infinite; }
@@ -291,6 +293,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     <div class="sb-time" id="sbTime">--:--:--</div>
   </div>
 </div>
+<div id="globalBusyBar"></div>
 
 <div id="app">
   <div id="sidebar">
@@ -306,7 +309,6 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     <div class="nav-item" data-tab="awards"><div class="nav-icon">06</div><div class="nav-label">수상작 관리</div></div>
     <div class="nav-item" data-tab="nonwriters"><div class="nav-icon">07</div><div class="nav-label">미제출자 현황</div></div>
     <div class="nav-item" data-tab="unmatched"><div class="nav-icon">08</div><div class="nav-label">관리대상 건</div></div>
-    </nav>
     <div class="nav-item" data-tab="sync" style="margin:auto 4px 4px;"><div class="nav-icon">99</div><div class="nav-label">동기화 설정</div></div>
     <div id="sidebar-foot" style="margin-top:0;">노션 원본 속성은 동기화 시<br>절대 덮어쓰지 않습니다.</div>
   </div>
@@ -340,12 +342,6 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
 
       <div class="sec-title">그룹사별 작성률<span class="sec-sub" id="coCount"></span></div>
       <div class="co-grid" id="coGrid"></div>
-
-      <!-- [임시 디버그] 대상자 필터링 단계별 진단 패널 -->
-      <div class="sec-title" style="margin-top:24px; cursor:pointer;" onclick="const d=document.getElementById('summaryDebugBox'); d.style.display = d.style.display==='none' ? 'block' : 'none';">
-        🔧 디버그 정보 (임시)<span class="sec-sub">클릭해서 펼치기/접기</span>
-      </div>
-      <pre id="summaryDebugBox" style="display:none; background:var(--bg2); border:1px solid var(--border2); border-radius:10px; padding:16px; font-size:11.5px; line-height:1.6; white-space:pre-wrap; word-break:break-all; color:var(--text2);"></pre>
     </div>
 
     <!-- ② 명단 제출 (구: 직원 관리) -->
@@ -755,6 +751,12 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     t.textContent = msg; t.classList.add('show');
     setTimeout(()=> t.classList.remove('show'), 2500);
   }
+  // callApi 실패 공통 처리 — 중복요청으로 스킵된 경우는 callApi 안에서 이미
+  // 안내 토스트를 띄웠으므로 여기서 또 "실패: ..." 토스트를 띄우지 않는다.
+  function _apiCatch(err){
+    if (err && err.message === '__DUPLICATE_SKIPPED__') return;
+    showToast('실패: ' + (err && err.message ? err.message : String(err)));
+  }
   function closeModal(id){ document.getElementById(id).classList.remove('active'); }
   function openModal(id){ document.getElementById(id).classList.add('active'); }
   function currentYYYYMM(){
@@ -804,23 +806,78 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     }
   });
 
+  /* [쾌적화] 진행 중인 요청 표시용 상단 바 + 동일 요청 중복 실행 방지.
+   * - 실행 로그 분석 결과, 같은 화면에서 짧은 간격으로 같은 액션이 두 번
+   *   들어가면 구글시트 쓰기 잠금이 얽혀 90~140초까지 늘어지는 현상이 확인됨.
+   * - action+payload가 동일한 요청이 아직 처리 중이면, 새로 보내지 않고
+   *   바로 안내 토스트만 띄운다 (연타/이중클릭 방지).
+   */
+  const _pendingRequestKeys = new Set();
+  let _busyCount = 0;
+  function _setGlobalBusy(on){
+    _busyCount += on ? 1 : -1;
+    if (_busyCount < 0) _busyCount = 0;
+    const bar = document.getElementById('globalBusyBar');
+    if (!bar) return;
+    bar.style.opacity = _busyCount > 0 ? '1' : '0';
+  }
+
   /* GAS Web App 호출 — ?action=...&data=... (GET, CORS 안전) */
   async function callApi(action, payload){
     if (!_scriptUrl) {
       throw new Error('연결 정보(SCRIPT_URL)를 아직 받지 못했습니다. index.html에서 로드되었는지 확인해주세요.');
     }
-    // POST + text/plain: 대용량 payload도 URL 길이 제한 없이 안전하게 전송,
-    // Content-Type을 text/plain으로 보내면 CORS 프리플라이트(OPTIONS)도 발생하지 않음
-    const res = await fetch(_scriptUrl, {
-      method: 'POST',
-      redirect: 'follow',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action, data: payload !== undefined ? payload : {} })
-    });
-    const json = await res.json();
-    if (!json.ok) throw new Error(json.error || '알 수 없는 오류');
-    return json.data;
+    const reqKey = action + ':' + JSON.stringify(payload || {});
+    if (_pendingRequestKeys.has(reqKey)) {
+      showToast('이미 처리 중입니다. 잠시만 기다려주세요.');
+      throw new Error('__DUPLICATE_SKIPPED__');
+    }
+    _pendingRequestKeys.add(reqKey);
+    _setGlobalBusy(true);
+    try {
+      // POST + text/plain: 대용량 payload도 URL 길이 제한 없이 안전하게 전송,
+      // Content-Type을 text/plain으로 보내면 CORS 프리플라이트(OPTIONS)도 발생하지 않음
+      const res = await fetch(_scriptUrl, {
+        method: 'POST',
+        redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action, data: payload !== undefined ? payload : {} })
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || '알 수 없는 오류');
+      return json.data;
+    } finally {
+      _pendingRequestKeys.delete(reqKey);
+      _setGlobalBusy(false);
+    }
   }
+
+  /* ---------------- 깃허브 정적 스냅샷 우선 로딩 ----------------
+   * 동기화 시 GAS가 깃허브에 게시한 snapshot.json을 먼저 읽어 화면을 즉시(수십 ms)
+   * 그리고, 그 뒤 GAS 최신 데이터로 조용히 갱신한다 (stale-while-revalidate).
+   * 스냅샷이 없거나(미게시/경로 상이) 실패하면 기존처럼 GAS만 사용 — 기능 저하 없음. */
+  let _snap = null;
+  const _SNAP_CANDIDATES = ['../data/snapshot.json','./data/snapshot.json','../snapshot.json','./snapshot.json'];
+  const _snapReady = (async () => {
+    const remembered = sessionStorage.getItem('_snapUrl');
+    const candidates = remembered
+      ? [remembered, ..._SNAP_CANDIDATES.filter(c => c !== remembered)]
+      : _SNAP_CANDIDATES;
+    for (const url of candidates){
+      try{
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) continue;
+        const json = await res.json();
+        if (json && json.generatedAt){
+          _snap = json;
+          sessionStorage.setItem('_snapUrl', url);
+          const sb = document.getElementById('sbSync');
+          if (sb) sb.textContent = '스냅샷 ' + json.generatedAt;
+          return;
+        }
+      } catch(e){ /* 다음 후보 경로 시도 */ }
+    }
+  })();
 
   document.querySelectorAll('.nav-item').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -850,9 +907,11 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   };
 
   /* ① 요약 대시보드 */
-  function loadSummary(){
+  async function loadSummary(){
     const ym = document.getElementById('summaryMonth').value || currentYYYYMM();
-    callApi('getSummary', { yyyymm: ym }).then(renderSummary).catch(err => showToast('실패: ' + err.message));
+    await _snapReady;
+    if (_snap && _snap.summary && _snap.summary.yyyymm === ym) renderSummary(_snap.summary); // 즉시 표시
+    callApi('getSummary', { yyyymm: ym }).then(renderSummary).catch(_apiCatch); // 백그라운드 최신화
   }
   function rateColor(rate){
     if(rate >= 80) return 'var(--green)';
@@ -875,12 +934,6 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
 
     document.getElementById('coCount').textContent = data.companyStats.length + '개 그룹사';
 
-    // [임시 디버그] 원인 파악용 — 콘솔 + 화면 패널 둘 다 출력
-    if (data._debug) {
-      console.log('[요약 대시보드 디버그]', data._debug);
-      document.getElementById('summaryDebugBox').textContent = JSON.stringify(data._debug, null, 2);
-    }
-
     const grid = document.getElementById('coGrid');
     if(!data.companyStats.length){ grid.innerHTML = '<div class="empty">데이터가 없습니다.</div>'; return; }
     grid.innerHTML = data.companyStats.map(c => {
@@ -899,9 +952,11 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   }
 
   /* ② 미작성자 현황 */
-  function loadNonWriters(){
+  async function loadNonWriters(){
     const ym = document.getElementById('nonwriterMonth').value || currentYYYYMM();
-    callApi('getNonWriters', { yyyymm: ym }).then(renderNonWriters).catch(err => showToast('실패: ' + err.message));
+    await _snapReady;
+    if (_snap && _snap.nonWriters && _snap.nonWriters.yyyymm === ym) renderNonWriters(_snap.nonWriters);
+    callApi('getNonWriters', { yyyymm: ym }).then(renderNonWriters).catch(_apiCatch);
   }
   function renderNonWriters(data){
     document.getElementById('nonwriterSub').textContent = `${data.nonWriters.length}명 미제출 / 대상 ${data.totalEligible}명`;
@@ -951,19 +1006,21 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     closeModal('exemptModalBg');
     callApi('setExemption', { empId, memo })
       .then(()=>{ showToast('열외 처리되었습니다.'); loadNonWriters(); })
-      .catch(err => showToast('실패: ' + err.message));
+      .catch(_apiCatch);
   }
 
   /* ③ 관리대상 건 */
-  function loadUnmatched(){
+  async function loadUnmatched(){
     const ym = document.getElementById('mgmtMonth').value || '';
+    await _snapReady;
+    if (!ym && _snap && _snap.mgmtItems) renderMgmtItems(_snap.mgmtItems);
     Promise.all([
       callApi('getMgmtItems', { yyyymm: ym }),
       callApi('getEmployees')
     ]).then(([data, emps])=>{
       employeeCache = emps;
       renderMgmtItems(data);
-    }).catch(err => showToast('실패: ' + err.message));
+    }).catch(_apiCatch);
   }
 
   function toggleAccord(id){
@@ -1117,7 +1174,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     if(!selected){ showToast('직원을 먼저 선택해주세요.'); return; }
     callApi('resolveUnmatched', { pageId, empId: selected.empId })
       .then(()=>{ showToast('매칭 완료 및 노션 반영되었습니다.'); loadUnmatched(); })
-      .catch(err => showToast('실패: ' + err.message));
+      .catch(_apiCatch);
   }
 
   function resolveUnmatched(pageId){
@@ -1125,7 +1182,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     if(!sel || !sel.value){ showToast('직원을 선택해주세요.'); return; }
     callApi('resolveUnmatched', { pageId, empId: sel.value })
       .then(()=>{ showToast('매칭 완료 및 노션 반영되었습니다.'); loadUnmatched(); })
-      .catch(err => showToast('실패: ' + err.message));
+      .catch(_apiCatch);
   }
 
   let employeeCache = [];
@@ -1255,7 +1312,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
         loadEmployees();
         loadRosterSubmitLog();
       })
-      .catch(err=>{ showToast('실패: ' + err.message); })
+      .catch(_apiCatch)
       .finally(()=>{ btn.disabled=false; btn.textContent='구글시트에 저장'; });
   }
 
@@ -1268,10 +1325,16 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     const sign = diff > 0 ? '▲' : '▼';
     return `<span style="color:${color}; font-size:10px; font-weight:700;"> (${sign}${Math.abs(diff)})</span>`;
   }
-  function loadRosterSubmitLog(){
+  async function loadRosterSubmitLog(){
     const box = document.getElementById('rosterSubmitLog');
     if(!box) return;
+    await _snapReady;
+    if (_snap && Array.isArray(_snap.rosterCards)) _renderRosterCards(box, _snap.rosterCards);
     callApi('getRosterCardStats').then(list=>{
+      _renderRosterCards(box, list);
+    }).catch(()=>{ if(!(_snap && _snap.rosterCards)) box.innerHTML = '<div class="empty" style="padding:0;">불러오기 실패</div>'; });
+  }
+  function _renderRosterCards(box, list){
       if(!list.length){ box.innerHTML = '<div class="empty" style="padding:0;">데이터가 없습니다.</div>'; return; }
       box.innerHTML = list.map(s => {
         const submitted = s.제출인원 !== null && s.제출인원 !== undefined;
@@ -1289,7 +1352,6 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
           </div>` : `<div style="font-size:11.5px; color:var(--text3);">아직 미제출</div>`}
         </div>`;
       }).join('');
-    }).catch(()=>{ box.innerHTML = '<div class="empty" style="padding:0;">불러오기 실패</div>'; });
   }
 
   /* ============ 조편성 ============ */
@@ -1301,6 +1363,16 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
 
   async function loadGroups(){
     let ym = document.getElementById('groupMonth').value;
+    document.getElementById('groupAdminOnly').style.display = _isGroupAdmin() ? 'inline-flex' : 'none';
+    await _snapReady;
+    // 스냅샷에 담긴 회차와 같으면(또는 월 미선택이면) 즉시 표시
+    if (_snap && _snap.groups && (!ym || _snap.groups.yyyymm === ym)){
+      if(!ym){ ym = _snap.groups.yyyymm; document.getElementById('groupMonth').value = ym; }
+      document.getElementById('groupRoundLabel').textContent = _snap.groups.회차라벨 ? ' · ' + _snap.groups.회차라벨 : '';
+      _lastGroupRows = _snap.groups.rows || [];
+      _lastGroupYm = ym;
+      renderGroups();
+    }
     if(!ym){
       try{
         const r = await callApi('getNextRosterRound');
@@ -1308,13 +1380,12 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
         document.getElementById('groupMonth').value = ym;
       } catch(e){}
     }
-    document.getElementById('groupAdminOnly').style.display = _isGroupAdmin() ? 'inline-flex' : 'none';
     callApi('getGroups', { yyyymm: ym }).then(r=>{
       document.getElementById('groupRoundLabel').textContent = r.회차라벨 ? ' · ' + r.회차라벨 : '';
       _lastGroupRows = r.rows || [];
       _lastGroupYm = ym;
       renderGroups();
-    }).catch(err => showToast('실패: ' + err.message));
+    }).catch(_apiCatch);
   }
 
   // 조 변경 후 즉시 반영이 안 되어 보일 때, 수동으로 조번호 순 정렬을 강제 재적용
@@ -1339,7 +1410,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     callApi('generateGroups', { yyyymm: ym }).then(r=>{
       showToast(`조편성 완료: ${r.groupCount}개 조 / ${r.memberCount}명`);
       loadGroups();
-    }).catch(err => showToast('실패: ' + err.message));
+    }).catch(_apiCatch);
   }
 
   function renderGroups(){
@@ -1420,26 +1491,26 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       const pageId = (list[0].NotionPageId||'').replace(/-/g,'');
       if(pageId) window.open(`https://app.notion.com/p/${pageId}`, '_blank');
       else showToast('노션 페이지 정보가 없습니다.');
-    }).catch(err => showToast('실패: ' + err.message));
+    }).catch(_apiCatch);
   }
 
   function changeGroupNo(empId, ym, newNo){
     if(!_isGroupAdmin()){ showToast('권한이 없습니다.'); return; }
     callApi('updateGroupAssignment', { 직원ID: empId, 조편성월: ym, 조번호: newNo })
       .then(()=>{ showToast('조 번호가 변경되었습니다.'); loadGroups(); })
-      .catch(err => showToast('실패: ' + err.message));
+      .catch(_apiCatch);
   }
   function setLeader(empId, ym){
     if(!_isGroupAdmin()){ showToast('권한이 없습니다.'); return; }
     callApi('updateGroupAssignment', { 직원ID: empId, 조편성월: ym, 조장여부: 'Y' })
       .then(()=>{ showToast('조장이 변경되었습니다.'); loadGroups(); })
-      .catch(err => showToast('실패: ' + err.message));
+      .catch(_apiCatch);
   }
   function pickCase(e, empId, ym){
     e.stopPropagation();
     callApi('updateGroupAssignment', { 직원ID: empId, 조편성월: ym, 우수사례: 'Y' })
       .then(()=>{ showToast('조별우수사례로 추천되었습니다.'); loadGroups(); })
-      .catch(err => showToast('실패: ' + err.message));
+      .catch(_apiCatch);
   }
   function onAttendanceChange(empId, ym, value){
     if(value === '불참'){
@@ -1450,7 +1521,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     } else {
       callApi('setAttendance', { 직원ID: empId, 조편성월: ym, 참석여부: '참석', 불참사유: '' })
         .then(()=>{ showToast('참석으로 변경되었습니다.'); loadGroups(); })
-        .catch(err => showToast('실패: ' + err.message));
+        .catch(_apiCatch);
     }
   }
   function saveAttendance(){
@@ -1459,7 +1530,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     const reason = document.getElementById('attReason').value;
     callApi('setAttendance', { 직원ID: empId, 조편성월: ym, 참석여부: '불참', 불참사유: reason })
       .then(()=>{ showToast('불참으로 변경되었습니다.'); closeModal('attendanceModalBg'); loadGroups(); })
-      .catch(err => showToast('실패: ' + err.message));
+      .catch(_apiCatch);
   }
   function showLeaderCriteria(){ openModal('leaderCriteriaModalBg'); }
 
@@ -1478,7 +1549,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       showToast('시트 초기화 완료. 새 명단을 업로드해주세요.');
       loadEmployees();
       loadRosterSubmitLog();
-    }).catch(err => showToast('실패: ' + err.message));
+    }).catch(_apiCatch);
   }
 
   /* --- 직원 목록 조회 --- */
@@ -1496,7 +1567,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       const filtered = af ? list.filter(e=>e.회사===af) : list;
       document.getElementById('rosterCount').textContent = filtered.length + '명';
       renderEmployees(filtered);
-    }).catch(err => showToast('실패: ' + err.message));
+    }).catch(_apiCatch);
   }
   function renderEmployees(list){
     employeeCache = list;
@@ -1542,7 +1613,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     };
     callApi('upsertEmployee', { emp: obj })
       .then(()=>{ showToast('저장되었습니다.'); closeModal('employeeModalBg'); loadEmployees(); })
-      .catch(err => showToast('실패: ' + err.message));
+      .catch(_apiCatch);
   }
   function openStatusModal(empId){
     document.getElementById('statusEmpId').value = empId;
@@ -1556,24 +1627,32 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     const memo = document.getElementById('statusMemo').value;
     callApi('setEmployeeStatus', { empId, status, memo })
       .then(()=>{ showToast('상태가 변경되었습니다.'); closeModal('statusModalBg'); loadEmployees(); })
-      .catch(err => showToast('실패: ' + err.message));
+      .catch(_apiCatch);
   }
   function compareRawData(){
     document.getElementById('compareResult').textContent = '대조 중...';
     callApi('compareRawData').then(r=>{
       document.getElementById('compareResult').textContent =
         `대조 완료: 일치 ${r.okCount} / 불일치 ${r.mismatchCount} / 누락 ${r.missingCount} / 신규 ${r.newCount} (전체 ${r.total}건)`;
-    }).catch(err => showToast('실패: ' + err.message));
+    }).catch(_apiCatch);
   }
 
   /* ⑤ 지식DB 작성현황 */
-  function loadKnowledgeList(){
+  async function loadKnowledgeList(){
     const filter = {
       yyyymm: document.getElementById('knowMonth').value,
       company: document.getElementById('knowCompany').value,
       writer: document.getElementById('knowWriter').value
     };
-    callApi('getKnowledgeList', { filter }).then(renderKnowledge).catch(err => showToast('실패: ' + err.message));
+    await _snapReady;
+    if (_snap && Array.isArray(_snap.knowledgeList)){
+      let rows = _snap.knowledgeList.filter(r => (r.작성자||'').toString().trim() !== '');
+      if (filter.yyyymm) rows = rows.filter(r => formatDate(r.등록일).slice(0,7) === filter.yyyymm);
+      if (filter.company) rows = rows.filter(r => (r['회사+부서']||'').includes(filter.company));
+      if (filter.writer) rows = rows.filter(r => (r.작성자||'').includes(filter.writer));
+      renderKnowledge(rows);
+    }
+    callApi('getKnowledgeList', { filter }).then(renderKnowledge).catch(_apiCatch);
   }
   function renderKnowledge(list){
     const body = document.getElementById('knowledgeBody');
@@ -1619,11 +1698,13 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     </div>`;
   }
 
-  function loadAwards(){
+  async function loadAwards(){
     const ym = document.getElementById('awardMonth').value || '';
+    await _snapReady;
+    if (!ym && _snap && Array.isArray(_snap.awards)) renderAwards(_snap.awards, ym);
     callApi('getAwardList', { yyyymm: ym })
       .then(list => renderAwards(list, ym))
-      .catch(err => showToast('실패: ' + err.message));
+      .catch(_apiCatch);
   }
 
   function renderAwards(list, ym){
@@ -1681,18 +1762,23 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   }
 
   /* ⑦ 동기화 설정 */
-  function loadSyncStatus(){
+  async function loadSyncStatus(){
+    await _snapReady;
+    if (_snap && _snap.syncStatus){
+      document.getElementById('syncStatus').textContent = `최근 동기화: ${_snap.syncStatus.lastSync} | 결과: ${_snap.syncStatus.lastResult}`;
+      document.getElementById('sbSync').textContent = '최근 동기화 ' + _snap.syncStatus.lastSync;
+    }
     callApi('getSyncStatus').then(s=>{
       document.getElementById('syncStatus').textContent = `최근 동기화: ${s.lastSync} | 결과: ${s.lastResult}`;
       document.getElementById('sbSync').textContent = '최근 동기화 ' + s.lastSync;
-    }).catch(err => showToast('실패: ' + err.message));
+    }).catch(_apiCatch);
   }
   function manualSync(){
     document.getElementById('syncStatus').textContent = '동기화 중... 잠시만 기다려주세요.';
     callApi('manualSync').then(r=>{
       showToast(r.message);
       loadSyncStatus();
-    }).catch(err => showToast('실패: ' + err.message));
+    }).catch(_apiCatch);
   }
 
   /* ---------------- 유틸 ---------------- */

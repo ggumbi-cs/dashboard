@@ -434,23 +434,27 @@ body.is-admin .notice-admin-gear { display:flex; }
 
       <!-- 품질 액션현황 -->
       <div class="nav-category">품질 액션현황</div>
-      <div class="nav-item" data-tab="액션현황/런칭전검사.html" onclick="goTab('액션현황/런칭전검사.html')">
+      <div class="nav-item" data-tab="액션현황/액션현황판.html" onclick="goTab('액션현황/액션현황판.html')">
+        <span style="font-size:15px;">📋</span>
+        <span class="nav-item-label">액션현황판</span>
+      </div>
+      <div class="nav-item" data-tab="액션현황/액션현황.html" onclick="goTab('액션현황/액션현황.html')">
         <span class="nav-step">S1</span>
         <span class="nav-item-label">런칭전검사</span>
       </div>
-      <div class="nav-item" data-tab="액션현황/분석(검사).html" onclick="goTab('액션현황/분석(검사).html')">
+      <div class="nav-item" data-tab="액션현황/액션현황.html" onclick="goTab('액션현황/액션현황.html')">
         <span class="nav-step">S2</span>
         <span class="nav-item-label">분석(검사)</span>
       </div>
-      <div class="nav-item" data-tab="액션현황/개선진행.html" onclick="goTab('액션현황/개선진행.html')">
+      <div class="nav-item" data-tab="액션현황/액션현황.html" onclick="goTab('액션현황/액션현황.html')">
         <span class="nav-step">S3</span>
         <span class="nav-item-label">개선진행</span>
       </div>
-      <div class="nav-item" data-tab="액션현황/입고검사.html" onclick="goTab('액션현황/입고검사.html')">
+      <div class="nav-item" data-tab="액션현황/액션현황.html" onclick="goTab('액션현황/액션현황.html')">
         <span class="nav-step">S4</span>
         <span class="nav-item-label">입고검사</span>
       </div>
-      <div class="nav-item" data-tab="액션현황/개선(검사완료).html" onclick="goTab('액션현황/개선(검사완료).html')">
+      <div class="nav-item" data-tab="액션현황/액션현황.html" onclick="goTab('액션현황/액션현황.html')">
         <span class="nav-step">S5</span>
         <span class="nav-item-label">개선(검사)완료</span>
       </div>
@@ -754,11 +758,12 @@ const COLOR_OPTIONS = [
 const DEFAULT_QUICK = [
   { icon:'🏠', label:'대시보드 홈',     tab:'home',                              color:'qi-cyan',   minRole:'affiliate' },
   { icon:'📉', label:'불량현황',        tab:'모니터링/불량현황.html',              color:'qi-red',    minRole:'affiliate' },
-  { icon:'🔍', label:'런칭전검사',      tab:'액션현황/런칭전검사.html',            color:'qi-blue',   minRole:'affiliate' },
-  { icon:'🧪', label:'분석(검사)',      tab:'액션현황/분석(검사).html',            color:'qi-purple', minRole:'affiliate' },
-  { icon:'🔧', label:'개선진행',        tab:'액션현황/개선진행.html',              color:'qi-orange', minRole:'affiliate' },
-  { icon:'📦', label:'입고검사',        tab:'액션현황/입고검사.html',              color:'qi-gold',   minRole:'affiliate' },
-  { icon:'✅', label:'개선(검사)완료',  tab:'액션현황/개선(검사완료).html',        color:'qi-green',  minRole:'affiliate' },
+  { icon:'📋', label:'액션현황판',      tab:'액션현황/액션현황판.html',            color:'qi-purple', minRole:'affiliate' },
+  { icon:'🔍', label:'런칭전검사',      tab:'액션현황/액션현황.html',              color:'qi-blue',   minRole:'affiliate' },
+  { icon:'🧪', label:'분석(검사)',      tab:'액션현황/액션현황.html',              color:'qi-purple', minRole:'affiliate' },
+  { icon:'🔧', label:'개선진행',        tab:'액션현황/액션현황.html',              color:'qi-orange', minRole:'affiliate' },
+  { icon:'📦', label:'입고검사',        tab:'액션현황/액션현황.html',              color:'qi-gold',   minRole:'affiliate' },
+  { icon:'✅', label:'개선(검사)완료',  tab:'액션현황/액션현황.html',              color:'qi-green',  minRole:'affiliate' },
   { icon:'↩️', label:'반품 종합검사',   tab:'https://cs-as-app.vercel.app/',      color:'qi-cyan',   minRole:'affiliate' },
   { icon:'👤', label:'개발자',          tab:'개발자',                             color:'qi-green',  minRole:'admin'     },
 ];
@@ -766,11 +771,12 @@ const DEFAULT_QUICK = [
 // ── 사이드바와 일치하는 슬라이더 카드 기본값 ──
 const DEFAULT_CARDS = [
   { id:'defect',  title:'불량현황',      sub:'품질 불량 모니터링',       icon:'📉', tab:'모니터링/불량현황.html',         iconCls:'qi-red',    minRole:'affiliate' },
-  { id:'step1',   title:'런칭전검사',    sub:'Step1. 런칭 전 검사',     icon:'🔍', tab:'액션현황/런칭전검사.html',       iconCls:'qi-blue',   minRole:'affiliate' },
-  { id:'step2',   title:'분석(검사)',    sub:'Step2. 불량 분석 검사',   icon:'🧪', tab:'액션현황/분석(검사).html',       iconCls:'qi-purple', minRole:'affiliate' },
-  { id:'step3',   title:'개선진행',      sub:'Step3. 개선 진행 현황',   icon:'🔧', tab:'액션현황/개선진행.html',         iconCls:'qi-orange', minRole:'affiliate' },
-  { id:'step4',   title:'입고검사',      sub:'Step4. 입고 검사',        icon:'📦', tab:'액션현황/입고검사.html',         iconCls:'qi-gold',   minRole:'affiliate' },
-  { id:'step5',   title:'개선(검사)완료',sub:'Step5. 개선(검사) 완료',  icon:'✅', tab:'액션현황/개선(검사완료).html',   iconCls:'qi-green',  minRole:'affiliate' },
+  { id:'board',   title:'액션현황판',    sub:'품질 액션 종합 현황판',    icon:'📋', tab:'액션현황/액션현황판.html',       iconCls:'qi-purple', minRole:'affiliate' },
+  { id:'step1',   title:'런칭전검사',    sub:'Step1. 런칭 전 검사',     icon:'🔍', tab:'액션현황/액션현황.html',         iconCls:'qi-blue',   minRole:'affiliate' },
+  { id:'step2',   title:'분석(검사)',    sub:'Step2. 불량 분석 검사',   icon:'🧪', tab:'액션현황/액션현황.html',         iconCls:'qi-purple', minRole:'affiliate' },
+  { id:'step3',   title:'개선진행',      sub:'Step3. 개선 진행 현황',   icon:'🔧', tab:'액션현황/액션현황.html',         iconCls:'qi-orange', minRole:'affiliate' },
+  { id:'step4',   title:'입고검사',      sub:'Step4. 입고 검사',        icon:'📦', tab:'액션현황/액션현황.html',         iconCls:'qi-gold',   minRole:'affiliate' },
+  { id:'step5',   title:'개선(검사)완료',sub:'Step5. 개선(검사) 완료',  icon:'✅', tab:'액션현황/액션현황.html',         iconCls:'qi-green',  minRole:'affiliate' },
   { id:'return',  title:'반품 종합검사', sub:'반품 품질 종합 검사',      icon:'↩️', tab:'https://cs-as-app.vercel.app/', iconCls:'qi-cyan',   minRole:'affiliate' },
 ];
 

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>품질 액션현황</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#080f1e;--bg2:#0d1830;--bg3:#111e35;--bg4:#162240;
+  --border:rgba(0,200,255,0.10);--border2:rgba(0,200,255,0.20);
+  --cyan:#00c8ff;--cyan-dim:rgba(0,200,255,0.08);
+  --gold:#f0c060;--green:#00e5a0;--red:#ff5a6e;--orange:#ff9040;--purple:#a080ff;
+  --text:#e8f0f8;--text2:#a8c8e0;--text3:#6a8faa;
+  --font-kr:'Noto Sans KR',sans-serif;--font-en:'Inter',sans-serif;
+  --s1:#ff9040;--s2:#00c8ff;--s3:#f0c060;--s4:#6a8faa;--s5:#00e5a0;--s6:#a080ff;
+}
+body.light{
+  --bg:#f0f4fa;--bg2:#fff;--bg3:#e8f0fb;--bg4:#dce8f7;
+  --border:rgba(26,78,180,0.12);--border2:rgba(26,78,180,0.25);
+  --cyan:#1a6eb8;--cyan-dim:rgba(26,110,184,0.08);
+  --gold:#b07800;--green:#007a50;--red:#c02020;--orange:#c05010;--purple:#5030b0;
+  --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6a9a;
+  --s2:#1a6eb8;--s3:#b07800;--s4:#3a6a9a;--s5:#007a50;--s6:#5030b0;
+}
+html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--font-kr);}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── 헤더 ── */
+#pageHeader{padding:14px 20px 0;display:flex;align-items:center;justify-content:space-between;}
+.ph-title{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.ph-title::before{content:'';display:inline-block;width:3px;height:15px;background:var(--cyan);border-radius:2px;}
+.ph-right{display:flex;align-items:center;gap:10px;}
+.ph-count{font-size:11px;color:var(--text3);}
+.ph-refresh{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.ph-refresh:hover{border-color:var(--border2);color:var(--cyan);}
+.ph-refresh.spin{animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── 스텝 탭 ── */
+#stepTabBar{display:flex;align-items:center;gap:0;padding:12px 20px 0;border-bottom:1px solid var(--border);overflow-x:auto;}
+.step-tab{display:flex;align-items:center;gap:6px;padding:8px 14px;cursor:pointer;border-bottom:2px solid transparent;font-size:11px;font-weight:600;color:var(--text3);white-space:nowrap;transition:all 0.15s;margin-bottom:-1px;}
+.step-tab:hover{color:var(--text2);}
+.step-tab.active{color:var(--tab-color);border-bottom-color:var(--tab-color);}
+.step-tab .tab-num{font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;background:var(--bg4);}
+.step-tab.active .tab-num{background:color-mix(in srgb, var(--tab-color) 15%, transparent);}
+
+/* ── 카드 목록 ── */
+#cardList{padding:16px 20px 40px;display:flex;flex-direction:column;gap:10px;}
+
+/* ── 액션 카드 ── */
+.action-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color 0.15s,box-shadow 0.15s;position:relative;}
+.action-card:hover{border-color:var(--border2);box-shadow:0 6px 24px rgba(0,0,0,0.3);}
+.card-step-bar{height:2px;width:100%;}
+
+/* 카드 상단 메타 */
+.card-meta-row{display:flex;align-items:center;gap:8px;padding:10px 14px 0;flex-wrap:wrap;}
+.card-date{font-size:10px;font-weight:500;font-family:var(--font-en);color:var(--text3);background:var(--bg3);padding:2px 8px;border-radius:5px;border:1px solid var(--border);flex-shrink:0;}
+.step-sel,.stage-sel{font-size:10px;font-weight:600;font-family:var(--font-kr);padding:2px 6px;border-radius:5px;border:1px solid var(--border);cursor:pointer;outline:none;transition:all 0.15s;background:var(--bg3);color:var(--text2);}
+.step-sel:hover,.stage-sel:hover{border-color:var(--border2);}
+.step-sel:focus,.stage-sel:focus{border-color:var(--border2);}
+
+/* 카드 태그행 */
+.card-tags-row{display:flex;align-items:center;gap:6px;padding:6px 14px 0;flex-wrap:wrap;}
+.prod-chip{font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;background:var(--bg4);color:var(--text2);border:1px solid var(--border);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gubun-chip{font-size:9px;font-weight:600;padding:2px 7px;border-radius:5px;color:var(--text3);border:1px solid var(--border);}
+.kw-tag{font-size:9px;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--cyan-dim);color:var(--cyan);border:1px solid var(--border2);}
+
+/* 카드 본문 */
+.card-body{padding:10px 14px 12px;}
+.card-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.4;display:flex;align-items:flex-start;gap:6px;}
+.card-title-icon{font-size:11px;flex-shrink:0;margin-top:2px;opacity:0.6;}
+.card-title-text{flex:1;}
+
+.card-section{margin-top:8px;}
+.card-section-label{font-size:9px;font-weight:700;font-family:var(--font-en);color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px;}
+.card-section-text{font-size:11px;color:var(--text2);line-height:1.6;white-space:pre-wrap;}
+
+.card-done{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:11px;color:var(--green);background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);padding:3px 10px;border-radius:6px;}
+
+/* ── 빈/로딩 ── */
+#loadingState,#emptyState{text-align:center;padding:50px 20px;}
+.ld-dots{display:inline-flex;gap:5px;margin-bottom:12px;}
+.ld-dots span{width:7px;height:7px;border-radius:50%;background:var(--cyan);animation:ldot 1.2s infinite;}
+.ld-dots span:nth-child(2){animation-delay:0.2s;} .ld-dots span:nth-child(3){animation-delay:0.4s;}
+@keyframes ldot{0%,80%,100%{opacity:0.2;transform:scale(0.8);}40%{opacity:1;transform:scale(1);}}
+.empty-icon{font-size:40px;margin-bottom:12px;}
+
+/* ── 스텝 색상 ── */
+[data-step="1"]{--tab-color:var(--s1);}
+[data-step="2"]{--tab-color:var(--s2);}
+[data-step="3"]{--tab-color:var(--s3);}
+[data-step="4"]{--tab-color:var(--s4);}
+[data-step="5"]{--tab-color:var(--s5);}
+[data-step="6"]{--tab-color:var(--s6);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.fade-in{animation:fadeUp 0.3s ease both;}
+</style>
+</head>
+<body>
+
+<div id="pageHeader">
+  <div class="ph-title">⚡ 품질 액션현황</div>
+  <div class="ph-right">
+    <span class="ph-count" id="phCount">-</span>
+    <button class="ph-refresh" id="refreshBtn" onclick="loadData()" title="새로고침">↻</button>
+  </div>
+</div>
+
+<div id="stepTabBar">
+  <div class="step-tab active" data-step="1" onclick="setStep(1)">
+    <span>S1</span><span class="tab-num" id="cnt1">-</span><span>런칭전검사</span>
+  </div>
+  <div class="step-tab" data-step="2" onclick="setStep(2)">
+    <span>S2</span><span class="tab-num" id="cnt2">-</span><span>분석(검사)</span>
+  </div>
+  <div class="step-tab" data-step="3" onclick="setStep(3)">
+    <span>S3</span><span class="tab-num" id="cnt3">-</span><span>개선진행</span>
+  </div>
+  <div class="step-tab" data-step="4" onclick="setStep(4)">
+    <span>S4</span><span class="tab-num" id="cnt4">-</span><span>입고검사</span>
+  </div>
+  <div class="step-tab" data-step="5" onclick="setStep(5)">
+    <span>S5</span><span class="tab-num" id="cnt5">-</span><span>개선(검사)완료</span>
+  </div>
+  <div class="step-tab" data-step="6" onclick="setStep(6)">
+    <span>⏸</span><span class="tab-num" id="cnt6">-</span><span>보류</span>
+  </div>
+</div>
+
+<div id="loadingState">
+  <div class="ld-dots"><span></span><span></span><span></span></div>
+  <div style="font-size:12px;color:var(--text3);">노션 데이터 불러오는 중...</div>
+</div>
+
+<div id="emptyState" style="display:none;">
+  <div class="empty-icon">📋</div>
+  <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;">이 스텝에 항목이 없어요</div>
+  <div style="font-size:11px;color:var(--text3);">노션에서 해당 스텝으로 지정된 건을 확인해 주세요.</div>
+</div>
+
+<div id="cardList" style="display:none;"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// 설정
+// ─────────────────────────────────────────────
+const QC_GAS_URL = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
+
+const STEP_MAP = {
+  1:'1.런칭전검사', 2:'2.분석(검사)', 3:'3.개선진행',
+  4:'4.입고검사',  5:'5.개선(검사)완료', 6:'6. 보류(미진행)'
+};
+const STEP_COLOR = {1:'var(--s1)',2:'var(--s2)',3:'var(--s3)',4:'var(--s4)',5:'var(--s5)',6:'var(--s6)'};
+const STEP_OPTIONS = Object.values(STEP_MAP);
+const STAGE_OPTIONS = [
+  '1-1. 샘플테스트','1-1.원인파악','1-2. 개선요청','1-3.업체피드백',
+  '1-4. 개선보완','1-5.개선적용','취소_발주중단',
+  '2-1 의뢰수신','2-2 검사중','2-3 검사완료','2-4. 개선불가통보'
+];
+
+let _records = [];
+let _curStep = 1;
+
+// ─────────────────────────────────────────────
+// postMessage (테마)
+// ─────────────────────────────────────────────
+window.addEventListener('message', e => {
+  if (!e.data) return;
+  if (e.data.type === 'THEME') {
+    document.body.classList.toggle('light', e.data.mode === 'light');
+  }
+});
+if (sessionStorage.getItem('_theme') === 'light') document.body.classList.add('light');
+
+// ─────────────────────────────────────────────
+// 데이터 로드
+// ─────────────────────────────────────────────
+async function loadData() {
+  showLoading();
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spin');
+
+  try {
+    const res  = await fetch(`${QC_GAS_URL}?action=getActionItems`, {redirect:'follow'});
+    const data = await res.json();
+    if (data.ok && data.records) {
+      _records = data.records;
+      updateCounts();
+      render();
+    } else {
+      showEmpty();
+    }
+  } catch(e) {
+    showEmpty();
+  }
+  btn.classList.remove('spin');
+}
+
+// ─────────────────────────────────────────────
+// 탭 전환
+// ─────────────────────────────────────────────
+function setStep(n) {
+  _curStep = n;
+  document.querySelectorAll('.step-tab').forEach(t => {
+    t.classList.toggle('active', parseInt(t.dataset.step) === n);
+  });
+  render();
+}
+
+// ─────────────────────────────────────────────
+// 카운트 업데이트
+// ─────────────────────────────────────────────
+function updateCounts() {
+  for (let i = 1; i <= 6; i++) {
+    const stepName = STEP_MAP[i];
+    const cnt = _records.filter(r => r.step === stepName).length;
+    const el = document.getElementById('cnt' + i);
+    if (el) el.textContent = cnt;
+  }
+  document.getElementById('phCount').textContent = `전체 ${_records.length}건`;
+}
+
+// ─────────────────────────────────────────────
+// 렌더
+// ─────────────────────────────────────────────
+function render() {
+  const stepName = STEP_MAP[_curStep];
+  const filtered = _records.filter(r => r.step === stepName);
+
+  document.getElementById('loadingState').style.display = 'none';
+
+  if (filtered.length === 0) {
+    document.getElementById('cardList').style.display  = 'none';
+    document.getElementById('emptyState').style.display = '';
+    return;
+  }
+
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('cardList').style.display   = '';
+
+  const stepContent = `step${_curStep}내용`;
+  const color = STEP_COLOR[_curStep];
+
+  document.getElementById('cardList').innerHTML = filtered.map((r, i) => buildCard(r, i, stepContent, color)).join('');
+}
+
+function buildCard(r, i, stepContentKey, color) {
+  const date    = r.등록일 ? r.등록일.slice(0,10).replace(/-/g,'.') : '-';
+  const stepOpts= STEP_OPTIONS.map(s => `<option value="${s}" ${r.step===s?'selected':''}>${s}</option>`).join('');
+  const stageOpts=STAGE_OPTIONS.map(s => `<option value="${s}" ${r.진행단계===s?'selected':''}>${s}</option>`).join('');
+  const kws     = (r.핵심키워드||[]).slice(0,4).map(k=>`<span class="kw-tag">${k}</span>`).join('');
+  const stepContent = r[stepContentKey] || '';
+  const isStep5 = _curStep === 5;
+
+  return `<div class="action-card fade-in" style="animation-delay:${i*0.04}s" onclick="openNotion('${r.url}','${r.id}')">
+    <div class="card-step-bar" style="background:${color}"></div>
+    <div class="card-meta-row">
+      <span class="card-date">${date}</span>
+      <select class="step-sel" onclick="event.stopPropagation()" onchange="updateStep('${r.id}',this)">
+        ${stepOpts}
+      </select>
+      <select class="stage-sel" onclick="event.stopPropagation()" onchange="updateStage('${r.id}',this)">
+        ${stageOpts}
+      </select>
+    </div>
+    <div class="card-tags-row">
+      ${r.제품명 ? `<span class="prod-chip" title="${r.제품명}">${r.제품명.replace(/\[.*?\]\s*/g,'')}</span>` : ''}
+      ${r.구분 ? `<span class="gubun-chip">${r.구분}</span>` : ''}
+      ${kws}
+    </div>
+    <div class="card-body">
+      <div class="card-title">
+        <span class="card-title-icon">🔗</span>
+        <span class="card-title-text">${r.주제||'(제목 없음)'}</span>
+      </div>
+      ${r.내용기준 ? `<div class="card-section">
+        <div class="card-section-label">내용 (기준)</div>
+        <div class="card-section-text">${r.내용기준}</div>
+      </div>` : ''}
+      ${stepContent ? `<div class="card-section">
+        <div class="card-section-label">S${_curStep} 진행내용</div>
+        <div class="card-section-text">${stepContent}</div>
+      </div>` : ''}
+      ${isStep5 && r.완료일 ? `<div class="card-done">✅ 완료일: ${r.완료일.slice(0,10).replace(/-/g,'.')}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+// ─────────────────────────────────────────────
+// 노션 링크 열기
+// ─────────────────────────────────────────────
+function openNotion(url, id) {
+  if (!url && id) url = `https://notion.so/${id.replace(/-/g,'')}`;
+  if (url) window.open(url, '_blank');
+}
+
+// ─────────────────────────────────────────────
+// Step 변경 → GAS 업데이트 → 탭 이동
+// ─────────────────────────────────────────────
+async function updateStep(pageId, selEl) {
+  const newStep = selEl.value;
+  selEl.disabled = true;
+
+  // 로컬 즉시 반영
+  const rec = _records.find(r => r.id === pageId);
+  if (rec) rec.step = newStep;
+
+  // GAS 업데이트
+  try {
+    const payload = encodeURIComponent(JSON.stringify({pageId, property:'Step.', value: newStep}));
+    await fetch(`${QC_GAS_URL}?action=updateActionItem&data=${payload}`, {redirect:'follow'});
+  } catch(e) {}
+
+  selEl.disabled = false;
+  updateCounts();
+
+  // 변경된 스텝 탭으로 이동
+  const stepNum = Object.entries(STEP_MAP).find(([,v]) => v === newStep)?.[0];
+  if (stepNum) setStep(parseInt(stepNum));
+  else render();
+}
+
+// ─────────────────────────────────────────────
+// 진행단계 변경 → GAS 업데이트
+// ─────────────────────────────────────────────
+async function updateStage(pageId, selEl) {
+  const newStage = selEl.value;
+  selEl.disabled = true;
+
+  const rec = _records.find(r => r.id === pageId);
+  if (rec) rec.진행단계 = newStage;
+
+  try {
+    const payload = encodeURIComponent(JSON.stringify({pageId, property:'진행단계', value: newStage}));
+    await fetch(`${QC_GAS_URL}?action=updateActionItem&data=${payload}`, {redirect:'follow'});
+  } catch(e) {}
+
+  selEl.disabled = false;
+}
+
+// ─────────────────────────────────────────────
+// 상태 유틸
+// ─────────────────────────────────────────────
+function showLoading() {
+  document.getElementById('loadingState').style.display = '';
+  document.getElementById('emptyState').style.display   = 'none';
+  document.getElementById('cardList').style.display     = 'none';
+}
+function showEmpty() {
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('emptyState').style.display   = '';
+  document.getElementById('cardList').style.display     = 'none';
+}
+
+// ─────────────────────────────────────────────
+// 진입
+// ─────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>

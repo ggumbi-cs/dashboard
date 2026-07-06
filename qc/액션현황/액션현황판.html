@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>액션현황판</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#080f1e;--bg2:#0d1830;--bg3:#111e35;
+  --border:rgba(0,200,255,0.10);--border2:rgba(0,200,255,0.20);
+  --cyan:#00c8ff;--cyan-dim:rgba(0,200,255,0.08);
+  --text:#e8f0f8;--text2:#a8c8e0;--text3:#6a8faa;
+  --purple:#a080ff;
+  --font-kr:'Noto Sans KR',sans-serif;--font-en:'Inter',sans-serif;
+}
+body.light{
+  --bg:#f0f4fa;--bg2:#fff;--bg3:#e8f0fb;
+  --border:rgba(26,78,180,0.12);--border2:rgba(26,78,180,0.25);
+  --cyan:#1a6eb8;--cyan-dim:rgba(26,110,184,0.08);
+  --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6a9a;
+  --purple:#5030b0;
+}
+html,body{width:100%;height:100vh;background:var(--bg);color:var(--text);font-family:var(--font-kr);display:flex;align-items:center;justify-content:center;}
+.wrap{text-align:center;padding:40px;}
+.icon{font-size:52px;margin-bottom:20px;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+.badge{display:inline-block;font-size:10px;font-weight:700;font-family:var(--font-en);letter-spacing:2px;color:var(--purple);background:rgba(160,128,255,0.1);border:1px solid rgba(160,128,255,0.25);padding:4px 12px;border-radius:20px;margin-bottom:16px;}
+.title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:8px;}
+.sub{font-size:13px;color:var(--text3);line-height:1.7;}
+.dots{display:inline-flex;gap:5px;margin-top:20px;}
+.dots span{width:6px;height:6px;border-radius:50%;background:var(--purple);animation:ldot 1.4s infinite;}
+.dots span:nth-child(2){animation-delay:0.2s;} .dots span:nth-child(3){animation-delay:0.4s;}
+@keyframes ldot{0%,80%,100%{opacity:0.2;transform:scale(0.8);}40%{opacity:1;transform:scale(1);}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="icon">📋</div>
+  <div class="badge">COMING SOON</div>
+  <div class="title">액션현황판</div>
+  <div class="sub">품질 액션 종합 현황판 준비 중입니다.<br>정적 JSON 기반 대시보드로 구성 예정이에요.</div>
+  <div class="dots"><span></span><span></span><span></span></div>
+</div>
+<script>
+window.addEventListener('message', e => {
+  if (e.data && e.data.type === 'THEME')
+    document.body.classList.toggle('light', e.data.mode === 'light');
+});
+if (sessionStorage.getItem('_theme') === 'light') document.body.classList.add('light');
+</script>
+</body>
+</html>

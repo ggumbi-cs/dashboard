@@ -92,8 +92,16 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 #bottomGrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
 .analysis-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
 
-/* 확인불량 Top10 */
-.fault-list{display:flex;flex-direction:column;gap:6px;}
+/* 확인불량 필터 탭 */
+.fault-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;}
+.fault-tab{padding:3px 9px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font-kr);transition:all 0.15s;white-space:nowrap;}
+.fault-tab:hover{border-color:var(--border2);color:var(--text2);}
+.fault-tab.active{border-color:var(--cyan);background:var(--cyan-dim);color:var(--cyan);}
+.fault-tab.t1.active{border-color:#4a9eff;background:rgba(74,158,255,0.1);color:#4a9eff;}
+.fault-tab.t2.active{border-color:#00e5a0;background:rgba(0,229,160,0.1);color:#00e5a0;}
+.fault-tab.t3.active{border-color:#f0c060;background:rgba(240,192,96,0.1);color:#f0c060;}
+.fault-tab.t4.active{border-color:#ff5a6e;background:rgba(255,90,110,0.1);color:#ff5a6e;}
+.fault-tab.t5.active{border-color:#a080ff;background:rgba(160,128,255,0.1);color:#a080ff;}
 .fault-row{display:flex;align-items:center;gap:10px;}
 .fault-rank{font-size:9px;font-weight:700;font-family:var(--font-en);color:var(--text3);width:16px;text-align:right;flex-shrink:0;}
 .fault-name{font-size:11px;color:var(--text2);min-width:80px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -247,7 +255,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
   <!-- 하단 분석 2단 -->
   <div id="bottomGrid">
     <div class="analysis-card">
-      <div class="sec-hd cyan" style="margin-bottom:14px;">확인불량 Top 10</div>
+      <div class="sec-hd cyan" style="margin-bottom:10px;">확인불량 Top 10</div>
+      <div class="fault-tabs" id="faultTabs"></div>
       <div class="fault-list" id="faultTop10"></div>
     </div>
     <div class="analysis-card">
@@ -308,6 +317,8 @@ let _tab    = 'monthly';
 let _period = todayPeriod('monthly');
 let _records= [];
 let _improve= {}; // { key: { status, note } }
+let _top5Products = []; // [{name, cnt}] - Top5 제품 목록
+let _faultFilter  = 'all'; // 'all' 또는 shortName
 
 // ─────────────────────────────────────────────
 // postMessage (테마)
@@ -457,8 +468,11 @@ function render() {
   const cur  = filterByPeriod(_records, _tab, _period);
   const prev = filterByPeriod(_records, _tab, prevPeriod(_tab, _period));
 
+  // 기간·탭 전환 시 필터 초기화
+  _faultFilter = 'all';
+
   renderKPI(cur, prev);
-  renderTop5(cur);
+  renderTop5(cur);       // 내부에서 buildFaultTabs() 호출
   renderFaultTop10(cur);
   renderSurge(cur, prev);
   renderImprove(cur);
@@ -512,10 +526,14 @@ function renderTop5(records) {
   const total  = records.length || 1;
   const max    = sorted[0]?.[1] || 1;
 
+  // Top5 저장 & 탭 빌드
+  _top5Products = sorted.map(([name,cnt]) => ({name,cnt}));
+  buildFaultTabs();
+
   document.getElementById('top5Row').innerHTML = sorted.length === 0
     ? '<div style="color:var(--text3);font-size:12px;grid-column:1/-1;">데이터 없음</div>'
     : sorted.map(([name,cnt],i) => `
-    <div class="top5-card fade-in" style="animation-delay:${i*0.06}s">
+    <div class="top5-card fade-in" style="animation-delay:${i*0.06}s;cursor:pointer;" onclick="setFaultFilter('${name}')">
       <div class="t5-rank-bar b${i}" style="opacity:0.7"></div>
       <div class="t5-body">
         <div class="t5-rank c${i}">TOP ${i+1}</div>
@@ -529,10 +547,35 @@ function renderTop5(records) {
     </div>`).join('');
 }
 
-// ── 확인불량 Top10 ──
+// ── 확인불량 탭 빌드 ──
+function buildFaultTabs() {
+  const tabClasses = ['','t1','t2','t3','t4','t5'];
+  const tabs = [
+    { key:'all', label:'전체' },
+    ..._top5Products.map((p,i) => ({ key:p.name, label:`Top${i+1} ${p.name}` }))
+  ];
+  document.getElementById('faultTabs').innerHTML = tabs.map((t,i) => `
+    <button class="fault-tab ${tabClasses[i]} ${_faultFilter===t.key?'active':''}"
+      onclick="setFaultFilter('${t.key}')" title="${t.label}">${t.label}</button>`
+  ).join('');
+}
+
+function setFaultFilter(key) {
+  _faultFilter = key;
+  buildFaultTabs();
+  const cur = filterByPeriod(_records, _tab, _period);
+  renderFaultTop10(cur);
+}
+
+// ── 확인불량 Top10 (필터 적용) ──
 function renderFaultTop10(records) {
+  // 필터 적용
+  const filtered = _faultFilter === 'all'
+    ? records
+    : records.filter(r => !r.제품명?.startsWith('[집계]') && shortName(r.제품명) === _faultFilter);
+
   const counts = {};
-  records.forEach(r => {
+  filtered.forEach(r => {
     if (!r.확인불량) return;
     const faults = Array.isArray(r.확인불량) ? r.확인불량 : JSON.parse(r.확인불량||'[]');
     faults.forEach(f => {
@@ -540,7 +583,8 @@ function renderFaultTop10(records) {
     });
   });
   const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  const max = sorted[0]?.[1] || 1;
+  const max    = sorted[0]?.[1] || 1;
+  const total  = filtered.length || 1;
 
   document.getElementById('faultTop10').innerHTML = sorted.length === 0
     ? '<div style="color:var(--text3);font-size:12px;">데이터 없음</div>'
@@ -550,7 +594,7 @@ function renderFaultTop10(records) {
       <div class="fault-name" title="${name}">${name}</div>
       <div class="fault-bar-wrap"><div class="fault-bar-fill" style="width:${(cnt/max*100).toFixed(1)}%;background:${i<3?'var(--red)':i<6?'var(--orange)':'var(--text3)'}"></div></div>
       <div class="fault-count">${cnt}</div>
-      <div class="fault-pct">${(cnt/records.length*100).toFixed(1)}%</div>
+      <div class="fault-pct">${(cnt/total*100).toFixed(1)}%</div>
     </div>`).join('');
 }
 

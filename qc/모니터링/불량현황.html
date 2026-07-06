@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>불량현황</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#080f1e;--bg2:#0d1830;--bg3:#111e35;--bg4:#162240;
+  --border:rgba(0,200,255,0.10);--border2:rgba(0,200,255,0.20);
+  --cyan:#00c8ff;--cyan-dim:rgba(0,200,255,0.08);
+  --gold:#f0c060;--green:#00e5a0;--red:#ff5a6e;--orange:#ff9040;--purple:#a080ff;
+  --text:#e8f0f8;--text2:#a8c8e0;--text3:#6a8faa;
+  --font-kr:'Noto Sans KR',sans-serif;--font-en:'Inter',sans-serif;
+}
+body.light{
+  --bg:#f0f4fa;--bg2:#ffffff;--bg3:#e8f0fb;--bg4:#dce8f7;
+  --border:rgba(26,78,180,0.12);--border2:rgba(26,78,180,0.25);
+  --cyan:#1a6eb8;--cyan-dim:rgba(26,110,184,0.08);
+  --gold:#b07800;--green:#007a50;--red:#c02020;--orange:#c05010;--purple:#5030b0;
+  --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6a9a;
+}
+html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--font-kr);overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── 상단 헤더 ── */
+#pageHeader{padding:16px 24px 0;display:flex;align-items:center;justify-content:space-between;}
+.ph-title{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.ph-title::before{content:'';display:inline-block;width:3px;height:16px;background:var(--red);border-radius:2px;}
+.ph-sync{font-size:11px;color:var(--text3);}
+
+/* ── 탭 ── */
+#tabBar{display:flex;align-items:center;gap:4px;padding:14px 24px 0;}
+.tab-btn{padding:6px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);font-family:var(--font-kr);transition:all 0.15s;}
+.tab-btn:hover{border-color:var(--border2);color:var(--text2);}
+.tab-btn.active{background:var(--cyan-dim);border-color:var(--border2);color:var(--cyan);}
+.tab-divider{width:1px;height:18px;background:var(--border);margin:0 8px;}
+
+/* 기간 이동 */
+#periodNav{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.pnav-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.pnav-btn:hover{border-color:var(--border2);color:var(--cyan);}
+#periodLabel{font-size:12px;font-weight:600;color:var(--text2);min-width:80px;text-align:center;}
+
+/* ── 메인 콘텐츠 ── */
+#mainContent{padding:16px 24px 40px;}
+
+/* 섹션 헤더 */
+.sec-hd{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:700;font-family:var(--font-en);color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;}
+.sec-hd::before{content:'';display:inline-block;width:3px;height:12px;border-radius:2px;}
+.sec-hd.red::before{background:var(--red);}
+.sec-hd.cyan::before{background:var(--cyan);}
+.sec-hd.orange::before{background:var(--orange);}
+.sec-hd.green::before{background:var(--green);}
+
+/* ── KPI 스트립 ── */
+#kpiRow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden;}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi-card.total::before{background:var(--text3);}
+.kpi-card.exchange::before{background:var(--purple);}
+.kpi-card.material::before{background:var(--gold);}
+.kpi-card.repair::before{background:var(--cyan);}
+.kpi-label{font-size:10px;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.kpi-val{font-size:26px;font-weight:700;font-family:var(--font-en);line-height:1;}
+.kpi-val.total{color:var(--text);}
+.kpi-val.exchange{color:var(--purple);}
+.kpi-val.material{color:var(--gold);}
+.kpi-val.repair{color:var(--cyan);}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:4px;}
+.kpi-delta{position:absolute;top:12px;right:14px;font-size:10px;font-weight:600;padding:2px 6px;border-radius:5px;}
+.kpi-delta.up{background:rgba(255,90,110,0.12);color:var(--red);}
+.kpi-delta.dn{background:rgba(0,229,160,0.10);color:var(--green);}
+
+/* ── Top5 불량제품 ── */
+#top5Row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}
+.top5-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color 0.15s;}
+.top5-card:hover{border-color:var(--border2);}
+.t5-rank-bar{height:3px;width:100%;}
+.t5-body{padding:12px 14px;}
+.t5-rank{font-size:9px;font-weight:700;font-family:var(--font-en);margin-bottom:4px;}
+.t5-name{font-size:11px;font-weight:600;color:var(--text);line-height:1.3;margin-bottom:6px;word-break:keep-all;}
+.t5-meta{display:flex;align-items:center;justify-content:space-between;}
+.t5-count{font-size:18px;font-weight:700;font-family:var(--font-en);}
+.t5-pct{font-size:10px;color:var(--text3);}
+.t5-bar-wrap{margin-top:8px;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;}
+.t5-bar-fill{height:100%;border-radius:2px;}
+
+/* ── 하단 2단 그리드 ── */
+#bottomGrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.analysis-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
+
+/* 확인불량 Top10 */
+.fault-list{display:flex;flex-direction:column;gap:6px;}
+.fault-row{display:flex;align-items:center;gap:10px;}
+.fault-rank{font-size:9px;font-weight:700;font-family:var(--font-en);color:var(--text3);width:16px;text-align:right;flex-shrink:0;}
+.fault-name{font-size:11px;color:var(--text2);min-width:80px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fault-bar-wrap{flex:1;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;}
+.fault-bar-fill{height:100%;border-radius:3px;background:var(--cyan);transition:width 0.4s ease;}
+.fault-count{font-size:11px;font-weight:600;font-family:var(--font-en);color:var(--text);min-width:28px;text-align:right;}
+.fault-pct{font-size:10px;color:var(--text3);min-width:36px;text-align:right;}
+
+/* 급증 불량제품 */
+.surge-list{display:flex;flex-direction:column;gap:8px;}
+.surge-row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--border);}
+.surge-name{font-size:11px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.surge-vals{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.surge-prev{font-size:10px;color:var(--text3);}
+.surge-arrow{font-size:10px;}
+.surge-curr{font-size:12px;font-weight:700;font-family:var(--font-en);color:var(--red);}
+.surge-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(255,90,110,0.12);color:var(--red);}
+
+/* ── 개선진행여부 테이블 ── */
+#improveSection{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:20px;}
+.improve-table{width:100%;border-collapse:collapse;}
+.improve-table th{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;padding:6px 10px;border-bottom:1px solid var(--border);text-align:left;background:var(--bg3);}
+.improve-table td{font-size:12px;color:var(--text2);padding:9px 10px;border-bottom:1px solid var(--border);}
+.improve-table tr:last-child td{border-bottom:none;}
+.improve-table tr:hover td{background:var(--bg3);}
+.prod-badge{display:inline-block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:500;color:var(--text);}
+.fault-tag{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600;background:var(--bg4);color:var(--text2);border:1px solid var(--border);}
+.status-sel{background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-family:var(--font-kr);padding:3px 8px;cursor:pointer;outline:none;transition:border-color 0.15s;}
+.status-sel:focus{border-color:var(--border2);}
+.status-sel.done{background:rgba(0,229,160,0.08);color:var(--green);border-color:rgba(0,229,160,0.2);}
+.status-sel.wip {background:rgba(0,200,255,0.08);color:var(--cyan);border-color:var(--border2);}
+.status-sel.hold{background:rgba(255,144,64,0.08);color:var(--orange);border-color:rgba(255,144,64,0.2);}
+.status-sel.none{background:var(--bg4);color:var(--text3);}
+
+/* ── 빈 상태 ── */
+#emptyState{display:none;text-align:center;padding:60px 24px;}
+.empty-icon{font-size:48px;margin-bottom:16px;}
+.empty-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;}
+.empty-sub{font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:20px;}
+.empty-btn{padding:9px 24px;background:var(--green);color:#000;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-kr);}
+
+/* ── 로딩 ── */
+#loadingState{text-align:center;padding:60px 24px;}
+.loading-dots{display:inline-flex;gap:5px;margin-bottom:16px;}
+.loading-dots span{width:8px;height:8px;border-radius:50%;background:var(--cyan);animation:ldot 1.2s infinite;}
+.loading-dots span:nth-child(2){animation-delay:0.2s;}
+.loading-dots span:nth-child(3){animation-delay:0.4s;}
+@keyframes ldot{0%,80%,100%{opacity:0.2;transform:scale(0.8);}40%{opacity:1;transform:scale(1);}}
+
+/* ── 색상 팔레트 ── */
+.c0{color:#4a9eff;} .c1{color:#00e5a0;} .c2{color:#f0c060;} .c3{color:#ff5a6e;} .c4{color:#a080ff;}
+.b0{background:#4a9eff;} .b1{background:#00e5a0;} .b2{background:#f0c060;} .b3{background:#ff5a6e;} .b4{background:#a080ff;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.fade-in{animation:fadeUp 0.4s ease both;}
+</style>
+</head>
+<body>
+
+<div id="pageHeader">
+  <div class="ph-title">📊 불량현황 — 가전제품</div>
+  <div class="ph-sync" id="syncInfo">-</div>
+</div>
+
+<div id="tabBar">
+  <button class="tab-btn" data-tab="weekly" onclick="setTab('weekly')">주간</button>
+  <button class="tab-btn active" data-tab="monthly" onclick="setTab('monthly')">월간</button>
+  <button class="tab-btn" data-tab="yearly" onclick="setTab('yearly')">연간</button>
+  <div class="tab-divider"></div>
+  <div id="periodNav">
+    <button class="pnav-btn" onclick="movePeriod(-1)">◀</button>
+    <div id="periodLabel">-</div>
+    <button class="pnav-btn" onclick="movePeriod(1)">▶</button>
+  </div>
+</div>
+
+<div id="loadingState">
+  <div class="loading-dots"><span></span><span></span><span></span></div>
+  <div style="font-size:13px;color:var(--text3);">데이터 불러오는 중...</div>
+</div>
+
+<div id="emptyState">
+  <div class="empty-icon">📭</div>
+  <div class="empty-title">데이터 동기화가 필요합니다</div>
+  <div class="empty-sub">노션과의 동기화가 아직 진행되지 않았습니다.<br>동기화 설정에서 수동 동기화를 실행해 주세요.</div>
+  <button class="empty-btn" onclick="goSync()">🔄 동기화 설정으로 이동</button>
+</div>
+
+<div id="mainContent" style="display:none;">
+
+  <!-- KPI -->
+  <div class="sec-hd red" style="margin-top:8px;">Overview</div>
+  <div id="kpiRow">
+    <div class="kpi-card total">
+      <div class="kpi-label">📋 총 접수 건수</div>
+      <div class="kpi-val total" id="kpiTotal">-</div>
+      <div class="kpi-sub" id="kpiTotalSub">-</div>
+    </div>
+    <div class="kpi-card exchange">
+      <div class="kpi-label">🔄 교환/환불</div>
+      <div class="kpi-val exchange" id="kpiExchange">-</div>
+      <div class="kpi-sub" id="kpiExchangeSub">-</div>
+      <div class="kpi-delta" id="kpiExchangeDelta"></div>
+    </div>
+    <div class="kpi-card material">
+      <div class="kpi-label">📦 자재출고</div>
+      <div class="kpi-val material" id="kpiMaterial">-</div>
+      <div class="kpi-sub" id="kpiMaterialSub">-</div>
+      <div class="kpi-delta" id="kpiMaterialDelta"></div>
+    </div>
+    <div class="kpi-card repair">
+      <div class="kpi-label">🔧 수리출고</div>
+      <div class="kpi-val repair" id="kpiRepair">-</div>
+      <div class="kpi-sub" id="kpiRepairSub">-</div>
+      <div class="kpi-delta" id="kpiRepairDelta"></div>
+    </div>
+  </div>
+
+  <!-- Top5 불량제품 -->
+  <div class="sec-hd red">불량제품 Top 5 <span style="margin-left:6px;font-size:9px;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0;">접수일 기준</span></div>
+  <div id="top5Row"></div>
+
+  <!-- 하단 분석 2단 -->
+  <div id="bottomGrid">
+    <div class="analysis-card">
+      <div class="sec-hd cyan" style="margin-bottom:14px;">확인불량 Top 10</div>
+      <div class="fault-list" id="faultTop10"></div>
+    </div>
+    <div class="analysis-card">
+      <div class="sec-hd orange" style="margin-bottom:14px;">급증하는 불량제품 <span style="font-size:9px;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0;">전 기간 대비</span></div>
+      <div class="surge-list" id="surgeList"></div>
+    </div>
+  </div>
+
+  <!-- 개선진행여부 -->
+  <div id="improveSection">
+    <div class="sec-hd green" style="margin-bottom:14px;">불량 Top5 × 확인불량 Top10 — 개선진행여부</div>
+    <table class="improve-table" id="improveTable">
+      <thead>
+        <tr>
+          <th>제품명</th>
+          <th>확인불량</th>
+          <th>건수</th>
+          <th>진행여부</th>
+          <th>비고</th>
+        </tr>
+      </thead>
+      <tbody id="improveTbody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// 설정
+// ─────────────────────────────────────────────
+const QC_GAS_URL  = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
+const DATA_PATH   = '../qc_data.json';
+// Notion API 키는 GAS Script Properties에 보관 (NOTION_API_KEY)
+
+const RANK_COLORS = ['#4a9eff','#00e5a0','#f0c060','#ff5a6e','#a080ff'];
+
+// ─────────────────────────────────────────────
+// 상태
+// ─────────────────────────────────────────────
+let _tab    = 'monthly';
+let _period = todayPeriod('monthly');
+let _records= [];
+let _improve= {}; // { key: { status, note } }
+
+// ─────────────────────────────────────────────
+// postMessage (테마)
+// ─────────────────────────────────────────────
+window.addEventListener('message', e => {
+  if (!e.data) return;
+  if (e.data.type === 'THEME') {
+    document.body.classList.toggle('light', e.data.mode === 'light');
+  }
+});
+// fallback
+const savedTheme = sessionStorage.getItem('_theme') || 'dark';
+if (savedTheme === 'light') document.body.classList.add('light');
+
+// ─────────────────────────────────────────────
+// 기간 유틸
+// ─────────────────────────────────────────────
+function todayPeriod(tab) {
+  const now = new Date();
+  if (tab === 'monthly') return { year: now.getFullYear(), month: now.getMonth()+1 };
+  if (tab === 'yearly')  return { year: now.getFullYear() };
+  // weekly: 이번 주 월~일
+  const d = new Date(now);
+  d.setDate(d.getDate() - d.getDay() + 1); // 월요일
+  return { year: d.getFullYear(), month: d.getMonth()+1, date: d.getDate() };
+}
+
+function periodLabel(tab, p) {
+  if (tab === 'monthly') return `${p.year}년 ${p.month}월`;
+  if (tab === 'yearly')  return `${p.year}년`;
+  return `${p.year}.${String(p.month).padStart(2,'0')}.${String(p.date).padStart(2,'0')} 주`;
+}
+
+function periodRange(tab, p) {
+  if (tab === 'monthly') {
+    const s = new Date(p.year, p.month-1, 1);
+    const e = new Date(p.year, p.month, 0);
+    return { start: toISO(s), end: toISO(e) };
+  }
+  if (tab === 'yearly') {
+    return { start:`${p.year}-01-01`, end:`${p.year}-12-31` };
+  }
+  // weekly: 월~일
+  const mon = new Date(p.year, p.month-1, p.date);
+  const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+  return { start: toISO(mon), end: toISO(sun) };
+}
+
+function prevPeriod(tab, p) {
+  if (tab === 'monthly') {
+    let m=p.month-1, y=p.year;
+    if(m<1){m=12;y--;}
+    return {year:y,month:m};
+  }
+  if (tab === 'yearly') return {year:p.year-1};
+  const d=new Date(p.year,p.month-1,p.date); d.setDate(d.getDate()-7);
+  return {year:d.getFullYear(),month:d.getMonth()+1,date:d.getDate()};
+}
+
+function nextPeriod(tab, p) {
+  if (tab === 'monthly') {
+    let m=p.month+1,y=p.year;
+    if(m>12){m=1;y++;}
+    return {year:y,month:m};
+  }
+  if (tab === 'yearly') return {year:p.year+1};
+  const d=new Date(p.year,p.month-1,p.date); d.setDate(d.getDate()+7);
+  return {year:d.getFullYear(),month:d.getMonth()+1,date:d.getDate()};
+}
+
+function toISO(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function filterByPeriod(records, tab, p) {
+  const {start, end} = periodRange(tab, p);
+  return records.filter(r => r.접수일 >= start && r.접수일 <= end);
+}
+
+// ─────────────────────────────────────────────
+// 탭 / 기간 조작
+// ─────────────────────────────────────────────
+function setTab(tab) {
+  _tab = tab;
+  _period = todayPeriod(tab);
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  render();
+}
+
+function movePeriod(dir) {
+  _period = dir < 0 ? prevPeriod(_tab, _period) : nextPeriod(_tab, _period);
+  render();
+}
+
+// ─────────────────────────────────────────────
+// 데이터 로드
+// ─────────────────────────────────────────────
+async function loadData() {
+  showLoading();
+  try {
+    // 1차: 정적 JSON
+    const res = await fetch(DATA_PATH);
+    if (res.ok) {
+      const json = await res.json();
+      _records = (json.가전 && json.가전.records) ? json.가전.records : [];
+      document.getElementById('syncInfo').textContent =
+        json.lastSynced ? `최근 동기화: ${new Date(json.lastSynced).toLocaleString('ko-KR')}` : '';
+      if (_records.length === 0) { showEmpty(); return; }
+      loadImproveStatus();
+      render();
+      return;
+    }
+  } catch(e) {}
+
+  // 2차: GAS 실시간 조회
+  try {
+    const r2 = await fetch(`${QC_GAS_URL}?action=getQcDefectData`, {redirect:'follow'});
+    const j2 = await r2.json();
+    if (j2.ok && j2.records) {
+      _records = j2.records;
+      loadImproveStatus();
+      render();
+      return;
+    }
+  } catch(e) {}
+
+  showEmpty();
+}
+
+async function loadImproveStatus() {
+  try {
+    const res = await fetch(`${QC_GAS_URL}?action=getQcImproveStatus`, {redirect:'follow'});
+    const data = await res.json();
+    if (data.ok && data.improve) _improve = data.improve;
+  } catch(e) {}
+}
+
+// ─────────────────────────────────────────────
+// 렌더
+// ─────────────────────────────────────────────
+function render() {
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('emptyState').style.display   = 'none';
+  document.getElementById('mainContent').style.display  = '';
+  document.getElementById('periodLabel').textContent    = periodLabel(_tab, _period);
+
+  const cur  = filterByPeriod(_records, _tab, _period);
+  const prev = filterByPeriod(_records, _tab, prevPeriod(_tab, _period));
+
+  renderKPI(cur, prev);
+  renderTop5(cur);
+  renderFaultTop10(cur);
+  renderSurge(cur, prev);
+  renderImprove(cur);
+}
+
+// ── KPI ──
+function renderKPI(cur, prev) {
+  const total    = cur.length;
+  const exchange = cur.filter(r=>r.구분==='교환/환불').length;
+  const material = cur.filter(r=>r.구분==='자재출고').length;
+  const repair   = cur.filter(r=>r.구분==='수리출고').length;
+
+  const pTotal    = prev.length;
+  const pExchange = prev.filter(r=>r.구분==='교환/환불').length;
+  const pMaterial = prev.filter(r=>r.구분==='자재출고').length;
+  const pRepair   = prev.filter(r=>r.구분==='수리출고').length;
+
+  document.getElementById('kpiTotal').textContent    = total;
+  document.getElementById('kpiExchange').textContent = exchange;
+  document.getElementById('kpiMaterial').textContent = material;
+  document.getElementById('kpiRepair').textContent   = repair;
+
+  document.getElementById('kpiTotalSub').textContent    = `전 기간 ${pTotal}건`;
+  document.getElementById('kpiExchangeSub').textContent = `전 기간 ${pExchange}건`;
+  document.getElementById('kpiMaterialSub').textContent = `전 기간 ${pMaterial}건`;
+  document.getElementById('kpiRepairSub').textContent   = `전 기간 ${pRepair}건`;
+
+  setDelta('kpiExchangeDelta', exchange, pExchange);
+  setDelta('kpiMaterialDelta', material, pMaterial);
+  setDelta('kpiRepairDelta',   repair,   pRepair);
+}
+
+function setDelta(id, cur, prev) {
+  const el = document.getElementById(id);
+  if (!el || prev === 0) { el && (el.textContent=''); return; }
+  const diff = cur - prev;
+  const pct  = Math.round((diff/prev)*100);
+  el.textContent = (diff > 0 ? '▲' : '▼') + Math.abs(pct) + '%';
+  el.className   = 'kpi-delta ' + (diff > 0 ? 'up' : 'dn');
+}
+
+// ── Top5 불량제품 ──
+function renderTop5(records) {
+  const counts = {};
+  records.forEach(r => {
+    if (!r.제품명 || r.제품명.startsWith('[집계]')) return;
+    const name = shortName(r.제품명);
+    counts[name] = (counts[name]||0) + 1;
+  });
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const total  = records.length || 1;
+  const max    = sorted[0]?.[1] || 1;
+
+  document.getElementById('top5Row').innerHTML = sorted.length === 0
+    ? '<div style="color:var(--text3);font-size:12px;grid-column:1/-1;">데이터 없음</div>'
+    : sorted.map(([name,cnt],i) => `
+    <div class="top5-card fade-in" style="animation-delay:${i*0.06}s">
+      <div class="t5-rank-bar b${i}" style="opacity:0.7"></div>
+      <div class="t5-body">
+        <div class="t5-rank c${i}">TOP ${i+1}</div>
+        <div class="t5-name">${name}</div>
+        <div class="t5-meta">
+          <div class="t5-count c${i}">${cnt}</div>
+          <div class="t5-pct">${((cnt/total)*100).toFixed(1)}%</div>
+        </div>
+        <div class="t5-bar-wrap"><div class="t5-bar-fill b${i}" style="width:${(cnt/max*100).toFixed(1)}%;opacity:0.7"></div></div>
+      </div>
+    </div>`).join('');
+}
+
+// ── 확인불량 Top10 ──
+function renderFaultTop10(records) {
+  const counts = {};
+  records.forEach(r => {
+    if (!r.확인불량) return;
+    const faults = Array.isArray(r.확인불량) ? r.확인불량 : JSON.parse(r.확인불량||'[]');
+    faults.forEach(f => {
+      if (f && f !== '특이사항없음' && f !== '미확인') counts[f] = (counts[f]||0)+1;
+    });
+  });
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const max = sorted[0]?.[1] || 1;
+
+  document.getElementById('faultTop10').innerHTML = sorted.length === 0
+    ? '<div style="color:var(--text3);font-size:12px;">데이터 없음</div>'
+    : sorted.map(([name,cnt],i) => `
+    <div class="fault-row">
+      <div class="fault-rank">${i+1}</div>
+      <div class="fault-name" title="${name}">${name}</div>
+      <div class="fault-bar-wrap"><div class="fault-bar-fill" style="width:${(cnt/max*100).toFixed(1)}%;background:${i<3?'var(--red)':i<6?'var(--orange)':'var(--text3)'}"></div></div>
+      <div class="fault-count">${cnt}</div>
+      <div class="fault-pct">${(cnt/records.length*100).toFixed(1)}%</div>
+    </div>`).join('');
+}
+
+// ── 급증 불량제품 ──
+function renderSurge(cur, prev) {
+  if (cur.length === 0) {
+    document.getElementById('surgeList').innerHTML = '<div style="color:var(--text3);font-size:12px;">데이터 없음</div>';
+    return;
+  }
+
+  const curCnt={}, prevCnt={};
+  cur.forEach(r  => { if(!r.제품명||r.제품명.startsWith('[집계]')) return; const n=shortName(r.제품명); curCnt[n]=(curCnt[n]||0)+1; });
+  prev.forEach(r => { if(!r.제품명||r.제품명.startsWith('[집계]')) return; const n=shortName(r.제품명); prevCnt[n]=(prevCnt[n]||0)+1; });
+
+  const surge = Object.entries(curCnt)
+    .map(([name,cnt]) => ({ name, curr:cnt, prev:prevCnt[name]||0, diff:cnt-(prevCnt[name]||0) }))
+    .filter(x => x.diff > 0 && x.curr >= 2)
+    .sort((a,b) => b.diff - a.diff)
+    .slice(0, 6);
+
+  document.getElementById('surgeList').innerHTML = surge.length === 0
+    ? '<div style="color:var(--text3);font-size:12px;">급증 제품 없음 (전 기간 대비 안정)</div>'
+    : surge.map(s => `
+    <div class="surge-row">
+      <div class="surge-name" title="${s.name}">${s.name}</div>
+      <div class="surge-vals">
+        <div class="surge-prev">${s.prev}건</div>
+        <div class="surge-arrow">→</div>
+        <div class="surge-curr">${s.curr}건</div>
+        <div class="surge-badge">+${s.diff}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── 개선진행여부 ──
+function renderImprove(records) {
+  // Top5 제품 × Top10 불량원인 교차
+  const prodCnt={}, faultCnt={};
+  records.forEach(r => {
+    if (!r.제품명 || r.제품명.startsWith('[집계]')) return;
+    const n = shortName(r.제품명);
+    prodCnt[n] = (prodCnt[n]||0)+1;
+    const faults = Array.isArray(r.확인불량) ? r.확인불량 : JSON.parse(r.확인불량||'[]');
+    faults.forEach(f => { if(f && f!=='특이사항없음' && f!=='미확인') faultCnt[f]=(faultCnt[f]||0)+1; });
+  });
+
+  const top5prod  = Object.entries(prodCnt).sort((a,b)=>b[1]-a[1]).slice(0,5).map(x=>x[0]);
+  const top10fault= Object.entries(faultCnt).sort((a,b)=>b[1]-a[1]).slice(0,10).map(x=>x[0]);
+
+  // 각 제품-불량 조합의 건수
+  const rows = [];
+  top5prod.forEach(prod => {
+    top10fault.forEach(fault => {
+      const cnt = records.filter(r => {
+        if (!r.제품명 || shortName(r.제품명) !== prod) return false;
+        const faults = Array.isArray(r.확인불량) ? r.확인불량 : JSON.parse(r.확인불량||'[]');
+        return faults.includes(fault);
+      }).length;
+      if (cnt > 0) rows.push({ prod, fault, cnt });
+    });
+  });
+  rows.sort((a,b) => b.cnt - a.cnt);
+
+  const tbody = document.getElementById('improveTbody');
+  tbody.innerHTML = rows.length === 0
+    ? '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px;">데이터 없음</td></tr>'
+    : rows.map(r => {
+        const key = encodeKey(r.prod, r.fault);
+        const imp = _improve[key] || { status:'', note:'' };
+        return `<tr>
+          <td><span class="prod-badge" title="${r.prod}">${r.prod}</span></td>
+          <td><span class="fault-tag">${r.fault}</span></td>
+          <td style="font-family:var(--font-en);font-weight:600;">${r.cnt}</td>
+          <td>
+            <select class="status-sel ${statusCls(imp.status)}" onchange="saveImprove('${key}',this)">
+              <option value="" ${!imp.status?'selected':''}>— 미지정</option>
+              <option value="개선완료" ${imp.status==='개선완료'?'selected':''}>✅ 개선완료</option>
+              <option value="진행중"   ${imp.status==='진행중'?'selected':''}>🔄 진행중</option>
+              <option value="보류"     ${imp.status==='보류'?'selected':''}>⏸ 보류</option>
+              <option value="해당없음" ${imp.status==='해당없음'?'selected':''}>— 해당없음</option>
+            </select>
+          </td>
+          <td>
+            <input type="text" value="${imp.note||''}" placeholder="비고 입력"
+              style="background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text2);font-size:11px;font-family:var(--font-kr);width:120px;padding:2px 4px;outline:none;"
+              onblur="saveImproveNote('${key}',this.value)">
+          </td>
+        </tr>`;
+      }).join('');
+}
+
+function statusCls(s) {
+  if(s==='개선완료') return 'done';
+  if(s==='진행중')   return 'wip';
+  if(s==='보류')     return 'hold';
+  return 'none';
+}
+
+function encodeKey(prod, fault) {
+  return btoa(encodeURIComponent(prod+'||'+fault)).replace(/=/g,'');
+}
+
+async function saveImprove(key, selEl) {
+  selEl.className = 'status-sel ' + statusCls(selEl.value);
+  _improve[key] = _improve[key] || {};
+  _improve[key].status = selEl.value;
+  await pushImprove();
+}
+
+async function saveImproveNote(key, note) {
+  _improve[key] = _improve[key] || {};
+  _improve[key].note = note;
+  await pushImprove();
+}
+
+async function pushImprove() {
+  try {
+    const payload = encodeURIComponent(JSON.stringify({improve: _improve}));
+    await fetch(`${QC_GAS_URL}?action=saveQcImproveStatus&data=${payload}`, {redirect:'follow'});
+  } catch(e) {}
+}
+
+// ─────────────────────────────────────────────
+// 유틸
+// ─────────────────────────────────────────────
+function shortName(name) {
+  if (!name) return '-';
+  let n = name.replace(/\[집계\]\s*/g,'').replace(/\[.*?\]\s*/g,'').trim();
+  return n.length > 14 ? n.slice(0,13)+'..' : n;
+}
+
+function showLoading() {
+  document.getElementById('loadingState').style.display  = '';
+  document.getElementById('emptyState').style.display    = 'none';
+  document.getElementById('mainContent').style.display   = 'none';
+}
+
+function showEmpty() {
+  document.getElementById('loadingState').style.display  = 'none';
+  document.getElementById('emptyState').style.display    = '';
+  document.getElementById('mainContent').style.display   = 'none';
+}
+
+function goSync() {
+  window.parent.postMessage({type:'GO_TAB', tab:'sync'}, '*');
+}
+
+// ─────────────────────────────────────────────
+// 진입
+// ─────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>

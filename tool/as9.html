@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AS9 PDF Workbench Pro</title>
+  <style>
+    :root{--bg:#06080d;--panel:#101722;--panel2:#151e2c;--panel3:#0b1018;--line:#273449;--line2:#3b4b65;--text:#eef4ff;--muted:#94a3b8;--muted2:#64748b;--accent:#7dd3fc;--accent2:#a78bfa;--ok:#86efac;--warn:#fbbf24;--danger:#fb7185;--shadow:0 24px 80px rgba(0,0,0,.46);--radius:18px}
+    *{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body:before{content:"";position:fixed;inset:-30%;pointer-events:none;background:radial-gradient(circle at 10% 5%,rgba(125,211,252,.20),transparent 25%),radial-gradient(circle at 82% 0%,rgba(167,139,250,.18),transparent 28%),radial-gradient(circle at 70% 95%,rgba(45,212,191,.10),transparent 30%);filter:blur(10px)}
+    .app{position:relative;height:100%;display:grid;grid-template-columns:360px 1fr;gap:14px;padding:14px}.sidebar,.main{min-height:0;background:rgba(16,23,34,.92);border:1px solid rgba(148,163,184,.16);border-radius:var(--radius);box-shadow:var(--shadow);backdrop-filter:blur(18px);overflow:hidden}.sidebar{display:flex;flex-direction:column}.brand{padding:18px 18px 12px;border-bottom:1px solid var(--line)}h1{margin:0;font-size:20px;display:flex;align-items:center;gap:8px;letter-spacing:.2px}.badge{font-size:11px;color:var(--accent);border:1px solid rgba(125,211,252,.35);background:rgba(125,211,252,.08);border-radius:999px;padding:4px 8px}.brand p{margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.45}
+    .drop{margin:14px;border:1.5px dashed rgba(125,211,252,.44);background:linear-gradient(180deg,rgba(125,211,252,.09),rgba(167,139,250,.06));border-radius:16px;padding:15px;text-align:center;transition:.16s;cursor:pointer;user-select:none}.drop.drag{transform:scale(.99);border-color:var(--ok);background:rgba(134,239,172,.10)}.drop strong{display:block;font-size:15px;margin-bottom:6px}.drop span{display:block;color:var(--muted);font-size:12px;line-height:1.4}#fileInput{display:none}.searchBox{padding:0 14px 10px}.searchBox input{width:100%;height:38px;border-radius:12px;border:1px solid rgba(148,163,184,.20);background:rgba(255,255,255,.055);color:var(--text);padding:0 12px;outline:0}.searchBox input:focus{border-color:rgba(125,211,252,.55)}
+    .tools{display:flex;gap:8px;padding:0 14px 12px;flex-wrap:wrap}button,select,input.pageInput{border:1px solid rgba(148,163,184,.22);background:rgba(255,255,255,.055);color:var(--text);border-radius:12px;padding:9px 11px;cursor:pointer;font-weight:750;font-size:12px;transition:.15s}button:hover,select:hover{background:rgba(255,255,255,.10);border-color:rgba(125,211,252,.42)}button.active{border-color:rgba(125,211,252,.62);background:rgba(125,211,252,.13);color:#dff6ff}button.danger:hover{border-color:rgba(251,113,133,.55);color:#fecdd3}.wide{flex:1}.listHead{display:flex;justify-content:space-between;align-items:center;padding:0 16px 8px;color:var(--muted);font-size:12px}.fileList{overflow:auto;padding:0 10px 12px;min-height:0;flex:1}.item{display:grid;grid-template-columns:26px 30px 1fr auto;gap:8px;align-items:center;padding:9px 8px;border:1px solid transparent;border-radius:13px;cursor:pointer;margin:4px 0;color:#dbeafe}.item:hover{background:rgba(255,255,255,.055)}.item.active{background:linear-gradient(90deg,rgba(125,211,252,.16),rgba(167,139,250,.12));border-color:rgba(125,211,252,.30)}.item.dragging{opacity:.45}.grab{height:25px;width:22px;border-radius:8px;display:grid;place-items:center;color:var(--muted2);cursor:grab}.num{height:25px;width:25px;border-radius:8px;display:grid;place-items:center;background:rgba(255,255,255,.07);font-size:11px;color:var(--muted)}.name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:750}.meta{font-size:11px;color:var(--muted);margin-top:2px}.x{font-size:17px;color:var(--muted);padding:2px 7px;border-radius:8px}.x:hover{background:rgba(251,113,133,.14);color:#fecdd3}
+    .main{display:flex;flex-direction:column}.topbar{min-height:78px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px}.titleWrap{min-width:0}.title{font-size:15px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hint{font-size:12px;color:var(--muted);margin-top:4px}.controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}.zoomVal{min-width:64px;text-align:center;color:var(--accent);font-weight:850;font-size:13px}.kbd{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:rgba(255,255,255,.08);padding:2px 6px;border-radius:6px;color:#e2e8f0}.stage{position:relative;flex:1;min-height:0;background:#060910;overflow:auto;padding:16px}.stage.empty{display:grid;place-items:center}.emptyBox{text-align:center;color:var(--muted);max-width:620px}.emptyBox b{display:block;color:var(--text);font-size:28px;margin-bottom:10px}.emptyBox p{line-height:1.6}.grid{display:grid;gap:14px;align-items:start}.grid.g1{grid-template-columns:1fr}.grid.g2{grid-template-columns:repeat(2,minmax(360px,1fr))}.grid.g4{grid-template-columns:repeat(2,minmax(320px,1fr))}.grid.g6{grid-template-columns:repeat(3,minmax(280px,1fr))}.grid.g9{grid-template-columns:repeat(3,minmax(260px,1fr))}
+    .card{min-width:0;background:rgba(11,16,24,.97);border:1px solid rgba(148,163,184,.16);border-radius:16px;overflow:hidden;box-shadow:0 14px 45px rgba(0,0,0,.32)}.card.focused{border-color:rgba(125,211,252,.62);box-shadow:0 0 0 1px rgba(125,211,252,.2),0 14px 45px rgba(0,0,0,.32)}.cardHead{min-height:43px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding:0 10px}.cardTitle{min-width:0;font-size:12px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pageInfo{font-size:11px;color:var(--muted);white-space:nowrap}.cardTools{display:flex;align-items:center;gap:6px;padding:7px 9px;border-bottom:1px solid rgba(39,52,73,.8);background:rgba(255,255,255,.025);flex-wrap:wrap}.mini{padding:6px 8px;border-radius:9px;font-size:11px}.pageInput{width:54px;height:28px;padding:0;text-align:center;border-radius:9px;cursor:text}.canvasWrap{height:calc(100vh - 218px);min-height:480px;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:14px;background:#080b12}.grid.g4 .canvasWrap{height:calc((100vh - 245px)/2);min-height:300px}.grid.g6 .canvasWrap,.grid.g9 .canvasWrap{height:calc((100vh - 255px)/2);min-height:260px}canvas{background:#fff;border-radius:7px;box-shadow:0 12px 34px rgba(0,0,0,.45)}.loading{padding:40px 18px;color:var(--muted);text-align:center;font-size:13px}.err{padding:40px 18px;color:#fecdd3;text-align:center;font-size:13px;line-height:1.5}.footer{border-top:1px solid var(--line);padding:9px 16px;color:var(--muted);font-size:12px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.pill{color:#c4b5fd}.sep{width:1px;height:20px;background:rgba(148,163,184,.22);margin:0 2px}
+    @media(max-width:1050px){.app{grid-template-columns:1fr;grid-template-rows:300px 1fr}.grid.g2,.grid.g4,.grid.g6,.grid.g9{grid-template-columns:1fr}.canvasWrap,.grid.g4 .canvasWrap,.grid.g6 .canvasWrap,.grid.g9 .canvasWrap{height:560px}.brand{padding:12px 14px 8px}.drop{padding:12px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><h1>AS9 PDF Workbench <span class="badge">PRO</span></h1><p>여러 PDF를 한 화면에서 검수·비교하는 로컬 미리보기 작업대.</p></div>
+    <label class="drop" id="dropZone" for="fileInput"><strong>PDF 파일 드래그 & 드롭</strong><span>여러 개 계속 추가 가능 · 브라우저 안에서만 처리<br>또는 클릭해서 파일 선택</span><input id="fileInput" type="file" accept="application/pdf,.pdf" multiple /></label>
+    <div class="searchBox"><input id="searchInput" placeholder="파일명 검색" /></div>
+    <div class="tools"><button id="openBtn">파일 선택</button><button id="sortBtn">이름순</button><button id="fullBtn">전체화면</button><button id="clearBtn" class="danger">전체 비우기</button></div>
+    <div class="tools"><button class="viewBtn active" data-view="1">1개</button><button class="viewBtn" data-view="2">2개</button><button class="viewBtn" data-view="4">4개</button><button class="viewBtn" data-view="6">6개</button><button class="viewBtn" data-view="9">9개</button></div>
+    <div class="tools"><button id="syncPageBtn" class="active wide">페이지 동기화 ON</button><button id="syncZoomBtn" class="active wide">확대 동기화 ON</button></div>
+    <div class="listHead"><span>업로드 목록 <span class="kbd">드래그 정렬</span></span><span id="count">0개</span></div><div class="fileList" id="fileList"></div>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <div class="titleWrap"><div class="title" id="currentTitle">PDF 미리보기 대기 중</div><div class="hint"><span class="kbd">Ctrl</span>+휠 커서 위치 PDF만 확대 · <span class="kbd">W</span> 폭맞춤 · <span class="kbd">F</span> 페이지맞춤 · <span class="kbd">R</span> 회전</div></div>
+      <div class="controls"><button id="prevFileBtn">이전 파일</button><button id="nextFileBtn">다음 파일</button><button id="prevPageBtn">이전 페이지</button><button id="nextPageBtn">다음 페이지</button><button id="zoomOut">－</button><div class="zoomVal" id="zoomVal">100%</div><button id="zoomIn">＋</button><button id="resetZoom">100%</button></div>
+    </div>
+    <section class="stage empty" id="stage"><div class="emptyBox"><b>PDF를 던져보시게.</b><p>서버 업로드 없이 브라우저 안에서만 미리보기합니다.<br>비교 모드는 2개·4개·6개·9개까지 바로 전환됩니다.</p></div></section>
+    <div class="footer"><span>단축키: <span class="kbd">Space</span> 다음 파일 · <span class="kbd">Shift</span>+<span class="kbd">Space</span> 이전 · <span class="kbd">↑↓</span> 페이지 · <span class="kbd">+/-</span> 확대</span><span class="pill">PDF.js CDN 기반 · 로컬 처리</span></div>
+  </main>
+</div>
+<script type="module">
+  import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs';
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
+
+  const $=id=>document.getElementById(id);
+  const els={fileInput:$('fileInput'),dropZone:$('dropZone'),fileList:$('fileList'),count:$('count'),stage:$('stage'),currentTitle:$('currentTitle'),zoomVal:$('zoomVal'),search:$('searchInput'),syncPage:$('syncPageBtn'),syncZoom:$('syncZoomBtn')};
+  const saved=JSON.parse(localStorage.getItem('as9_pro_prefs')||'{}');
+  let files=[],currentIndex=0,viewCount=saved.viewCount||1,globalPage=1,syncPage=saved.syncPage??true,syncZoom=saved.syncZoom??true,renderToken=0,focusedId=null,dragIndex=null;
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+  const fmtSize=b=>b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB';
+  const esc=s=>String(s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+  const savePrefs=()=>localStorage.setItem('as9_pro_prefs',JSON.stringify({viewCount,syncPage,syncZoom}));
+
+  document.querySelectorAll('.viewBtn').forEach(b=>b.classList.toggle('active',Number(b.dataset.view)===viewCount));
+  els.syncPage.classList.toggle('active',syncPage); els.syncPage.textContent='페이지 동기화 '+(syncPage?'ON':'OFF');
+  els.syncZoom.classList.toggle('active',syncZoom); els.syncZoom.textContent='확대 동기화 '+(syncZoom?'ON':'OFF');
+
+  async function addFiles(list){
+    const pdfs=[...list].filter(f=>f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf'));
+    const wasEmpty=!files.length;
+    for(const file of pdfs){
+      const item={id:crypto.randomUUID?.()||String(Date.now()+Math.random()),file,name:file.name,size:file.size,url:URL.createObjectURL(file),pdf:null,pages:0,page:1,zoom:1,fit:'free',rotate:0,loading:null,error:null};
+      files.push(item); item.loading=pdfjsLib.getDocument(item.url).promise.then(pdf=>{item.pdf=pdf;item.pages=pdf.numPages;renderList();return pdf}).catch(err=>{item.error=err?.message||'PDF 로드 실패';renderList()});
+    }
+    if(wasEmpty&&pdfs.length){currentIndex=0;focusedId=files[0].id} renderList(); renderStage();
+  }
+  const visibleFiles=()=>files.slice(currentIndex,currentIndex+viewCount);
+  const focusedItem=()=>files.find(f=>f.id===focusedId)||visibleFiles()[0]||files[currentIndex];
+
+  function renderList(){
+    els.count.textContent=`${files.length}개`; els.fileList.innerHTML=''; const q=els.search.value.trim().toLowerCase();
+    files.forEach((item,idx)=>{ if(q&&!item.name.toLowerCase().includes(q)) return;
+      const row=document.createElement('div'); row.className='item'+(idx>=currentIndex&&idx<currentIndex+viewCount?' active':''); row.draggable=true; row.dataset.index=idx;
+      row.innerHTML=`<div class="grab" title="드래그 정렬">☰</div><div class="num">${idx+1}</div><div style="min-width:0"><div class="name" title="${esc(item.name)}">${esc(item.name)}</div><div class="meta">${fmtSize(item.size)} · ${item.pages?item.pages+'p':item.error?'오류':'로딩중'} · ${Math.round(item.zoom*100)}%</div></div><div class="x" title="제거">×</div>`;
+      row.onclick=()=>{currentIndex=idx;globalPage=1;focusedId=item.id;renderList();renderStage()}; row.querySelector('.x').onclick=e=>{e.stopPropagation();removeFile(idx)};
+      row.addEventListener('dragstart',e=>{dragIndex=idx;row.classList.add('dragging');e.dataTransfer.effectAllowed='move'});
+      row.addEventListener('dragend',()=>{dragIndex=null;row.classList.remove('dragging')});
+      row.addEventListener('dragover',e=>e.preventDefault());
+      row.addEventListener('drop',e=>{e.preventDefault();const to=Number(row.dataset.index);if(dragIndex===null||dragIndex===to)return;const [m]=files.splice(dragIndex,1);files.splice(to,0,m);currentIndex=clamp(files.findIndex(f=>f.id===focusedId),0,Math.max(0,files.length-1));renderList();renderStage()});
+      els.fileList.appendChild(row);
+    });
+  }
+  function removeFile(idx){URL.revokeObjectURL(files[idx].url);files.splice(idx,1);currentIndex=clamp(currentIndex,0,Math.max(0,files.length-1));focusedId=files[currentIndex]?.id||null;renderList();renderStage()}
+  function emptyHTML(){return '<div class="emptyBox"><b>PDF를 던져보시게.</b><p>서버 업로드 없이 브라우저 안에서만 미리보기합니다.<br>비교 모드는 2개·4개·6개·9개까지 바로 전환됩니다.</p></div>'}
+
+  async function renderStage(){
+    renderToken++; const token=renderToken;
+    if(!files.length){els.stage.className='stage empty';els.stage.innerHTML=emptyHTML();els.currentTitle.textContent='PDF 미리보기 대기 중';els.zoomVal.textContent='100%';return}
+    els.stage.className='stage'; els.stage.innerHTML=`<div class="grid g${viewCount}" id="grid"></div>`; const grid=$('grid'),visibles=visibleFiles();
+    if(!visibles.some(f=>f.id===focusedId)) focusedId=visibles[0]?.id; els.currentTitle.textContent=viewCount===1?visibles[0]?.name:`${currentIndex+1}번부터 ${visibles.length}개 비교 중`;
+    for(const item of visibles){
+      const card=document.createElement('div'); card.className='card'+(item.id===focusedId?' focused':''); card.dataset.id=item.id;
+      card.innerHTML=`<div class="cardHead"><div class="cardTitle" title="${esc(item.name)}">${esc(item.name)}</div><div class="pageInfo">준비 중</div></div><div class="cardTools"><button class="mini pprev">‹</button><input class="pageInput" value="${item.page}" inputmode="numeric"><button class="mini pnext">›</button><span class="sep"></span><button class="mini zout">−</button><button class="mini zin">+</button><button class="mini fitW">폭맞춤</button><button class="mini fitP">페이지</button><button class="mini rot">회전</button></div><div class="canvasWrap"><div class="loading">PDF 읽는 중...</div></div>`;
+      grid.appendChild(card); bindCardTools(item,card); renderCard(item,card,token);
+    }
+    applyZoomLabel(); renderList();
+  }
+  function bindCardTools(item,card){
+    card.addEventListener('pointerdown',()=>{focusedId=item.id;document.querySelectorAll('.card').forEach(c=>c.classList.toggle('focused',c.dataset.id===item.id));applyZoomLabel(item);renderList()});
+    card.querySelector('.pprev').onclick=()=>changePage(-1,item); card.querySelector('.pnext').onclick=()=>changePage(1,item);
+    card.querySelector('.zin').onclick=()=>{item.fit='free';changeOneZoom(item,.1)}; card.querySelector('.zout').onclick=()=>{item.fit='free';changeOneZoom(item,-.1)};
+    card.querySelector('.fitW').onclick=()=>{item.fit='width';renderStage()}; card.querySelector('.fitP').onclick=()=>{item.fit='page';renderStage()};
+    card.querySelector('.rot').onclick=()=>{item.rotate=(item.rotate+90)%360;renderStage()};
+    card.querySelector('.pageInput').onkeydown=e=>{if(e.key==='Enter'){const n=parseInt(e.target.value,10);if(Number.isFinite(n)){if(syncPage){globalPage=n}else item.page=n;renderStage()}}};
+  }
+  async function renderCard(item,card,token){
+    const info=card.querySelector('.pageInfo'),wrap=card.querySelector('.canvasWrap'),input=card.querySelector('.pageInput');
+    try{ if(!item.pdf) await item.loading; if(token!==renderToken)return; if(item.error)throw new Error(item.error);
+      const pageNo=syncPage?clamp(globalPage,1,item.pages):clamp(item.page,1,item.pages); if(syncPage)item.page=pageNo; else item.page=pageNo; input.value=pageNo; info.textContent=`${pageNo} / ${item.pages} · ${Math.round(item.zoom*100)}%${item.fit!=='free'?' · '+(item.fit==='width'?'폭':'페이지'):''}${item.rotate?' · '+item.rotate+'°':''}`;
+      wrap.innerHTML=''; const page=await item.pdf.getPage(pageNo); if(token!==renderToken)return; const raw=page.getViewport({scale:1,rotation:item.rotate}); let scale;
+      if(item.fit==='width') scale=Math.max(.15,(wrap.clientWidth-34)/raw.width); else if(item.fit==='page') scale=Math.max(.15,Math.min((wrap.clientWidth-34)/raw.width,(wrap.clientHeight-34)/raw.height)); else {const base=viewCount===1?1.55:viewCount===2?1.05:viewCount===4?.78:.58; scale=base*item.zoom}
+      if(item.fit!=='free') item.zoom=scale/(viewCount===1?1.55:viewCount===2?1.05:viewCount===4?.78:.58);
+      const viewport=page.getViewport({scale,rotation:item.rotate}); const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1;
+      canvas.width=Math.floor(viewport.width*dpr); canvas.height=Math.floor(viewport.height*dpr); canvas.style.width=Math.floor(viewport.width)+'px'; canvas.style.height=Math.floor(viewport.height)+'px'; ctx.setTransform(dpr,0,0,dpr,0,0); wrap.appendChild(canvas); await page.render({canvasContext:ctx,viewport}).promise;
+    }catch(e){wrap.innerHTML=`<div class="err">PDF를 표시하지 못했습니다.<br>${esc(String(e.message||e))}</div>`;info.textContent='오류'}
+  }
+  function changePage(delta,target=null){if(!files.length)return;if(syncPage&&!target){const max=Math.max(...visibleFiles().map(f=>f.pages||1));globalPage=clamp(globalPage+delta,1,max)}else{const item=target||focusedItem();if(item)item.page=clamp((item.page||1)+delta,1,item.pages||1)}renderStage()}
+  function changeZoom(delta){if(syncZoom){visibleFiles().forEach(f=>{f.fit='free';f.zoom=clamp(f.zoom+delta,.25,5)})}else{const f=focusedItem();if(f){f.fit='free';f.zoom=clamp(f.zoom+delta,.25,5)}}applyZoomLabel();renderStage()}
+  function changeOneZoom(item,delta){if(!item)return;item.fit='free';item.zoom=clamp(item.zoom+delta,.25,5);focusedId=item.id;applyZoomLabel(item);renderStage()}
+  function applyZoomLabel(item=null){const base=item||focusedItem();els.zoomVal.textContent=Math.round((base?.zoom||1)*100)+'%'}
+  function moveFile(delta){if(!files.length)return;currentIndex=clamp(currentIndex+delta,0,Math.max(0,files.length-1));globalPage=1;focusedId=files[currentIndex]?.id;renderStage()}
+  function setFocusedFit(mode){const f=focusedItem();if(f){f.fit=mode;renderStage()}}
+  function rotateFocused(){const f=focusedItem();if(f){f.rotate=(f.rotate+90)%360;renderStage()}}
+
+  els.dropZone.addEventListener('dragenter',e=>{e.preventDefault();els.dropZone.classList.add('drag')}); els.dropZone.addEventListener('dragover',e=>{e.preventDefault();els.dropZone.classList.add('drag')}); els.dropZone.addEventListener('dragleave',()=>els.dropZone.classList.remove('drag')); els.dropZone.addEventListener('drop',e=>{e.preventDefault();els.dropZone.classList.remove('drag');addFiles(e.dataTransfer.files)}); els.fileInput.onchange=e=>addFiles(e.target.files);
+  $('openBtn').onclick=()=>els.fileInput.click(); $('sortBtn').onclick=()=>{const id=focusedId;files.sort((a,b)=>a.name.localeCompare(b.name,'ko'));currentIndex=Math.max(0,files.findIndex(f=>f.id===id));renderStage()}; $('clearBtn').onclick=()=>{files.forEach(f=>URL.revokeObjectURL(f.url));files=[];renderList();renderStage()}; $('fullBtn').onclick=()=>{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen?.()}; els.search.oninput=renderList;
+  document.querySelectorAll('.viewBtn').forEach(btn=>btn.onclick=()=>{viewCount=Number(btn.dataset.view);document.querySelectorAll('.viewBtn').forEach(b=>b.classList.toggle('active',b===btn));savePrefs();renderStage()});
+  els.syncPage.onclick=()=>{syncPage=!syncPage;els.syncPage.classList.toggle('active',syncPage);els.syncPage.textContent='페이지 동기화 '+(syncPage?'ON':'OFF');savePrefs();renderStage()}; els.syncZoom.onclick=()=>{syncZoom=!syncZoom;els.syncZoom.classList.toggle('active',syncZoom);els.syncZoom.textContent='확대 동기화 '+(syncZoom?'ON':'OFF');savePrefs();renderStage()};
+  $('prevFileBtn').onclick=()=>moveFile(-1); $('nextFileBtn').onclick=()=>moveFile(1); $('prevPageBtn').onclick=()=>changePage(-1); $('nextPageBtn').onclick=()=>changePage(1); $('zoomIn').onclick=()=>changeZoom(.1); $('zoomOut').onclick=()=>changeZoom(-.1); $('resetZoom').onclick=()=>{visibleFiles().forEach(f=>{f.zoom=1;f.fit='free'});renderStage()};
+  els.stage.addEventListener('wheel',e=>{if(!e.ctrlKey)return;const card=e.target.closest('.card');if(!card)return;e.preventDefault();const item=files.find(f=>f.id===card.dataset.id);changeOneZoom(item,e.deltaY>0?-.08:.08)},{passive:false});
+  window.addEventListener('keydown',e=>{if(!files.length||['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return; if(e.key==='ArrowLeft')moveFile(-1); if(e.key==='ArrowRight')moveFile(1); if(e.key==='ArrowUp'){e.preventDefault();changePage(-1)} if(e.key==='ArrowDown'){e.preventDefault();changePage(1)} if(e.key===' '){e.preventDefault();moveFile(e.shiftKey?-1:1)} if(e.key==='+'||e.key==='=')changeZoom(.1); if(e.key==='-')changeZoom(-.1); if(e.key==='0'){visibleFiles().forEach(f=>{f.zoom=1;f.fit='free'});renderStage()} if(e.key.toLowerCase()==='w')setFocusedFit('width'); if(e.key.toLowerCase()==='f')setFocusedFit('page'); if(e.key.toLowerCase()==='r')rotateFocused();});
+  window.addEventListener('resize',()=>files.length&&renderStage()); window.addEventListener('beforeunload',()=>files.forEach(f=>URL.revokeObjectURL(f.url)));
+</script>
+</body>
+</html>

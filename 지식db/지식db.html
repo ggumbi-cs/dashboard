@@ -1545,7 +1545,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       renderGroups();
     }
     callApi('updateGroupAssignment', { 직원ID: empId, 조편성월: ym, 우수사례: 'Y' })
-      .then(()=> showToast('⭐ 조별우수사례로 추천되었습니다.'))
+      .then(()=>{ showToast('⭐ 조별우수사례로 추천되었습니다.'); loadGroups(true); }) // 서버 재조회로 실제 저장 확인
       .catch(err=>{ _apiCatch(err); loadGroups(true); });
   }
   function unpickCase(e, empId, ym){
@@ -1553,7 +1553,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     const target = _lastGroupRows.find(r => r.직원ID === empId);
     if (target){ target.우수사례 = ''; renderGroups(); }
     callApi('updateGroupAssignment', { 직원ID: empId, 조편성월: ym, 우수사례: '' })
-      .then(()=> showToast('추천이 해제되었습니다.'))
+      .then(()=>{ showToast('추천이 해제되었습니다.'); loadGroups(true); })
       .catch(err=>{ _apiCatch(err); loadGroups(true); });
   }
   function onAttendanceChange(empId, ym, value){

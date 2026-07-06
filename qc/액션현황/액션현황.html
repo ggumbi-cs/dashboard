@@ -14,7 +14,7 @@
   --gold:#f0c060;--green:#00e5a0;--red:#ff5a6e;--orange:#ff9040;--purple:#a080ff;
   --text:#e8f0f8;--text2:#a8c8e0;--text3:#6a8faa;
   --font-kr:'Noto Sans KR',sans-serif;--font-en:'Inter',sans-serif;
-  --s1:#ff9040;--s2:#00c8ff;--s3:#f0c060;--s4:#6a8faa;--s5:#00e5a0;--s6:#a080ff;
+  --s1:#ff9040;--s2:#00c8ff;--s3:#f0c060;--s4:#6a8faa;--s5:#00e5a0;
 }
 body.light{
   --bg:#f0f4fa;--bg2:#fff;--bg3:#e8f0fb;--bg4:#dce8f7;
@@ -22,62 +22,88 @@ body.light{
   --cyan:#1a6eb8;--cyan-dim:rgba(26,110,184,0.08);
   --gold:#b07800;--green:#007a50;--red:#c02020;--orange:#c05010;--purple:#5030b0;
   --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6a9a;
-  --s2:#1a6eb8;--s3:#b07800;--s4:#3a6a9a;--s5:#007a50;--s6:#5030b0;
+  --s2:#1a6eb8;--s3:#b07800;--s4:#3a6a9a;--s5:#007a50;
 }
 html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--font-kr);}
 ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 
-/* ── 헤더 ── */
-#pageHeader{padding:14px 20px 0;display:flex;align-items:center;justify-content:space-between;}
-.ph-title{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+/* ── 툴바 ── */
+#toolbar{padding:12px 18px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.ph-title{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:7px;flex-shrink:0;}
 .ph-title::before{content:'';display:inline-block;width:3px;height:15px;background:var(--cyan);border-radius:2px;}
-.ph-right{display:flex;align-items:center;gap:10px;}
-.ph-count{font-size:11px;color:var(--text3);}
-.ph-refresh{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+
+/* 검색 */
+.search-wrap{flex:1;min-width:160px;max-width:320px;display:flex;gap:4px;}
+.search-input{flex:1;padding:5px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;font-family:var(--font-kr);outline:none;}
+.search-input:focus{border-color:var(--border2);}
+.search-btn{padding:5px 12px;background:var(--cyan-dim);border:1px solid var(--border2);border-radius:7px;color:var(--cyan);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font-kr);white-space:nowrap;}
+.search-btn:hover{background:rgba(0,200,255,0.15);}
+
+/* 정렬 */
+.sort-wrap{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.sort-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font-kr);transition:all 0.15s;display:flex;align-items:center;gap:3px;}
+.sort-btn:hover{border-color:var(--border2);color:var(--text2);}
+.sort-btn.active{border-color:var(--cyan);background:var(--cyan-dim);color:var(--cyan);}
+.sort-icon{font-size:9px;}
+
+/* 우선순위 설정 버튼 */
+.prio-set-btn{padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:11px;cursor:pointer;transition:all 0.15s;}
+.prio-set-btn:hover{border-color:var(--gold);color:var(--gold);}
+
+/* 새로고침 */
+.ph-refresh{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;}
 .ph-refresh:hover{border-color:var(--border2);color:var(--cyan);}
 .ph-refresh.spin{animation:spin 0.8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
+.ph-count{font-size:11px;color:var(--text3);flex-shrink:0;}
 
 /* ── 스텝 탭 ── */
-#stepTabBar{display:flex;align-items:center;gap:0;padding:12px 20px 0;border-bottom:1px solid var(--border);overflow-x:auto;}
-.step-tab{display:flex;align-items:center;gap:6px;padding:8px 14px;cursor:pointer;border-bottom:2px solid transparent;font-size:11px;font-weight:600;color:var(--text3);white-space:nowrap;transition:all 0.15s;margin-bottom:-1px;}
+#stepTabBar{display:flex;align-items:center;gap:0;padding:10px 18px 0;border-bottom:1px solid var(--border);overflow-x:auto;}
+.step-tab{display:flex;align-items:center;gap:5px;padding:7px 12px;cursor:pointer;border-bottom:2px solid transparent;font-size:11px;font-weight:600;color:var(--text3);white-space:nowrap;transition:all 0.15s;margin-bottom:-1px;}
 .step-tab:hover{color:var(--text2);}
-.step-tab.active{color:var(--tab-color);border-bottom-color:var(--tab-color);}
-.step-tab .tab-num{font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;background:var(--bg4);}
-.step-tab.active .tab-num{background:color-mix(in srgb, var(--tab-color) 15%, transparent);}
+.step-tab.active{color:var(--tab-color, var(--cyan));border-bottom-color:var(--tab-color, var(--cyan));}
+.step-tab[data-step="all"]{--tab-color:var(--text2);}
+.step-tab[data-step="1"] {--tab-color:var(--s1);}
+.step-tab[data-step="2"] {--tab-color:var(--s2);}
+.step-tab[data-step="3"] {--tab-color:var(--s3);}
+.step-tab[data-step="4"] {--tab-color:var(--s4);}
+.step-tab[data-step="5"] {--tab-color:var(--s5);}
+.tab-cnt{font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;background:var(--bg4);}
+.step-tab.active .tab-cnt{background:color-mix(in srgb,var(--tab-color,var(--cyan)) 18%,transparent);}
 
 /* ── 카드 목록 ── */
-#cardList{padding:16px 20px 40px;display:flex;flex-direction:column;gap:10px;}
+#cardList{padding:12px 18px 40px;display:flex;flex-direction:column;gap:10px;}
 
 /* ── 액션 카드 ── */
-.action-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color 0.15s,box-shadow 0.15s;position:relative;}
+.action-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:border-color 0.15s,box-shadow 0.15s;}
 .action-card:hover{border-color:var(--border2);box-shadow:0 6px 24px rgba(0,0,0,0.3);}
 .card-step-bar{height:2px;width:100%;}
 
-/* 카드 상단 메타 */
-.card-meta-row{display:flex;align-items:center;gap:8px;padding:10px 14px 0;flex-wrap:wrap;}
-.card-date{font-size:10px;font-weight:500;font-family:var(--font-en);color:var(--text3);background:var(--bg3);padding:2px 8px;border-radius:5px;border:1px solid var(--border);flex-shrink:0;}
-.step-sel,.stage-sel{font-size:10px;font-weight:600;font-family:var(--font-kr);padding:2px 6px;border-radius:5px;border:1px solid var(--border);cursor:pointer;outline:none;transition:all 0.15s;background:var(--bg3);color:var(--text2);}
+/* 카드 헤더 행 */
+.card-hd{display:flex;align-items:center;gap:6px;padding:8px 12px 0;flex-wrap:wrap;}
+.card-hd-left{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.card-hd-right{margin-left:auto;display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+.card-date{font-size:10px;font-family:var(--font-en);color:var(--text3);background:var(--bg3);padding:2px 7px;border-radius:5px;border:1px solid var(--border);flex-shrink:0;}
+.step-sel,.stage-sel{font-size:10px;font-weight:600;font-family:var(--font-kr);padding:2px 6px;border-radius:5px;border:1px solid var(--border);cursor:pointer;outline:none;transition:border-color 0.15s;background:var(--bg3);color:var(--text2);}
 .step-sel:hover,.stage-sel:hover{border-color:var(--border2);}
-.step-sel:focus,.stage-sel:focus{border-color:var(--border2);}
+.prod-chip{font-size:10px;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--bg4);color:var(--text2);border:1px solid var(--border);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gubun-chip{font-size:9px;padding:2px 6px;border-radius:5px;color:var(--text3);border:1px solid var(--border);}
+.kw-tag{font-size:9px;font-weight:600;padding:2px 6px;border-radius:5px;background:var(--cyan-dim);color:var(--cyan);border:1px solid var(--border2);}
 
-/* 카드 태그행 */
-.card-tags-row{display:flex;align-items:center;gap:6px;padding:6px 14px 0;flex-wrap:wrap;}
-.prod-chip{font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;background:var(--bg4);color:var(--text2);border:1px solid var(--border);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.gubun-chip{font-size:9px;font-weight:600;padding:2px 7px;border-radius:5px;color:var(--text3);border:1px solid var(--border);}
-.kw-tag{font-size:9px;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--cyan-dim);color:var(--cyan);border:1px solid var(--border2);}
+/* 카드 바디 2컬럼 */
+.card-bd{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:8px 0 10px;}
+.bd-left{padding:0 10px 0 12px;border-right:1px solid var(--border);}
+.bd-right{padding:0 12px 0 10px;}
 
-/* 카드 본문 */
-.card-body{padding:10px 14px 12px;}
-.card-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.4;display:flex;align-items:flex-start;gap:6px;}
-.card-title-icon{font-size:11px;flex-shrink:0;margin-top:2px;opacity:0.6;}
-.card-title-text{flex:1;}
+.card-title{font-size:12px;font-weight:700;color:var(--text);line-height:1.4;margin-bottom:5px;display:flex;align-items:flex-start;gap:5px;}
+.card-title-icon{font-size:10px;flex-shrink:0;margin-top:2px;opacity:0.5;}
+.sec-label{font-size:9px;font-weight:700;font-family:var(--font-en);color:var(--text3);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;margin-top:6px;}
+.sec-text{font-size:11px;color:var(--text2);line-height:1.6;white-space:pre-wrap;}
+.sec-text.empty{color:var(--text3);font-style:italic;}
 
-.card-section{margin-top:8px;}
-.card-section-label{font-size:9px;font-weight:700;font-family:var(--font-en);color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px;}
-.card-section-text{font-size:11px;color:var(--text2);line-height:1.6;white-space:pre-wrap;}
-
-.card-done{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:11px;color:var(--green);background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);padding:3px 10px;border-radius:6px;}
+.step-content-label{font-size:9px;font-weight:700;font-family:var(--font-en);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;display:flex;align-items:center;gap:5px;}
+.step-content-label::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.card-done{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:10px;color:var(--green);background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);padding:2px 8px;border-radius:5px;}
 
 /* ── 빈/로딩 ── */
 #loadingState,#emptyState{text-align:center;padding:50px 20px;}
@@ -85,48 +111,78 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 .ld-dots span{width:7px;height:7px;border-radius:50%;background:var(--cyan);animation:ldot 1.2s infinite;}
 .ld-dots span:nth-child(2){animation-delay:0.2s;} .ld-dots span:nth-child(3){animation-delay:0.4s;}
 @keyframes ldot{0%,80%,100%{opacity:0.2;transform:scale(0.8);}40%{opacity:1;transform:scale(1);}}
-.empty-icon{font-size:40px;margin-bottom:12px;}
 
-/* ── 스텝 색상 ── */
-[data-step="1"]{--tab-color:var(--s1);}
-[data-step="2"]{--tab-color:var(--s2);}
-[data-step="3"]{--tab-color:var(--s3);}
-[data-step="4"]{--tab-color:var(--s4);}
-[data-step="5"]{--tab-color:var(--s5);}
-[data-step="6"]{--tab-color:var(--s6);}
+/* ── 우선순위 설정 모달 ── */
+#prioModal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
+#prioModal.open{display:flex;}
+.prio-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:24px 28px;width:400px;max-height:80vh;overflow-y:auto;}
+.prio-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.prio-sub{font-size:11px;color:var(--text3);margin-bottom:16px;}
+.prio-list{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.prio-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;cursor:grab;transition:background 0.1s;}
+.prio-item:active{cursor:grabbing;}
+.prio-item.dragging{opacity:0.3;}
+.prio-item.drag-over{border-top:2px solid var(--cyan);}
+.prio-handle{display:flex;flex-direction:column;gap:2px;opacity:0.4;}
+.prio-handle span{display:block;width:10px;height:2px;background:var(--text2);border-radius:1px;}
+.prio-num{font-size:10px;font-weight:700;font-family:var(--font-en);color:var(--text3);width:18px;}
+.prio-name{font-size:11px;color:var(--text2);flex:1;}
+.prio-btns{display:flex;gap:8px;}
+.prio-save{flex:1;padding:9px;background:var(--cyan);color:#000;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-kr);}
+.prio-cancel{padding:9px 16px;background:var(--bg4);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:12px;cursor:pointer;font-family:var(--font-kr);}
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
-.fade-in{animation:fadeUp 0.3s ease both;}
+.fade-in{animation:fadeUp 0.25s ease both;}
 </style>
 </head>
 <body>
 
-<div id="pageHeader">
+<!-- 툴바 -->
+<div id="toolbar">
   <div class="ph-title">⚡ 품질 액션현황</div>
-  <div class="ph-right">
-    <span class="ph-count" id="phCount">-</span>
-    <button class="ph-refresh" id="refreshBtn" onclick="loadData()" title="새로고침">↻</button>
+
+  <div class="search-wrap">
+    <input class="search-input" id="searchInput" placeholder="주제·제품명·키워드 검색..."
+      onkeydown="if(event.key==='Enter')doSearch()">
+    <button class="search-btn" onclick="doSearch()">검색</button>
   </div>
+
+  <div class="sort-wrap">
+    <button class="sort-btn active" id="sortDate" onclick="setSort('date')">
+      <span>날짜</span><span class="sort-icon" id="sortDateIcon">▼</span>
+    </button>
+    <button class="sort-btn" id="sortProd" onclick="setSort('prod')">
+      <span>제품명</span><span class="sort-icon" id="sortProdIcon">↕</span>
+    </button>
+    <button class="sort-btn" id="sortPrio" onclick="setSort('prio')">
+      <span>우선순위</span>
+    </button>
+    <button class="prio-set-btn" onclick="openPrioModal()" title="우선순위 설정">⚙</button>
+  </div>
+
+  <span class="ph-count" id="phCount">-</span>
+  <button class="ph-refresh" id="refreshBtn" onclick="loadData()" title="새로고침">↻</button>
 </div>
 
+<!-- 스텝 탭 -->
 <div id="stepTabBar">
-  <div class="step-tab active" data-step="1" onclick="setStep(1)">
-    <span>S1</span><span class="tab-num" id="cnt1">-</span><span>런칭전검사</span>
+  <div class="step-tab active" data-step="all" onclick="setStep('all')">
+    <span>전체</span><span class="tab-cnt" id="cntAll">-</span>
+  </div>
+  <div class="step-tab" data-step="1" onclick="setStep(1)">
+    <span>S1</span><span class="tab-cnt" id="cnt1">-</span><span>런칭전검사</span>
   </div>
   <div class="step-tab" data-step="2" onclick="setStep(2)">
-    <span>S2</span><span class="tab-num" id="cnt2">-</span><span>분석(검사)</span>
+    <span>S2</span><span class="tab-cnt" id="cnt2">-</span><span>분석(검사)</span>
   </div>
   <div class="step-tab" data-step="3" onclick="setStep(3)">
-    <span>S3</span><span class="tab-num" id="cnt3">-</span><span>개선진행</span>
+    <span>S3</span><span class="tab-cnt" id="cnt3">-</span><span>개선진행</span>
   </div>
   <div class="step-tab" data-step="4" onclick="setStep(4)">
-    <span>S4</span><span class="tab-num" id="cnt4">-</span><span>입고검사</span>
+    <span>S4</span><span class="tab-cnt" id="cnt4">-</span><span>입고검사</span>
   </div>
   <div class="step-tab" data-step="5" onclick="setStep(5)">
-    <span>S5</span><span class="tab-num" id="cnt5">-</span><span>개선(검사)완료</span>
-  </div>
-  <div class="step-tab" data-step="6" onclick="setStep(6)">
-    <span>⏸</span><span class="tab-num" id="cnt6">-</span><span>보류</span>
+    <span>S5</span><span class="tab-cnt" id="cnt5">-</span><span>개선(검사)완료</span>
   </div>
 </div>
 
@@ -134,14 +190,25 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
   <div class="ld-dots"><span></span><span></span><span></span></div>
   <div style="font-size:12px;color:var(--text3);">노션 데이터 불러오는 중...</div>
 </div>
-
 <div id="emptyState" style="display:none;">
-  <div class="empty-icon">📋</div>
-  <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;">이 스텝에 항목이 없어요</div>
-  <div style="font-size:11px;color:var(--text3);">노션에서 해당 스텝으로 지정된 건을 확인해 주세요.</div>
+  <div style="font-size:36px;margin-bottom:12px;">📋</div>
+  <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px;">항목이 없어요</div>
+  <div style="font-size:11px;color:var(--text3);">검색어를 바꾸거나 노션에서 스텝 설정을 확인해 주세요.</div>
 </div>
-
 <div id="cardList" style="display:none;"></div>
+
+<!-- 우선순위 설정 모달 -->
+<div id="prioModal">
+  <div class="prio-box">
+    <div class="prio-title">⚙ 제품 우선순위 설정</div>
+    <div class="prio-sub">드래그해서 순서를 정하세요. 저장하면 GAS에 기억돼요.</div>
+    <div class="prio-list" id="prioList"></div>
+    <div class="prio-btns">
+      <button class="prio-save" onclick="savePrio()">💾 저장</button>
+      <button class="prio-cancel" onclick="closePrioModal()">취소</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ─────────────────────────────────────────────
@@ -151,9 +218,17 @@ const QC_GAS_URL = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0E
 
 const STEP_MAP = {
   1:'1.런칭전검사', 2:'2.분석(검사)', 3:'3.개선진행',
-  4:'4.입고검사',  5:'5.개선(검사)완료', 6:'6. 보류(미진행)'
+  4:'4.입고검사',  5:'5.개선(검사)완료'
 };
-const STEP_COLOR = {1:'var(--s1)',2:'var(--s2)',3:'var(--s3)',4:'var(--s4)',5:'var(--s5)',6:'var(--s6)'};
+const STEP_COLOR = {1:'var(--s1)',2:'var(--s2)',3:'var(--s3)',4:'var(--s4)',5:'var(--s5)'};
+const STEP_NUM = {
+  '1.런칭전검사':1,'2.분석(검사)':2,'3.개선진행':3,
+  '4.입고검사':4,'5.개선(검사)완료':5
+};
+const STEP_CONTENT_KEY = {
+  '1.런칭전검사':'step1내용','2.분석(검사)':'step2내용','3.개선진행':'step3내용',
+  '4.입고검사':'step4내용','5.개선(검사)완료':'step5내용'
+};
 const STEP_OPTIONS = Object.values(STEP_MAP);
 const STAGE_OPTIONS = [
   '1-1. 샘플테스트','1-1.원인파악','1-2. 개선요청','1-3.업체피드백',
@@ -161,17 +236,23 @@ const STAGE_OPTIONS = [
   '2-1 의뢰수신','2-2 검사중','2-3 검사완료','2-4. 개선불가통보'
 ];
 
-let _records = [];
-let _curStep = 1;
+// ─────────────────────────────────────────────
+// 상태
+// ─────────────────────────────────────────────
+let _records      = [];
+let _curStep      = 'all';
+let _searchQuery  = '';
+let _sortMode     = 'date';
+let _sortDir      = -1; // -1=내림차순 1=오름차순
+let _prodSortDir  = 1;
+let _productPrio  = []; // ['제품A','제품B',...]
 
 // ─────────────────────────────────────────────
 // postMessage (테마)
 // ─────────────────────────────────────────────
 window.addEventListener('message', e => {
   if (!e.data) return;
-  if (e.data.type === 'THEME') {
-    document.body.classList.toggle('light', e.data.mode === 'light');
-  }
+  if (e.data.type === 'THEME') document.body.classList.toggle('light', e.data.mode === 'light');
 });
 if (sessionStorage.getItem('_theme') === 'light') document.body.classList.add('light');
 
@@ -182,115 +263,175 @@ async function loadData() {
   showLoading();
   const btn = document.getElementById('refreshBtn');
   btn.classList.add('spin');
-
   try {
-    const res  = await fetch(`${QC_GAS_URL}?action=getActionItems`, {redirect:'follow'});
-    const data = await res.json();
-    if (data.ok && data.records) {
-      _records = data.records;
-      updateCounts();
-      render();
-    } else {
-      showEmpty();
-    }
-  } catch(e) {
-    showEmpty();
-  }
+    const [dataRes, prioRes] = await Promise.all([
+      fetch(`${QC_GAS_URL}?action=getActionItems`, {redirect:'follow'}),
+      fetch(`${QC_GAS_URL}?action=getProductPriority`, {redirect:'follow'})
+    ]);
+    const data = await dataRes.json();
+    const prio = await prioRes.json();
+    if (data.ok) _records = data.records || [];
+    if (prio.ok) _productPrio = prio.priority || [];
+  } catch(e) { _records = []; }
   btn.classList.remove('spin');
-}
-
-// ─────────────────────────────────────────────
-// 탭 전환
-// ─────────────────────────────────────────────
-function setStep(n) {
-  _curStep = n;
-  document.querySelectorAll('.step-tab').forEach(t => {
-    t.classList.toggle('active', parseInt(t.dataset.step) === n);
-  });
+  updateCounts();
   render();
 }
 
 // ─────────────────────────────────────────────
-// 카운트 업데이트
+// 탭 / 검색 / 정렬
+// ─────────────────────────────────────────────
+function setStep(n) {
+  _curStep = n;
+  document.querySelectorAll('.step-tab').forEach(t => {
+    const v = t.dataset.step;
+    t.classList.toggle('active', (v==='all'?'all':parseInt(v)) === n);
+  });
+  render();
+}
+
+function doSearch() {
+  _searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+  render();
+}
+
+function setSort(mode) {
+  if (mode === 'date') {
+    if (_sortMode === 'date') _sortDir *= -1;
+    _sortMode = 'date';
+    document.getElementById('sortDateIcon').textContent = _sortDir === -1 ? '▼' : '▲';
+  } else if (mode === 'prod') {
+    if (_sortMode === 'prod') _prodSortDir *= -1;
+    _sortMode = 'prod';
+    document.getElementById('sortProdIcon').textContent = _prodSortDir === 1 ? '▲' : '▼';
+  } else {
+    _sortMode = 'prio';
+  }
+  ['sortDate','sortProd','sortPrio'].forEach(id => {
+    document.getElementById(id).classList.toggle('active',
+      id === 'sort' + mode.charAt(0).toUpperCase() + mode.slice(1));
+  });
+  document.getElementById('sortDate').classList.toggle('active', _sortMode==='date');
+  document.getElementById('sortProd').classList.toggle('active', _sortMode==='prod');
+  document.getElementById('sortPrio').classList.toggle('active', _sortMode==='prio');
+  render();
+}
+
+// ─────────────────────────────────────────────
+// 카운트
 // ─────────────────────────────────────────────
 function updateCounts() {
-  for (let i = 1; i <= 6; i++) {
-    const stepName = STEP_MAP[i];
-    const cnt = _records.filter(r => r.step === stepName).length;
-    const el = document.getElementById('cnt' + i);
-    if (el) el.textContent = cnt;
+  const valid = _records.filter(r => STEP_NUM[r.step]);
+  document.getElementById('cntAll').textContent = valid.length;
+  for (let i=1;i<=5;i++) {
+    const cnt = _records.filter(r=>r.step===STEP_MAP[i]).length;
+    document.getElementById('cnt'+i).textContent = cnt;
   }
-  document.getElementById('phCount').textContent = `전체 ${_records.length}건`;
+  document.getElementById('phCount').textContent = `전체 ${valid.length}건`;
+}
+
+// ─────────────────────────────────────────────
+// 필터 + 정렬
+// ─────────────────────────────────────────────
+function getFiltered() {
+  let list = _records.filter(r => STEP_NUM[r.step]); // 보류 제외
+
+  // 스텝 필터
+  if (_curStep !== 'all') list = list.filter(r => r.step === STEP_MAP[_curStep]);
+
+  // 검색
+  if (_searchQuery) {
+    list = list.filter(r => {
+      const hay = [r.주제, r.제품명, r.내용기준, r.구분,
+        ...(r.핵심키워드||[]),
+        r.step1내용,r.step2내용,r.step3내용,r.step4내용,r.step5내용
+      ].join(' ').toLowerCase();
+      return hay.includes(_searchQuery);
+    });
+  }
+
+  // 정렬
+  if (_sortMode === 'date') {
+    list.sort((a,b) => _sortDir * ((b.등록일||'') < (a.등록일||'') ? -1 : 1));
+  } else if (_sortMode === 'prod') {
+    list.sort((a,b) => _prodSortDir * (a.제품명||'').localeCompare(b.제품명||'', 'ko'));
+  } else if (_sortMode === 'prio') {
+    list.sort((a,b) => {
+      const ai = _productPrio.indexOf(a.제품명||'');
+      const bi = _productPrio.indexOf(b.제품명||'');
+      if (ai === -1 && bi === -1) return 0;
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
+  }
+  return list;
 }
 
 // ─────────────────────────────────────────────
 // 렌더
 // ─────────────────────────────────────────────
 function render() {
-  const stepName = STEP_MAP[_curStep];
-  const filtered = _records.filter(r => r.step === stepName);
-
+  const list = getFiltered();
   document.getElementById('loadingState').style.display = 'none';
-
-  if (filtered.length === 0) {
+  if (list.length === 0) {
     document.getElementById('cardList').style.display  = 'none';
     document.getElementById('emptyState').style.display = '';
     return;
   }
-
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('cardList').style.display   = '';
-
-  const stepContent = `step${_curStep}내용`;
-  const color = STEP_COLOR[_curStep];
-
-  document.getElementById('cardList').innerHTML = filtered.map((r, i) => buildCard(r, i, stepContent, color)).join('');
+  document.getElementById('cardList').innerHTML = list.map((r,i) => buildCard(r,i)).join('');
 }
 
-function buildCard(r, i, stepContentKey, color) {
-  const date    = r.등록일 ? r.등록일.slice(0,10).replace(/-/g,'.') : '-';
-  const stepOpts= STEP_OPTIONS.map(s => `<option value="${s}" ${r.step===s?'selected':''}>${s}</option>`).join('');
-  const stageOpts=STAGE_OPTIONS.map(s => `<option value="${s}" ${r.진행단계===s?'selected':''}>${s}</option>`).join('');
-  const kws     = (r.핵심키워드||[]).slice(0,4).map(k=>`<span class="kw-tag">${k}</span>`).join('');
-  const stepContent = r[stepContentKey] || '';
-  const isStep5 = _curStep === 5;
+function buildCard(r, i) {
+  const stepNum  = STEP_NUM[r.step] || 1;
+  const color    = STEP_COLOR[stepNum] || 'var(--text3)';
+  const date     = r.등록일 ? r.등록일.slice(0,10).replace(/-/g,'.') : '-';
+  const stepOpts = STEP_OPTIONS.map(s => `<option value="${s}" ${r.step===s?'selected':''}>${s}</option>`).join('');
+  const stageOpts= STAGE_OPTIONS.map(s => `<option value="${s}" ${r.진행단계===s?'selected':''}>${s}</option>`).join('');
+  const kws      = (r.핵심키워드||[]).slice(0,3).map(k=>`<span class="kw-tag">${k}</span>`).join('');
+  const stepKey  = STEP_CONTENT_KEY[r.step] || 'step1내용';
+  const stepContent = r[stepKey] || '';
+  const isS5 = r.step === '5.개선(검사)완료';
+  const stepLabelNum = stepNum;
 
-  return `<div class="action-card fade-in" style="animation-delay:${i*0.04}s" onclick="openNotion('${r.url}','${r.id}')">
+  return `<div class="action-card fade-in" style="animation-delay:${Math.min(i*0.03,0.3)}s" onclick="openNotion('${r.url||''}','${r.id}')">
     <div class="card-step-bar" style="background:${color}"></div>
-    <div class="card-meta-row">
-      <span class="card-date">${date}</span>
-      <select class="step-sel" onclick="event.stopPropagation()" onchange="updateStep('${r.id}',this)">
-        ${stepOpts}
-      </select>
-      <select class="stage-sel" onclick="event.stopPropagation()" onchange="updateStage('${r.id}',this)">
-        ${stageOpts}
-      </select>
-    </div>
-    <div class="card-tags-row">
-      ${r.제품명 ? `<span class="prod-chip" title="${r.제품명}">${r.제품명.replace(/\[.*?\]\s*/g,'')}</span>` : ''}
-      ${r.구분 ? `<span class="gubun-chip">${r.구분}</span>` : ''}
-      ${kws}
-    </div>
-    <div class="card-body">
-      <div class="card-title">
-        <span class="card-title-icon">🔗</span>
-        <span class="card-title-text">${r.주제||'(제목 없음)'}</span>
+    <div class="card-hd">
+      <div class="card-hd-left">
+        <span class="card-date">${date}</span>
+        <select class="step-sel" onclick="event.stopPropagation()" onchange="updateStep('${r.id}',this)">${stepOpts}</select>
+        <select class="stage-sel" onclick="event.stopPropagation()" onchange="updateStage('${r.id}',this)">${stageOpts}</select>
       </div>
-      ${r.내용기준 ? `<div class="card-section">
-        <div class="card-section-label">내용 (기준)</div>
-        <div class="card-section-text">${r.내용기준}</div>
-      </div>` : ''}
-      ${stepContent ? `<div class="card-section">
-        <div class="card-section-label">S${_curStep} 진행내용</div>
-        <div class="card-section-text">${stepContent}</div>
-      </div>` : ''}
-      ${isStep5 && r.완료일 ? `<div class="card-done">✅ 완료일: ${r.완료일.slice(0,10).replace(/-/g,'.')}</div>` : ''}
+      <div class="card-hd-right">
+        ${r.제품명?`<span class="prod-chip" title="${r.제품명}">${r.제품명.replace(/\[.*?\]\s*/g,'')}</span>`:''}
+        ${r.구분?`<span class="gubun-chip">${r.구분}</span>`:''}
+        ${kws}
+      </div>
+    </div>
+    <div class="card-bd">
+      <div class="bd-left">
+        <div class="card-title">
+          <span class="card-title-icon">🔗</span>
+          <span>${r.주제||'(제목 없음)'}</span>
+        </div>
+        ${r.내용기준?`<div class="sec-label">내용 (기준)</div><div class="sec-text">${r.내용기준}</div>`:''}
+      </div>
+      <div class="bd-right">
+        <div class="step-content-label" style="color:${color}">
+          <span style="background:${color}"></span>
+          S${stepLabelNum} 진행내용
+        </div>
+        <div class="sec-text ${stepContent?'':'empty'}">${stepContent||'미입력'}</div>
+        ${isS5&&r.완료일?`<div class="card-done">✅ 완료일: ${r.완료일.slice(0,10).replace(/-/g,'.')}</div>`:''}
+      </div>
     </div>
   </div>`;
 }
 
 // ─────────────────────────────────────────────
-// 노션 링크 열기
+// 노션 링크
 // ─────────────────────────────────────────────
 function openNotion(url, id) {
   if (!url && id) url = `https://notion.so/${id.replace(/-/g,'')}`;
@@ -298,61 +439,94 @@ function openNotion(url, id) {
 }
 
 // ─────────────────────────────────────────────
-// Step 변경 → GAS 업데이트 → 탭 이동
+// Step / Stage 업데이트
 // ─────────────────────────────────────────────
 async function updateStep(pageId, selEl) {
-  const newStep = selEl.value;
   selEl.disabled = true;
-
-  // 로컬 즉시 반영
-  const rec = _records.find(r => r.id === pageId);
-  if (rec) rec.step = newStep;
-
-  // GAS 업데이트
+  const rec = _records.find(r=>r.id===pageId);
+  if (rec) rec.step = selEl.value;
   try {
-    const payload = encodeURIComponent(JSON.stringify({pageId, property:'Step.', value: newStep}));
-    await fetch(`${QC_GAS_URL}?action=updateActionItem&data=${payload}`, {redirect:'follow'});
-  } catch(e) {}
-
+    const payload = encodeURIComponent(JSON.stringify({pageId, property:'Step.', value:selEl.value}));
+    await fetch(`${QC_GAS_URL}?action=updateActionItem&data=${payload}`,{redirect:'follow'});
+  } catch(e){}
   selEl.disabled = false;
   updateCounts();
-
-  // 변경된 스텝 탭으로 이동
-  const stepNum = Object.entries(STEP_MAP).find(([,v]) => v === newStep)?.[0];
-  if (stepNum) setStep(parseInt(stepNum));
+  const newStepNum = STEP_NUM[selEl.value];
+  if (newStepNum && _curStep !== 'all') setStep(newStepNum);
   else render();
 }
 
-// ─────────────────────────────────────────────
-// 진행단계 변경 → GAS 업데이트
-// ─────────────────────────────────────────────
 async function updateStage(pageId, selEl) {
-  const newStage = selEl.value;
   selEl.disabled = true;
-
-  const rec = _records.find(r => r.id === pageId);
-  if (rec) rec.진행단계 = newStage;
-
+  const rec = _records.find(r=>r.id===pageId);
+  if (rec) rec.진행단계 = selEl.value;
   try {
-    const payload = encodeURIComponent(JSON.stringify({pageId, property:'진행단계', value: newStage}));
-    await fetch(`${QC_GAS_URL}?action=updateActionItem&data=${payload}`, {redirect:'follow'});
-  } catch(e) {}
-
+    const payload = encodeURIComponent(JSON.stringify({pageId, property:'진행단계', value:selEl.value}));
+    await fetch(`${QC_GAS_URL}?action=updateActionItem&data=${payload}`,{redirect:'follow'});
+  } catch(e){}
   selEl.disabled = false;
+}
+
+// ─────────────────────────────────────────────
+// 우선순위 모달
+// ─────────────────────────────────────────────
+let _prioOrder = [];
+
+function openPrioModal() {
+  // 현재 데이터에서 고유 제품명 추출
+  const prods = [...new Set(_records.filter(r=>r.제품명).map(r=>r.제품명))];
+  // 기존 우선순위 순서 + 신규 제품 뒤에 추가
+  const ordered = [..._productPrio.filter(p=>prods.includes(p)),
+                   ...prods.filter(p=>!_productPrio.includes(p))];
+  _prioOrder = ordered;
+  renderPrioList();
+  document.getElementById('prioModal').classList.add('open');
+}
+
+function closePrioModal() { document.getElementById('prioModal').classList.remove('open'); }
+
+function renderPrioList() {
+  document.getElementById('prioList').innerHTML = _prioOrder.map((prod,i)=>`
+    <div class="prio-item" draggable="true" data-idx="${i}"
+      ondragstart="prioDragStart(event,${i})" ondragover="prioDragOver(event)"
+      ondrop="prioDrop(event,${i})" ondragend="prioDragEnd()">
+      <div class="prio-handle"><span></span><span></span><span></span></div>
+      <span class="prio-num">${i+1}</span>
+      <span class="prio-name" title="${prod}">${prod.replace(/\[.*?\]\s*/g,'').slice(0,28)}</span>
+    </div>`).join('');
+}
+
+let _prioDragSrc = -1;
+function prioDragStart(e,i){ _prioDragSrc=i; setTimeout(()=>e.target.classList.add('dragging'),0); }
+function prioDragEnd(){ document.querySelectorAll('.prio-item').forEach(el=>el.classList.remove('dragging','drag-over')); }
+function prioDragOver(e){ e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function prioDrop(e,i){
+  e.preventDefault();
+  document.querySelectorAll('.prio-item').forEach(el=>el.classList.remove('drag-over'));
+  if(_prioDragSrc===i)return;
+  const moved=_prioOrder.splice(_prioDragSrc,1)[0];
+  _prioOrder.splice(i,0,moved);
+  _prioDragSrc=-1;
+  renderPrioList();
+}
+
+async function savePrio() {
+  _productPrio = [..._prioOrder];
+  closePrioModal();
+  if(_sortMode==='prio') render();
+  try {
+    const payload = encodeURIComponent(JSON.stringify({priority:_productPrio}));
+    await fetch(`${QC_GAS_URL}?action=saveProductPriority&data=${payload}`,{redirect:'follow'});
+  } catch(e){}
 }
 
 // ─────────────────────────────────────────────
 // 상태 유틸
 // ─────────────────────────────────────────────
 function showLoading() {
-  document.getElementById('loadingState').style.display = '';
-  document.getElementById('emptyState').style.display   = 'none';
-  document.getElementById('cardList').style.display     = 'none';
-}
-function showEmpty() {
-  document.getElementById('loadingState').style.display = 'none';
-  document.getElementById('emptyState').style.display   = '';
-  document.getElementById('cardList').style.display     = 'none';
+  document.getElementById('loadingState').style.display='';
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('cardList').style.display='none';
 }
 
 // ─────────────────────────────────────────────

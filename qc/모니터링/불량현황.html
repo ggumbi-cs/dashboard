@@ -113,20 +113,45 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 .surge-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(255,90,110,0.12);color:var(--red);}
 
 /* ── 개선진행여부 테이블 ── */
-#improveSection{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:20px;}
-.improve-table{width:100%;border-collapse:collapse;}
-.improve-table th{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;padding:6px 10px;border-bottom:1px solid var(--border);text-align:left;background:var(--bg3);}
-.improve-table td{font-size:12px;color:var(--text2);padding:9px 10px;border-bottom:1px solid var(--border);}
+#improveSection{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px 16px;margin-bottom:20px;}
+.improve-table{width:100%;border-collapse:collapse;table-layout:fixed;}
+.improve-table col.col-prod  { width:130px; }
+.improve-table col.col-fault { width:90px; }
+.improve-table col.col-cnt   { width:44px; }
+.improve-table col.col-stat  { width:110px; }
+.improve-table col.col-note  { width:auto; }
+.improve-table col.col-link  { width:60px; }
+.improve-table th{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;padding:5px 6px;border-bottom:1px solid var(--border);text-align:left;background:var(--bg3);}
+.improve-table td{font-size:12px;color:var(--text2);padding:7px 6px;border-bottom:1px solid var(--border);overflow:hidden;}
 .improve-table tr:last-child td{border-bottom:none;}
-.improve-table tr:hover td{background:var(--bg3);}
-.prod-badge{display:inline-block;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:500;color:var(--text);}
-.fault-tag{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600;background:var(--bg4);color:var(--text2);border:1px solid var(--border);}
-.status-sel{background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-family:var(--font-kr);padding:3px 8px;cursor:pointer;outline:none;transition:border-color 0.15s;}
+.improve-table tr.has-link{cursor:pointer;}
+.improve-table tr.has-link:hover td{background:rgba(0,200,255,0.04);}
+.improve-table tr:not(.has-link):hover td{background:var(--bg3);}
+.prod-badge{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:500;color:var(--text);}
+.fault-tag{display:inline-block;padding:2px 6px;border-radius:5px;font-size:10px;font-weight:600;background:var(--bg4);color:var(--text2);border:1px solid var(--border);}
+.note-input{background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text2);font-size:11px;font-family:var(--font-kr);width:100%;padding:2px 2px;outline:none;min-width:0;}
+.note-input:focus{border-bottom-color:var(--cyan);}
+.status-sel{background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-family:var(--font-kr);padding:3px 6px;cursor:pointer;outline:none;transition:border-color 0.15s;width:100%;}
 .status-sel:focus{border-color:var(--border2);}
 .status-sel.done{background:rgba(0,229,160,0.08);color:var(--green);border-color:rgba(0,229,160,0.2);}
 .status-sel.wip {background:rgba(0,200,255,0.08);color:var(--cyan);border-color:var(--border2);}
 .status-sel.hold{background:rgba(255,144,64,0.08);color:var(--orange);border-color:rgba(255,144,64,0.2);}
 .status-sel.none{background:var(--bg4);color:var(--text3);}
+/* 링크 버튼 */
+.link-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:var(--text3);transition:all 0.15s;flex-shrink:0;}
+.link-btn:hover{border-color:var(--border2);color:var(--cyan);}
+.link-btn.has-url{color:var(--cyan);border-color:var(--border2);background:var(--cyan-dim);}
+/* 링크 입력 팝업 */
+#linkPopup{display:none;position:fixed;z-index:9999;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:14px 16px;width:340px;box-shadow:0 16px 48px rgba(0,0,0,0.5);}
+#linkPopup.open{display:block;}
+.lp-title{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:10px;}
+.lp-input{width:100%;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;font-family:var(--font-kr);outline:none;margin-bottom:10px;}
+.lp-input:focus{border-color:var(--border2);}
+.lp-row{display:flex;gap:8px;}
+.lp-btn{flex:1;padding:7px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-kr);border:none;}
+.lp-btn.save{background:var(--cyan);color:#000;}
+.lp-btn.del{background:var(--bg4);color:var(--red);border:1px solid rgba(255,90,110,0.2);}
+.lp-btn.cancel{background:var(--bg4);color:var(--text3);border:1px solid var(--border);}
 
 /* ── 빈 상태 ── */
 #emptyState{display:none;text-align:center;padding:60px 24px;}
@@ -232,6 +257,10 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
   <div id="improveSection">
     <div class="sec-hd green" style="margin-bottom:14px;">불량 Top5 × 확인불량 Top10 — 개선진행여부</div>
     <table class="improve-table" id="improveTable">
+      <colgroup>
+        <col class="col-prod"><col class="col-fault"><col class="col-cnt">
+        <col class="col-stat"><col class="col-note"><col class="col-link">
+      </colgroup>
       <thead>
         <tr>
           <th>제품명</th>
@@ -239,10 +268,22 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
           <th>건수</th>
           <th>진행여부</th>
           <th>비고</th>
+          <th style="text-align:center;">링크</th>
         </tr>
       </thead>
       <tbody id="improveTbody"></tbody>
     </table>
+  </div>
+
+  <!-- 링크 입력 팝업 -->
+  <div id="linkPopup">
+    <div class="lp-title">🔗 노션 링크 연결</div>
+    <input class="lp-input" id="linkInput" placeholder="https://notion.so/..." type="url">
+    <div class="lp-row">
+      <button class="lp-btn save" onclick="saveLinkPopup()">저장</button>
+      <button class="lp-btn del"  onclick="deleteLinkPopup()">삭제</button>
+      <button class="lp-btn cancel" onclick="closeLinkPopup()">취소</button>
+    </div>
   </div>
 
 </div>
@@ -572,16 +613,17 @@ function renderImprove(records) {
 
   const tbody = document.getElementById('improveTbody');
   tbody.innerHTML = rows.length === 0
-    ? '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px;">데이터 없음</td></tr>'
+    ? '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px;">데이터 없음</td></tr>'
     : rows.map(r => {
-        const key = encodeKey(r.prod, r.fault);
-        const imp = _improve[key] || { status:'', note:'' };
-        return `<tr>
+        const key  = encodeKey(r.prod, r.fault);
+        const imp  = _improve[key] || { status:'', note:'', link:'' };
+        const hasLink = !!imp.link;
+        return `<tr class="${hasLink?'has-link':''}" onclick="rowClick('${key}',event)">
           <td><span class="prod-badge" title="${r.prod}">${r.prod}</span></td>
           <td><span class="fault-tag">${r.fault}</span></td>
-          <td style="font-family:var(--font-en);font-weight:600;">${r.cnt}</td>
+          <td style="font-family:var(--font-en);font-weight:600;text-align:center;">${r.cnt}</td>
           <td>
-            <select class="status-sel ${statusCls(imp.status)}" onchange="saveImprove('${key}',this)">
+            <select class="status-sel ${statusCls(imp.status)}" onchange="saveImprove('${key}',this)" onclick="event.stopPropagation()">
               <option value="" ${!imp.status?'selected':''}>— 미지정</option>
               <option value="개선완료" ${imp.status==='개선완료'?'selected':''}>✅ 개선완료</option>
               <option value="진행중"   ${imp.status==='진행중'?'selected':''}>🔄 진행중</option>
@@ -590,9 +632,13 @@ function renderImprove(records) {
             </select>
           </td>
           <td>
-            <input type="text" value="${imp.note||''}" placeholder="비고 입력"
-              style="background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text2);font-size:11px;font-family:var(--font-kr);width:120px;padding:2px 4px;outline:none;"
+            <input class="note-input" type="text" value="${imp.note||''}" placeholder="비고 입력"
+              onclick="event.stopPropagation()"
               onblur="saveImproveNote('${key}',this.value)">
+          </td>
+          <td style="text-align:center;">
+            <button class="link-btn ${hasLink?'has-url':''}" title="${hasLink?imp.link:'링크 추가'}"
+              onclick="event.stopPropagation();openLinkPopup('${key}',this)">🔗</button>
           </td>
         </tr>`;
       }).join('');
@@ -621,6 +667,66 @@ async function saveImproveNote(key, note) {
   _improve[key].note = note;
   await pushImprove();
 }
+
+// ── 링크 팝업 ──
+let _linkPopupKey = null;
+let _linkPopupBtn = null;
+
+function openLinkPopup(key, btnEl) {
+  _linkPopupKey = key;
+  _linkPopupBtn = btnEl;
+  const imp  = _improve[key] || {};
+  document.getElementById('linkInput').value = imp.link || '';
+  const popup = document.getElementById('linkPopup');
+  const rect  = btnEl.getBoundingClientRect();
+  popup.style.left = Math.min(rect.right - 340, window.innerWidth - 356) + 'px';
+  popup.style.top  = (rect.bottom + 6) + 'px';
+  popup.classList.add('open');
+  document.getElementById('linkInput').focus();
+}
+
+function closeLinkPopup() {
+  document.getElementById('linkPopup').classList.remove('open');
+  _linkPopupKey = null; _linkPopupBtn = null;
+}
+
+async function saveLinkPopup() {
+  const url = document.getElementById('linkInput').value.trim();
+  if (!_linkPopupKey) return;
+  _improve[_linkPopupKey] = _improve[_linkPopupKey] || {};
+  _improve[_linkPopupKey].link = url;
+  if (_linkPopupBtn) {
+    _linkPopupBtn.classList.toggle('has-url', !!url);
+    _linkPopupBtn.title = url || '링크 추가';
+    // 행에 has-link 클래스 토글
+    const row = _linkPopupBtn.closest('tr');
+    if (row) row.classList.toggle('has-link', !!url);
+  }
+  closeLinkPopup();
+  await pushImprove();
+}
+
+async function deleteLinkPopup() {
+  if (!_linkPopupKey) return;
+  _improve[_linkPopupKey] = _improve[_linkPopupKey] || {};
+  _improve[_linkPopupKey].link = '';
+  closeLinkPopup();
+  renderImprove(filterByPeriod(_records, _tab, _period));
+  await pushImprove();
+}
+
+// 행 클릭 → 링크 열기
+function rowClick(key, e) {
+  const imp = _improve[key];
+  if (imp && imp.link) window.open(imp.link, '_blank');
+}
+
+// 팝업 외부 클릭 닫기
+document.addEventListener('click', e => {
+  const popup = document.getElementById('linkPopup');
+  if (popup.classList.contains('open') && !popup.contains(e.target) && !e.target.classList.contains('link-btn'))
+    closeLinkPopup();
+});
 
 async function pushImprove() {
   try {

@@ -116,13 +116,16 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 #improveSection{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px 16px;margin-bottom:20px;}
 .improve-table{width:100%;border-collapse:collapse;table-layout:fixed;}
 .improve-table col.col-prod  { width:140px; }
-.improve-table col.col-fault { width:90px; }
-.improve-table col.col-cnt   { width:44px; }
-.improve-table col.col-stat  { width:110px; }
-.improve-table col.col-note  { width:28%; }
-.improve-table col.col-link  { width:50px; }
+.improve-table col.col-fault { width:82px; }
+.improve-table col.col-cnt   { width:42px; }
+.improve-table col.col-stat  { width:112px; }
+.improve-table col.col-note  { width:190px; }
+.improve-table col.col-link  { width:46px; }
 .improve-table th{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;padding:5px 6px;border-bottom:1px solid var(--border);text-align:left;background:var(--bg3);}
+.improve-table th:nth-child(3),
+.improve-table th:nth-child(4) { text-align:center; }
 .improve-table td{font-size:12px;color:var(--text2);padding:7px 6px;border-bottom:1px solid var(--border);overflow:hidden;}
+.improve-table td:nth-child(4) { text-align:center; }
 .improve-table tr:last-child td{border-bottom:none;}
 .improve-table tr.has-link{cursor:pointer;}
 .improve-table tr.has-link:hover td{background:rgba(0,200,255,0.04);}

@@ -163,6 +163,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic','�
   font-size:11px;color:var(--green);font-weight:600;
   padding:4px 8px;background:rgba(0,229,160,0.07);
   border-radius:5px;border:1px solid rgba(0,229,160,0.15);
+  display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 
 /* ══ 역할 분담 최종 ══ */
@@ -207,6 +208,62 @@ html,body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic','�
 .anim{animation:fadeUp 0.45s ease both;}
 .d1{animation-delay:0.05s;}.d2{animation-delay:0.10s;}.d3{animation-delay:0.15s;}
 .d4{animation-delay:0.20s;}.d5{animation-delay:0.25s;}.d6{animation-delay:0.30s;}
+
+/* ══ 미리보기 ══ */
+.preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;}
+.preview-card{position:relative;cursor:pointer;}
+.preview-browser{
+  background:var(--bg3);border:1px solid var(--border2);border-radius:10px;
+  overflow:hidden;transition:border-color 0.2s,box-shadow 0.2s,transform 0.2s;
+}
+.preview-card:hover .preview-browser{
+  border-color:var(--blue);box-shadow:0 8px 32px rgba(74,143,255,0.25);transform:translateY(-3px);
+}
+.preview-bar{
+  background:var(--bg4);padding:7px 10px;
+  display:flex;align-items:center;gap:5px;border-bottom:1px solid var(--border);
+}
+.preview-dot{width:7px;height:7px;border-radius:50%;}
+.preview-url{
+  flex:1;font-size:8.5px;color:var(--text3);font-family:monospace;
+  background:var(--bg3);padding:2px 6px;border-radius:4px;margin-left:4px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.preview-frame-wrap{position:relative;width:100%;padding-top:65%;overflow:hidden;background:var(--bg2);}
+.preview-frame{
+  position:absolute;top:0;left:0;width:300%;height:300%;
+  transform:scale(0.333);transform-origin:top left;
+  border:none;pointer-events:none;opacity:0;transition:opacity 0.4s;
+}
+.preview-frame.loaded{opacity:1;}
+.preview-placeholder{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:6px;
+}
+.preview-placeholder-icon{font-size:24px;}
+.preview-placeholder-text{font-size:10px;color:var(--text3);}
+.preview-info{padding:10px 12px;display:flex;align-items:center;justify-content:space-between;}
+.preview-title-small{font-size:10px;color:var(--text3);margin-bottom:1px;}
+.preview-title{font-size:11.5px;font-weight:700;color:var(--text);}
+.preview-open{font-size:10px;color:var(--cyan);font-weight:700;}
+/* 호버 팝업 */
+.preview-popup{
+  position:fixed;z-index:9999;width:480px;height:320px;
+  background:var(--bg2);border:1px solid var(--border2);border-radius:14px;
+  overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.7);
+  pointer-events:none;opacity:0;transition:opacity 0.2s,transform 0.2s;transform:scale(0.94);
+}
+.preview-popup.visible{opacity:1;transform:scale(1);}
+.popup-bar{
+  background:var(--bg4);padding:8px 12px;
+  display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);
+}
+.popup-url{flex:1;font-size:9px;color:var(--text3);font-family:monospace;background:var(--bg3);padding:3px 8px;border-radius:5px;margin-left:6px;}
+.popup-frame-wrap{position:relative;width:100%;height:calc(100% - 36px);overflow:hidden;background:var(--bg2);}
+.popup-frame{
+  position:absolute;top:0;left:0;width:200%;height:200%;
+  transform:scale(0.5);transform-origin:top left;border:none;
+}
 </style>
 </head>
 <body>
@@ -520,6 +577,29 @@ html,body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic','�
   </div>
 </div>
 
+<!-- 미리보기 섹션 -->
+<div class="sec anim d4">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--blue);"></div>
+    <div class="sec-title">실제 결과물 미리보기</div>
+    <div class="sec-sub">· 카드에 마우스를 올려보세요</div>
+  </div>
+  <div class="preview-grid" id="previewGrid"></div>
+</div>
+
+<!-- 호버 팝업 -->
+<div class="preview-popup" id="previewPopup">
+  <div class="popup-bar">
+    <div class="preview-dot" style="background:#ff5f57;"></div>
+    <div class="preview-dot" style="background:#febc2e;margin:0 3px;"></div>
+    <div class="preview-dot" style="background:#28c840;"></div>
+    <div class="popup-url" id="popupUrl"></div>
+  </div>
+  <div class="popup-frame-wrap">
+    <iframe class="popup-frame" id="popupFrame" src="" title="미리보기"></iframe>
+  </div>
+</div>
+
 <!-- 핵심 포인트 -->
 <div class="sec anim d5">
   <div class="sec-head">
@@ -571,6 +651,121 @@ html,body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic','�
 </div>
 
 <script>
+// ── 미리보기 카드 ──
+const PREVIEW_SESSIONS = [
+  { round:1, title:'AI로 AI 활용하기', path:'training/ai교육/ai교육_1회차.html' },
+  { round:2, title:'바이브 코딩',       path:'training/ai교육/ai교육_2회차.html' },
+  { round:3, title:'GitHub 게시하기',   path:'training/ai교육/ai교육_3회차.html' },
+  { round:4, title:'Google Apps Script',path:'training/ai교육/ai교육_4회차.html' },
+  { round:5, title:'업무 자동화 로드맵',path:'training/ai교육/ai교육_5회차.html' },
+];
+
+(function() {
+  const grid = document.getElementById('previewGrid');
+  if (!grid) return;
+
+  PREVIEW_SESSIONS.forEach((s, i) => {
+    const card = document.createElement('div');
+    card.className = 'preview-card';
+    card.innerHTML = `
+      <div class="preview-browser">
+        <div class="preview-bar">
+          <div class="preview-dot" style="background:#ff5f57;"></div>
+          <div class="preview-dot" style="background:#febc2e;margin:0 3px;"></div>
+          <div class="preview-dot" style="background:#28c840;"></div>
+          <div class="preview-url">${s.path}</div>
+        </div>
+        <div class="preview-frame-wrap">
+          <div class="preview-placeholder" id="ph_${i}">
+            <div class="preview-placeholder-icon">📄</div>
+            <div class="preview-placeholder-text">${s.round}회차</div>
+          </div>
+          <iframe class="preview-frame" id="pf_${i}" src="" title="${s.title}" data-src="${s.path}"></iframe>
+        </div>
+      </div>
+      <div class="preview-info">
+        <div>
+          <div class="preview-title-small">${s.round}회차</div>
+          <div class="preview-title">${s.title}</div>
+        </div>
+        <div class="preview-open">열기 →</div>
+      </div>`;
+
+    card.addEventListener('click', () => {
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type:'TRAINING_NAV', path:s.path }, '*');
+          return;
+        }
+      } catch(e) {}
+      window.open(s.path, '_blank');
+    });
+
+    grid.appendChild(card);
+
+    const iframe = card.querySelector('#pf_' + i);
+    const ph = card.querySelector('#ph_' + i);
+    const obs = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && !iframe.src) {
+        iframe.src = iframe.dataset.src;
+        iframe.onload = () => {
+          iframe.classList.add('loaded');
+          ph.style.display = 'none';
+          try {
+            const t = localStorage.getItem('ggumbi-theme') || 'dark';
+            iframe.contentWindow.postMessage({ type:'THEME', mode:t }, '*');
+          } catch(e) {}
+        };
+        obs.disconnect();
+      }
+    }, { threshold: 0.1 });
+    obs.observe(card);
+  });
+
+  // 호버 팝업
+  const popup = document.getElementById('previewPopup');
+  const popupUrl = document.getElementById('popupUrl');
+  const popupFrm = document.getElementById('popupFrame');
+  let popupTimer, hideTimer, currentSrc = '';
+
+  grid.addEventListener('mouseover', ev => {
+    const card = ev.target.closest('.preview-card');
+    if (!card) return;
+    const idx = [...grid.children].indexOf(card);
+    if (idx < 0) return;
+    const s = PREVIEW_SESSIONS[idx];
+    clearTimeout(hideTimer);
+    if (currentSrc !== s.path) {
+      currentSrc = s.path;
+      popupUrl.textContent = s.path;
+      popupFrm.src = s.path;
+      popupFrm.onload = () => {
+        try {
+          const t = localStorage.getItem('ggumbi-theme') || 'dark';
+          popupFrm.contentWindow.postMessage({ type:'THEME', mode:t }, '*');
+        } catch(e) {}
+      };
+    }
+    const rect = card.getBoundingClientRect();
+    const pw = 480, ph2 = 320;
+    let left = rect.right + 12;
+    let top  = rect.top;
+    if (left + pw > window.innerWidth - 12) left = rect.left - pw - 12;
+    if (top + ph2 > window.innerHeight - 12) top = window.innerHeight - ph2 - 12;
+    if (top < 8) top = 8;
+    popup.style.left = left + 'px';
+    popup.style.top  = top + 'px';
+    clearTimeout(popupTimer);
+    popupTimer = setTimeout(() => popup.classList.add('visible'), 120);
+  });
+
+  grid.addEventListener('mouseleave', () => {
+    clearTimeout(popupTimer);
+    hideTimer = setTimeout(() => { popup.classList.remove('visible'); currentSrc = ''; }, 200);
+  });
+})();
+
+
 const NAV_CONFIG = {
   prev: 'training/ai교육/ai교육_5회차.html',
   next: 'training/ai교육/ai교육_7회차.html'

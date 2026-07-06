@@ -996,6 +996,17 @@ function loadHome() {
 }
 
 // main.html → GO_TAB 수신 / tool_main.html → TOOL_NAV 수신
+// ── 팀원교육 허용 경로 (training_main TRAINING_DATA의 status:'done' 경로와 동기화)
+const TRAINING_ALLOWED_PATHS = [
+  'training/ai교육/ai교육_1회차.html',
+  'training/ai교육/ai교육_2회차.html',
+  'training/ai교육/ai교육_3회차.html',
+  'training/ai교육/ai교육_4회차.html',
+  'training/ai교육/ai교육_5회차.html',
+  'training/ai교육/ai교육_6회차.html',
+  // 새 회차 추가 시 여기에도 추가
+];
+
 window.addEventListener('message', e => {
   if (!e.data) return;
   // 디버그 로그 (배포 전 제거)
@@ -1020,28 +1031,11 @@ window.addEventListener('message', e => {
   if (e.data.type === 'TRAINING_NAV' && e.data.path) {
     const frame = document.getElementById('mainFrame');
 
-    // checkOnly: training_main에 존재 여부만 물어보고 결과를 요청자에게 돌려줌
+    // checkOnly: index가 직접 허용 경로 목록으로 판단 (training_main 의존 제거)
     if (e.data.checkOnly) {
       const requester = e.source;
-      // training_main이 현재 frame에 로드되어 있으면 직접 물어봄
-      // 아니면 path 기준으로 TRAINING_DATA 체크 요청
-      try {
-        frame.contentWindow.postMessage({
-          type: 'CHECK_NEXT', path: e.data.path, _reply: true
-        }, '*');
-      } catch(err) {}
-      // 응답을 받아서 requester에게 전달하는 리스너 (1회용)
-      const _checkHandler = function(ev) {
-        if (!ev.data || ev.data.type !== 'CHECK_NEXT_RESULT') return;
-        window.removeEventListener('message', _checkHandler);
-        try { requester.postMessage({ type:'NAV_CHECK_RESULT', exists: ev.data.exists, path: e.data.path }, '*'); } catch(err2) {}
-      };
-      window.addEventListener('message', _checkHandler);
-      // 타임아웃 — training_main이 없으면 200ms 후 false 반환
-      setTimeout(() => {
-        window.removeEventListener('message', _checkHandler);
-        try { requester.postMessage({ type:'NAV_CHECK_RESULT', exists: false, path: e.data.path }, '*'); } catch(err2) {}
-      }, 200);
+      const exists = TRAINING_ALLOWED_PATHS.includes(e.data.path);
+      try { requester.postMessage({ type:'NAV_CHECK_RESULT', exists, path: e.data.path }, '*'); } catch(err) {}
       return;
     }
 

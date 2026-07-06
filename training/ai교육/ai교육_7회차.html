@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI 교육 7회차 · GPT로도 만들 수 있다</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#070d1a;--bg2:#0c1628;--bg3:#111e35;--bg4:#172240;
+  --border:rgba(80,140,255,0.12);--border2:rgba(80,140,255,0.25);
+  --blue:#4a8fff;--blue-dim:rgba(74,143,255,0.10);
+  --cyan:#00d4ff;--green:#00e5a0;--red:#ff5a5a;
+  --orange:#ffaa40;--gold:#f0c060;--purple:#a07aff;--teal:#00c8a0;
+  --text:#e4eeff;--text2:#8aaad0;--text3:#4a6a90;
+  --radius:14px;
+}
+body.light-mode{
+  --bg:#f0f4fa;--bg2:#ffffff;--bg3:#e8f0fb;--bg4:#dce8f7;
+  --border:rgba(26,78,180,0.12);--border2:rgba(26,78,180,0.28);
+  --blue:#1a5fd4;--blue-dim:rgba(26,95,212,0.08);
+  --cyan:#0090b8;--green:#007a50;--red:#c02020;--orange:#b06010;
+  --gold:#8a6000;--purple:#5030b0;--teal:#007a62;
+  --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6090;
+}
+body.light-mode .hero-glow{background:radial-gradient(ellipse,rgba(26,95,212,0.07) 0%,transparent 65%);}
+body.light-mode .hero-glow2{background:radial-gradient(ellipse,rgba(0,144,184,0.05) 0%,transparent 65%);}
+body.light-mode #summary::before{background:radial-gradient(ellipse at 50% 0%,rgba(26,95,212,0.06) 0%,transparent 60%);}
+body.light-mode .chat-bubble-user{background:var(--blue-dim);}
+body.light-mode .chat-bubble-gpt{background:var(--bg3);}
+body.light-mode .timeline-node{background:var(--bg2);}
+body.light-mode .preview-bar{background:var(--bg4);}
+
+html,body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo',sans-serif;font-size:14px;line-height:1.6;overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-blue  {background:var(--blue-dim);color:var(--blue);border:1px solid var(--border2);}
+.badge-green {background:rgba(0,229,160,0.10);color:var(--green);border:1px solid rgba(0,229,160,0.25);}
+.badge-gold  {background:rgba(240,192,96,0.10);color:var(--gold);border:1px solid rgba(240,192,96,0.25);}
+.badge-teal  {background:rgba(0,200,160,0.10);color:var(--teal);border:1px solid rgba(0,200,160,0.25);}
+.badge-orange{background:rgba(255,170,64,0.10);color:var(--orange);border:1px solid rgba(255,170,64,0.25);}
+.hl-blue{color:var(--blue);}
+.hl-green{color:var(--green);}
+.hl-gold{color:var(--gold);}
+.hl-cyan{color:var(--cyan);}
+.hl-teal{color:var(--teal);}
+
+.wrap{max-width:960px;margin:0 auto;padding:0 24px;}
+
+/* ══ 네비게이션 ══ */
+.nav-prev,.nav-next{
+  position:fixed;top:50%;transform:translateY(-50%);
+  width:44px;height:80px;display:flex;align-items:center;justify-content:center;
+  background:var(--bg2);border:1px solid var(--border2);cursor:pointer;z-index:999;
+  transition:background 0.15s,border-color 0.2s,box-shadow 0.2s;
+  font-size:18px;color:var(--text2);user-select:none;
+}
+.nav-prev{left:0;border-radius:0 10px 10px 0;border-left:none;}
+.nav-next{right:0;border-radius:10px 0 0 10px;border-right:none;}
+.nav-prev:hover,.nav-next:hover{background:var(--bg3);border-color:var(--blue);color:var(--blue);box-shadow:0 4px 20px rgba(74,143,255,0.15);}
+.nav-prev.disabled{opacity:0.2;cursor:default;pointer-events:none;}
+.nav-prev .nav-tooltip,.nav-next .nav-tooltip{
+  position:absolute;background:var(--bg4);border:1px solid var(--border2);
+  border-radius:8px;padding:6px 10px;font-size:10px;color:var(--text2);
+  white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.15s;line-height:1.5;
+}
+.nav-prev .nav-tooltip{left:52px;top:50%;transform:translateY(-50%);}
+.nav-next .nav-tooltip{right:52px;top:50%;transform:translateY(-50%);}
+.nav-prev:hover .nav-tooltip,.nav-next:hover .nav-tooltip{opacity:1;}
+.nav-tooltip-round{display:block;font-weight:700;color:var(--text);}
+
+/* ══ 히어로 ══ */
+#hero{
+  position:relative;
+  background:linear-gradient(160deg,var(--bg) 0%,var(--bg2) 55%,var(--bg) 100%);
+  border-bottom:1px solid var(--border);padding:48px 0 42px;overflow:hidden;
+}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:44px 44px;}
+.hero-glow{position:absolute;top:-80px;right:-40px;width:440px;height:320px;background:radial-gradient(ellipse,rgba(0,200,160,0.07) 0%,transparent 65%);pointer-events:none;}
+.hero-glow2{position:absolute;bottom:-60px;left:10%;width:340px;height:220px;background:radial-gradient(ellipse,rgba(74,143,255,0.05) 0%,transparent 65%);pointer-events:none;}
+.hero-inner{position:relative;z-index:1;}
+.hero-top{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.hero-eyebrow{font-size:11px;font-weight:700;color:var(--teal);letter-spacing:2.5px;text-transform:uppercase;}
+.hero-title{font-size:clamp(26px,4vw,38px);font-weight:800;line-height:1.15;margin-bottom:10px;letter-spacing:-0.5px;color:var(--text);}
+.hero-sub{font-size:15px;color:var(--text2);max-width:580px;line-height:1.7;margin-bottom:20px;}
+.hero-pills{display:flex;gap:12px;flex-wrap:wrap;}
+.hero-pill{display:flex;align-items:center;gap:7px;padding:7px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:30px;font-size:12px;color:var(--text2);}
+
+/* ══ 공통 섹션 ══ */
+.sec{padding:40px 0 0;}
+.sec-head{display:flex;align-items:center;gap:10px;margin-bottom:24px;}
+.sec-bar{width:3px;height:16px;border-radius:2px;flex-shrink:0;}
+.sec-title{font-size:15px;font-weight:700;color:var(--text);}
+.sec-sub{font-size:11px;color:var(--text3);margin-left:2px;}
+
+/* ══ 대화 말풍선 ══ */
+.chat-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px 20px;display:flex;flex-direction:column;gap:12px;}
+.chat-row{display:flex;gap:10px;align-items:flex-start;}
+.chat-row.user{flex-direction:row-reverse;}
+.chat-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;border:1px solid var(--border);}
+.av-user{background:var(--blue-dim);}
+.av-gpt {background:rgba(0,200,160,0.12);}
+.chat-bubble-user{
+  background:var(--blue-dim);border:1px solid var(--border2);
+  padding:10px 14px;border-radius:12px 4px 12px 12px;
+  font-size:12.5px;color:var(--text);max-width:75%;line-height:1.6;
+}
+.chat-bubble-gpt{
+  background:var(--bg3);border:1px solid var(--border);
+  padding:10px 14px;border-radius:4px 12px 12px 12px;
+  font-size:12.5px;color:var(--text2);max-width:75%;line-height:1.6;
+  border-left:2px solid var(--teal);
+}
+.chat-name{font-size:9.5px;font-weight:700;margin-bottom:4px;}
+.cn-user{color:var(--blue);text-align:right;}
+.cn-gpt {color:var(--teal);}
+.chat-hint{
+  text-align:center;padding:10px;
+  font-size:11.5px;color:var(--text3);
+  background:var(--bg3);border-radius:8px;border:1px dashed var(--border2);
+}
+
+/* ══ 첫 요청 카드 ══ */
+.req-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;}
+.req-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:11px;
+  padding:14px;display:flex;align-items:flex-start;gap:9px;
+}
+.req-icon{font-size:18px;flex-shrink:0;}
+.req-text{font-size:12px;color:var(--text2);line-height:1.5;}
+.req-text strong{color:var(--text);display:block;margin-bottom:2px;font-size:12.5px;}
+
+/* ══ 타임라인 ══ */
+.timeline{display:flex;flex-direction:column;gap:0;position:relative;}
+.timeline::before{
+  content:'';position:absolute;left:19px;top:20px;bottom:20px;
+  width:2px;background:linear-gradient(to bottom,var(--teal),var(--blue));
+  border-radius:1px;
+}
+.timeline-item{display:flex;gap:16px;padding-bottom:20px;position:relative;}
+.timeline-item:last-child{padding-bottom:0;}
+.tl-dot{
+  width:40px;height:40px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;
+  border:2px solid var(--border2);position:relative;z-index:1;
+}
+.tl1{background:rgba(0,200,160,0.15);color:var(--teal);border-color:rgba(0,200,160,0.4);}
+.tl2{background:rgba(74,143,255,0.15);color:var(--blue);border-color:rgba(74,143,255,0.4);}
+.tl3{background:rgba(240,192,96,0.15);color:var(--gold);border-color:rgba(240,192,96,0.4);}
+.tl4{background:rgba(160,122,255,0.15);color:var(--purple);border-color:rgba(160,122,255,0.4);}
+.tl5{background:rgba(0,229,160,0.15);color:var(--green);border-color:rgba(0,229,160,0.4);}
+.timeline-node{
+  flex:1;background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px 18px;
+}
+.tl-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.tl-step{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;}
+.tl-title{font-size:13px;font-weight:700;color:var(--text);}
+.tl-features{display:flex;flex-wrap:wrap;gap:5px;}
+.tl-feat{
+  font-size:10.5px;padding:3px 9px;border-radius:6px;
+  background:var(--bg3);border:1px solid var(--border);color:var(--text2);
+}
+.tl-feat.f-new{background:rgba(0,229,160,0.08);border-color:rgba(0,229,160,0.2);color:var(--green);}
+
+/* ══ 미리보기 ══ */
+.preview-single{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);
+  overflow:hidden;max-width:480px;margin:0 auto;cursor:pointer;
+  transition:border-color 0.2s,box-shadow 0.2s,transform 0.15s;
+}
+.preview-single:hover{border-color:var(--teal);box-shadow:0 12px 40px rgba(0,200,160,0.2);transform:translateY(-3px);}
+.preview-bar{
+  background:var(--bg4);padding:8px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:5px;
+}
+.preview-dot{width:8px;height:8px;border-radius:50%;}
+.preview-url{flex:1;font-size:9px;color:var(--text3);font-family:monospace;background:var(--bg3);padding:2px 8px;border-radius:4px;margin-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.preview-frame-wrap{position:relative;width:100%;padding-top:56%;overflow:hidden;background:var(--bg3);}
+.preview-frame{
+  position:absolute;top:0;left:0;width:200%;height:200%;
+  transform:scale(0.5);transform-origin:top left;border:none;
+  pointer-events:none;opacity:0;transition:opacity 0.4s;
+}
+.preview-frame.loaded{opacity:1;}
+.preview-placeholder{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px;
+}
+.preview-placeholder-icon{font-size:32px;}
+.preview-placeholder-text{font-size:11px;color:var(--text3);}
+.preview-foot{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;}
+.preview-foot-title{font-size:13px;font-weight:700;color:var(--text);}
+.preview-foot-sub{font-size:10.5px;color:var(--text3);margin-top:2px;}
+.preview-open-btn{
+  padding:6px 14px;background:rgba(0,200,160,0.10);border:1px solid rgba(0,200,160,0.3);
+  border-radius:7px;font-size:11px;font-weight:700;color:var(--teal);
+  cursor:pointer;transition:background 0.15s;white-space:nowrap;
+}
+.preview-open-btn:hover{background:rgba(0,200,160,0.18);}
+
+/* ══ Before/After ══ */
+.ba-wrap{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;}
+.ba-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.ba-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.ba-body{padding:14px 16px;display:flex;flex-direction:column;gap:8px;}
+.ba-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);}
+.ba-dot-bad {width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0;}
+.ba-dot-good{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;}
+.ba-arrow{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.ba-arrow-icon{font-size:28px;color:var(--border2);}
+.ba-center-msg{
+  grid-column:1/-1;margin-top:4px;
+  padding:16px;background:linear-gradient(135deg,rgba(0,229,160,0.07),rgba(74,143,255,0.05));
+  border:1px solid rgba(0,229,160,0.2);border-radius:10px;
+  text-align:center;font-size:15px;font-weight:800;color:var(--text);
+}
+
+/* ══ 배울 점 카드 ══ */
+.learn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;}
+.learn-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px;transition:border-color 0.15s,transform 0.15s;
+}
+.learn-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.learn-num{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:1.5px;margin-bottom:6px;}
+.learn-icon{font-size:24px;margin-bottom:8px;}
+.learn-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px;}
+.learn-desc{font-size:11.5px;color:var(--text2);line-height:1.6;}
+.learn-example{
+  margin-top:8px;padding:7px 10px;
+  background:var(--bg3);border-radius:6px;border-left:2px solid var(--border2);
+  font-size:10.5px;color:var(--text3);font-style:italic;line-height:1.5;
+}
+
+/* ══ 대화 하이라이트 ══ */
+.highlight-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px 20px;display:flex;flex-direction:column;gap:16px;}
+.hl-exchange{display:flex;flex-direction:column;gap:8px;}
+.hl-user{
+  align-self:flex-end;max-width:78%;
+  background:var(--blue-dim);border:1px solid var(--border2);
+  padding:10px 14px;border-radius:12px 4px 12px 12px;font-size:12px;color:var(--text);line-height:1.5;
+}
+.hl-gpt{
+  align-self:flex-start;max-width:78%;
+  background:var(--bg3);border:1px solid var(--border);border-left:2px solid var(--teal);
+  padding:10px 14px;border-radius:4px 12px 12px 12px;font-size:12px;color:var(--text2);line-height:1.5;
+}
+.hl-divider{height:1px;background:var(--border);margin:4px 0;}
+
+/* ══ 요약 ══ */
+#summary{
+  margin:40px 0 0;padding:32px;
+  background:linear-gradient(135deg,var(--bg2) 0%,var(--bg4) 100%);
+  border:1px solid var(--border2);border-radius:var(--radius);
+  text-align:center;position:relative;overflow:hidden;
+}
+#summary::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(0,200,160,0.07) 0%,transparent 60%);}
+.summary-inner{position:relative;z-index:1;}
+.summary-lines{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+.summary-line{font-size:clamp(13px,2vw,16px);font-weight:700;color:var(--text);line-height:1.5;}
+.summary-author{font-size:11px;color:var(--text3);}
+
+.sec-bottom{height:48px;}
+
+@media(max-width:700px){
+  .ba-wrap{grid-template-columns:1fr;}
+  .ba-arrow{flex-direction:row;justify-content:center;}
+  .ba-arrow-icon{transform:rotate(90deg);}
+  .ba-center-msg{grid-column:1;}
+  #summary{padding:22px 16px;}
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.anim{animation:fadeUp 0.45s ease both;}
+.d1{animation-delay:0.05s;}.d2{animation-delay:0.10s;}.d3{animation-delay:0.15s;}
+.d4{animation-delay:0.20s;}.d5{animation-delay:0.25s;}.d6{animation-delay:0.30s;}
+</style>
+</head>
+<body>
+
+<div class="nav-prev" id="navPrev" onclick="navGo('prev')">
+  ‹
+  <div class="nav-tooltip">
+    <span class="nav-tooltip-round">6회차</span>
+    AI 협업 프로세스
+  </div>
+</div>
+<div class="nav-next" id="navNext" onclick="navGo('next')">
+  ›
+  <div class="nav-tooltip">
+    <span class="nav-tooltip-round">다음 회차</span>
+    준비 중
+  </div>
+</div>
+
+<!-- ══ 히어로 ══ -->
+<div id="hero">
+  <div class="hero-grid"></div><div class="hero-glow"></div><div class="hero-glow2"></div>
+  <div class="wrap hero-inner anim d1">
+    <div class="hero-top">
+      <div class="hero-eyebrow">AI 교육 7회차</div>
+      <div class="badge badge-teal">⏱ 3분 완성</div>
+      <div class="badge badge-gold">🎯 실전 사례</div>
+      <div class="badge badge-orange">🤖 GPT 제작</div>
+    </div>
+    <div class="hero-title">
+      <span class="hl-teal">GPT</span>로도 만들 수 있다<br>
+      <span style="font-size:0.62em;font-weight:500;color:var(--text2);">허접한 대화에서 시작한 PDF 업무툴 제작 사례</span>
+    </div>
+    <div class="hero-sub">
+      "자네 나와 일하나 같이 합세."<br>
+      이 한 마디로 시작해서 — PDF 비교·다중 미리보기·이름변경 저장까지 되는 실무 툴이 완성됐습니다.
+    </div>
+    <div class="hero-pills">
+      <div class="hero-pill"><span>💬</span> 허접한 대화로 시작</div>
+      <div class="hero-pill"><span>🤖</span> GPT만 사용</div>
+      <div class="hero-pill"><span>📄</span> PDF 비교 툴 완성</div>
+      <div class="hero-pill"><span>✅</span> 실제 사용 중</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ══ 2. 시작은 가벼웠다 ══ -->
+<div class="sec anim d2">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--teal);"></div>
+    <div class="sec-title">시작은 아주 가벼웠습니다</div>
+    <div class="sec-sub">· 실제 대화 그대로</div>
+  </div>
+  <div class="chat-wrap">
+    <div class="chat-row user">
+      <div class="chat-avatar av-user">👤</div>
+      <div>
+        <div class="chat-name cn-user">나</div>
+        <div class="chat-bubble-user">"자네 나와 일하나 같이 합세."</div>
+      </div>
+    </div>
+    <div class="chat-row">
+      <div class="chat-avatar av-gpt">🤖</div>
+      <div>
+        <div class="chat-name cn-gpt">ChatGPT</div>
+        <div class="chat-bubble-gpt">"좋습니다. 바로 같이 만들 만한 툴이네요. 무엇을 만들어볼까요?"</div>
+      </div>
+    </div>
+    <div class="chat-row user">
+      <div class="chat-avatar av-user">👤</div>
+      <div>
+        <div class="chat-name cn-user">나</div>
+        <div class="chat-bubble-user">"as9.html 하나 만들어보시게."<br>"PDF 여러 개를 한 번에 비교하기 귀찮다네."</div>
+      </div>
+    </div>
+    <div class="chat-row">
+      <div class="chat-avatar av-gpt">🤖</div>
+      <div>
+        <div class="chat-name cn-gpt">ChatGPT</div>
+        <div class="chat-bubble-gpt">"PDF 여러 개를 한 화면에서 비교하는 툴 바로 만들겠습니다."</div>
+      </div>
+    </div>
+    <div class="chat-hint">
+      💡 정교한 기획서가 아니라, <strong>불편함을 말하는 것</strong>부터 시작했습니다
+    </div>
+  </div>
+</div>
+
+<!-- ══ 3. 첫 요청 ══ -->
+<div class="sec anim d3">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--blue);"></div>
+    <div class="sec-title">처음 요구한 것들</div>
+    <div class="sec-sub">· 완벽하지 않아도 충분했습니다</div>
+  </div>
+  <div class="req-grid">
+    <div class="req-card"><div class="req-icon">📂</div><div class="req-text"><strong>파일 드래그 업로드</strong>PDF 여러 개 한번에</div></div>
+    <div class="req-card"><div class="req-icon">🖥</div><div class="req-text"><strong>큰 미리보기 화면</strong>탭 전환 없이 한눈에</div></div>
+    <div class="req-card"><div class="req-icon">🔍</div><div class="req-text"><strong>Ctrl+휠 확대/축소</strong>원하는 배율로</div></div>
+    <div class="req-card"><div class="req-icon">📄</div><div class="req-text"><strong>as9.html 로컬 실행</strong>설치 없이 바로</div></div>
+    <div class="req-card"><div class="req-icon">🎨</div><div class="req-text"><strong>블랙톤 UI</strong>보기 편한 어두운 테마</div></div>
+  </div>
+</div>
+
+<!-- ══ 4. 발전 타임라인 ══ -->
+<div class="sec anim d4">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--gold);"></div>
+    <div class="sec-title">대화가 쌓이면서 툴이 발전했습니다</div>
+    <div class="sec-sub">· 5단계 진화 과정</div>
+  </div>
+  <div class="timeline">
+
+    <div class="timeline-item">
+      <div class="tl-dot tl1">1차</div>
+      <div class="timeline-node">
+        <div class="tl-head">
+          <div class="tl-step">FIRST VERSION</div>
+          <div class="tl-title">기본 툴 완성</div>
+        </div>
+        <div class="tl-features">
+          <span class="tl-feat">📂 PDF 다중 업로드</span>
+          <span class="tl-feat">📋 좌측 파일 목록</span>
+          <span class="tl-feat">🖥 큰 미리보기</span>
+          <span class="tl-feat">🔍 Ctrl+휠 확대</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="tl-dot tl2">2차</div>
+      <div class="timeline-node">
+        <div class="tl-head">
+          <div class="tl-step">MULTI-VIEW</div>
+          <div class="tl-title">다중 비교 추가</div>
+        </div>
+        <div class="tl-features">
+          <span class="tl-feat f-new">📐 1·2·4·6·9개 비교 보기</span>
+          <span class="tl-feat f-new">🔄 페이지 동기화</span>
+          <span class="tl-feat f-new">🔍 확대 동기화</span>
+          <span class="tl-feat f-new">🔎 검색</span>
+          <span class="tl-feat f-new">⌨ 단축키</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="tl-dot tl3">3차</div>
+      <div class="timeline-node">
+        <div class="tl-head">
+          <div class="tl-step">UX 개선</div>
+          <div class="tl-title">개별 확대 적용</div>
+        </div>
+        <div class="tl-features">
+          <span class="tl-feat">🖱 마우스 올린 PDF</span>
+          <span class="tl-feat f-new">🎯 해당 PDF만 확대/축소</span>
+          <span class="tl-feat">전체 확대 → 개별 확대로 변경</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="tl-dot tl4">4차</div>
+      <div class="timeline-node">
+        <div class="tl-head">
+          <div class="tl-step">PROFESSIONAL</div>
+          <div class="tl-title">프로페셔널 버전</div>
+        </div>
+        <div class="tl-features">
+          <span class="tl-feat f-new">📏 PDF별 개별 확대</span>
+          <span class="tl-feat f-new">📄 PDF별 페이지 이동</span>
+          <span class="tl-feat f-new">↔ 폭맞춤 / 페이지맞춤</span>
+          <span class="tl-feat f-new">🔄 회전</span>
+          <span class="tl-feat f-new">↕ 드래그 정렬</span>
+          <span class="tl-feat f-new">⛶ 전체화면</span>
+          <span class="tl-feat f-new">💾 설정 저장</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="tl-dot tl5">5차</div>
+      <div class="timeline-node">
+        <div class="tl-head">
+          <div class="tl-step">FINAL</div>
+          <div class="tl-title">최종 완성 — 이름변경 저장</div>
+        </div>
+        <div class="tl-features">
+          <span class="tl-feat f-new">✏ 파일명 직접 수정</span>
+          <span class="tl-feat f-new">💾 이름변경 저장</span>
+          <span class="tl-feat f-new">📁 변경된 파일만 저장</span>
+          <span class="tl-feat f-new">📦 전체 저장</span>
+          <span class="tl-feat f-new">🗜 ZIP 압축 저장</span>
+          <span class="tl-feat f-new">📄 개별 PDF 저장</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ 5. 결과물 미리보기 ══ -->
+<div class="sec anim d5">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--teal);"></div>
+    <div class="sec-title">실제 결과물</div>
+    <div class="sec-sub">· GPT와의 대화로 완성된 PDF 비교 워크벤치</div>
+  </div>
+
+  <!-- as9.html 경로 — 배포 후 실제 경로로 수정 -->
+  <div class="preview-single" id="previewCard">
+    <div class="preview-bar">
+      <div class="preview-dot" style="background:#ff5f57;"></div>
+      <div class="preview-dot" style="background:#febc2e;margin:0 3px;"></div>
+      <div class="preview-dot" style="background:#28c840;"></div>
+      <div class="preview-url" id="previewUrlText">tool/as9.html</div>
+    </div>
+    <div class="preview-frame-wrap">
+      <div class="preview-placeholder" id="previewPh">
+        <div class="preview-placeholder-icon">📄</div>
+        <div class="preview-placeholder-text">PDF 비교 워크벤치</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px;">카드를 클릭하면 열립니다</div>
+      </div>
+      <iframe class="preview-frame" id="previewFrame" src="" title="PDF 비교 워크벤치"></iframe>
+    </div>
+    <div class="preview-foot">
+      <div>
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;">
+          <div class="preview-foot-title">PDF 비교 워크벤치</div>
+          <div class="badge badge-teal" style="font-size:9px;">🤖 GPT 제작</div>
+        </div>
+        <div class="preview-foot-sub">여러 PDF를 한 화면에서 비교·이름 수정·저장</div>
+      </div>
+      <div class="preview-open-btn" id="previewOpenBtn">새 탭으로 열기 →</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 6. Before / After ══ -->
+<div class="sec anim d5">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--cyan);"></div>
+    <div class="sec-title">불편함이 업무툴이 되었습니다</div>
+    <div class="sec-sub">· Before vs After</div>
+  </div>
+  <div class="ba-wrap">
+    <div class="ba-card">
+      <div class="ba-head">
+        <span style="font-size:18px;">😩</span>
+        <span style="font-size:13px;font-weight:700;color:var(--red);">Before</span>
+        <div class="badge" style="background:rgba(255,90,90,0.08);color:var(--red);border:1px solid rgba(255,90,90,0.2);font-size:9px;margin-left:auto;">불편</div>
+      </div>
+      <div class="ba-body">
+        <div class="ba-item"><div class="ba-dot-bad"></div>PDF 탭을 왔다 갔다</div>
+        <div class="ba-item"><div class="ba-dot-bad"></div>한눈에 비교 불가</div>
+        <div class="ba-item"><div class="ba-dot-bad"></div>파일명 정리 번거로움</div>
+        <div class="ba-item"><div class="ba-dot-bad"></div>저장 후 이름 다시 변경</div>
+      </div>
+    </div>
+
+    <div class="ba-arrow">
+      <div class="ba-arrow-icon">→</div>
+      <div style="font-size:9px;color:var(--text3);text-align:center;">AI 협업</div>
+    </div>
+
+    <div class="ba-card">
+      <div class="ba-head">
+        <span style="font-size:18px;">🚀</span>
+        <span style="font-size:13px;font-weight:700;color:var(--green);">After</span>
+        <div class="badge badge-green" style="font-size:9px;margin-left:auto;">해결</div>
+      </div>
+      <div class="ba-body">
+        <div class="ba-item"><div class="ba-dot-good"></div>PDF 최대 9개 동시 비교</div>
+        <div class="ba-item"><div class="ba-dot-good"></div>개별 확대·페이지 이동</div>
+        <div class="ba-item"><div class="ba-dot-good"></div>파일명 직접 수정</div>
+        <div class="ba-item"><div class="ba-dot-good"></div>수정된 이름으로 바로 저장</div>
+      </div>
+    </div>
+
+    <div class="ba-center-msg">
+      💡 불편함을 말했더니, 업무툴이 되었다.
+    </div>
+  </div>
+</div>
+
+<!-- ══ 7. 배울 점 ══ -->
+<div class="sec anim d6">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--purple);"></div>
+    <div class="sec-title">이 사례에서 배울 점</div>
+    <div class="sec-sub">· 나도 할 수 있다</div>
+  </div>
+  <div class="learn-grid">
+    <div class="learn-card">
+      <div class="learn-num">POINT 01</div>
+      <div class="learn-icon">🚀</div>
+      <div class="learn-title">처음부터 완벽할 필요 없다</div>
+      <div class="learn-desc">가볍게 시작해도 됩니다. 대화가 쌓이면서 툴이 발전합니다.</div>
+    </div>
+    <div class="learn-card">
+      <div class="learn-num">POINT 02</div>
+      <div class="learn-icon">💡</div>
+      <div class="learn-title">AI가 먼저 기능을 제안한다</div>
+      <div class="learn-desc">내가 생각 못한 기능도 AI가 제안해줍니다. 제안을 받아들이면 됩니다.</div>
+    </div>
+    <div class="learn-card">
+      <div class="learn-num">POINT 03</div>
+      <div class="learn-icon">🔄</div>
+      <div class="learn-title">마음에 안 들면 다시 말하면 된다</div>
+      <div class="learn-desc">수정 요청도 대화로 하면 됩니다.</div>
+      <div class="learn-example">"전체 확대 말고, 마우스 올린 PDF만 확대되게 해줘."</div>
+    </div>
+    <div class="learn-card">
+      <div class="learn-num">POINT 04</div>
+      <div class="learn-icon">🛠</div>
+      <div class="learn-title">대화가 곧 개발 과정이다</div>
+      <div class="learn-desc">요청 → 결과 → 수정 → 개선, 이 반복이 툴을 완성합니다.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 8. 대화 하이라이트 ══ -->
+<div class="sec anim d6">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--orange);"></div>
+    <div class="sec-title">실제 대화 하이라이트</div>
+    <div class="sec-sub">· 이렇게 말해도 됩니다</div>
+  </div>
+  <div class="highlight-wrap">
+
+    <div class="hl-exchange">
+      <div class="hl-user">👤 "뭐하고있어? 니가 만든다면 넣는 기능이면 니가 만들었으니 넣어야지."</div>
+      <div class="hl-gpt">🤖 "맞습니다. 제가 괜히 입만 털었네요. 바로 업그레이드하겠습니다."</div>
+    </div>
+
+    <div class="hl-divider"></div>
+
+    <div class="hl-exchange">
+      <div class="hl-user">👤 "프로페셔널하게 하나 해줘."</div>
+      <div class="hl-gpt">🤖 "프로페셔널 버전으로 갈아엎었습니다. PDF별 개별 제어·회전·전체화면·설정 저장까지 넣었습니다."</div>
+    </div>
+
+    <div class="hl-divider"></div>
+
+    <div class="hl-exchange">
+      <div class="hl-user">👤 "이름변경 저장 기능 추가해볼까?"</div>
+      <div class="hl-gpt">🤖 "최종 기능 얹었습니다. 파일명 직접 수정·변경된 파일만 저장·ZIP 압축까지 완성됐습니다."</div>
+    </div>
+
+    <div style="margin-top:8px;padding:10px 14px;background:rgba(0,200,160,0.07);border:1px solid rgba(0,200,160,0.2);border-radius:8px;font-size:11.5px;color:var(--teal);text-align:center;font-weight:600;">
+      😄 이런 대화가 쌓여서 실무 툴이 완성됐습니다
+    </div>
+  </div>
+</div>
+
+<!-- ══ 요약 ══ -->
+<div id="summary" class="anim" style="animation-delay:0.35s;">
+  <div class="summary-inner">
+    <div style="font-size:28px;margin-bottom:16px;">💬</div>
+    <div class="summary-lines">
+      <div class="summary-line">AI에게 <span class="hl-gold">멋있게 말할 필요</span>는 없다.</div>
+      <div class="summary-line">업무에서 <span class="hl-teal">불편한 점을 솔직하게</span> 말하면 된다.</div>
+      <div class="summary-line">그 대화가 쌓이면 <span class="hl-green">실무툴이 된다.</span></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+      <div class="badge badge-teal">💬 불편함 말하기</div>
+      <div style="color:var(--text3);">→</div>
+      <div class="badge badge-blue">🤖 AI가 제작</div>
+      <div style="color:var(--text3);">→</div>
+      <div class="badge badge-gold">🔄 대화로 개선</div>
+      <div style="color:var(--text3);">→</div>
+      <div class="badge badge-green">🛠 실무툴 완성</div>
+    </div>
+    <div class="summary-author">AI 교육 7회차 · 엄마감동팀</div>
+  </div>
+</div>
+
+<div class="sec-bottom"></div>
+</div>
+
+<script>
+// ── as9.html 경로 설정 (배포 후 실제 경로로 수정) ──
+const AS9_PATH = 'tool/as9.html';
+
+// 미리보기 설정
+(function() {
+  const card    = document.getElementById('previewCard');
+  const frame   = document.getElementById('previewFrame');
+  const ph      = document.getElementById('previewPh');
+  const openBtn = document.getElementById('previewOpenBtn');
+  const urlText = document.getElementById('previewUrlText');
+
+  urlText.textContent = AS9_PATH;
+
+  // 카드 진입 시 iframe 로드
+  const obs = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && !frame.src) {
+      frame.src = AS9_PATH;
+      frame.onload = () => {
+        frame.classList.add('loaded');
+        ph.style.display = 'none';
+        try {
+          const t = localStorage.getItem('ggumbi-theme') || 'dark';
+          frame.contentWindow.postMessage({ type:'THEME', mode:t }, '*');
+        } catch(e) {}
+      };
+      obs.disconnect();
+    }
+  }, { threshold: 0.1 });
+  obs.observe(card);
+
+  // 클릭 → 새 탭 또는 TRAINING_NAV
+  card.addEventListener('click', (e) => {
+    if (e.target === openBtn || openBtn.contains(e.target)) {
+      window.open(AS9_PATH, '_blank');
+      return;
+    }
+    window.open(AS9_PATH, '_blank');
+  });
+  openBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    window.open(AS9_PATH, '_blank');
+  });
+})();
+
+// ── 회차 네비게이션 ──
+const NAV_CONFIG = {
+  prev: 'training/ai교육/ai교육_6회차.html',
+  next: 'training/ai교육/ai교육_8회차.html'
+};
+
+function navGo(dir) {
+  const path = NAV_CONFIG[dir];
+  if (!path) return;
+  const isInIframe = (function() {
+    try { return window.parent && window.parent !== window; } catch(e) { return false; }
+  })();
+  if (isInIframe) {
+    if (dir === 'next') {
+      window.parent.postMessage({ type:'TRAINING_NAV', path, checkOnly:true }, '*');
+      const _h = function(e) {
+        if (!e.data || e.data.type !== 'NAV_CHECK_RESULT' || e.data.path !== path) return;
+        window.removeEventListener('message', _h);
+        if (e.data.exists) {
+          window.parent.postMessage({ type:'TRAINING_NAV', path }, '*');
+        } else {
+          showNavToast();
+        }
+      };
+      window.addEventListener('message', _h);
+      setTimeout(() => window.removeEventListener('message', _h), 500);
+    } else {
+      window.parent.postMessage({ type:'TRAINING_NAV', path }, '*');
+    }
+  } else {
+    if (dir === 'next') { showNavToast(); return; }
+    window.location.href = path;
+  }
+}
+
+function showNavToast() {
+  let t = document.getElementById('navToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'navToast';
+    t.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(12px);'+
+      'background:#172240;border:1px solid rgba(80,140,255,0.35);color:#8aaad0;'+
+      'font-size:12px;font-weight:600;padding:10px 20px;border-radius:30px;'+
+      'z-index:9999;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;';
+    t.textContent = '📋 다음 회차는 준비 중입니다';
+    document.body.appendChild(t);
+  }
+  t.style.opacity = '1';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateX(-50%) translateY(12px)';
+  }, 2200);
+}
+
+window.addEventListener('message', e => {
+  if (!e.data) return;
+  if (e.data.type === 'THEME') {
+    if (e.data.mode === 'light') document.body.classList.add('light-mode');
+    else document.body.classList.remove('light-mode');
+  }
+});
+</script>
+</body>
+</html>

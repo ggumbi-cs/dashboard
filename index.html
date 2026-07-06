@@ -1004,15 +1004,12 @@ const TRAINING_ALLOWED_PATHS = [
   'training/ai교육/ai교육_4회차.html',
   'training/ai교육/ai교육_5회차.html',
   'training/ai교육/ai교육_6회차.html',
+  'training/ai교육/ai교육_7회차.html',
   // 새 회차 추가 시 여기에도 추가
 ];
 
 window.addEventListener('message', e => {
   if (!e.data) return;
-  // 디버그 로그 (배포 전 제거)
-  if (['TRAINING_NAV','TOOL_NAV','GO_TAB'].includes(e.data.type)) {
-    console.log('[index] message received:', e.data.type, e.data.path || e.data.tab || '');
-  }
   if (e.data.type === 'GO_TAB') {
     const tabName = e.data.tab;
     const tabEl = document.querySelector(`.nav-item[data-tab="${tabName}"]`);

@@ -54,7 +54,7 @@ body{ background-image:radial-gradient(circle at 15% 0%, rgba(0,200,255,0.05) 0%
 
 #sidebar-foot{ margin-top:auto; padding:14px 10px 4px; border-top:1px solid var(--border); font-size:10px; color:var(--text3); line-height:1.6; }
 
-#main{ flex:1; min-width:0; padding:28px 32px 70px; }
+#main{ flex:1; min-width:0; padding:28px 32px 28px; }
 .page{ display:none; }
 .page.active{ display:block; animation:fadeUp .35s ease both; }
 @keyframes fadeUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
@@ -103,9 +103,9 @@ body{ background-image:radial-gradient(circle at 15% 0%, rgba(0,200,255,0.05) 0%
 
 .panel{ background:var(--bg2); border:1px solid var(--border); border-radius:15px; overflow:hidden; }
 .panel.no-clip{ overflow:visible; } /* (구) sticky thead 대응용 — 현재는 로컬 스크롤박스 방식으로 대체되어 사실상 불필요 */
-.sticky-scroll-box{ max-height:65vh; overflow:auto; } /* 가로/세로 스크롤을 한 박스에서 처리 → sticky 기준점이 명확해짐 */
+.sticky-scroll-box{ max-height:72vh; overflow:auto; } /* 가로/세로 스크롤을 한 박스에서 처리 → sticky 기준점이 명확해짐 */
 .sticky-scroll-box .sticky-thead-table thead th{ top:0; } /* 로컬 스크롤 기준이므로 상태바 오프셋(38px) 불필요 */
-.group-scroll-box{ max-height:65vh; overflow:auto; }
+.group-scroll-box{ max-height:72vh; overflow:auto; }
 .group-scroll-box .sticky-thead-table thead th{ top:0; }
 .group-table th, .group-table td{ padding:7px 10px; }
 .group-table select{ padding:3px 4px; font-size:11.5px; border-radius:6px; }
@@ -240,6 +240,18 @@ table tr.clickable:hover td{ background:rgba(0,200,255,0.04); cursor:pointer; }
 .ready-icon{ font-size:48px; opacity:.5; }
 .ready-title{ font-size:18px; font-weight:700; color:var(--text2); }
 .ready-desc{ font-size:13px; color:var(--text3); line-height:1.7; }
+/* ───────── 조별우수사례 ───────── */
+.case-card{ border:1px solid var(--border2); border-radius:12px; background:var(--bg2); padding:16px 18px; margin-bottom:14px; }
+.case-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; font-size:13px; }
+.case-groupno{ font-family:var(--font-mono); font-weight:700; color:var(--cyan); background:var(--cyan-dim); border-radius:8px; padding:3px 9px; font-size:11.5px; }
+.case-dept{ color:var(--text3); font-size:11.5px; }
+.case-post{ display:flex; align-items:center; gap:12px; padding:9px 12px; border:1px solid var(--border); border-radius:9px; margin-bottom:7px; background:var(--bg); }
+.case-post-main{ flex:1; min-width:0; }
+.case-post-title{ font-size:12.5px; font-weight:600; }
+.case-post-meta{ font-size:11px; color:var(--text3); margin-top:2px; }
+.case-post-none{ font-size:12px; color:var(--text3); padding:8px 4px; }
+.award-tag{ font-size:11px; font-weight:700; color:var(--gold); border:1px solid rgba(240,192,96,0.5); border-radius:8px; padding:4px 10px; cursor:pointer; white-space:nowrap; }
+.pick-badge{ cursor:pointer; }
 /* ───────── 수상작 월별 소분류 (가로 보드 컬럼) ───────── */
 .award-month-group{ flex:1 1 260px; min-width:260px; }
 .award-month-label{ font-size:11px; font-weight:700; color:var(--text3); letter-spacing:1px; text-transform:uppercase; padding:6px 2px; border-bottom:1px solid var(--border); margin-bottom:14px; }
@@ -534,10 +546,26 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
 
     <!-- 03 조별우수사례 (준비중) -->
     <div class="page" id="page-cases">
-      <div class="ready-wrap">
-        <div class="ready-icon">📊</div>
-        <div class="ready-title">조별우수사례</div>
-        <div class="ready-desc">조별 우수 지식 사례를 수집·관리하는 페이지입니다.<br>현재 준비 중입니다.</div>
+      <div class="sec-title">조별우수사례<span class="sec-sub" id="caseRoundLabel"></span><span class="sec-sub" id="caseSub" style="margin-left:8px;"></span></div>
+      <div class="toolbar" style="flex-wrap:wrap; gap:8px;">
+        <input type="month" id="caseMonth">
+        <button class="btn secondary" onclick="loadCases(true)">조회</button>
+        <span style="font-size:11.5px; color:var(--text3); margin-left:auto;">조편성 탭에서 "추천"된 인원이 여기에 표시됩니다. 게시물별로 수상작 지정이 가능합니다.</span>
+      </div>
+      <div id="caseList" style="margin-top:14px;"></div>
+    </div>
+
+    <!-- 수상작 지정 모달 -->
+    <div class="modal-bg" id="awardPickModalBg" onclick="if(event.target===this)closeModal('awardPickModalBg')">
+      <div class="modal" style="max-width:340px;">
+        <h3>수상작 지정</h3>
+        <div style="font-size:12px; color:var(--text3); line-height:1.6; margin-bottom:12px;">
+          선정 부문을 선택하세요.<br>노션 '지식왕 선정' 속성에 기록되고, 수상작 관리 탭에 바로 표시됩니다.
+        </div>
+        <div id="awardCatBtns" style="display:flex; flex-direction:column; gap:8px;"></div>
+        <div class="actions" style="margin-top:14px;">
+          <button class="btn secondary" onclick="closeModal('awardPickModalBg')">닫기</button>
+        </div>
       </div>
     </div>
 
@@ -893,7 +921,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       if(btn.dataset.tab==='knowledge') loadKnowledgeList();
       if(btn.dataset.tab==='awards') loadAwards();
       if(btn.dataset.tab==='sync') loadSyncStatus();
-      // 준비중 탭들은 별도 로드 없음 (page-cases, page-groups)
+      if(btn.dataset.tab==='cases') loadCases();
     });
   });
 
@@ -1361,12 +1389,13 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   let _lastGroupYm = '';
   let _groupFilter = 'all';
 
-  async function loadGroups(){
+  async function loadGroups(forceFresh){
     let ym = document.getElementById('groupMonth').value;
     document.getElementById('groupAdminOnly').style.display = _isGroupAdmin() ? 'inline-flex' : 'none';
     await _snapReady;
     // 스냅샷에 담긴 회차와 같으면(또는 월 미선택이면) 즉시 표시
-    if (_snap && _snap.groups && (!ym || _snap.groups.yyyymm === ym)){
+    // 단, 저장 직후 새로고침(forceFresh)일 땐 스냅샷(변경 전 데이터)을 건너뛴다
+    if (!forceFresh && _snap && _snap.groups && (!ym || _snap.groups.yyyymm === ym)){
       if(!ym){ ym = _snap.groups.yyyymm; document.getElementById('groupMonth').value = ym; }
       document.getElementById('groupRoundLabel').textContent = _snap.groups.회차라벨 ? ' · ' + _snap.groups.회차라벨 : '';
       _lastGroupRows = _snap.groups.rows || [];
@@ -1390,7 +1419,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
 
   // 조 변경 후 즉시 반영이 안 되어 보일 때, 수동으로 조번호 순 정렬을 강제 재적용
   function refreshGroupOrder(){
-    loadGroups();
+    loadGroups(true);
   }
 
   function setGroupFilter(filter, el){
@@ -1409,7 +1438,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     const ym = document.getElementById('groupMonth').value || '';
     callApi('generateGroups', { yyyymm: ym }).then(r=>{
       showToast(`조편성 완료: ${r.groupCount}개 조 / ${r.memberCount}명`);
-      loadGroups();
+      loadGroups(true);
     }).catch(_apiCatch);
   }
 
@@ -1455,7 +1484,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
         ? `<span class="leader-crown">👑 조장</span>`
         : (isAdmin ? `<span class="leader-action" onclick="setLeader('${r.직원ID}','${ym}')">변경</span>` : '');
       const pickCell = isPicked
-        ? `<span class="pick-badge">⭐ 추천됨</span>`
+        ? `<span class="pick-badge" title="클릭하면 추천 해제" onclick="unpickCase(event,'${r.직원ID}','${ym}')">⭐ 추천됨</span>`
         : `<span class="pick-action" onclick="pickCase(event,'${r.직원ID}','${ym}')">추천</span>`;
 
       const rowStyle = isAbsent ? 'background:var(--red-dim);' : '';
@@ -1497,20 +1526,35 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   function changeGroupNo(empId, ym, newNo){
     if(!_isGroupAdmin()){ showToast('권한이 없습니다.'); return; }
     callApi('updateGroupAssignment', { 직원ID: empId, 조편성월: ym, 조번호: newNo })
-      .then(()=>{ showToast('조 번호가 변경되었습니다.'); loadGroups(); })
+      .then(()=>{ showToast('조 번호가 변경되었습니다.'); loadGroups(true); })
       .catch(_apiCatch);
   }
   function setLeader(empId, ym){
     if(!_isGroupAdmin()){ showToast('권한이 없습니다.'); return; }
     callApi('updateGroupAssignment', { 직원ID: empId, 조편성월: ym, 조장여부: 'Y' })
-      .then(()=>{ showToast('조장이 변경되었습니다.'); loadGroups(); })
+      .then(()=>{ showToast('조장이 변경되었습니다.'); loadGroups(true); })
       .catch(_apiCatch);
   }
   function pickCase(e, empId, ym){
     e.stopPropagation();
+    // 낙관적 즉시 반영 — 화면 먼저 갱신하고 저장은 뒤에서 (실패 시 새로고침으로 원복)
+    const target = _lastGroupRows.find(r => r.직원ID === empId);
+    if (target){
+      _lastGroupRows.forEach(r => { if(Number(r.조번호) === Number(target.조번호)) r.우수사례 = ''; });
+      target.우수사례 = 'Y';
+      renderGroups();
+    }
     callApi('updateGroupAssignment', { 직원ID: empId, 조편성월: ym, 우수사례: 'Y' })
-      .then(()=>{ showToast('조별우수사례로 추천되었습니다.'); loadGroups(); })
-      .catch(_apiCatch);
+      .then(()=> showToast('⭐ 조별우수사례로 추천되었습니다.'))
+      .catch(err=>{ _apiCatch(err); loadGroups(true); });
+  }
+  function unpickCase(e, empId, ym){
+    e.stopPropagation();
+    const target = _lastGroupRows.find(r => r.직원ID === empId);
+    if (target){ target.우수사례 = ''; renderGroups(); }
+    callApi('updateGroupAssignment', { 직원ID: empId, 조편성월: ym, 우수사례: '' })
+      .then(()=> showToast('추천이 해제되었습니다.'))
+      .catch(err=>{ _apiCatch(err); loadGroups(true); });
   }
   function onAttendanceChange(empId, ym, value){
     if(value === '불참'){
@@ -1520,7 +1564,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       openModal('attendanceModalBg');
     } else {
       callApi('setAttendance', { 직원ID: empId, 조편성월: ym, 참석여부: '참석', 불참사유: '' })
-        .then(()=>{ showToast('참석으로 변경되었습니다.'); loadGroups(); })
+        .then(()=>{ showToast('참석으로 변경되었습니다.'); loadGroups(true); })
         .catch(_apiCatch);
     }
   }
@@ -1529,7 +1573,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     const ym = document.getElementById('attYm').value;
     const reason = document.getElementById('attReason').value;
     callApi('setAttendance', { 직원ID: empId, 조편성월: ym, 참석여부: '불참', 불참사유: reason })
-      .then(()=>{ showToast('불참으로 변경되었습니다.'); closeModal('attendanceModalBg'); loadGroups(); })
+      .then(()=>{ showToast('불참으로 변경되었습니다.'); closeModal('attendanceModalBg'); loadGroups(true); })
       .catch(_apiCatch);
   }
   function showLeaderCriteria(){ openModal('leaderCriteriaModalBg'); }
@@ -1696,6 +1740,81 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
         ${notionUrl ? `<span style="font-size:10px; color:var(--cyan);">열기 ↗</span>` : ''}
       </div>
     </div>`;
+  }
+
+  /* ⑤-2 조별우수사례 — 추천 인원 + 해당 월 게시물 + 수상작 지정 */
+  async function loadCases(forceFresh){
+    let ym = document.getElementById('caseMonth').value;
+    await _snapReady;
+    if (!forceFresh && _snap && _snap.cases && (!ym || _snap.cases.yyyymm === ym)){
+      if(!ym){ ym = _snap.cases.yyyymm; document.getElementById('caseMonth').value = ym; }
+      renderCases(_snap.cases);
+    }
+    if(!ym){
+      try{
+        const r = await callApi('getNextRosterRound');
+        ym = r.yyyymm;
+        document.getElementById('caseMonth').value = ym;
+      } catch(e){}
+    }
+    callApi('getGroupCases', { yyyymm: ym }).then(renderCases).catch(_apiCatch);
+  }
+
+  function renderCases(data){
+    document.getElementById('caseRoundLabel').textContent = data.회차라벨 ? ' · ' + data.회차라벨 : '';
+    const wrap = document.getElementById('caseList');
+    const cases = data.cases || [];
+    document.getElementById('caseSub').textContent = cases.length ? cases.length + '명 추천됨' : '';
+    if(!cases.length){
+      wrap.innerHTML = '<div class="empty">이 회차에 추천된 조별우수사례가 없습니다.<br>조편성 탭에서 "추천"을 누르면 여기에 표시됩니다.</div>';
+      return;
+    }
+    wrap.innerHTML = cases.map(c => {
+      const posts = c.posts || [];
+      const postHtml = posts.length ? posts.map(p => {
+        const pid = (p.NotionPageId||'').replace(/-/g,'');
+        const url = pid ? `https://app.notion.com/p/${pid}` : '';
+        const awarded = p.지식왕선정 && String(p.지식왕선정).trim() !== '';
+        return `<div class="case-post">
+          <div class="case-post-main" ${url?`onclick="window.open('${url}','_blank')" style="cursor:pointer;"`:''}>
+            <div class="case-post-title">${p.주제||'(제목 없음)'}</div>
+            <div class="case-post-meta">${formatDate(p.등록일)}${p.지식툴 ? ' · ' + p.지식툴 : ''}</div>
+          </div>
+          ${awarded
+            ? `<span class="award-tag" title="클릭해서 변경/해제" onclick="openAwardModal('${p.NotionPageId}', this.dataset.cat)" data-cat="${p.지식왕선정}">🏆 ${p.지식왕선정}</span>`
+            : `<button class="btn secondary" style="padding:6px 12px; font-size:11.5px;" onclick="openAwardModal('${p.NotionPageId}','')">수상작 지정</button>`}
+        </div>`;
+      }).join('') : `<div class="case-post-none">해당 월에 등록된 게시물이 없습니다. (게시물 등록 후 수상작 지정 가능)</div>`;
+      return `<div class="case-card">
+        <div class="case-head">
+          <span class="case-groupno">${c.조번호}조</span>
+          ${coTag(c.회사)}<b>${c.이름}</b><span class="case-dept">${c.부서||''}${c.근무지 ? ' · ' + c.근무지 : ''}</span>
+        </div>
+        ${postHtml}
+      </div>`;
+    }).join('');
+  }
+
+  const AWARD_CATEGORIES = ['👑 이달의 지식왕 👑', '부문별 우수 지식상', '우수 기여자', '전사추천'];
+  let _awardTargetPageId = null;
+  function openAwardModal(pageId, current){
+    _awardTargetPageId = pageId;
+    current = current || '';
+    const box = document.getElementById('awardCatBtns');
+    box.innerHTML = AWARD_CATEGORIES.map(c =>
+      `<button class="btn ${c===current ? '' : 'secondary'}" onclick="applyAward(this.dataset.cat)" data-cat="${c}">${c}</button>`
+    ).join('') + (current
+      ? `<button class="btn secondary" style="color:var(--red);" onclick="applyAward('')">🗑 지정 해제</button>` : '');
+    openModal('awardPickModalBg');
+  }
+  function applyAward(category){
+    closeModal('awardPickModalBg');
+    callApi('setKnowledgeAward', { pageId: _awardTargetPageId, category: category || '' })
+      .then(()=>{
+        showToast(category ? '🏆 수상작으로 지정되었습니다. 수상작 관리 탭에 표시됩니다.' : '수상작 지정이 해제되었습니다.');
+        loadCases(true);
+      })
+      .catch(_apiCatch);
   }
 
   async function loadAwards(){

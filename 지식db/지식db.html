@@ -1708,16 +1708,69 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     employeeCache = list;
     const body = document.getElementById('employeeBody');
     if(!list.length){ body.innerHTML = '<tr><td colspan="12" class="empty">등록된 직원이 없습니다.</td></tr>'; return; }
-    body.innerHTML = list.map(e => `
+    const curYm = currentYYYYMM();
+    body.innerHTML = list.map(e => {
+      const dispStatus = _displayStatus_(e, curYm); // 저장된 텍스트가 아니라 오늘 기준 실제 상태
+      return `
       <tr>
         <td>${e.이름}</td><td>${coTag(e.회사)}</td><td>${e.부서||''}</td><td>${e.근무지||''}</td><td>${formatDate(e.입사일)}</td>
         <td>${e.퇴사일?formatDate(e.퇴사일):''}</td>
         <td>${e.휴직시작?formatDate(e.휴직시작):''}</td><td>${e.휴직종료?formatDate(e.휴직종료):''}</td>
-        <td><span class="badge ${e.상태}">${e.상태}</span></td><td>${e.비고||''}</td>
+        <td><span class="badge ${dispStatus}">${dispStatus}</span></td><td>${e.비고||''}</td>
         <td><button class="btn small secondary" onclick='openEmployeeModal(${JSON.stringify(e)})'>수정</button></td>
         <td><button class="btn small secondary" onclick="openStatusModal('${e.직원ID}')">상태변경</button></td>
-      </tr>
-    `).join('');
+      </tr>`;
+    }).join('');
+  }
+
+  /* [표시 전용] 저장된 '상태' 텍스트 그대로 대신, 오늘 기준으로 실제 재직/휴직/퇴사 여부를
+   * 계산해서 보여준다. GAS의 _effectiveStatus_ / _firstForumMonth_와 동일한 규칙 —
+   * 휴직종료일도 입사일과 똑같이 "그 달 지식포럼일(마지막주 화요일) 기준"으로 판정한다.
+   * ⚠️ 서버 계산값을 대체하는 게 아니라 화면 배지 표시만 담당 — 할당량 계산 등 실제
+   * 업무 로직은 항상 GAS _effectiveStatus_가 기준이며 여기선 그 규칙을 그대로 재현만 함. */
+  function _lastTuesdayOfMonthJs_(year, monthIdx0){
+    const lastDay = new Date(year, monthIdx0+1, 0);
+    const dow = lastDay.getDay();
+    const diff = (dow - 2 + 7) % 7;
+    const d = new Date(lastDay);
+    d.setDate(lastDay.getDate() - diff);
+    return d;
+  }
+  function _ymJs_(dateVal){
+    if(!dateVal) return '';
+    const d = new Date(dateVal);
+    if(isNaN(d.getTime())) return '';
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  }
+  function _addMonthsJs_(ym, n){
+    const [y,m] = ym.split('-').map(Number);
+    const d = new Date(y, m-1+n, 1);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  }
+  function _firstNormalMonthJs_(dateRaw){
+    const d = new Date(dateRaw);
+    if(isNaN(d.getTime())) return null;
+    const y=d.getFullYear(), m0=d.getMonth();
+    const forumDate = _lastTuesdayOfMonthJs_(y,m0);
+    const base = (d <= forumDate) ? new Date(y,m0,1) : new Date(y,m0+1,1);
+    return base.getFullYear() + '-' + String(base.getMonth()+1).padStart(2,'0');
+  }
+  function _displayStatus_(emp, yyyymm){
+    const raw = (emp.상태||'').toString().trim();
+    if(raw === '열외') return '열외';
+    if(emp.퇴사일 && String(emp.퇴사일).trim() !== '') return '퇴사';
+    if(emp.휴직시작 && String(emp.휴직시작).trim() !== ''){
+      const startYm = _ymJs_(emp.휴직시작);
+      let leaveEndYm;
+      if(emp.휴직종료 && String(emp.휴직종료).trim() !== ''){
+        const firstNormal = _firstNormalMonthJs_(emp.휴직종료);
+        leaveEndYm = firstNormal ? _addMonthsJs_(firstNormal, -1) : _ymJs_(emp.휴직종료);
+      } else {
+        leaveEndYm = '9999-12';
+      }
+      if(startYm && yyyymm >= startYm && yyyymm <= leaveEndYm) return '휴직';
+    }
+    return '재직';
   }
   function openEmployeeModal(emp){
     document.getElementById('employeeModalTitle').textContent = emp ? '직원 정보 수정' : '직원 추가';

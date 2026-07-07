@@ -585,9 +585,13 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
         <span id="groupSummary" style="font-size:11.5px; color:var(--text3); margin-left:auto;"></span>
       </div>
 
-      <div class="tabbar" style="margin-bottom:12px;">
-        <div class="tab-item active" data-groupfilter="all" onclick="setGroupFilter('all', this)">전체</div>
-        <div class="tab-item" data-groupfilter="absent" onclick="setGroupFilter('absent', this)">🚫 불참자 명단</div>
+      <div class="tabbar" style="margin-bottom:12px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+        <div style="display:flex; gap:0;">
+          <div class="tab-item active" data-groupfilter="all" onclick="setGroupFilter('all', this)">전체</div>
+          <div class="tab-item" data-groupfilter="absent" onclick="setGroupFilter('absent', this)">🚫 불참자 명단</div>
+        </div>
+        <button class="btn secondary" style="font-size:11.5px; padding:6px 12px;" onclick="openLocationAddModal()">+ 장소 추가</button>
+        <div id="locationChipList" style="display:flex; gap:6px; flex-wrap:wrap; font-size:11px; color:var(--text3);"></div>
       </div>
 
       <div class="panel">
@@ -595,11 +599,26 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
         <table class="sticky-thead-table group-table">
           <thead><tr>
             <th style="width:64px;">참석</th><th style="width:64px;">조장</th><th style="width:52px;">조번호</th>
+            <th style="width:120px;">장소</th>
             <th>그룹사</th><th>팀/부서</th><th>이름</th><th>근무지</th><th style="width:52px;">상태</th>
             <th>불참사유</th><th style="width:96px;">조별우수사례</th>
           </tr></thead>
           <tbody id="groupBody"></tbody>
         </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 장소 추가/수정 팝업 -->
+    <div class="modal-bg" id="locationAddModalBg" onclick="if(event.target===this)closeModal('locationAddModalBg')">
+      <div class="modal" style="max-width:340px;">
+        <h3 id="locationModalTitle">장소 추가</h3>
+        <div class="field"><label>장소명</label><input type="text" id="locationName" placeholder="예: 2층식당"></div>
+        <div class="field"><label>수용가능 조 숫자</label><input type="number" id="locationCapacity" min="1" value="1"></div>
+        <div class="actions">
+          <button class="btn secondary" id="locationDeleteBtn" style="display:none; color:var(--red);" onclick="deleteLocationConfirm()">삭제</button>
+          <button class="btn secondary" onclick="closeModal('locationAddModalBg')">취소</button>
+          <button class="btn" onclick="saveLocation()">저장</button>
         </div>
       </div>
     </div>
@@ -1398,6 +1417,8 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
   let _lastGroupYm = '';
   let _groupFilter = 'all';
 
+  let _groupLocations = []; // [{장소, 수용가능조수}]
+
   async function loadGroups(forceFresh){
     let ym = document.getElementById('groupMonth').value;
     document.getElementById('groupAdminOnly').style.display = _isGroupAdmin() ? 'inline-flex' : 'none';
@@ -1409,6 +1430,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       document.getElementById('groupRoundLabel').textContent = _snap.groups.회차라벨 ? ' · ' + _snap.groups.회차라벨 : '';
       _lastGroupRows = _snap.groups.rows || [];
       _lastGroupYm = ym;
+      if (_snap.groupLocations) { _groupLocations = _snap.groupLocations; renderLocationChips(); }
       renderGroups();
     }
     if(!ym){
@@ -1424,6 +1446,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       _lastGroupYm = ym;
       renderGroups();
     }).catch(_apiCatch);
+    callApi('getGroupLocations').then(list=>{ _groupLocations = list || []; renderLocationChips(); }).catch(()=>{});
   }
 
   // 조 변경 후 즉시 반영이 안 되어 보일 때, 수동으로 조번호 순 정렬을 강제 재적용
@@ -1446,8 +1469,47 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     closeModal('genGroupConfirmModalBg');
     const ym = document.getElementById('groupMonth').value || '';
     callApi('generateGroups', { yyyymm: ym }).then(r=>{
-      showToast(`조편성 완료: ${r.groupCount}개 조 / ${r.memberCount}명`);
+      const warn = r.unassignedRoomCount ? ` (⚠️ 장소 부족으로 ${r.unassignedRoomCount}개 조 미배정 — 장소를 추가해주세요)` : '';
+      showToast(`조편성 완료: ${r.groupCount}개 조 / ${r.memberCount}명${warn}`);
       loadGroups(true);
+    }).catch(_apiCatch);
+  }
+
+  /* ---- 조편성 장소 관리 ---- */
+  function renderLocationChips(){
+    const box = document.getElementById('locationChipList');
+    if (!box) return;
+    if (!_groupLocations.length) { box.innerHTML = '<span style="opacity:.6;">등록된 장소 없음</span>'; return; }
+    box.innerHTML = _groupLocations.map(l =>
+      `<span class="badge" style="cursor:pointer;" onclick="openLocationAddModal('${l.장소}', ${Number(l.수용가능조수)||1})">${l.장소}(${l.수용가능조수})</span>`
+    ).join('');
+  }
+  let _editingLocationName = null;
+  function openLocationAddModal(name, capacity){
+    _editingLocationName = name || null;
+    document.getElementById('locationModalTitle').textContent = name ? '장소 수정' : '장소 추가';
+    document.getElementById('locationName').value = name || '';
+    document.getElementById('locationName').disabled = !!name; // 이름은 수정 시 고정(용량만 변경)
+    document.getElementById('locationCapacity').value = capacity || 1;
+    document.getElementById('locationDeleteBtn').style.display = name ? 'inline-flex' : 'none';
+    openModal('locationAddModalBg');
+  }
+  function saveLocation(){
+    const name = document.getElementById('locationName').value.trim();
+    const capacity = Number(document.getElementById('locationCapacity').value) || 1;
+    if (!name) { showToast('장소명을 입력해주세요.'); return; }
+    callApi('upsertGroupLocation', { 장소: name, 수용가능조수: capacity }).then(()=>{
+      showToast('장소가 저장되었습니다.');
+      closeModal('locationAddModalBg');
+      callApi('getGroupLocations').then(list=>{ _groupLocations = list || []; renderLocationChips(); });
+    }).catch(_apiCatch);
+  }
+  function deleteLocationConfirm(){
+    if (!_editingLocationName) return;
+    callApi('deleteGroupLocation', { 장소: _editingLocationName }).then(()=>{
+      showToast('장소가 삭제되었습니다.');
+      closeModal('locationAddModalBg');
+      callApi('getGroupLocations').then(list=>{ _groupLocations = list || []; renderLocationChips(); });
     }).catch(_apiCatch);
   }
 
@@ -1459,7 +1521,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       ? `${new Set(rows.map(r=>r.조번호)).size}개 조 · ${rows.length}명` : '';
 
     if(!rows.length){
-      body.innerHTML = '<tr><td colspan="10" class="empty">편성된 조가 없습니다. 관리자에게 자동 조편성 생성을 요청해주세요.</td></tr>';
+      body.innerHTML = '<tr><td colspan="11" class="empty">편성된 조가 없습니다. 관리자에게 자동 조편성 생성을 요청해주세요.</td></tr>';
       return;
     }
 
@@ -1469,7 +1531,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       ? filtered0.filter(r => [r.이름, r.회사, r.부서, r.근무지].some(v => (v||'').toString().toLowerCase().includes(q)))
       : filtered0;
     if(!filtered.length){
-      body.innerHTML = `<tr><td colspan="10" class="empty">${q ? '검색 결과가 없습니다.' : '불참자가 없습니다 🎉'}</td></tr>`;
+      body.innerHTML = `<tr><td colspan="11" class="empty">${q ? '검색 결과가 없습니다.' : '불참자가 없습니다 🎉'}</td></tr>`;
       return;
     }
 
@@ -1485,7 +1547,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
         curGroup = Number(r.조번호);
         const memberCount = (q ? filtered : rows).filter(x=>Number(x.조번호)===curGroup).length;
         const totalInGroup = rows.filter(x=>Number(x.조번호)===curGroup).length;
-        html += `<tr class="group-header-row"><td colspan="10">${curGroup}조 · ${q ? memberCount + '/' + totalInGroup + '명 (검색결과)' : memberCount + '명'}</td></tr>`;
+        html += `<tr class="group-header-row"><td colspan="11">${curGroup}조 · ${q ? memberCount + '/' + totalInGroup + '명 (검색결과)' : memberCount + '명'}</td></tr>`;
       }
 
       const isLeader = r.조장여부 === 'Y';
@@ -1494,6 +1556,15 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       const groupNoCell = isAdmin
         ? `<select onchange="changeGroupNo('${r.직원ID}','${ym}', this.value)">${groupNos.map(n=>`<option value="${n}" ${Number(r.조번호)===n?'selected':''}>${n}조</option>`).join('')}</select>`
         : `${r.조번호}조`;
+      // 장소 드롭다운 — 관리 목록(_groupLocations) + 지금 이 조에 이미 배정된 값(특별조 전용 방처럼
+      // 관리 목록에 없을 수도 있음)을 합쳐서 옵션으로 보여준다. 변경하면 같은 조 전체에 반영됨.
+      const roomOptions = [...new Set([...(r.장소?[r.장소]:[]), ..._groupLocations.map(l=>l.장소)])];
+      const roomCell = isAdmin
+        ? `<select onchange="changeGroupRoom('${r.직원ID}','${ym}', this.value)">
+             <option value="">(미배정)</option>
+             ${roomOptions.map(name=>`<option value="${name}" ${r.장소===name?'selected':''}>${name}</option>`).join('')}
+           </select>`
+        : (r.장소 || '-');
       const leaderCell = isLeader
         ? `<span class="leader-crown">👑 조장</span>`
         : (isAdmin ? `<span class="leader-action" onclick="setLeader('${r.직원ID}','${ym}')">변경</span>` : '');
@@ -1512,6 +1583,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
         </td>
         <td>${leaderCell}</td>
         <td>${groupNoCell}</td>
+        <td>${roomCell}</td>
         <td>${coTag(r.회사)}</td>
         <td>${r.부서||''}</td>
         <td style="${isLeader?'font-weight:700; color:var(--gold);':''}">${isLeader?'👑 ':''}${r.이름}</td>
@@ -1543,6 +1615,12 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
       .then(()=>{ showToast('조 번호가 변경되었습니다.'); loadGroups(true); })
       .catch(_apiCatch);
   }
+  function changeGroupRoom(empId, ym, newRoom){
+    if(!_isGroupAdmin()){ showToast('권한이 없습니다.'); return; }
+    callApi('updateGroupAssignment', { 직원ID: empId, 조편성월: ym, 장소: newRoom })
+      .then(()=>{ showToast('장소가 변경되었습니다. (같은 조 전체에 반영)'); loadGroups(true); })
+      .catch(_apiCatch);
+  }
   function setLeader(empId, ym){
     if(!_isGroupAdmin()){ showToast('권한이 없습니다.'); return; }
     callApi('updateGroupAssignment', { 직원ID: empId, 조편성월: ym, 조장여부: 'Y' })
@@ -1568,13 +1646,15 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     groupNos.forEach(no => {
       const members = rows.filter(r => Number(r.조번호) === no)
         .sort((a,b)=> (b.조장여부==='Y')-(a.조장여부==='Y') || String(a.이름).localeCompare(String(b.이름),'ko'));
-      bodyRows += `<tr class="grp"><td colspan="8">${no}조 · ${members.length}명</td></tr>`;
+      const room = members.length ? (members[0].장소 || '') : '';
+      bodyRows += `<tr class="grp"><td colspan="9">${no}조${room?' · '+esc(room):''} · ${members.length}명</td></tr>`;
       members.forEach(r => {
         const isLeader = r.조장여부 === 'Y';
         const isAbsent = r.참석여부 === '불참';
         const isPicked = r.우수사례 === 'Y';
         bodyRows += `<tr class="${isAbsent?'absent':''}">
           <td>${no}조</td>
+          <td>${esc(r.장소||'')}</td>
           <td>${esc(r.회사)}</td>
           <td>${esc(r.부서)}</td>
           <td>${isLeader ? '👑 ' : ''}${esc(r.이름)}</td>
@@ -1607,7 +1687,7 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     <h1>조편성 명단 — ${esc(ym)}${roundLabel?' · '+esc(roundLabel):''}</h1>
     <div class="meta">총 ${groupNos.length}개 조 · ${rows.length}명 · 이 문서는 ${esc(now)} 기준으로 고정 출력되었습니다 (이후 변경사항은 반영되지 않음)</div>
     <table>
-      <thead><tr><th>조</th><th>그룹사</th><th>팀/부서</th><th>이름</th><th>근무지</th><th>상태</th><th>참석여부</th><th>우수사례</th></tr></thead>
+      <thead><tr><th>조</th><th>장소</th><th>그룹사</th><th>팀/부서</th><th>이름</th><th>근무지</th><th>상태</th><th>참석여부</th><th>우수사례</th></tr></thead>
       <tbody>${bodyRows}</tbody>
     </table>
     <div class="footer">그룹 지식DB 운영 시스템 · 조편성 출력본</div>

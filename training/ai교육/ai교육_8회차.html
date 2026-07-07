@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI 교육 8회차 · AI와 첫 업무툴 만들기</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#070d1a;--bg2:#0c1628;--bg3:#111e35;--bg4:#172240;
+  --border:rgba(80,140,255,0.12);--border2:rgba(80,140,255,0.25);
+  --blue:#4a8fff;--blue-dim:rgba(74,143,255,0.10);
+  --cyan:#00d4ff;--green:#00e5a0;--red:#ff5a5a;
+  --orange:#ffaa40;--gold:#f0c060;--purple:#a07aff;--teal:#00c8a0;
+  --text:#e4eeff;--text2:#8aaad0;--text3:#4a6a90;
+  --radius:14px;
+}
+body.light-mode{
+  --bg:#f0f4fa;--bg2:#ffffff;--bg3:#e8f0fb;--bg4:#dce8f7;
+  --border:rgba(26,78,180,0.12);--border2:rgba(26,78,180,0.28);
+  --blue:#1a5fd4;--blue-dim:rgba(26,95,212,0.08);
+  --cyan:#0090b8;--green:#007a50;--red:#c02020;--orange:#b06010;
+  --gold:#8a6000;--purple:#5030b0;--teal:#007a62;
+  --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6090;
+}
+body.light-mode .hero-glow{background:radial-gradient(ellipse,rgba(26,95,212,0.07) 0%,transparent 65%);}
+body.light-mode .hero-glow2{background:radial-gradient(ellipse,rgba(0,144,184,0.05) 0%,transparent 65%);}
+body.light-mode #summary::before{background:radial-gradient(ellipse at 50% 0%,rgba(26,95,212,0.06) 0%,transparent 60%);}
+body.light-mode textarea,body.light-mode .chat-input{background:var(--bg3);color:var(--text);border-color:var(--border2);}
+body.light-mode .preview-bar{background:var(--bg4);}
+
+html,body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo',sans-serif;font-size:14px;line-height:1.6;overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+.wrap{max-width:860px;margin:0 auto;padding:0 24px;}
+
+/* ══ 네비게이션 ══ */
+.nav-prev,.nav-next{
+  position:fixed;top:50%;transform:translateY(-50%);
+  width:44px;height:80px;display:flex;align-items:center;justify-content:center;
+  background:var(--bg2);border:1px solid var(--border2);cursor:pointer;z-index:999;
+  transition:background 0.15s,border-color 0.2s,box-shadow 0.2s;
+  font-size:18px;color:var(--text2);user-select:none;
+}
+.nav-prev{left:0;border-radius:0 10px 10px 0;border-left:none;}
+.nav-next{right:0;border-radius:10px 0 0 10px;border-right:none;}
+.nav-prev:hover,.nav-next:hover{background:var(--bg3);border-color:var(--blue);color:var(--blue);box-shadow:0 4px 20px rgba(74,143,255,0.15);}
+.nav-prev.disabled{opacity:0.2;cursor:default;pointer-events:none;}
+.nav-prev .nav-tooltip,.nav-next .nav-tooltip{
+  position:absolute;background:var(--bg4);border:1px solid var(--border2);
+  border-radius:8px;padding:6px 10px;font-size:10px;color:var(--text2);
+  white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.15s;line-height:1.5;
+}
+.nav-prev .nav-tooltip{left:52px;top:50%;transform:translateY(-50%);}
+.nav-next .nav-tooltip{right:52px;top:50%;transform:translateY(-50%);}
+.nav-prev:hover .nav-tooltip,.nav-next:hover .nav-tooltip{opacity:1;}
+.nav-tooltip-round{display:block;font-weight:700;color:var(--text);}
+
+/* ══ 히어로 ══ */
+#hero{
+  position:relative;
+  background:linear-gradient(160deg,var(--bg) 0%,var(--bg2) 55%,var(--bg) 100%);
+  border-bottom:1px solid var(--border);padding:44px 0 38px;overflow:hidden;
+}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:44px 44px;}
+.hero-glow{position:absolute;top:-80px;right:-40px;width:440px;height:320px;background:radial-gradient(ellipse,rgba(0,229,160,0.08) 0%,transparent 65%);pointer-events:none;}
+.hero-glow2{position:absolute;bottom:-60px;left:10%;width:340px;height:220px;background:radial-gradient(ellipse,rgba(74,143,255,0.05) 0%,transparent 65%);pointer-events:none;}
+.hero-inner{position:relative;z-index:1;}
+.hero-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.hero-eyebrow{font-size:11px;font-weight:700;color:var(--green);letter-spacing:2.5px;text-transform:uppercase;}
+.hero-title{font-size:clamp(24px,4vw,36px);font-weight:800;line-height:1.2;margin-bottom:8px;letter-spacing:-0.5px;color:var(--text);}
+.hero-sub{font-size:14px;color:var(--text2);margin-bottom:18px;}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-green{background:rgba(0,229,160,0.10);color:var(--green);border:1px solid rgba(0,229,160,0.25);}
+.badge-blue {background:var(--blue-dim);color:var(--blue);border:1px solid var(--border2);}
+.badge-gold {background:rgba(240,192,96,0.10);color:var(--gold);border:1px solid rgba(240,192,96,0.25);}
+.badge-teal {background:rgba(0,200,160,0.10);color:var(--teal);border:1px solid rgba(0,200,160,0.25);}
+
+/* 스텝 배지 */
+.step-pills{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.step-pill{
+  padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;
+  border:1px solid var(--border);color:var(--text3);background:var(--bg3);
+  transition:all 0.2s;cursor:default;
+}
+.step-pill.active{background:var(--blue-dim);color:var(--blue);border-color:var(--border2);}
+.step-pill.done{background:rgba(0,229,160,0.08);color:var(--green);border-color:rgba(0,229,160,0.25);}
+.step-sep{color:var(--text3);font-size:12px;}
+
+/* ══ 공통 섹션 ══ */
+.sec{padding:36px 0 0;}
+.step-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;
+}
+.step-head{
+  padding:16px 22px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+}
+.step-num{
+  width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;flex-shrink:0;
+}
+.sn-1{background:rgba(0,229,160,0.15);color:var(--green);border:1px solid rgba(0,229,160,0.35);}
+.sn-2{background:rgba(74,143,255,0.15);color:var(--blue);border:1px solid rgba(74,143,255,0.35);}
+.sn-3{background:rgba(240,192,96,0.15);color:var(--gold);border:1px solid rgba(240,192,96,0.35);}
+.step-head-title{font-size:15px;font-weight:700;color:var(--text);}
+.step-head-sub{font-size:11px;color:var(--text3);margin-left:2px;}
+.step-body{padding:22px;}
+
+/* ══ STEP 1 입력창 ══ */
+.input-group{margin-bottom:16px;}
+.input-label{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:7px;display:flex;align-items:center;gap:6px;}
+.input-label .req{color:var(--green);font-size:10px;}
+.input-label .opt{color:var(--text3);font-size:10px;}
+textarea{
+  width:100%;background:var(--bg3);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;color:var(--text);font-family:inherit;
+  font-size:13px;resize:vertical;outline:none;min-height:72px;
+  transition:border-color 0.15s;line-height:1.6;
+}
+textarea:focus{border-color:var(--border2);}
+textarea::placeholder{color:var(--text3);font-size:12px;}
+
+/* 복사 버튼 */
+.copy-btn{
+  width:100%;padding:14px;border-radius:10px;border:none;cursor:pointer;
+  font-family:inherit;font-size:14px;font-weight:700;
+  background:linear-gradient(135deg,var(--green),rgba(0,200,160,0.8));
+  color:#051a10;transition:opacity 0.15s,transform 0.1s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-top:4px;
+}
+.copy-btn:hover{opacity:0.88;transform:translateY(-1px);}
+.copy-btn:active{transform:translateY(0);}
+.copy-btn.copied{background:linear-gradient(135deg,#00b37a,#008a5f);color:#fff;}
+.copy-hint{font-size:11px;color:var(--text3);text-align:center;margin-top:8px;}
+
+/* ══ STEP 2 GPT 채팅 ══ */
+.chat-window{
+  background:var(--bg3);border:1px solid var(--border);border-radius:12px;
+  padding:16px;display:flex;flex-direction:column;gap:10px;min-height:120px;
+}
+.chat-bubble{padding:10px 14px;border-radius:12px;font-size:12.5px;max-width:85%;line-height:1.6;}
+.cb-user{
+  align-self:flex-end;
+  background:var(--blue-dim);border:1px solid var(--border2);
+  border-radius:12px 12px 4px 12px;color:var(--text);
+}
+.cb-gpt{
+  align-self:flex-start;
+  background:var(--bg4);border:1px solid var(--border);border-left:2px solid var(--teal);
+  border-radius:12px 12px 12px 4px;color:var(--text2);
+}
+.cb-name{font-size:9.5px;font-weight:700;margin-bottom:3px;}
+.cn-user{color:var(--blue);text-align:right;}
+.cn-gpt{color:var(--teal);}
+
+/* 강조 문구 */
+.emphasis-box{
+  background:linear-gradient(135deg,rgba(0,229,160,0.07),rgba(74,143,255,0.05));
+  border:1px solid rgba(0,229,160,0.2);border-radius:10px;
+  padding:14px 18px;text-align:center;margin:16px 0;
+  font-size:13.5px;font-weight:700;color:var(--text);line-height:1.6;
+}
+
+/* 결과물 미리보기 */
+.preview-browser{
+  background:var(--bg3);border:1px solid var(--border2);border-radius:10px;overflow:hidden;
+}
+.preview-bar{
+  background:var(--bg4);padding:7px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:5px;
+}
+.preview-dot{width:8px;height:8px;border-radius:50%;}
+.preview-url{flex:1;font-size:9px;color:var(--text3);font-family:monospace;background:var(--bg3);padding:2px 8px;border-radius:4px;margin-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.preview-frame-wrap{position:relative;width:100%;padding-top:56%;overflow:hidden;background:var(--bg3);}
+.preview-frame{
+  position:absolute;top:0;left:0;width:200%;height:200%;
+  transform:scale(0.5);transform-origin:top left;border:none;
+  opacity:0;transition:opacity 0.4s;
+}
+.preview-frame.loaded{opacity:1;}
+.preview-placeholder{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px;
+}
+.preview-placeholder-icon{font-size:28px;}
+.preview-placeholder-text{font-size:11px;color:var(--text3);}
+.preview-open-btn{
+  display:block;text-align:center;padding:10px;
+  border-top:1px solid var(--border);font-size:12px;font-weight:700;
+  color:var(--cyan);cursor:pointer;text-decoration:none;
+  transition:background 0.15s;
+}
+.preview-open-btn:hover{background:var(--bg4);}
+
+/* ══ STEP 3 카드 ══ */
+.step3-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.fix-card,.add-card{
+  background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;
+}
+.card-title{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.hint-box{
+  background:var(--bg4);border:1px solid var(--border);border-radius:8px;
+  padding:10px 12px;font-size:11.5px;color:var(--text2);margin-bottom:10px;line-height:1.6;
+}
+.hint-box .hint-label{font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px;}
+.copy-btn-sm{
+  width:100%;padding:9px;border-radius:8px;border:none;cursor:pointer;
+  font-family:inherit;font-size:12px;font-weight:700;
+  background:rgba(0,229,160,0.12);color:var(--green);
+  border:1px solid rgba(0,229,160,0.25);
+  transition:background 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;
+  margin-bottom:6px;
+}
+.copy-btn-sm:hover{background:rgba(0,229,160,0.2);}
+.copy-btn-sm.copied{background:rgba(0,229,160,0.25);color:#fff;}
+
+.add-btn{
+  width:100%;padding:9px;border-radius:8px;border:none;cursor:pointer;
+  font-family:inherit;font-size:11.5px;font-weight:600;
+  background:var(--bg4);color:var(--text2);
+  border:1px solid var(--border);
+  transition:all 0.15s;display:flex;align-items:center;gap:7px;
+  margin-bottom:6px;text-align:left;
+}
+.add-btn:hover{border-color:var(--border2);color:var(--text);}
+.add-btn:last-child{margin-bottom:0;}
+.add-btn.copied{background:rgba(74,143,255,0.1);border-color:var(--border2);color:var(--blue);}
+
+/* ══ 마지막 요약 ══ */
+#summary{
+  margin:36px 0 0;padding:30px;
+  background:linear-gradient(135deg,var(--bg2) 0%,var(--bg4) 100%);
+  border:1px solid var(--border2);border-radius:var(--radius);
+  position:relative;overflow:hidden;
+}
+#summary::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(0,229,160,0.07) 0%,transparent 60%);}
+.summary-inner{position:relative;z-index:1;}
+.learn-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+.learn-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;border-radius:9px;font-size:12.5px;
+}
+.li-bad{background:rgba(255,90,90,0.07);border:1px solid rgba(255,90,90,0.15);color:var(--text2);}
+.li-good{background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.15);color:var(--text2);}
+.li-icon{font-size:16px;flex-shrink:0;}
+.li-arrow{font-size:16px;color:var(--border2);text-align:center;}
+.summary-quote{font-size:clamp(12px,1.8vw,14px);font-weight:700;line-height:1.7;color:var(--text);text-align:center;margin-top:16px;}
+.summary-author{font-size:11px;color:var(--text3);text-align:center;margin-top:10px;}
+
+.sec-bottom{height:48px;}
+
+@media(max-width:640px){
+  .step3-grid{grid-template-columns:1fr;}
+  #summary{padding:20px 16px;}
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.anim{animation:fadeUp 0.4s ease both;}
+.d1{animation-delay:0.05s;}.d2{animation-delay:0.10s;}.d3{animation-delay:0.15s;}
+.d4{animation-delay:0.20s;}.d5{animation-delay:0.25s;}
+</style>
+</head>
+<body>
+
+<div class="nav-prev" id="navPrev" onclick="navGo('prev')">
+  ‹
+  <div class="nav-tooltip">
+    <span class="nav-tooltip-round">7회차</span>
+    GPT로도 만들 수 있다
+  </div>
+</div>
+<div class="nav-next" id="navNext" onclick="navGo('next')">
+  ›
+  <div class="nav-tooltip">
+    <span class="nav-tooltip-round">다음 회차</span>
+    준비 중
+  </div>
+</div>
+
+<!-- 히어로 -->
+<div id="hero">
+  <div class="hero-grid"></div><div class="hero-glow"></div><div class="hero-glow2"></div>
+  <div class="wrap hero-inner anim d1">
+    <div class="hero-top">
+      <div class="hero-eyebrow">AI 교육 8회차</div>
+      <div class="badge badge-green">🛠 실습</div>
+      <div class="badge badge-gold">⏱ 10분</div>
+    </div>
+    <div class="hero-title">AI와 첫 업무툴 만들기</div>
+    <div class="hero-sub">프롬프트를 몰라도 괜찮아요. 불편한 점을 말하면 됩니다.</div>
+    <div class="step-pills">
+      <div class="step-pill active" id="pill-1">① 말하기</div>
+      <div class="step-sep">→</div>
+      <div class="step-pill" id="pill-2">② GPT에 보내기</div>
+      <div class="step-sep">→</div>
+      <div class="step-pill" id="pill-3">③ 고치기</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- STEP 1 -->
+<div class="sec anim d2">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-1">1</div>
+      <div>
+        <div class="step-head-title">무엇을 만들고 싶은지만 적어보세요</div>
+        <div class="step-head-sub">어떻게 말해도 괜찮아요 — 평소 말하는 그대로</div>
+      </div>
+    </div>
+    <div class="step-body">
+
+      <div class="input-group">
+        <div class="input-label">
+          🤔 어떤 프로그램을 만들고 싶나요?
+          <span class="req">필수</span>
+        </div>
+        <textarea id="inp-what" rows="3" placeholder="예)
+이미지를 PDF로 변환하는 프로그램이요.
+회사에서 문서 정리할 때 쓰고 싶어요.
+파일 여러 개를 한 번에 넣고 싶어요."></textarea>
+      </div>
+
+      <div class="input-group">
+        <div class="input-label">
+          ⚙ 이런 기능이 있으면 좋겠어요
+          <span class="opt">선택</span>
+        </div>
+        <textarea id="inp-feature" rows="3" placeholder="예)
+드래그 업로드
+파일 삭제
+미리보기가 크게
+PDF 저장
+파일 순서 변경"></textarea>
+      </div>
+
+      <div class="input-group">
+        <div class="input-label">
+          ✨ 이런 느낌이면 좋겠어요
+          <span class="opt">선택</span>
+        </div>
+        <textarea id="inp-style" rows="2" placeholder="예)
+다크모드  버튼 크게  깔끔한 디자인  초보자도 쉽게"></textarea>
+      </div>
+
+      <button class="copy-btn" id="copyBtn" onclick="copyPrompt()">
+        📋 GPT에게 보낼 내용 복사
+      </button>
+      <div class="copy-hint" id="copyHint">버튼을 누르면 클립보드에 복사돼요. 그대로 GPT에 붙여넣으면 됩니다.</div>
+
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div class="sec anim d3">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-2">2</div>
+      <div>
+        <div class="step-head-title">복사한 내용을 GPT에게 보내보세요</div>
+        <div class="step-head-sub">ChatGPT 열고 → 붙여넣기 → 전송</div>
+      </div>
+    </div>
+    <div class="step-body">
+
+      <!-- GPT 대화창 -->
+      <div class="chat-window">
+        <div>
+          <div class="cb-name cn-user">나</div>
+          <div class="chat-bubble cb-user">이미지를 PDF로 변환하는 프로그램을 만들고 싶어요.<br>드래그 업로드가 가능하면 좋겠고, 미리보기는 크게 보여주세요.<br>다크모드면 좋겠습니다.</div>
+        </div>
+        <div>
+          <div class="cb-name cn-gpt">ChatGPT</div>
+          <div class="chat-bubble cb-gpt">좋아요! 바로 만들어드릴게요.<br>드래그 업로드, 큰 미리보기, 다크모드까지 전부 넣겠습니다. 🎨</div>
+        </div>
+      </div>
+
+      <div class="emphasis-box">
+        이 정도 말만 해도<br>
+        AI는 프로그램을 만들어줍니다 ✅
+      </div>
+
+      <!-- 결과물 미리보기 -->
+      <div style="margin-bottom:8px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">📄 만들어진 결과물 — 이미지 → PDF 변환기</div>
+        <div class="preview-browser" id="previewCard">
+          <div class="preview-bar">
+            <div class="preview-dot" style="background:#ff5f57;"></div>
+            <div class="preview-dot" style="background:#febc2e;margin:0 3px;"></div>
+            <div class="preview-dot" style="background:#28c840;"></div>
+            <div class="preview-url">tool/as6.html</div>
+          </div>
+          <div class="preview-frame-wrap">
+            <div class="preview-placeholder" id="previewPh">
+              <div class="preview-placeholder-icon">🖼</div>
+              <div class="preview-placeholder-text">이미지 → PDF 변환기 미리보기</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:4px;">카드를 클릭하면 열립니다</div>
+            </div>
+            <iframe class="preview-frame" id="previewFrame" src="" title="이미지 PDF 변환기"></iframe>
+          </div>
+          <a class="preview-open-btn" href="https://ggumbi-cs.github.io/dashboard/tool/as6.html" target="_blank">
+            🔗 새 탭으로 열기 →
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div class="sec anim d4">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-3">3</div>
+      <div>
+        <div class="step-head-title">조금씩 고쳐가면 됩니다</div>
+        <div class="step-head-sub">마음에 안 드는 부분만 다시 말하면 돼요</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="step3-grid">
+
+        <!-- 오류 수정 -->
+        <div class="fix-card">
+          <div class="card-title">🔧 <span style="color:var(--orange);">오류 수정해보기</span></div>
+          <div class="hint-box">
+            <div class="hint-label">💡 GPT에게 이렇게 말해보세요</div>
+            미리보기 창이 너무 작아서 불편해요.<br>조금 더 크게 만들어줄 수 있나요?
+          </div>
+          <button class="copy-btn-sm" onclick="copyText(this, '미리보기 창이 너무 작아서 불편해요. 조금 더 크게 만들어줄 수 있나요?')">
+            📋 복사하기
+          </button>
+          <button class="copy-btn-sm" onclick="copyText(this, '삭제 버튼이 잘 안 보여요. 조금 더 눈에 띄게 만들어주세요.')">
+            📋 복사하기
+          </button>
+          <button class="copy-btn-sm" onclick="copyText(this, '파일 순서를 드래그로 바꿀 수 있게 해주세요.')">
+            📋 복사하기
+          </button>
+        </div>
+
+        <!-- 기능 추가 -->
+        <div class="add-card">
+          <div class="card-title">✨ <span style="color:var(--cyan);">기능 추가해보기</span></div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">버튼을 누르면 복사돼요</div>
+          <button class="add-btn" onclick="copyText(this, '파일명도 직접 수정하고 싶어요.')">
+            📝 파일명 수정 기능
+          </button>
+          <button class="add-btn" onclick="copyText(this, '드래그로 파일 순서를 바꿀 수 있게 해주세요.')">
+            ↕ 드래그 순서 변경
+          </button>
+          <button class="add-btn" onclick="copyText(this, '저장할 때 파일 이름을 바꿀 수 있으면 좋겠어요.')">
+            💾 이름 변경 저장
+          </button>
+          <button class="add-btn" onclick="copyText(this, 'PDF 여러 개를 한 화면에서 비교하고 싶어요.')">
+            📑 PDF 비교 보기
+          </button>
+          <button class="add-btn" onclick="copyText(this, '다크모드로 바꿔주세요.')">
+            🌙 다크모드
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 마지막 요약 -->
+<div id="summary" class="anim d5">
+  <div class="summary-inner">
+    <div style="font-size:24px;text-align:center;margin-bottom:14px;">🎯</div>
+    <div class="learn-list">
+      <div class="learn-item li-bad">
+        <div class="li-icon">❌</div>
+        <div>AI는 어려운 프롬프트가 필요하다</div>
+      </div>
+      <div class="li-arrow">↓</div>
+      <div class="learn-item li-good">
+        <div class="li-icon">✅</div>
+        <div>불편한 점을 편하게 말하면 된다</div>
+      </div>
+      <div class="learn-item li-good">
+        <div class="li-icon">✅</div>
+        <div>마음에 안 들면 다시 이야기하면 된다</div>
+      </div>
+      <div class="learn-item li-good">
+        <div class="li-icon">✅</div>
+        <div>그렇게 조금씩 프로그램이 완성된다</div>
+      </div>
+    </div>
+    <div class="summary-quote">
+      "AI에게 잘 말하는 사람이 아니라,<br>
+      AI와 <strong>계속 대화하는 사람</strong>이 좋은 결과물을 만듭니다."
+    </div>
+    <div class="summary-author">AI 교육 8회차 · 엄마감동팀</div>
+  </div>
+</div>
+
+<div class="sec-bottom"></div>
+</div>
+
+<!-- 토스트 -->
+<div id="navToast" style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(12px);background:#172240;border:1px solid rgba(80,140,255,0.35);color:#8aaad0;font-size:12px;font-weight:600;padding:10px 20px;border-radius:30px;z-index:9999;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;">
+  📋 다음 회차는 준비 중입니다
+</div>
+
+<script>
+// ── 결과물 미리보기 ──
+const AS6_PATH = 'https://ggumbi-cs.github.io/dashboard/tool/as6.html';
+(function() {
+  const card  = document.getElementById('previewCard');
+  const frame = document.getElementById('previewFrame');
+  const ph    = document.getElementById('previewPh');
+  const obs = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && !frame.src) {
+      frame.src = AS6_PATH;
+      frame.onload = () => {
+        frame.classList.add('loaded');
+        ph.style.display = 'none';
+      };
+      obs.disconnect();
+    }
+  }, { threshold: 0.1 });
+  obs.observe(card);
+  card.addEventListener('click', e => {
+    if (e.target.classList.contains('preview-open-btn') || e.target.closest('.preview-open-btn')) return;
+    window.open(AS6_PATH, '_blank');
+  });
+})();
+
+// ── STEP 1 복사 ──
+function copyPrompt() {
+  const what    = document.getElementById('inp-what').value.trim();
+  const feature = document.getElementById('inp-feature').value.trim();
+  const style   = document.getElementById('inp-style').value.trim();
+
+  if (!what) {
+    document.getElementById('inp-what').focus();
+    document.getElementById('copyHint').textContent = '⚠ 첫 번째 칸을 먼저 채워주세요!';
+    document.getElementById('copyHint').style.color = 'var(--orange)';
+    return;
+  }
+
+  let text = what;
+  if (feature) text += '\n\n이런 기능이 있으면 좋겠어요:\n' + feature;
+  if (style)   text += '\n\n이런 느낌이면 좋겠어요:\n' + style;
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn  = document.getElementById('copyBtn');
+    const hint = document.getElementById('copyHint');
+    btn.textContent = '✅ 복사됐어요! GPT에 붙여넣으세요';
+    btn.classList.add('copied');
+    hint.textContent = 'ChatGPT 열고 Ctrl+V (붙여넣기) → 전송!';
+    hint.style.color = 'var(--green)';
+    // 스텝 배지 업데이트
+    document.getElementById('pill-1').className = 'step-pill done';
+    document.getElementById('pill-2').className = 'step-pill active';
+    setTimeout(() => {
+      btn.textContent = '📋 GPT에게 보낼 내용 복사';
+      btn.classList.remove('copied');
+    }, 3000);
+  }).catch(() => {
+    alert('복사에 실패했어요. 내용을 직접 선택해서 복사해주세요.');
+  });
+}
+
+// ── 작은 복사 버튼 ──
+function copyText(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.innerHTML;
+    btn.classList.add('copied');
+    btn.innerHTML = '✅ 복사됐어요!';
+    // 스텝 3 배지
+    document.getElementById('pill-2').className = 'step-pill done';
+    document.getElementById('pill-3').className = 'step-pill active';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = orig;
+    }, 2000);
+  });
+}
+
+// ── 네비게이션 ──
+const NAV_CONFIG = {
+  prev: 'training/ai교육/ai교육_7회차.html',
+  next: 'training/ai교육/ai교육_9회차.html'
+};
+function navGo(dir) {
+  const path = NAV_CONFIG[dir];
+  if (!path) return;
+  const isInIframe = (function(){ try { return window.parent && window.parent !== window; } catch(e){ return false; } })();
+  if (isInIframe) {
+    if (dir === 'next') {
+      window.parent.postMessage({ type:'TRAINING_NAV', path, checkOnly:true }, '*');
+      const _h = function(e) {
+        if (!e.data || e.data.type !== 'NAV_CHECK_RESULT' || e.data.path !== path) return;
+        window.removeEventListener('message', _h);
+        if (e.data.exists) { window.parent.postMessage({ type:'TRAINING_NAV', path }, '*'); }
+        else { showNavToast(); }
+      };
+      // ── 회차 네비게이션 ──
+let _nextExists = false; // training_main에서 NAV_INFO로 전달받음
+
+function navGo(dir) {
+  const path = NAV_CONFIG[dir];
+  if (!path) return;
+  const isInIframe = (function(){ try { return window.parent && window.parent !== window; } catch(e){ return false; } })();
+  if (isInIframe) {
+    if (dir === 'next') {
+      if (_nextExists) {
+        window.parent.postMessage({ type: 'TRAINING_NAV', path }, '*');
+      } else {
+        showNavToast();
+      }
+    } else {
+      window.parent.postMessage({ type: 'TRAINING_NAV', path }, '*');
+    }
+  } else {
+    if (dir === 'next') { showNavToast(); return; }
+    window.location.href = path;
+  }
+}
+
+function showNavToast() {
+  let t = document.getElementById('navToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'navToast';
+    t.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(12px);'+
+      'background:#172240;border:1px solid rgba(80,140,255,0.35);color:#8aaad0;'+
+      'font-size:12px;font-weight:600;padding:10px 20px;border-radius:30px;'+
+      'z-index:9999;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;';
+    t.textContent = '📋 다음 회차는 준비 중입니다';
+    document.body.appendChild(t);
+  }
+  t.style.opacity = '1';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateX(-50%) translateY(12px)';
+  }, 2200);
+}
+
+window.addEventListener('message', e => {
+  if (!e.data) return;
+  if (e.data.type === 'NAV_INFO') {
+    _nextExists = !!e.data.nextExists;
+  }
+  if (e.data.type === 'THEME') {
+    if (e.data.mode === 'light') document.body.classList.add('light-mode');
+    else document.body.classList.remove('light-mode');
+  }
+});
+</script>
+</body>
+</html>

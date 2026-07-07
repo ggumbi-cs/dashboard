@@ -659,35 +659,23 @@ const NAV_CONFIG = {
 };
 
 // ── 회차 네비게이션 ──
+let _nextExists = false; // training_main에서 NAV_INFO로 전달받음
+
 function navGo(dir) {
   const path = NAV_CONFIG[dir];
   if (!path) return;
-
-  const isInIframe = (function() {
-    try { return window.parent && window.parent !== window; } catch(e) { return false; }
-  })();
-
+  const isInIframe = (function(){ try { return window.parent && window.parent !== window; } catch(e){ return false; } })();
   if (isInIframe) {
     if (dir === 'next') {
-      // index에 먼저 존재 여부 확인 요청
-      window.parent.postMessage({ type: 'TRAINING_NAV', path, checkOnly: true }, '*');
-      // 결과 수신 (1회용)
-      const _h = function(e) {
-        if (!e.data || e.data.type !== 'NAV_CHECK_RESULT' || e.data.path !== path) return;
-        window.removeEventListener('message', _h);
-        if (e.data.exists) {
-          window.parent.postMessage({ type: 'TRAINING_NAV', path }, '*');
-        } else {
-          showNavToast();
-        }
-      };
-      window.addEventListener('message', _h);
-      setTimeout(() => window.removeEventListener('message', _h), 500);
+      if (_nextExists) {
+        window.parent.postMessage({ type: 'TRAINING_NAV', path }, '*');
+      } else {
+        showNavToast();
+      }
     } else {
       window.parent.postMessage({ type: 'TRAINING_NAV', path }, '*');
     }
   } else {
-    // 직접 열린 경우 — prev는 바로 이동, next는 토스트
     if (dir === 'next') { showNavToast(); return; }
     window.location.href = path;
   }
@@ -713,8 +701,12 @@ function showNavToast() {
     t.style.transform = 'translateX(-50%) translateY(12px)';
   }, 2200);
 }
+
 window.addEventListener('message', e => {
   if (!e.data) return;
+  if (e.data.type === 'NAV_INFO') {
+    _nextExists = !!e.data.nextExists;
+  }
   if (e.data.type === 'THEME') {
     if (e.data.mode === 'light') document.body.classList.add('light-mode');
     else document.body.classList.remove('light-mode');

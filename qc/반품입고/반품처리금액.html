@@ -36,6 +36,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 .period-btn{padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font-kr);transition:all 0.15s;}
 .period-btn:hover{border-color:var(--border2);color:var(--text2);}
 .period-btn.active{border-color:var(--cyan);background:var(--cyan-dim);color:var(--cyan);}
+.pnav-btn{width:24px;height:24px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.pnav-btn:hover{border-color:var(--border2);color:var(--cyan);}
 .ph-refresh{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
 .ph-refresh:hover{border-color:var(--border2);color:var(--cyan);}
 .ph-refresh.spin{animation:spin 0.8s linear infinite;}
@@ -133,9 +135,14 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 <div id="hd">
   <div class="hd-title">↩️ 반품입고 비용현황</div>
   <div class="hd-right">
-    <button class="period-btn" onclick="setPeriod('all')">전체</button>
-    <button class="period-btn active" onclick="setPeriod('year')">올해</button>
-    <button class="period-btn" onclick="setPeriod('last')">전년도</button>
+    <button class="period-btn" onclick="setPeriodType('weekly')">주간</button>
+    <button class="period-btn active" onclick="setPeriodType('monthly')">월간</button>
+    <button class="period-btn" onclick="setPeriodType('yearly')">연간</button>
+    <div style="display:flex;align-items:center;gap:5px;margin-left:2px;">
+      <button class="pnav-btn" onclick="movePeriod(-1)">◀</button>
+      <span id="periodLabel" style="font-size:11px;font-weight:600;color:var(--text2);min-width:88px;text-align:center;">-</span>
+      <button class="pnav-btn" onclick="movePeriod(1)">▶</button>
+    </div>
     <button class="ph-refresh" id="refreshBtn" onclick="loadData()">↻</button>
   </div>
 </div>
@@ -153,7 +160,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
     <div id="kpiRow">
       <div class="kpi total"><div class="kpi-label">💰 총 처리금액</div><div class="kpi-val total" id="kTotal">-</div><div class="kpi-sub" id="kTotalSub">-</div></div>
       <div class="kpi re"><div class="kpi-label">🔴 재상품화</div><div class="kpi-val re" id="kRe">-</div><div class="kpi-sub" id="kReSub">-</div></div>
-      <div class="kpi rm"><div class="kpi-label">🟡 원자재화</div><div class="kpi-val rm" id="kRm">-</div><div class="kpi-sub" id="kRmSub">-</div></div>
+      <div class="kpi rm"><div class="kpi-label">🟡 원자재화</div><div class="kpi-val rm" id="kRm">-</div><div class="kpi-sub" id="kRmSub">건수 기준</div></div>
       <div class="kpi cnt"><div class="kpi-label">📋 처리건수 / 수량</div><div class="kpi-val cnt" id="kCnt">-</div><div class="kpi-sub" id="kCntSub">-</div></div>
     </div>
   </div>
@@ -214,126 +221,134 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 </div>
 
 <script>
-// ─────────────────────────────────────────────
-// 설정
-// ─────────────────────────────────────────────
 const QC_GAS_URL = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
 
-// ─────────────────────────────────────────────
-// 상태
-// ─────────────────────────────────────────────
-let _all     = []; // 전체 레코드
-let _records = []; // 필터 적용된 레코드
-let _period  = 'year';
+let _all        = [];
+let _records    = [];
+let _periodType = 'monthly';
+let _periodRef  = new Date();
 
-// ─────────────────────────────────────────────
-// postMessage (테마)
-// ─────────────────────────────────────────────
+// 테마
 window.addEventListener('message', e => {
   if (e.data && e.data.type === 'THEME')
     document.body.classList.toggle('light', e.data.mode === 'light');
 });
 if (sessionStorage.getItem('_theme') === 'light') document.body.classList.add('light');
 
-// ─────────────────────────────────────────────
-// 기간 필터
-// ─────────────────────────────────────────────
-function setPeriod(p) {
-  _period = p;
+// ── 기간 ──
+function setPeriodType(type) {
+  _periodType = type;
+  _periodRef  = new Date();
   document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-  applyFilter();
-  renderAll();
+  document.querySelector(`.period-btn[onclick*="${type}"]`).classList.add('active');
+  applyFilter(); renderAll();
 }
-
+function movePeriod(dir) {
+  const d = new Date(_periodRef);
+  if (_periodType === 'weekly')  d.setDate(d.getDate() + dir * 7);
+  if (_periodType === 'monthly') d.setMonth(d.getMonth() + dir);
+  if (_periodType === 'yearly')  d.setFullYear(d.getFullYear() + dir);
+  _periodRef = d; applyFilter(); renderAll();
+}
+function getPeriodLabel() {
+  const d=_periodRef, y=d.getFullYear(), m=d.getMonth()+1;
+  if (_periodType==='yearly')  return `${y}년`;
+  if (_periodType==='monthly') return `${y}년 ${m}월`;
+  const mon=new Date(d); mon.setDate(d.getDate()-d.getDay()+1);
+  const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+  return `${mon.getMonth()+1}.${String(mon.getDate()).padStart(2,'0')}~${sun.getMonth()+1}.${String(sun.getDate()).padStart(2,'0')}`;
+}
+function toISO(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 function applyFilter() {
-  const now   = new Date();
-  const curY  = now.getFullYear();
-  const lastY = curY - 1;
-  _records = _all.filter(r => {
-    if (!r.처리일) return _period === 'all';
-    const y = parseInt(r.처리일.slice(0,4));
-    if (_period === 'year') return y === curY;
-    if (_period === 'last') return y === lastY;
-    return true;
-  });
+  document.getElementById('periodLabel').textContent = getPeriodLabel();
+  const d=_periodRef, y=d.getFullYear(), m=d.getMonth()+1;
+  if (_periodType==='yearly') {
+    _records=_all.filter(r=>r.처리일&&parseInt(r.처리일.slice(0,4))===y);
+  } else if (_periodType==='monthly') {
+    _records=_all.filter(r=>r.처리일&&parseInt(r.처리일.slice(0,4))===y&&parseInt(r.처리일.slice(5,7))===m);
+  } else {
+    const mon=new Date(d); mon.setDate(d.getDate()-d.getDay()+1);
+    const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+    const start=toISO(mon), end=toISO(sun);
+    _records=_all.filter(r=>r.처리일&&r.처리일>=start&&r.처리일<=end);
+  }
 }
 
-// ─────────────────────────────────────────────
-// 데이터 로드
-// ─────────────────────────────────────────────
+// ── 데이터 로드 (정적 JSON 우선, GAS 폴백) ──
 async function loadData() {
-  document.getElementById('loadState').style.display  = '';
-  document.getElementById('mainWrap').style.display   = 'none';
-  const btn = document.getElementById('refreshBtn');
+  document.getElementById('loadState').style.display='';
+  document.getElementById('mainWrap').style.display='none';
+  const btn=document.getElementById('refreshBtn');
   btn.classList.add('spin');
-
   try {
-    const res  = await fetch(`${QC_GAS_URL}?action=getReturnCostData`, {redirect:'follow'});
-    const data = await res.json();
-    if (data.ok && data.records) {
-      _all = data.records;
-      applyFilter();
-      renderAll();
+    // ① 정적 JSON
+    const res=await fetch('../qc_data.json');
+    if (res.ok) {
+      const json=await res.json();
+      if (json.반품처리&&json.반품처리.records) {
+        _all=json.반품처리.records;
+        if (json.lastSynced)
+          document.querySelector('.hd-title').title=`최근 동기화: ${new Date(json.lastSynced).toLocaleString('ko-KR')}`;
+        applyFilter(); renderAll();
+        btn.classList.remove('spin');
+        return;
+      }
     }
+  } catch(e) {}
+  try {
+    // ② GAS 실시간 폴백
+    const res=await fetch(`${QC_GAS_URL}?action=getReturnCostData`,{redirect:'follow'});
+    const data=await res.json();
+    if (data.ok&&data.records) { _all=data.records; applyFilter(); renderAll(); }
   } catch(e) {
-    document.getElementById('loadState').innerHTML =
-      '<div style="font-size:36px;margin-bottom:12px;">⚠️</div><div style="color:var(--text3);font-size:12px;">데이터 로드 실패. GAS 연결을 확인해 주세요.</div>';
+    document.getElementById('loadState').innerHTML=
+      '<div style="font-size:36px;margin-bottom:12px;">⚠️</div><div style="color:var(--text3);font-size:12px;">데이터 로드 실패. 동기화를 먼저 실행해 주세요.</div>';
   }
   btn.classList.remove('spin');
 }
 
-// ─────────────────────────────────────────────
-// 렌더
-// ─────────────────────────────────────────────
+// ── 렌더 ──
 function renderAll() {
-  document.getElementById('loadState').style.display = 'none';
-  document.getElementById('mainWrap').style.display  = '';
-  renderKPI();
-  renderProdList();
-  renderDist();
-  renderTrend();
-  renderRecent();
+  document.getElementById('loadState').style.display='none';
+  document.getElementById('mainWrap').style.display='';
+  renderKPI(); renderProdList(); renderDist(); renderTrend(); renderRecent();
 }
 
-// ── KPI ──
 function renderKPI() {
-  const r = _records;
-  const total = r.reduce((s,x)=>s+(x.처리금액||0),0);
-  const re    = r.filter(x=>x.처리결과==='재상품화');
-  const rm    = r.filter(x=>x.처리결과==='원자재화');
-  const reAmt = re.reduce((s,x)=>s+(x.처리금액||0),0);
-  const rmAmt = rm.reduce((s,x)=>s+(x.처리금액||0),0);
-  const qty   = r.reduce((s,x)=>s+(x.처리수량||0),0);
-
-  document.getElementById('kTotal').textContent  = won(total);
-  document.getElementById('kTotalSub').textContent = `${r.length}건`;
-  document.getElementById('kRe').textContent     = won(reAmt);
-  document.getElementById('kReSub').textContent  = `${re.length}건`;
-  document.getElementById('kRm').textContent     = won(rmAmt);
-  document.getElementById('kRmSub').textContent  = `${rm.length}건`;
-  document.getElementById('kCnt').textContent    = r.length;
-  document.getElementById('kCntSub').textContent = `수량 ${qty}개`;
+  const r=_records;
+  const total=r.reduce((s,x)=>s+(x.처리금액||0),0);
+  const re=r.filter(x=>x.처리결과==='재상품화');
+  const rm=r.filter(x=>x.처리결과==='원자재화');
+  const reAmt=re.reduce((s,x)=>s+(x.처리금액||0),0);
+  const qty=r.reduce((s,x)=>s+(x.처리수량||0),0);
+  document.getElementById('kTotal').textContent=won(total);
+  document.getElementById('kTotalSub').textContent=`${r.length}건`;
+  document.getElementById('kRe').textContent=won(reAmt);
+  document.getElementById('kReSub').textContent=`${re.length}건`;
+  document.getElementById('kRm').textContent=`${rm.length}건`;
+  document.getElementById('kCnt').textContent=r.length;
+  document.getElementById('kCntSub').textContent=`수량 ${qty}개`;
 }
 
-// ── 제품별 리스트 ──
 function renderProdList() {
-  const byProd = {};
-  _records.forEach(r => {
+  const byProd={};
+  _records.forEach(r=>{
     if (!r.제품명) return;
-    if (!byProd[r.제품명]) byProd[r.제품명] = {amt:0, cnt:0, re:0, rm:0};
-    byProd[r.제품명].amt += r.처리금액||0;
+    if (!byProd[r.제품명]) byProd[r.제품명]={amt:0,cnt:0,re:0,rm:0,qty:0};
+    byProd[r.제품명].amt+=r.처리금액||0;
     byProd[r.제품명].cnt++;
+    byProd[r.제품명].qty+=r.처리수량||0;
     if (r.처리결과==='재상품화') byProd[r.제품명].re++;
     else if (r.처리결과==='원자재화') byProd[r.제품명].rm++;
   });
-  const sorted = Object.entries(byProd).sort((a,b)=>b[1].amt-a[1].amt);
-  const maxAmt = sorted[0]?.[1].amt || 1;
-
-  document.getElementById('prodList').innerHTML = sorted.map(([name,v],i)=>`
+  const sorted=Object.entries(byProd).sort((a,b)=>b[1].amt-a[1].amt);
+  const maxAmt=sorted[0]?.[1].amt||1;
+  document.getElementById('prodList').innerHTML=sorted.map(([name,v],i)=>`
     <div class="prod-row fade-in" style="animation-delay:${i*0.04}s">
       <div class="prod-rank">${i+1}</div>
-      <div class="prod-name" title="${name}">${shortProd(name)}</div>
+      <div class="prod-name" style="white-space:normal;word-break:keep-all;" title="${name}">${stripBrand(name)}</div>
       <div class="prod-bar-wrap"><div class="prod-bar-fill" style="width:${(v.amt/maxAmt*100).toFixed(1)}%"></div></div>
       <div class="prod-amt">${won(v.amt)}</div>
       <div class="prod-cnt">${v.cnt}건</div>
@@ -341,85 +356,57 @@ function renderProdList() {
         ${v.re>0?`<div class="dot-re" title="재상품화 ${v.re}건"></div>`:''}
         ${v.rm>0?`<div class="dot-rm" title="원자재화 ${v.rm}건"></div>`:''}
       </div>
-    </div>`).join('') || '<div style="color:var(--text3);font-size:12px;">데이터 없음</div>';
+    </div>`).join('')||'<div style="color:var(--text3);font-size:12px;">데이터 없음</div>';
 }
 
-// ── 분포 ──
 function renderDist() {
-  const total = _records.reduce((s,x)=>s+(x.처리금액||0),0);
-  const reAmt = _records.filter(x=>x.처리결과==='재상품화').reduce((s,x)=>s+(x.처리금액||0),0);
-  const rmAmt = _records.filter(x=>x.처리결과==='원자재화').reduce((s,x)=>s+(x.처리금액||0),0);
-  const rePct = total ? (reAmt/total*100).toFixed(1) : 0;
-  const rmPct = total ? (rmAmt/total*100).toFixed(1) : 0;
-
-  document.getElementById('distTotal').textContent = won(total);
-  document.getElementById('distBarRe').style.width = rePct + '%';
-  document.getElementById('distBarRm').style.width = rmPct + '%';
-  document.getElementById('distRows').innerHTML = `
-    <div class="dist-row">
-      <div class="dist-dot" style="background:var(--col-re)"></div>
-      <div class="dist-label">재상품화</div>
-      <div class="dist-amt">${won(reAmt)}</div>
-      <div class="dist-pct">${rePct}%</div>
-    </div>
-    <div class="dist-row">
-      <div class="dist-dot" style="background:var(--col-rm)"></div>
-      <div class="dist-label">원자재화</div>
-      <div class="dist-amt">${won(rmAmt)}</div>
-      <div class="dist-pct">${rmPct}%</div>
-    </div>`;
+  const total=_records.reduce((s,x)=>s+(x.처리금액||0),0);
+  const reQty=_records.filter(x=>x.처리결과==='재상품화').reduce((s,x)=>s+(x.처리수량||0),0);
+  const rmQty=_records.filter(x=>x.처리결과==='원자재화').reduce((s,x)=>s+(x.처리수량||0),0);
+  const totQty=reQty+rmQty||1;
+  const rePct=(reQty/totQty*100).toFixed(1);
+  const rmPct=(rmQty/totQty*100).toFixed(1);
+  document.getElementById('distTotal').textContent=won(total);
+  document.getElementById('distBarRe').style.width=rePct+'%';
+  document.getElementById('distBarRm').style.width=rmPct+'%';
+  document.getElementById('distRows').innerHTML=`
+    <div class="dist-row"><div class="dist-dot" style="background:var(--col-re)"></div><div class="dist-label">재상품화</div><div class="dist-amt">${reQty}개</div><div class="dist-pct">${rePct}%</div></div>
+    <div class="dist-row"><div class="dist-dot" style="background:var(--col-rm)"></div><div class="dist-label">원자재화</div><div class="dist-amt">${rmQty}개</div><div class="dist-pct">${rmPct}%</div></div>
+    <div style="margin-top:6px;font-size:10px;color:var(--text3);text-align:center;">수량 기준 비율</div>`;
 }
 
-// ── 월별 추이 (SVG 바 차트) ──
 function renderTrend() {
-  const monthly = {};
-  _records.forEach(r => {
+  const monthly={};
+  _records.forEach(r=>{
     if (!r.처리일) return;
-    const key = r.처리일.slice(0,7); // YYYY-MM
-    if (!monthly[key]) monthly[key] = {re:0, rm:0};
-    if (r.처리결과==='재상품화') monthly[key].re += r.처리금액||0;
-    else monthly[key].rm += r.처리금액||0;
+    const key=r.처리일.slice(0,7);
+    if (!monthly[key]) monthly[key]={re:0,rm:0};
+    if (r.처리결과==='재상품화') monthly[key].re+=r.처리금액||0;
+    else monthly[key].rm+=r.처리금액||0;
   });
-
-  const months = Object.keys(monthly).sort();
-  if (months.length === 0) { document.getElementById('trendSvg').innerHTML=''; return; }
-
-  const W=600, H=120, pad={l:4,r:4,t:10,b:20};
-  const barW = Math.min(36, (W - pad.l - pad.r) / months.length - 4);
-  const gap   = (W - pad.l - pad.r - barW * months.length) / (months.length + 1);
-  const maxAmt = Math.max(...months.map(m => (monthly[m].re||0)+(monthly[m].rm||0)));
-  const chartH = H - pad.t - pad.b;
-
-  let bars = '';
-  months.forEach((m, i) => {
-    const x    = pad.l + gap + i * (barW + gap);
-    const tot  = (monthly[m].re||0) + (monthly[m].rm||0);
-    const hTot = maxAmt ? (tot / maxAmt * chartH) : 0;
-    const hRe  = maxAmt ? ((monthly[m].re||0) / maxAmt * chartH) : 0;
-    const hRm  = hTot - hRe;
-    const y    = pad.t + chartH;
-
-    bars += `<rect x="${x.toFixed(1)}" y="${(y-hTot).toFixed(1)}" width="${barW}" height="${Math.max(hRe,0).toFixed(1)}" fill="var(--col-re)" rx="2"/>`;
-    bars += `<rect x="${x.toFixed(1)}" y="${(y-hTot+hRe).toFixed(1)}" width="${barW}" height="${Math.max(hRm,0).toFixed(1)}" fill="var(--col-rm)" rx="2" ry="2"/>`;
-    // 금액 텍스트 (최대값만)
-    if (tot === maxAmt) {
-      bars += `<text x="${(x+barW/2).toFixed(1)}" y="${(pad.t+chartH-hTot-4).toFixed(1)}" text-anchor="middle" fill="var(--text2)" font-size="9" font-family="Inter">${wonShort(tot)}</text>`;
-    }
+  const months=Object.keys(monthly).sort();
+  if (!months.length) { document.getElementById('trendSvg').innerHTML=''; return; }
+  const W=600,H=120,pad={l:4,r:4,t:14,b:20};
+  const barW=Math.min(36,(W-pad.l-pad.r)/months.length-4);
+  const gap=(W-pad.l-pad.r-barW*months.length)/(months.length+1);
+  const maxAmt=Math.max(...months.map(m=>(monthly[m].re||0)+(monthly[m].rm||0)));
+  const chartH=H-pad.t-pad.b;
+  let bars='';
+  months.forEach((m,i)=>{
+    const x=pad.l+gap+i*(barW+gap);
+    const tot=(monthly[m].re||0)+(monthly[m].rm||0);
+    const hTot=maxAmt?(tot/maxAmt*chartH):0;
+    const hRe=maxAmt?((monthly[m].re||0)/maxAmt*chartH):0;
+    const y=pad.t+chartH;
+    bars+=`<rect x="${x.toFixed(1)}" y="${(y-hTot).toFixed(1)}" width="${barW}" height="${Math.max(hRe,0).toFixed(1)}" fill="var(--col-re)" rx="2"/>`;
+    bars+=`<rect x="${x.toFixed(1)}" y="${(y-hTot+hRe).toFixed(1)}" width="${barW}" height="${Math.max(hTot-hRe,0).toFixed(1)}" fill="var(--col-rm)" rx="2"/>`;
+    if (tot===maxAmt) bars+=`<text x="${(x+barW/2).toFixed(1)}" y="${(pad.t+chartH-hTot-3).toFixed(1)}" text-anchor="middle" fill="var(--text2)" font-size="9" font-family="Inter">${wonShort(tot)}</text>`;
   });
-
-  document.getElementById('trendSvg').innerHTML = bars;
-  document.getElementById('trendLabels').innerHTML = months.map(m =>
-    `<span class="trend-lbl">${m.slice(5)}</span>`).join('');
-
-  // 상위 처리월
-  const topM = [...months].sort((a,b)=>{
-    const ta=(monthly[b].re||0)+(monthly[b].rm||0);
-    const tb=(monthly[a].re||0)+(monthly[a].rm||0);
-    return ta-tb;
-  }).slice(0,4);
-
-  document.getElementById('topMonths').innerHTML = topM.map((m,i)=>{
-    const tot = (monthly[m].re||0)+(monthly[m].rm||0);
+  document.getElementById('trendSvg').innerHTML=bars;
+  document.getElementById('trendLabels').innerHTML=months.map(m=>`<span class="trend-lbl">${m.slice(5)}</span>`).join('');
+  const topM=[...months].sort((a,b)=>((monthly[b].re||0)+(monthly[b].rm||0))-((monthly[a].re||0)+(monthly[a].rm||0))).slice(0,4);
+  document.getElementById('topMonths').innerHTML=topM.map((m,i)=>{
+    const tot=(monthly[m].re||0)+(monthly[m].rm||0);
     return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg3);border-radius:7px;border:1px solid var(--border);">
       <span style="font-size:10px;font-weight:700;color:var(--text3);width:16px;">${i+1}</span>
       <span style="font-size:11px;color:var(--text2);flex:1;">${m}</span>
@@ -428,41 +415,24 @@ function renderTrend() {
   }).join('');
 }
 
-// ── 최근 내역 ──
 function renderRecent() {
-  const sorted = [..._records].sort((a,b)=>(b.처리일||'').localeCompare(a.처리일||'')).slice(0,30);
-  document.getElementById('recentCount').textContent = `최근 ${sorted.length}건 표시`;
-  document.getElementById('recTbody').innerHTML = sorted.map(r=>`
+  const sorted=[..._records].sort((a,b)=>(b.처리일||'').localeCompare(a.처리일||'')).slice(0,30);
+  document.getElementById('recentCount').textContent=`최근 ${sorted.length}건 표시`;
+  document.getElementById('recTbody').innerHTML=sorted.map(r=>`
     <tr>
       <td style="font-family:var(--font-en);white-space:nowrap;">${r.처리일||'-'}</td>
-      <td>${shortProd(r.제품명||'-')}</td>
+      <td style="word-break:keep-all;">${stripBrand(r.제품명||'-')}</td>
       <td>${r.처리결과==='재상품화'?'<span class="badge-re">재상품화</span>':'<span class="badge-rm">원자재화</span>'}</td>
       <td style="text-align:right;font-family:var(--font-en);">${r.처리수량||0}</td>
       <td style="text-align:right;font-family:var(--font-en);font-weight:600;">${won(r.처리금액||0)}</td>
       <td style="color:var(--text3);">${r.비고||''}</td>
-    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px;">데이터 없음</td></tr>';
+    </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px;">데이터 없음</td></tr>';
 }
 
-// ─────────────────────────────────────────────
-// 유틸
-// ─────────────────────────────────────────────
-function won(n) {
-  if (!n && n !== 0) return '-';
-  return '₩' + Math.round(n).toLocaleString('ko-KR');
-}
-function wonShort(n) {
-  if (n >= 1000000) return '₩' + (n/1000000).toFixed(1) + 'M';
-  if (n >= 1000)    return '₩' + (n/1000).toFixed(0) + 'K';
-  return '₩' + n;
-}
-function shortProd(name) {
-  if (!name) return '-';
-  return name.replace(/\[.*?\]\s*/g,'').slice(0,16) + (name.replace(/\[.*?\]\s*/g,'').length > 16 ? '..' : '');
-}
+function won(n){ if(!n&&n!==0)return'-'; return '₩'+Math.round(n).toLocaleString('ko-KR'); }
+function wonShort(n){ if(n>=1000000)return '₩'+(n/1000000).toFixed(1)+'M'; if(n>=1000)return '₩'+(n/1000).toFixed(0)+'K'; return '₩'+n; }
+function stripBrand(name){ if(!name)return'-'; return name.replace(/\[.*?\]\s*/g,'').trim(); }
 
-// ─────────────────────────────────────────────
-// 진입
-// ─────────────────────────────────────────────
 loadData();
 </script>
 </body>

@@ -480,15 +480,11 @@ body.is-admin .notice-admin-gear { display:flex; }
         <span style="font-size:15px;">📅</span>
         <span class="nav-item-label">주요일정</span>
       </div>
-      <div class="nav-item" data-tab="" onclick="goTab('')">
-        <span style="font-size:15px;">🏖️</span>
-        <span class="nav-item-label">휴가일정표</span>
-      </div>
-      <div class="nav-item" data-tab="" onclick="goTab('')">
+      <div class="nav-item" data-tab="기타/자재발주.html" onclick="goTab('기타/자재발주.html')">
         <span style="font-size:15px;">📦</span>
         <span class="nav-item-label">자재발주</span>
       </div>
-      <div class="nav-item" data-tab="" onclick="goTab('')">
+      <div class="nav-item" data-tab="기타/택배출고.html" onclick="goTab('기타/택배출고.html')">
         <span style="font-size:15px;">🚚</span>
         <span class="nav-item-label">택배출고</span>
       </div>
@@ -496,11 +492,7 @@ body.is-admin .notice-admin-gear { display:flex; }
         <span style="font-size:15px;">📝</span>
         <span class="nav-item-label">제품스크립트</span>
       </div>
-      <div class="nav-item" data-tab="" onclick="goTab('')">
-        <span style="font-size:15px;">🏗️</span>
-        <span class="nav-item-label">조달현황판</span>
-      </div>
-      <div class="nav-item" data-tab="" onclick="goTab('')">
+      <div class="nav-item" data-tab="기타/유상처리단가.html" onclick="goTab('기타/유상처리단가.html')">
         <span style="font-size:15px;">💰</span>
         <span class="nav-item-label">유상처리단가</span>
       </div>
@@ -1390,7 +1382,8 @@ function updateSyncUI(info) {
 
 function formatSyncTime(timeStr) {
   try {
-    const d = new Date(timeStr);
+    const d    = new Date(timeStr);
+    if (isNaN(d.getTime())) return timeStr; // 파싱 실패 시 원문 그대로
     const diff = Math.floor((new Date() - d) / 60000);
     if (diff < 1)    return '방금 전';
     if (diff < 60)   return `${diff}분 전`;
@@ -1409,20 +1402,21 @@ async function runManualSync() {
   try {
     const res  = await fetch(`${_scriptUrl}?action=syncQcData`, {redirect:'follow'});
     const data = await res.json();
-    const now  = new Date().toLocaleString('ko-KR');
+    const iso  = new Date().toISOString(); // ISO 형식으로 저장 → formatSyncTime 파싱 가능
     const info = {
       ok:     data.ok,
-      time:   now,
+      time:   iso,
       result: data.ok ? '성공' : '실패',
       detail: data.ok
-        ? `✅ 동기화 완료 · ${now}<br>${data.summary||'데이터 최신화 완료'}`
+        ? `✅ 동기화 완료 · ${new Date(iso).toLocaleString('ko-KR')}<br>${data.summary||'데이터 최신화 완료'}`
         : `⚠ 동기화 실패: ${data.msg||'오류'}`
     };
     localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(info));
     updateSyncUI(info);
     showToast(data.ok ? '✅ 동기화 완료' : '⚠ 동기화 실패');
   } catch(e) {
-    const info = {ok:false, time:new Date().toLocaleString('ko-KR'), result:'오류', detail:`⚠ 연결 오류: ${e.message}`};
+    const iso  = new Date().toISOString();
+    const info = {ok:false, time:iso, result:'오류', detail:`⚠ 연결 오류: ${e.message}`};
     localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(info));
     updateSyncUI(info);
     showToast('⚠ 동기화 오류');

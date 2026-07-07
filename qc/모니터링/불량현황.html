@@ -526,14 +526,23 @@ function renderTop5(records) {
   const total  = records.length || 1;
   const max    = sorted[0]?.[1] || 1;
 
-  // Top5 저장 & 탭 빌드
-  _top5Products = sorted.map(([name,cnt]) => ({name,cnt}));
+  // Top5 저장 & 탭 빌드 (키는 원본 제품명, 표시만 shortName)
+  _top5Products = sorted.map(([name,cnt]) => ({name, cnt})); // name = shortName (표시용)
+  
+  // 원본 제품명도 함께 저장
+  const prodOrigMap = {};
+  records.forEach(r => {
+    if (!r.제품명 || r.제품명.startsWith('[집계]')) return;
+    const sn = shortName(r.제품명);
+    if (!prodOrigMap[sn]) prodOrigMap[sn] = r.제품명;
+  });
+  _top5Products = sorted.map(([sn,cnt]) => ({ sn, orig: prodOrigMap[sn]||sn, cnt }));
   buildFaultTabs();
 
   document.getElementById('top5Row').innerHTML = sorted.length === 0
     ? '<div style="color:var(--text3);font-size:12px;grid-column:1/-1;">데이터 없음</div>'
     : sorted.map(([name,cnt],i) => `
-    <div class="top5-card fade-in" style="animation-delay:${i*0.06}s;cursor:pointer;" onclick="setFaultFilter('${name}')">
+    <div class="top5-card fade-in" style="animation-delay:${i*0.06}s;cursor:pointer;" onclick="setFaultFilter('${(_top5Products[i]?.orig||name).replace(/'/g,"\\'")}')">
       <div class="t5-rank-bar b${i}" style="opacity:0.7"></div>
       <div class="t5-body">
         <div class="t5-rank c${i}">TOP ${i+1}</div>
@@ -552,11 +561,11 @@ function buildFaultTabs() {
   const tabClasses = ['','t1','t2','t3','t4','t5'];
   const tabs = [
     { key:'all', label:'전체' },
-    ..._top5Products.map((p,i) => ({ key:p.name, label:`Top${i+1} ${p.name}` }))
+    ..._top5Products.map((p,i) => ({ key: p.orig, label:`Top${i+1} ${p.sn}` }))
   ];
   document.getElementById('faultTabs').innerHTML = tabs.map((t,i) => `
     <button class="fault-tab ${tabClasses[i]} ${_faultFilter===t.key?'active':''}"
-      onclick="setFaultFilter('${t.key}')" title="${t.label}">${t.label}</button>`
+      onclick="setFaultFilter(this.dataset.key)" data-key="${t.key}" title="${t.label}">${t.label}</button>`
   ).join('');
 }
 
@@ -569,10 +578,10 @@ function setFaultFilter(key) {
 
 // ── 확인불량 Top10 (필터 적용) ──
 function renderFaultTop10(records) {
-  // 필터 적용
+  // 필터 적용 — 원본 제품명으로 비교
   const filtered = _faultFilter === 'all'
     ? records
-    : records.filter(r => !r.제품명?.startsWith('[집계]') && shortName(r.제품명) === _faultFilter);
+    : records.filter(r => r.제품명 === _faultFilter);
 
   const counts = {};
   filtered.forEach(r => {

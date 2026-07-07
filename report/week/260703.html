@@ -112,9 +112,47 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .review-ai{font-size:11px;color:var(--teal);margin-top:5px;padding-top:5px;border-top:1px solid var(--border2);}
 
 .footer{text-align:center;padding:18px;font-size:10px;color:var(--text4);border-top:1px solid var(--border);background:var(--card2);}
+
+/* ── 이미지 호버 오버레이 ── */
+#img-overlay{
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,0.82);
+  align-items:center;justify-content:center;
+  cursor:zoom-out;
+  backdrop-filter:blur(4px);
+}
+#img-overlay.show{display:flex;}
+#img-overlay img{
+  max-width:88vw;max-height:88vh;
+  border-radius:10px;
+  box-shadow:0 24px 80px rgba(0,0,0,0.6);
+  object-fit:contain;
+  animation:zoomIn .18s ease;
+}
+@keyframes zoomIn{from{opacity:0;transform:scale(0.88);}to{opacity:1;transform:scale(1);}}
+.thumb-wrap{
+  display:block;aspect-ratio:1;border-radius:6px;overflow:hidden;
+  border:1.5px solid rgba(124,45,18,0.25);cursor:zoom-in;position:relative;
+}
+.thumb-wrap img{width:100%;height:100%;object-fit:cover;transition:transform .25s,filter .25s;}
+.thumb-wrap:hover img{transform:scale(1.06);filter:brightness(1.08);}
 </style>
 </head>
 <body>
+
+<!-- ── 이미지 호버 오버레이 레이어 ── -->
+<div id="img-overlay" onclick="this.classList.remove('show')">
+  <img id="overlay-img" src="" alt="미리보기">
+</div>
+<script>
+function showImg(src){
+  document.getElementById('overlay-img').src = src;
+  document.getElementById('img-overlay').classList.add('show');
+}
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape') document.getElementById('img-overlay').classList.remove('show');
+});
+</script>
 
 <!-- ══ 헤더 ══ -->
 <div class="header">
@@ -172,50 +210,26 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       <div style="margin-bottom:14px;">
         <div style="font-size:9.5px;font-weight:700;color:#7c2d12;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">📸 실제 고객 접수 사진</div>
         <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;">
-          <a href="https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/week/image/260703/1.jpg" target="_blank"
-             style="display:block;aspect-ratio:1;border-radius:6px;overflow:hidden;border:1.5px solid rgba(124,45,18,0.25);cursor:zoom-in;position:relative;">
-            <img src="https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/week/image/260703/1.jpg"
-                 style="width:100%;height:100%;object-fit:cover;transition:transform .3s;"
-                 onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"
-                 onerror="this.parentElement.style.background='#f1f5f9';this.style.display='none'">
-          </a>
-          <a href="https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/week/image/260703/2.jpg" target="_blank"
-             style="display:block;aspect-ratio:1;border-radius:6px;overflow:hidden;border:1.5px solid rgba(124,45,18,0.25);cursor:zoom-in;">
-            <img src="https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/week/image/260703/2.jpg"
-                 style="width:100%;height:100%;object-fit:cover;transition:transform .3s;"
-                 onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"
-                 onerror="this.parentElement.style.background='#f1f5f9';this.style.display='none'">
-          </a>
-          <a href="https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/week/image/260703/3.png" target="_blank"
-             style="display:block;aspect-ratio:1;border-radius:6px;overflow:hidden;border:1.5px solid rgba(124,45,18,0.25);cursor:zoom-in;">
-            <img src="https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/week/image/260703/3.png"
-                 style="width:100%;height:100%;object-fit:cover;transition:transform .3s;"
-                 onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"
-                 onerror="this.parentElement.style.background='#f1f5f9';this.style.display='none'">
-          </a>
-          <a href="https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/week/image/260703/4.jpg" target="_blank"
-             style="display:block;aspect-ratio:1;border-radius:6px;overflow:hidden;border:1.5px solid rgba(124,45,18,0.25);cursor:zoom-in;">
-            <img src="https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/week/image/260703/4.jpg"
-                 style="width:100%;height:100%;object-fit:cover;transition:transform .3s;"
-                 onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"
-                 onerror="this.parentElement.style.background='#f1f5f9';this.style.display='none'">
-          </a>
-          <a href="https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/week/image/260703/5.png" target="_blank"
-             style="display:block;aspect-ratio:1;border-radius:6px;overflow:hidden;border:1.5px solid rgba(124,45,18,0.25);cursor:zoom-in;">
-            <img src="https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/week/image/260703/5.png"
-                 style="width:100%;height:100%;object-fit:cover;transition:transform .3s;"
-                 onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"
-                 onerror="this.parentElement.style.background='#f1f5f9';this.style.display='none'">
-          </a>
-          <a href="https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/week/image/260703/6.jpg" target="_blank"
-             style="display:block;aspect-ratio:1;border-radius:6px;overflow:hidden;border:1.5px solid rgba(124,45,18,0.25);cursor:zoom-in;">
-            <img src="https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/week/image/260703/6.jpg"
-                 style="width:100%;height:100%;object-fit:cover;transition:transform .3s;"
-                 onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"
-                 onerror="this.parentElement.style.background='#f1f5f9';this.style.display='none'">
-          </a>
+          <div class="thumb-wrap" onclick="showImg(this.querySelector('img').src)" title="클릭하면 크게 보기">
+            <img src="https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/week/image/260703/1.jpg" onerror="this.parentElement.style.background='#f1f5f9';this.style.display='none'">
+          </div>
+          <div class="thumb-wrap" onclick="showImg(this.querySelector('img').src)" title="클릭하면 크게 보기">
+            <img src="https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/week/image/260703/2.jpg" onerror="this.parentElement.style.background='#f1f5f9';this.style.display='none'">
+          </div>
+          <div class="thumb-wrap" onclick="showImg(this.querySelector('img').src)" title="클릭하면 크게 보기">
+            <img src="https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/week/image/260703/3.png" onerror="this.parentElement.style.background='#f1f5f9';this.style.display='none'">
+          </div>
+          <div class="thumb-wrap" onclick="showImg(this.querySelector('img').src)" title="클릭하면 크게 보기">
+            <img src="https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/week/image/260703/4.jpg" onerror="this.parentElement.style.background='#f1f5f9';this.style.display='none'">
+          </div>
+          <div class="thumb-wrap" onclick="showImg(this.querySelector('img').src)" title="클릭하면 크게 보기">
+            <img src="https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/week/image/260703/5.png" onerror="this.parentElement.style.background='#f1f5f9';this.style.display='none'">
+          </div>
+          <div class="thumb-wrap" onclick="showImg(this.querySelector('img').src)" title="클릭하면 크게 보기">
+            <img src="https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/week/image/260703/6.jpg" onerror="this.parentElement.style.background='#f1f5f9';this.style.display='none'">
+          </div>
         </div>
-        <div style="font-size:9.5px;color:#7c2d12;margin-top:5px;opacity:0.7;">※ 사진 클릭 시 크게 보기 · 마우스 오버 시 확대</div>
+        <div style="font-size:9.5px;color:#7c2d12;margin-top:5px;opacity:0.7;">※ 사진 클릭 시 크게 보기 · ESC 또는 바깥 클릭으로 닫기</div>
       </div>
 
       <div class="step-row">

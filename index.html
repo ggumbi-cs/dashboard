@@ -997,17 +997,6 @@ function loadHome() {
 
 // main.html → GO_TAB 수신 / tool_main.html → TOOL_NAV 수신
 // ── 팀원교육 허용 경로 (training_main TRAINING_DATA의 status:'done' 경로와 동기화)
-const TRAINING_ALLOWED_PATHS = [
-  'training/ai교육/ai교육_1회차.html',
-  'training/ai교육/ai교육_2회차.html',
-  'training/ai교육/ai교육_3회차.html',
-  'training/ai교육/ai교육_4회차.html',
-  'training/ai교육/ai교육_5회차.html',
-  'training/ai교육/ai교육_6회차.html',
-  'training/ai교육/ai교육_7회차.html',
-  // 새 회차 추가 시 여기에도 추가
-];
-
 window.addEventListener('message', e => {
   if (!e.data) return;
   if (e.data.type === 'GO_TAB') {
@@ -1027,20 +1016,14 @@ window.addEventListener('message', e => {
   }
   if (e.data.type === 'TRAINING_NAV' && e.data.path) {
     const frame = document.getElementById('mainFrame');
-
-    // checkOnly: index가 직접 허용 경로 목록으로 판단 (training_main 의존 제거)
-    if (e.data.checkOnly) {
-      const requester = e.source;
-      const exists = TRAINING_ALLOWED_PATHS.includes(e.data.path);
-      try { requester.postMessage({ type:'NAV_CHECK_RESULT', exists, path: e.data.path }, '*'); } catch(err) {}
-      return;
-    }
-
+    const nextExists = e.data.nextExists ?? false;
     const _tHandler = function() {
       frame.removeEventListener('load', _tHandler);
       try {
         const t = localStorage.getItem('ggumbi-theme') || 'dark';
         frame.contentWindow.postMessage({ type:'THEME', mode: t }, '*');
+        // training_main에서 넘어온 nextExists 정보를 교육파일에 전달
+        frame.contentWindow.postMessage({ type:'NAV_INFO', nextExists }, '*');
       } catch(err) {}
     };
     frame.addEventListener('load', _tHandler);

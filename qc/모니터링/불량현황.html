@@ -516,37 +516,31 @@ function setDelta(id, cur, prev) {
 
 // ── Top5 불량제품 ──
 function renderTop5(records) {
+  // 집계: 원본 제품명 기준 (shortName 미사용)
   const counts = {};
   records.forEach(r => {
     if (!r.제품명 || r.제품명.startsWith('[집계]')) return;
-    const name = shortName(r.제품명);
-    counts[name] = (counts[name]||0) + 1;
+    counts[r.제품명] = (counts[r.제품명]||0) + 1;
   });
   const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  const total  = records.length || 1;
-  const max    = sorted[0]?.[1] || 1;
+  // sorted: [[원본제품명, cnt], ...]
 
-  // Top5 저장 & 탭 빌드 (키는 원본 제품명, 표시만 shortName)
-  _top5Products = sorted.map(([name,cnt]) => ({name, cnt})); // name = shortName (표시용)
-  
-  // 원본 제품명도 함께 저장
-  const prodOrigMap = {};
-  records.forEach(r => {
-    if (!r.제품명 || r.제품명.startsWith('[집계]')) return;
-    const sn = shortName(r.제품명);
-    if (!prodOrigMap[sn]) prodOrigMap[sn] = r.제품명;
-  });
-  _top5Products = sorted.map(([sn,cnt]) => ({ sn, orig: prodOrigMap[sn]||sn, cnt }));
+  const total = records.length || 1;
+  const max   = sorted[0]?.[1] || 1;
+
+  // Top5 저장: orig=원본명(필터 키), sn=표시용 짧은 이름
+  _top5Products = sorted.map(([orig, cnt]) => ({ orig, sn: shortName(orig), cnt }));
   buildFaultTabs();
 
   document.getElementById('top5Row').innerHTML = sorted.length === 0
     ? '<div style="color:var(--text3);font-size:12px;grid-column:1/-1;">데이터 없음</div>'
-    : sorted.map(([name,cnt],i) => `
-    <div class="top5-card fade-in" style="animation-delay:${i*0.06}s;cursor:pointer;" onclick="setFaultFilter('${(_top5Products[i]?.orig||name).replace(/'/g,"\\'")}')">
+    : sorted.map(([orig, cnt], i) => `
+    <div class="top5-card fade-in" style="animation-delay:${i*0.06}s;cursor:pointer;"
+      onclick="setFaultFilter(this.dataset.orig)" data-orig="${orig.replace(/"/g,'&quot;')}">
       <div class="t5-rank-bar b${i}" style="opacity:0.7"></div>
       <div class="t5-body">
         <div class="t5-rank c${i}">TOP ${i+1}</div>
-        <div class="t5-name">${name}</div>
+        <div class="t5-name">${shortName(orig)}</div>
         <div class="t5-meta">
           <div class="t5-count c${i}">${cnt}</div>
           <div class="t5-pct">${((cnt/total)*100).toFixed(1)}%</div>

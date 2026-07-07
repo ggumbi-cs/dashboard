@@ -68,6 +68,9 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 .kpi-val.rm{color:var(--col-rm);}
 .kpi-val.cnt{color:var(--green);}
 .kpi-sub{font-size:10px;color:var(--text3);margin-top:4px;}
+.kpi-delta{position:absolute;top:10px;right:12px;font-size:10px;font-weight:600;padding:2px 6px;border-radius:5px;}
+.kpi-delta.up{background:rgba(255,90,110,0.12);color:var(--red);}
+.kpi-delta.dn{background:rgba(0,229,160,0.10);color:var(--green);}
 
 /* ── 메인 2컬럼 ── */
 #mainGrid{display:grid;grid-template-columns:3fr 2fr;gap:14px;}
@@ -158,10 +161,10 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
   <div>
     <div class="sec-hd orange">Overview</div>
     <div id="kpiRow">
-      <div class="kpi total"><div class="kpi-label">💰 총 처리금액</div><div class="kpi-val total" id="kTotal">-</div><div class="kpi-sub" id="kTotalSub">-</div></div>
-      <div class="kpi re"><div class="kpi-label">🔴 재상품화</div><div class="kpi-val re" id="kRe">-</div><div class="kpi-sub" id="kReSub">-</div></div>
-      <div class="kpi rm"><div class="kpi-label">🟡 원자재화</div><div class="kpi-val rm" id="kRm">-</div><div class="kpi-sub" id="kRmSub">건수 기준</div></div>
-      <div class="kpi cnt"><div class="kpi-label">📋 처리건수 / 수량</div><div class="kpi-val cnt" id="kCnt">-</div><div class="kpi-sub" id="kCntSub">-</div></div>
+      <div class="kpi total"><div class="kpi-delta" id="dTotal"></div><div class="kpi-label">💰 총 처리금액</div><div class="kpi-val total" id="kTotal">-</div><div class="kpi-sub" id="kTotalSub">-</div></div>
+      <div class="kpi re">  <div class="kpi-delta" id="dRe"></div>   <div class="kpi-label">🔴 재상품화</div>      <div class="kpi-val re" id="kRe">-</div>  <div class="kpi-sub" id="kReSub">-</div></div>
+      <div class="kpi rm">  <div class="kpi-delta" id="dRm"></div>   <div class="kpi-label">🟡 원자재화</div>      <div class="kpi-val rm" id="kRm">-</div>  <div class="kpi-sub">건수 기준</div></div>
+      <div class="kpi cnt"> <div class="kpi-delta" id="dCnt"></div>  <div class="kpi-label">📋 처리건수</div>      <div class="kpi-val cnt" id="kCnt">-</div> <div class="kpi-sub" id="kCntSub">-</div></div>
     </div>
   </div>
 
@@ -225,6 +228,7 @@ const QC_GAS_URL = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0E
 
 let _all        = [];
 let _records    = [];
+let _prevRecords= [];
 let _periodType = 'monthly';
 let _periodRef  = new Date();
 
@@ -265,14 +269,20 @@ function applyFilter() {
   document.getElementById('periodLabel').textContent = getPeriodLabel();
   const d=_periodRef, y=d.getFullYear(), m=d.getMonth()+1;
   if (_periodType==='yearly') {
-    _records=_all.filter(r=>r.처리일&&parseInt(r.처리일.slice(0,4))===y);
+    _records     = _all.filter(r=>r.처리일&&parseInt(r.처리일.slice(0,4))===y);
+    _prevRecords = _all.filter(r=>r.처리일&&parseInt(r.처리일.slice(0,4))===(y-1));
   } else if (_periodType==='monthly') {
-    _records=_all.filter(r=>r.처리일&&parseInt(r.처리일.slice(0,4))===y&&parseInt(r.처리일.slice(5,7))===m);
+    _records     = _all.filter(r=>r.처리일&&parseInt(r.처리일.slice(0,4))===y&&parseInt(r.처리일.slice(5,7))===m);
+    const pm=m===1?{y:y-1,m:12}:{y,m:m-1};
+    _prevRecords = _all.filter(r=>r.처리일&&parseInt(r.처리일.slice(0,4))===pm.y&&parseInt(r.처리일.slice(5,7))===pm.m);
   } else {
     const mon=new Date(d); mon.setDate(d.getDate()-d.getDay()+1);
     const sun=new Date(mon); sun.setDate(mon.getDate()+6);
     const start=toISO(mon), end=toISO(sun);
-    _records=_all.filter(r=>r.처리일&&r.처리일>=start&&r.처리일<=end);
+    _records     = _all.filter(r=>r.처리일&&r.처리일>=start&&r.처리일<=end);
+    const pmon=new Date(mon); pmon.setDate(mon.getDate()-7);
+    const psun=new Date(pmon); psun.setDate(pmon.getDate()+6);
+    _prevRecords = _all.filter(r=>r.처리일&&r.처리일>=toISO(pmon)&&r.처리일<=toISO(psun));
   }
 }
 
@@ -317,11 +327,12 @@ function renderAll() {
 }
 
 function renderKPI() {
-  const r=_records;
+  const r=_records, p=_prevRecords;
   const total=r.reduce((s,x)=>s+(x.처리금액||0),0);
-  const re=r.filter(x=>x.처리결과==='재상품화');
-  const rm=r.filter(x=>x.처리결과==='원자재화');
-  const reAmt=re.reduce((s,x)=>s+(x.처리금액||0),0);
+  const pTotal=p.reduce((s,x)=>s+(x.처리금액||0),0);
+  const re=r.filter(x=>x.처리결과==='재상품화'), pRe=p.filter(x=>x.처리결과==='재상품화');
+  const rm=r.filter(x=>x.처리결과==='원자재화'), pRm=p.filter(x=>x.처리결과==='원자재화');
+  const reAmt=re.reduce((s,x)=>s+(x.처리금액||0),0), pReAmt=pRe.reduce((s,x)=>s+(x.처리금액||0),0);
   const qty=r.reduce((s,x)=>s+(x.처리수량||0),0);
   document.getElementById('kTotal').textContent=won(total);
   document.getElementById('kTotalSub').textContent=`${r.length}건`;
@@ -330,6 +341,18 @@ function renderKPI() {
   document.getElementById('kRm').textContent=`${rm.length}건`;
   document.getElementById('kCnt').textContent=r.length;
   document.getElementById('kCntSub').textContent=`수량 ${qty}개`;
+  setDelta('dTotal',total,pTotal);
+  setDelta('dRe',reAmt,pReAmt);
+  setDelta('dRm',rm.length,pRm.length);
+  setDelta('dCnt',r.length,p.length);
+}
+
+function setDelta(id,cur,prev) {
+  const el=document.getElementById(id);
+  if(!el||!prev){el&&(el.textContent='');return;}
+  const diff=cur-prev, pct=Math.round(Math.abs(diff/prev)*100);
+  el.textContent=(diff>0?'▲':'▼')+pct+'%';
+  el.className='kpi-delta '+(diff>0?'up':'dn');
 }
 
 function renderProdList() {
@@ -376,43 +399,46 @@ function renderDist() {
 }
 
 function renderTrend() {
-  const monthly={};
-  _records.forEach(r=>{
-    if (!r.처리일) return;
-    const key=r.처리일.slice(0,7);
-    if (!monthly[key]) monthly[key]={re:0,rm:0};
-    if (r.처리결과==='재상품화') monthly[key].re+=r.처리금액||0;
-    else monthly[key].rm+=r.처리금액||0;
-  });
-  const months=Object.keys(monthly).sort();
-  if (!months.length) { document.getElementById('trendSvg').innerHTML=''; return; }
-  const W=600,H=120,pad={l:4,r:4,t:14,b:20};
-  const barW=Math.min(36,(W-pad.l-pad.r)/months.length-4);
-  const gap=(W-pad.l-pad.r-barW*months.length)/(months.length+1);
-  const maxAmt=Math.max(...months.map(m=>(monthly[m].re||0)+(monthly[m].rm||0)));
+  const grouped={};
+  let curKey;
+  if (_periodType==='yearly') {
+    _all.forEach(r=>{ if(!r.처리일)return; const k=r.처리일.slice(0,4); if(!grouped[k])grouped[k]={re:0,rm:0}; if(r.처리결과==='재상품화')grouped[k].re+=r.처리금액||0; else grouped[k].rm+=r.처리금액||0; });
+    curKey=String(_periodRef.getFullYear());
+  } else if (_periodType==='monthly') {
+    const endD=new Date(_periodRef.getFullYear(),_periodRef.getMonth()+1,0);
+    const startD=new Date(_periodRef.getFullYear(),_periodRef.getMonth()-11,1);
+    _all.forEach(r=>{ if(!r.처리일)return; if(r.처리일<toISO(startD)||r.처리일>toISO(endD))return; const k=r.처리일.slice(0,7); if(!grouped[k])grouped[k]={re:0,rm:0}; if(r.처리결과==='재상품화')grouped[k].re+=r.처리금액||0; else grouped[k].rm+=r.처리금액||0; });
+    curKey=`${_periodRef.getFullYear()}-${String(_periodRef.getMonth()+1).padStart(2,'0')}`;
+  } else {
+    const sunNow=new Date(_periodRef); sunNow.setDate(_periodRef.getDate()-_periodRef.getDay()+7);
+    const monStart=new Date(sunNow); monStart.setDate(sunNow.getDate()-55);
+    _all.forEach(r=>{ if(!r.처리일)return; if(r.처리일<toISO(monStart)||r.처리일>toISO(sunNow))return; const d=new Date(r.처리일); const mon=new Date(d); mon.setDate(d.getDate()-d.getDay()+1); const k=toISO(mon); if(!grouped[k])grouped[k]={re:0,rm:0}; if(r.처리결과==='재상품화')grouped[k].re+=r.처리금액||0; else grouped[k].rm+=r.처리금액||0; });
+    const refMon=new Date(_periodRef); refMon.setDate(_periodRef.getDate()-_periodRef.getDay()+1);
+    curKey=toISO(refMon);
+  }
+  const periods=Object.keys(grouped).sort();
+  if (!periods.length) { document.getElementById('trendSvg').innerHTML=`<text x="300" y="65" text-anchor="middle" fill="var(--text3)" font-size="12">비교 데이터 없음</text>`; document.getElementById('trendLabels').innerHTML=''; document.getElementById('topMonths').innerHTML=''; return; }
+  const W=600,H=120,pad={l:4,r:4,t:18,b:20};
+  const barW=Math.min(40,(W-pad.l-pad.r)/periods.length-4);
+  const gap=(W-pad.l-pad.r-barW*periods.length)/(periods.length+1);
+  const maxAmt=Math.max(...periods.map(k=>(grouped[k].re||0)+(grouped[k].rm||0)),1);
   const chartH=H-pad.t-pad.b;
   let bars='';
-  months.forEach((m,i)=>{
-    const x=pad.l+gap+i*(barW+gap);
-    const tot=(monthly[m].re||0)+(monthly[m].rm||0);
-    const hTot=maxAmt?(tot/maxAmt*chartH):0;
-    const hRe=maxAmt?((monthly[m].re||0)/maxAmt*chartH):0;
-    const y=pad.t+chartH;
-    bars+=`<rect x="${x.toFixed(1)}" y="${(y-hTot).toFixed(1)}" width="${barW}" height="${Math.max(hRe,0).toFixed(1)}" fill="var(--col-re)" rx="2"/>`;
-    bars+=`<rect x="${x.toFixed(1)}" y="${(y-hTot+hRe).toFixed(1)}" width="${barW}" height="${Math.max(hTot-hRe,0).toFixed(1)}" fill="var(--col-rm)" rx="2"/>`;
-    if (tot===maxAmt) bars+=`<text x="${(x+barW/2).toFixed(1)}" y="${(pad.t+chartH-hTot-3).toFixed(1)}" text-anchor="middle" fill="var(--text2)" font-size="9" font-family="Inter">${wonShort(tot)}</text>`;
+  const curIdx=periods.indexOf(curKey);
+  if(curIdx>=0){ const hx=pad.l+gap+curIdx*(barW+gap)-3; bars+=`<rect x="${hx.toFixed(1)}" y="${pad.t-2}" width="${(barW+6).toFixed(1)}" height="${chartH+4}" fill="rgba(255,144,64,0.08)" rx="4"/>`; }
+  periods.forEach((k,i)=>{
+    const x=pad.l+gap+i*(barW+gap), tot=(grouped[k].re||0)+(grouped[k].rm||0);
+    const hTot=tot/maxAmt*chartH, hRe=(grouped[k].re||0)/maxAmt*chartH, y=pad.t+chartH;
+    const op=k===curKey?1:0.38;
+    bars+=`<rect x="${x.toFixed(1)}" y="${(y-hTot).toFixed(1)}" width="${barW}" height="${Math.max(hRe,0).toFixed(1)}" fill="var(--col-re)" opacity="${op}" rx="2"/>`;
+    bars+=`<rect x="${x.toFixed(1)}" y="${(y-hTot+hRe).toFixed(1)}" width="${barW}" height="${Math.max(hTot-hRe,0).toFixed(1)}" fill="var(--col-rm)" opacity="${op}" rx="2"/>`;
+    if(k===curKey) bars+=`<text x="${(x+barW/2).toFixed(1)}" y="${(y-hTot-4).toFixed(1)}" text-anchor="middle" fill="var(--text)" font-size="9" font-family="Inter" font-weight="600">${wonShort(tot)}</text>`;
   });
   document.getElementById('trendSvg').innerHTML=bars;
-  document.getElementById('trendLabels').innerHTML=months.map(m=>`<span class="trend-lbl">${m.slice(5)}</span>`).join('');
-  const topM=[...months].sort((a,b)=>((monthly[b].re||0)+(monthly[b].rm||0))-((monthly[a].re||0)+(monthly[a].rm||0))).slice(0,4);
-  document.getElementById('topMonths').innerHTML=topM.map((m,i)=>{
-    const tot=(monthly[m].re||0)+(monthly[m].rm||0);
-    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg3);border-radius:7px;border:1px solid var(--border);">
-      <span style="font-size:10px;font-weight:700;color:var(--text3);width:16px;">${i+1}</span>
-      <span style="font-size:11px;color:var(--text2);flex:1;">${m}</span>
-      <span style="font-size:11px;font-weight:600;font-family:var(--font-en);color:var(--orange);">${won(tot)}</span>
-    </div>`;
-  }).join('');
+  const lFn=k=>_periodType==='yearly'?k:_periodType==='monthly'?k.slice(5):k.slice(5).replace('-','.');
+  document.getElementById('trendLabels').innerHTML=periods.map(k=>`<span class="trend-lbl" style="${k===curKey?'color:var(--orange);font-weight:700;':''}">${lFn(k)}</span>`).join('');
+  const topP=[...periods].sort((a,b)=>((grouped[b].re||0)+(grouped[b].rm||0))-((grouped[a].re||0)+(grouped[a].rm||0))).slice(0,4);
+  document.getElementById('topMonths').innerHTML=topP.map((k,i)=>{ const tot=(grouped[k].re||0)+(grouped[k].rm||0); return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg3);border-radius:7px;border:1px solid ${k===curKey?'var(--orange)':'var(--border)'};"><span style="font-size:10px;font-weight:700;color:var(--text3);width:16px;">${i+1}</span><span style="font-size:11px;color:var(--text2);flex:1;">${k}</span><span style="font-size:11px;font-weight:600;font-family:var(--font-en);color:var(--orange);">${won(tot)}</span></div>`; }).join('');
 }
 
 function renderRecent() {

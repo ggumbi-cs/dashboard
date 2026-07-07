@@ -101,7 +101,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
     <table class="rec-table">
       <thead>
         <tr>
-          <th>요청일</th><th>고객명</th><th>제품명</th><th>주문번호</th>
+          <th>요청일</th><th>출력일</th><th>고객명</th><th>제품명</th><th>주문번호</th>
           <th>택배사</th><th>상태</th><th>송장번호</th><th>연락처</th><th>주소</th>
         </tr>
       </thead>
@@ -207,6 +207,11 @@ function render(){
   document.getElementById('recTbody').innerHTML=list.map(r=>`
     <tr onclick="openNotion('${r.url||''}','${r.id}')">
       <td style="font-family:var(--font-en);white-space:nowrap;">${r.요청일||'-'}</td>
+      <td onclick="event.stopPropagation()">
+        <input type="date" class="edit-input" style="width:108px;"
+          value="${r.출력일||''}"
+          onchange="updatePrintDate('${r.id}',this.value)">
+      </td>
       <td style="font-weight:500;color:var(--text);">${r.고객명||'-'}</td>
       <td style="word-break:keep-all;">${r.제품명||'-'}</td>
       <td style="font-family:var(--font-en);font-size:10px;color:var(--text3);">${r.주문번호||'-'}</td>
@@ -255,6 +260,13 @@ async function saveNew(){
     else alert('등록 실패: '+(d.msg||'오류'));
   }catch(e){alert('오류: '+e.message);}
   btn.disabled=false; btn.textContent='등록';
+}
+
+async function updatePrintDate(pageId, val) {
+  try {
+    const p = encodeURIComponent(JSON.stringify({pageId, property:'출력일', value:val||null, type:'date'}));
+    await fetch(`${GAS}?action=updateTaekbaeItem&data=${p}`, {redirect:'follow'});
+  } catch(e) {}
 }
 
 function showLoading(){document.getElementById('loadState').style.display='';document.getElementById('emptyState').style.display='none';document.getElementById('mainWrap').style.display='none';}

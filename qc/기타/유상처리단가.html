@@ -19,6 +19,7 @@ body.light{--bg:#f0f4fa;--bg2:#fff;--bg3:#e8f0fb;--bg4:#dce8f7;--border:rgba(26,
 html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--font-kr);}
 ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 
+/* ── 툴바 ── */
 #toolbar{padding:12px 18px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .ph-title{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:7px;flex-shrink:0;}
 .ph-title::before{content:'';display:inline-block;width:3px;height:15px;background:var(--green);border-radius:2px;}
@@ -27,15 +28,20 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 .search-input:focus{border-color:var(--border2);}
 .search-btn{padding:5px 10px;background:var(--cyan-dim);border:1px solid var(--border2);border-radius:7px;color:var(--cyan);font-size:11px;font-weight:600;cursor:pointer;}
 .ph-count{font-size:11px;color:var(--text3);}
-.btn-filter{padding:5px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:7px;color:var(--cyan);font-size:11px;font-weight:600;cursor:pointer;position:relative;}
-.btn-filter.has-filter{background:var(--cyan-dim);}
+
+/* 필터 버튼 + 배지 */
+.btn-filter-wrap{position:relative;flex-shrink:0;}
+.btn-filter{padding:5px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:7px;color:var(--cyan);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font-kr);}
+.filter-badge{position:absolute;top:-6px;right:-8px;min-width:18px;height:18px;border-radius:9px;background:var(--cyan);color:#000;font-size:10px;font-weight:700;font-family:var(--font-en);display:flex;align-items:center;justify-content:center;padding:0 4px;pointer-events:none;}
+.filter-badge.all{background:var(--text3);color:var(--bg);}
+
 .btn-new{padding:5px 12px;background:var(--green);color:#000;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font-kr);}
 .ph-refresh{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
 .ph-refresh:hover{border-color:var(--border2);color:var(--cyan);}
 .ph-refresh.spin{animation:spin 0.8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
-/* 필터 팝업 */
+/* ── 필터 팝업 ── */
 #filterPopup{display:none;position:fixed;z-index:999;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:14px 16px;min-width:220px;box-shadow:0 16px 48px rgba(0,0,0,0.5);}
 #filterPopup.open{display:block;}
 .fp-title{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
@@ -46,20 +52,39 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 .fp-item label{font-size:11px;color:var(--text2);cursor:pointer;flex:1;}
 .fp-apply{width:100%;margin-top:10px;padding:7px;background:var(--cyan);color:#000;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-kr);}
 
+/* ── 아코디언 제품 그룹 ── */
 .wrap{padding:12px 18px 40px;}
-.prod-group{margin-bottom:20px;}
-.prod-group-hd{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px 10px 0 0;border-bottom:none;}
-.prod-badge{font-size:11px;font-weight:700;color:var(--text);padding:2px 10px;border-radius:5px;background:var(--bg3);border:1px solid var(--border2);}
+.prod-group{margin-bottom:10px;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.prod-group-hd{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg2);cursor:pointer;transition:background 0.15s;user-select:none;}
+.prod-group-hd:hover{background:var(--bg3);}
+.prod-toggle{font-size:11px;color:var(--text3);transition:transform 0.2s;flex-shrink:0;}
+.prod-group.open .prod-toggle{transform:rotate(90deg);}
+.prod-badge{font-size:11px;font-weight:700;color:var(--text);flex:1;}
 .prod-cnt-badge{font-size:10px;color:var(--text3);}
-.danga-table{width:100%;border-collapse:collapse;background:var(--bg2);border:1px solid var(--border);border-radius:0 0 10px 10px;overflow:hidden;}
-.danga-table th{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.7px;padding:6px 10px;border-bottom:1px solid var(--border);text-align:left;background:var(--bg3);}
-.danga-table td{font-size:11px;color:var(--text2);padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
+.prod-body{display:none;overflow-x:auto;}
+.prod-group.open .prod-body{display:block;}
+
+/* ── 고정 컬럼 테이블 ── */
+.danga-table{width:100%;border-collapse:collapse;table-layout:fixed;}
+.danga-table col.c-symptom {width:22%;}
+.danga-table col.c-part    {width:16%;}
+.danga-table col.c-labor   {width:9%;}
+.danga-table col.c-price   {width:9%;}
+.danga-table col.c-total   {width:11%;}
+.danga-table col.c-work    {width:18%;}
+.danga-table col.c-note    {width:15%;}
+.danga-table th{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;padding:6px 10px;border-bottom:1px solid var(--border);text-align:left;background:var(--bg3);white-space:nowrap;overflow:hidden;}
+.danga-table td{font-size:11px;color:var(--text2);padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;overflow:hidden;}
 .danga-table tr:last-child td{border-bottom:none;}
 .danga-table tr:hover td{background:var(--bg3);cursor:pointer;}
-.amt{font-family:var(--font-en);font-weight:600;color:var(--text);}
-.amt-total{font-family:var(--font-en);font-weight:700;color:var(--green);}
 
-/* 신규등록 모달 */
+/* 최종견적 강조 */
+.danga-table th.col-total{color:var(--green);background:rgba(0,229,160,0.06);}
+.danga-table td.col-total{background:rgba(0,229,160,0.04);font-family:var(--font-en);font-weight:700;color:var(--green);font-size:12px;}
+.danga-table tr:hover td.col-total{background:rgba(0,229,160,0.1);}
+.amt{font-family:var(--font-en);font-weight:500;color:var(--text);}
+
+/* ── 신규등록 모달 ── */
 #newModal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
 #newModal.open{display:flex;}
 .modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:24px 28px;width:480px;max-height:85vh;overflow-y:auto;position:relative;}
@@ -89,12 +114,14 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
     <button class="search-btn" onclick="doSearch()">검색</button>
   </div>
   <span class="ph-count" id="phCount">-</span>
-  <button class="btn-filter" id="filterBtn" onclick="toggleFilter()">🔽 제품 필터</button>
+  <div class="btn-filter-wrap">
+    <button class="btn-filter" id="filterBtn" onclick="toggleFilter()">🔽 제품 필터</button>
+    <div class="filter-badge all" id="filterBadge">All</div>
+  </div>
   <button class="btn-new" onclick="openNew()">+ 신규등록</button>
   <button class="ph-refresh" id="refreshBtn" onclick="loadData()">↻</button>
 </div>
 
-<!-- 필터 팝업 -->
 <div id="filterPopup">
   <div class="fp-title">
     <span>표시 제품 선택</span>
@@ -108,7 +135,6 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 <div id="emptyState" style="display:none;"><div style="font-size:36px;margin-bottom:12px;">📭</div><div style="font-size:13px;color:var(--text);">항목 없음</div></div>
 <div class="wrap" id="mainWrap" style="display:none;"></div>
 
-<!-- 신규등록 모달 -->
 <div id="newModal">
   <div class="modal-box">
     <button class="modal-close" onclick="closeNew()">✕</button>
@@ -133,13 +159,14 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 <script>
 const GAS = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
 const PROD_OPTS=['젖병살균세척기','분유쉐이커','젖병세척기 스팀플러스','출수형 분유포트','버블리스 분유포트','센서 휴지통','휴대용 분유포트','웜라이너','장난감 살균기','전동 젖병세척솔','UV LED살균기','퀵폴딩샤워가드','(분리형) 휴대용 분유포트'];
+const DEFAULT_OPEN = '젖병살균세척기'; // 기본 펼침 제품
 
-let _all=[], _checkedProds=new Set(), _query='';
+let _all=[], _checkedProds=new Set(), _allProds=[], _query='';
+let _openGroups=new Set([DEFAULT_OPEN]); // 열린 그룹 관리
 
 window.addEventListener('message',e=>{if(e.data&&e.data.type==='THEME')document.body.classList.toggle('light',e.data.mode==='light');});
 if(sessionStorage.getItem('_theme')==='light')document.body.classList.add('light');
 
-// 신규등록 제품명 select 초기화
 document.getElementById('nw제품명').innerHTML='<option value="">선택</option>'+PROD_OPTS.map(p=>`<option value="${p}">${p}</option>`).join('');
 
 async function loadData(){
@@ -151,21 +178,22 @@ async function loadData(){
     const d=await res.json();
     if(d.ok&&d.records){
       _all=d.records;
-      const prods=[...new Set(_all.map(r=>r.제품명).filter(Boolean))].sort();
-      _checkedProds=new Set(prods); // 기본 전체 선택
-      buildFilterList(prods);
+      _allProds=[...new Set(_all.map(r=>r.제품명).filter(Boolean))].sort();
+      _checkedProds=new Set(_allProds);
+      buildFilterList();
+      updateBadge();
       render();
     }else{document.getElementById('loadState').style.display='none';document.getElementById('emptyState').style.display='';}
   }catch(e){document.getElementById('loadState').style.display='none';document.getElementById('emptyState').style.display='';}
   document.getElementById('refreshBtn').classList.remove('spin');
 }
 
-function buildFilterList(prods){
-  document.getElementById('fpList').innerHTML=prods.map(p=>`
-    <div class="fp-item">
-      <input type="checkbox" id="fp_${p.replace(/[^a-zA-Z가-힣0-9]/g,'_')}" value="${p}" ${_checkedProds.has(p)?'checked':''}>
-      <label for="fp_${p.replace(/[^a-zA-Z가-힣0-9]/g,'_')}">${p}</label>
-    </div>`).join('');
+// ── 필터 팝업 ──
+function buildFilterList(){
+  document.getElementById('fpList').innerHTML=_allProds.map(p=>{
+    const id='fp_'+p.replace(/[^a-zA-Z가-힣0-9]/g,'_');
+    return `<div class="fp-item"><input type="checkbox" id="${id}" value="${p}" ${_checkedProds.has(p)?'checked':''}><label for="${id}">${p}</label></div>`;
+  }).join('');
 }
 
 function toggleFilter(){
@@ -187,14 +215,21 @@ function toggleAll(){
 function applyFilter(){
   _checkedProds=new Set([...document.querySelectorAll('#fpList input[type=checkbox]:checked')].map(c=>c.value));
   document.getElementById('filterPopup').classList.remove('open');
-  document.getElementById('filterBtn').classList.toggle('has-filter',_checkedProds.size<[...document.querySelectorAll('#fpList input')].length);
+  updateBadge();
   render();
+}
+
+function updateBadge(){
+  const badge=document.getElementById('filterBadge');
+  const isAll=_checkedProds.size===_allProds.length;
+  badge.textContent=isAll?'All':_checkedProds.size;
+  badge.className='filter-badge'+(isAll?' all':'');
 }
 
 document.addEventListener('click',e=>{
   const popup=document.getElementById('filterPopup');
   const btn=document.getElementById('filterBtn');
-  if(popup.classList.contains('open')&&!popup.contains(e.target)&&e.target!==btn&&!btn.contains(e.target))
+  if(popup.classList.contains('open')&&!popup.contains(e.target)&&!btn.contains(e.target))
     popup.classList.remove('open');
 });
 
@@ -208,6 +243,14 @@ function getFiltered(){
 
 function won(n){if(!n&&n!==0)return'-'; return '₩'+Math.round(n).toLocaleString('ko-KR');}
 
+// ── 그룹 토글 ──
+function toggleGroup(prod){
+  if(_openGroups.has(prod)) _openGroups.delete(prod);
+  else _openGroups.add(prod);
+  const el=document.getElementById('grp_'+CSS.escape(prod));
+  if(el) el.classList.toggle('open',_openGroups.has(prod));
+}
+
 function render(){
   const list=getFiltered();
   document.getElementById('phCount').textContent=`${list.length}건`;
@@ -218,35 +261,46 @@ function render(){
 
   const grouped={};
   list.forEach(r=>{const k=r.제품명||'미분류'; if(!grouped[k])grouped[k]=[]; grouped[k].push(r);});
-  document.getElementById('mainWrap').innerHTML=Object.entries(grouped).map(([prod,rows])=>`
-    <div class="prod-group">
-      <div class="prod-group-hd">
+
+  document.getElementById('mainWrap').innerHTML=Object.entries(grouped).map(([prod,rows])=>{
+    const isOpen=_openGroups.has(prod);
+    const safeId='grp_'+prod.replace(/[^a-zA-Z가-힣0-9]/g,'_');
+    return `
+    <div class="prod-group${isOpen?' open':''}" id="${safeId}">
+      <div class="prod-group-hd" onclick="toggleGroup('${prod.replace(/'/g,"\\'")}')">
+        <span class="prod-toggle">▶</span>
         <span class="prod-badge">${prod}</span>
         <span class="prod-cnt-badge">${rows.length}건</span>
       </div>
-      <table class="danga-table">
-        <thead><tr>
-          <th>접수증상</th><th>예상부품</th><th>공임</th>
-          <th>소비자단가</th><th>최종견적</th><th>예상작업</th><th>비고</th>
-        </tr></thead>
-        <tbody>
-          ${rows.map(r=>`<tr onclick="openNotion('${r.url||''}','${r.id}')">
-            <td style="font-weight:500;color:var(--text);">${r.접수증상||'-'}</td>
-            <td>${r.예상부품||'-'}</td>
-            <td class="amt">${won(r.공임)}</td>
-            <td class="amt">${won(r.소비자단가)}</td>
-            <td class="amt-total">${won(r.최종견적)}</td>
-            <td style="max-width:140px;font-size:10px;color:var(--text3);">${r.예상작업||'-'}</td>
-            <td style="max-width:120px;font-size:10px;color:var(--text3);">${r.비고||'-'}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>`).join('');
+      <div class="prod-body">
+        <table class="danga-table">
+          <colgroup>
+            <col class="c-symptom"><col class="c-part"><col class="c-labor">
+            <col class="c-price"><col class="c-total"><col class="c-work"><col class="c-note">
+          </colgroup>
+          <thead><tr>
+            <th>접수증상</th><th>예상부품</th><th>공임</th>
+            <th>소비자단가</th><th class="col-total">★ 최종견적</th><th>예상작업</th><th>비고</th>
+          </tr></thead>
+          <tbody>
+            ${rows.map(r=>`<tr onclick="openNotion('${r.url||''}','${r.id}')">
+              <td style="font-weight:500;color:var(--text);word-break:keep-all;">${r.접수증상||'-'}</td>
+              <td style="word-break:keep-all;">${r.예상부품||'-'}</td>
+              <td class="amt">${won(r.공임)}</td>
+              <td class="amt">${won(r.소비자단가)}</td>
+              <td class="col-total">${won(r.최종견적)}</td>
+              <td style="font-size:10px;color:var(--text3);word-break:keep-all;">${r.예상작업||'-'}</td>
+              <td style="font-size:10px;color:var(--text3);word-break:keep-all;">${r.비고||'-'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function openNotion(url,id){if(!url&&id)url=`https://notion.so/${id.replace(/-/g,'')}`; if(url)window.open(url,'_blank');}
 
-// 신규등록
 function openNew(){document.getElementById('newModal').classList.add('open');}
 function closeNew(){document.getElementById('newModal').classList.remove('open');}
 

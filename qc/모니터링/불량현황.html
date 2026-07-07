@@ -570,29 +570,30 @@ function setFaultFilter(key) {
   renderFaultTop10(cur);
 }
 
-// ── 확인불량 Top10 (필터별 독립 집계) ──
+// ── 확인불량 Top10 (접수불량 우선, 확인불량 보완) ──
 function renderFaultTop10(records) {
-  // 필터 적용: 전체 vs 특정 제품
   const target = _faultFilter === 'all'
     ? records
     : records.filter(r => r.제품명 === _faultFilter);
 
-  // 해당 레코드 안에서 확인불량 독립 집계
+  // 접수불량 우선, 없는 건만 확인불량으로 보완
   const counts = {};
   target.forEach(r => {
-    if (!r.확인불량) return;
-    const faults = Array.isArray(r.확인불량) ? r.확인불량 : JSON.parse(r.확인불량||'[]');
-    faults.forEach(f => {
-      if (f && f !== '특이사항없음' && f !== '미확인') counts[f] = (counts[f]||0)+1;
-    });
+    const jsFaults = Array.isArray(r.접수불량) ? r.접수불량 : JSON.parse(r.접수불량||'[]');
+    const cfFaults = Array.isArray(r.확인불량)  ? r.확인불량  : JSON.parse(r.확인불량||'[]');
+    // 접수불량이 있으면 접수불량 사용, 없으면 확인불량 사용
+    const useFaults = jsFaults.filter(f=>f&&f!=='특이사항없음'&&f!=='미확인').length > 0
+      ? jsFaults
+      : cfFaults;
+    useFaults.forEach(f => { if(f&&f!=='특이사항없음'&&f!=='미확인') counts[f]=(counts[f]||0)+1; });
   });
 
   const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  const max    = sorted[0]?.[1] || 1;
-  const base   = target.length || 1;
+  const max  = sorted[0]?.[1] || 1;
+  const base = target.length || 1;
 
   document.getElementById('faultTop10').innerHTML = sorted.length === 0
-    ? '<div style="color:var(--text3);font-size:12px;">해당 제품의 확인불량 데이터 없음</div>'
+    ? `<div style="color:var(--text3);font-size:12px;">${target.length > 0 ? `이 제품 ${target.length}건 — 불량 데이터 미기입` : '데이터 없음'}</div>`
     : sorted.map(([name,cnt],i) => `
     <div class="fault-row">
       <div class="fault-rank">${i+1}</div>

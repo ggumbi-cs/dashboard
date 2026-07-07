@@ -103,7 +103,22 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 
 .step-content-label{font-size:9px;font-weight:700;font-family:var(--font-en);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:3px;display:flex;align-items:center;gap:5px;}
 .step-content-label::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.edit-pencil{margin-left:auto;width:20px;height:20px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;}
+.edit-pencil:hover{border-color:var(--border2);color:var(--cyan);}
 .card-done{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:10px;color:var(--green);background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);padding:2px 8px;border-radius:5px;}
+
+/* 스텝내용 편집 모달 */
+#stepEditModal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
+#stepEditModal.open{display:flex;}
+.se-box{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:22px 24px;width:480px;max-height:80vh;display:flex;flex-direction:column;gap:12px;}
+.se-title{font-size:13px;font-weight:700;color:var(--text);}
+.se-sub{font-size:11px;color:var(--text3);margin-top:-6px;}
+.se-ta{flex:1;min-height:140px;max-height:340px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;font-family:var(--font-kr);outline:none;resize:vertical;line-height:1.7;}
+.se-ta:focus{border-color:var(--border2);}
+.se-btns{display:flex;gap:8px;}
+.se-save{flex:1;padding:9px;background:var(--cyan);color:#000;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-kr);}
+.se-save:disabled{opacity:0.5;cursor:not-allowed;}
+.se-cancel{padding:9px 16px;background:var(--bg4);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:12px;cursor:pointer;font-family:var(--font-kr);}
 
 /* ── 빈/로딩 ── */
 #loadingState,#emptyState{text-align:center;padding:50px 20px;}
@@ -197,8 +212,22 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 </div>
 <div id="cardList" style="display:none;"></div>
 
-<!-- 우선순위 설정 모달 -->
-<div id="prioModal">
+<!-- 스텝내용 편집 모달 -->
+<div id="stepEditModal">
+  <div class="se-box">
+    <div>
+      <div class="se-title" id="seTitle">S* 진행내용 편집</div>
+      <div class="se-sub" id="seSub"></div>
+    </div>
+    <textarea class="se-ta" id="seTA" placeholder="진행 내용을 입력하세요..."></textarea>
+    <div class="se-btns">
+      <button class="se-save" id="seSaveBtn" onclick="saveStepEdit()">💾 저장</button>
+      <button class="se-cancel" onclick="closeStepEdit()">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- 우선순위 설정 모달 --><div id="prioModal">
   <div class="prio-box">
     <div class="prio-title">⚙ 제품 우선순위 설정</div>
     <div class="prio-sub">드래그해서 순서를 정하세요. 저장하면 GAS에 기억돼요.</div>
@@ -422,8 +451,10 @@ function buildCard(r, i) {
         <div class="step-content-label" style="color:${color}">
           <span style="background:${color}"></span>
           S${stepLabelNum} 진행내용
+          <button class="edit-pencil" title="내용 편집"
+            onclick="event.stopPropagation();openStepEdit('${r.id}','${stepKey}',${stepLabelNum},'${r.주제||''}',\`${stepContent.replace(/`/g,"'").replace(/\n/g,'\\n')}\`)">✏</button>
         </div>
-        <div class="sec-text ${stepContent?'':'empty'}">${stepContent||'미입력'}</div>
+        <div class="sec-text ${stepContent?'':'empty'}" id="sc-${r.id}">${stepContent||'미입력'}</div>
         ${isS5&&r.완료일?`<div class="card-done">✅ 완료일: ${r.완료일.slice(0,10).replace(/-/g,'.')}</div>`:''}
       </div>
     </div>
@@ -467,9 +498,63 @@ async function updateStage(pageId, selEl) {
   selEl.disabled = false;
 }
 
+// 노션 속성명 매핑 (스페이스 있음)
+const NOTION_PROP_MAP = {
+  step1내용:'step1 내용', step2내용:'step2 내용', step3내용:'step3 내용',
+  step4내용:'step4 내용', step5내용:'step5 내용'
+};
+
 // ─────────────────────────────────────────────
-// 우선순위 모달
+// 스텝내용 편집 모달
 // ─────────────────────────────────────────────
+let _sePageId = null, _seKey = null;
+
+function openStepEdit(pageId, key, stepNum, title, content) {
+  _sePageId = pageId; _seKey = key;
+  document.getElementById('seTitle').textContent = `S${stepNum} 진행내용 편집`;
+  document.getElementById('seSub').textContent   = title ? `「${title}」` : '';
+  document.getElementById('seTA').value          = content.replace(/\\n/g,'\n');
+  document.getElementById('stepEditModal').classList.add('open');
+  setTimeout(()=>document.getElementById('seTA').focus(),100);
+}
+
+function closeStepEdit() {
+  document.getElementById('stepEditModal').classList.remove('open');
+  _sePageId = null; _seKey = null;
+}
+
+async function saveStepEdit() {
+  if (!_sePageId || !_seKey) return;
+  const content = document.getElementById('seTA').value;
+  const btn = document.getElementById('seSaveBtn');
+  btn.disabled = true; btn.textContent = '저장 중...';
+
+  // 로컬 즉시 반영
+  const rec = _records.find(r=>r.id===_sePageId);
+  if (rec) rec[_seKey] = content;
+  const el = document.getElementById('sc-' + _sePageId);
+  if (el) {
+    el.textContent = content || '미입력';
+    el.className = 'sec-text ' + (content?'':'empty');
+  }
+
+  // GAS → 노션 업데이트
+  const notionProp = NOTION_PROP_MAP[_seKey] || _seKey;
+  try {
+    const payload = encodeURIComponent(JSON.stringify({
+      pageId: _sePageId, property: notionProp, value: content, type: 'text'
+    }));
+    await fetch(`${QC_GAS_URL}?action=updateActionItem&data=${payload}`,{redirect:'follow'});
+  } catch(e){}
+
+  btn.disabled = false; btn.textContent = '💾 저장';
+  closeStepEdit();
+}
+
+// ESC로 모달 닫기
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') { closeStepEdit(); closePrioModal(); }
+});
 let _prioOrder = [];
 
 function openPrioModal() {

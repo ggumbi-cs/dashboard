@@ -52,6 +52,16 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 .edit-input{background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text2);font-size:11px;font-family:var(--font-en);width:90px;padding:1px 2px;outline:none;}
 .edit-input:focus{border-bottom-color:var(--cyan);}
 
+/* 자동완성 */
+.ac-wrap{position:relative;display:inline-block;}
+.ac-input{width:100%;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;font-family:var(--font-kr);outline:none;}
+.ac-input:focus{border-color:var(--border2);}
+.ac-dropdown{display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;z-index:200;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.4);margin-top:2px;}
+.ac-dropdown.open{display:block;}
+.ac-item{padding:8px 12px;font-size:12px;color:var(--text2);cursor:pointer;transition:background 0.1s;}
+.ac-item:hover,.ac-item.selected{background:var(--bg3);color:var(--text);}
+.ac-item mark{background:rgba(0,200,255,0.2);color:var(--cyan);border-radius:2px;}
+
 /* 신규등록 모달 */
 #newModal{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
 #newModal.open{display:flex;}
@@ -101,7 +111,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
     <table class="rec-table">
       <thead>
         <tr>
-          <th>요청일</th><th>출력일</th><th>고객명</th><th>제품명</th><th>주문번호</th>
+          <th>요청일</th><th>출력일</th><th>요청자</th><th>고객명</th><th>제품명</th><th>주문번호</th>
           <th>택배사</th><th>상태</th><th>송장번호</th><th>연락처</th><th>주소</th>
         </tr>
       </thead>
@@ -118,6 +128,15 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
     <div class="modal-grid">
       <div class="modal-field"><div class="field-label">고객명 *</div><input class="field-input" id="nw고객명" placeholder="홍길동"></div>
       <div class="modal-field"><div class="field-label">연락처</div><input class="field-input" id="nw연락처" placeholder="010-0000-0000"></div>
+      <div class="modal-field full">
+        <div class="field-label">요청자</div>
+        <div class="ac-wrap" id="acWrap">
+          <input class="ac-input" id="nw요청자Input" placeholder="이름 입력 (3자 이상 자동완성)" autocomplete="off"
+            oninput="acSearch(this.value)" onkeydown="acKeyDown(event)">
+          <div class="ac-dropdown" id="acDrop"></div>
+        </div>
+        <input type="hidden" id="nw요청자Id">
+      </div>
       <div class="modal-field full"><div class="field-label">제품명</div><input class="field-input" id="nw제품명" placeholder="휴대용 분유포트 뚜껑"></div>
       <div class="modal-field full"><div class="field-label">주소</div><input class="field-input" id="nw주소" placeholder="서울시 강남구..."></div>
       <div class="modal-field"><div class="field-label">주문번호</div><input class="field-input" id="nw주문번호" placeholder="2026051234567890"></div>
@@ -134,15 +153,58 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 
 <script>
 const GAS = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
-const DATA_PATH = '../qc_data.json';
+const DATA_PATH  = '../qc_data.json';
+const USERS_PATH = '../users.json';
 const STATUS_OPTS=['출력요청','출고완료(취합대기)','출고완료(취합완료)','미출고(실물X)','출고보류(예약)'];
 let _static=[], _realtime=[], _curStatus='출력요청', _query='';
+let _users=[], _acIdx=-1;
 
 window.addEventListener('message',e=>{if(e.data&&e.data.type==='THEME')document.body.classList.toggle('light',e.data.mode==='light');});
 if(sessionStorage.getItem('_theme')==='light')document.body.classList.add('light');
 
 // 오늘 날짜 기본값
 document.getElementById('nw요청일').value = new Date().toISOString().slice(0,10);
+
+// ── 직원 목록 로드 ──
+async function loadUsers() {
+  try {
+    const res = await fetch(USERS_PATH);
+    if (res.ok) { const j = await res.json(); _users = j.users || []; }
+  } catch(e) {}
+}
+
+// ── 자동완성 ──
+function acSearch(val) {
+  document.getElementById('nw요청자Id').value = '';
+  const drop = document.getElementById('acDrop');
+  if (val.length < 3) { drop.classList.remove('open'); return; }
+  const q = val.toLowerCase();
+  const matches = _users.filter(u => u.name.toLowerCase().includes(q)).slice(0, 8);
+  if (!matches.length) { drop.classList.remove('open'); return; }
+  _acIdx = -1;
+  drop.innerHTML = matches.map(u => {
+    const esc = val.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const hi  = u.name.replace(new RegExp(esc,'gi'), m=>`<mark>${m}</mark>`);
+    return `<div class="ac-item" data-id="${u.id}" data-name="${u.name.replace(/"/g,'&quot;')}" onmousedown="acSelect('${u.id}','${u.name.replace(/'/g,"\\'")}')">
+      ${hi}</div>`;
+  }).join('');
+  drop.classList.add('open');
+}
+function acSelect(id, name) {
+  document.getElementById('nw요청자Input').value = name;
+  document.getElementById('nw요청자Id').value   = id;
+  document.getElementById('acDrop').classList.remove('open');
+}
+function acKeyDown(e) {
+  const drop = document.getElementById('acDrop');
+  const items = drop.querySelectorAll('.ac-item');
+  if (!drop.classList.contains('open') || !items.length) return;
+  if (e.key === 'ArrowDown') { e.preventDefault(); _acIdx=Math.min(_acIdx+1,items.length-1); items.forEach((el,i)=>el.classList.toggle('selected',i===_acIdx)); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); _acIdx=Math.max(_acIdx-1,0); items.forEach((el,i)=>el.classList.toggle('selected',i===_acIdx)); }
+  else if (e.key === 'Enter' && _acIdx>=0) { e.preventDefault(); const s=items[_acIdx]; acSelect(s.dataset.id,s.dataset.name); }
+  else if (e.key === 'Escape') { drop.classList.remove('open'); }
+}
+document.addEventListener('click',e=>{ const w=document.getElementById('acWrap'); if(w&&!w.contains(e.target))document.getElementById('acDrop').classList.remove('open'); });
 
 async function loadData(){
   showLoading();
@@ -212,6 +274,7 @@ function render(){
           value="${r.출력일||''}"
           onchange="updatePrintDate('${r.id}',this.value)">
       </td>
+      <td style="font-size:10px;color:var(--text3);white-space:nowrap;">${r.요청자||'-'}</td>
       <td style="font-weight:500;color:var(--text);">${r.고객명||'-'}</td>
       <td style="word-break:keep-all;">${r.제품명||'-'}</td>
       <td style="font-family:var(--font-en);font-size:10px;color:var(--text3);">${r.주문번호||'-'}</td>
@@ -251,7 +314,7 @@ async function saveNew(){
   if(!고객명){alert('고객명은 필수입니다.');return;}
   const btn=document.getElementById('newSaveBtn');
   btn.disabled=true; btn.textContent='등록 중...';
-  const data={고객명,연락처:document.getElementById('nw연락처').value.trim(),제품명:document.getElementById('nw제품명').value.trim(),주소:document.getElementById('nw주소').value.trim(),주문번호:document.getElementById('nw주문번호').value.trim(),택배사:document.getElementById('nw택배사').value,요청일:document.getElementById('nw요청일').value};
+  const data={고객명,연락처:document.getElementById('nw연락처').value.trim(),제품명:document.getElementById('nw제품명').value.trim(),주소:document.getElementById('nw주소').value.trim(),주문번호:document.getElementById('nw주문번호').value.trim(),택배사:document.getElementById('nw택배사').value,요청일:document.getElementById('nw요청일').value,요청자Id:document.getElementById('nw요청자Id').value||null};
   try{
     const p=encodeURIComponent(JSON.stringify(data));
     const res=await fetch(`${GAS}?action=createTaekbaeItem&data=${p}`,{redirect:'follow'});
@@ -270,6 +333,7 @@ async function updatePrintDate(pageId, val) {
 }
 
 function showLoading(){document.getElementById('loadState').style.display='';document.getElementById('emptyState').style.display='none';document.getElementById('mainWrap').style.display='none';}
+loadUsers(); // 직원 목록 별도 로드 (비동기, 메인 로딩과 병렬)
 loadData();
 </script>
 </body>

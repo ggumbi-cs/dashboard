@@ -314,13 +314,47 @@ async function saveNew(){
   if(!고객명){alert('고객명은 필수입니다.');return;}
   const btn=document.getElementById('newSaveBtn');
   btn.disabled=true; btn.textContent='등록 중...';
-  const data={고객명,연락처:document.getElementById('nw연락처').value.trim(),제품명:document.getElementById('nw제품명').value.trim(),주소:document.getElementById('nw주소').value.trim(),주문번호:document.getElementById('nw주문번호').value.trim(),택배사:document.getElementById('nw택배사').value,요청일:document.getElementById('nw요청일').value,요청자Id:document.getElementById('nw요청자Id').value||null};
+
+  const data={
+    고객명,
+    연락처: document.getElementById('nw연락처').value.trim(),
+    제품명: document.getElementById('nw제품명').value.trim(),
+    주소:   document.getElementById('nw주소').value.trim(),
+    주문번호:document.getElementById('nw주문번호').value.trim(),
+    택배사: document.getElementById('nw택배사').value,
+    요청일: document.getElementById('nw요청일').value,
+    요청자Id: document.getElementById('nw요청자Id').value||null
+  };
+
   try{
     const p=encodeURIComponent(JSON.stringify(data));
     const res=await fetch(`${GAS}?action=createTaekbaeItem&data=${p}`,{redirect:'follow'});
     const d=await res.json();
-    if(d.ok){closeNew(); await loadData();}
-    else alert('등록 실패: '+(d.msg||'오류'));
+    if(d.ok){
+      // GAS 재호출 없이 로컬로 즉시 추가 (새로고침 없이 바로 표시)
+      const newRec={
+        id:'tmp-'+Date.now(), url:'',
+        고객명:data.고객명, 상태:'출력요청',
+        제품명:data.제품명, 연락처:data.연락처,
+        주소:data.주소, 주문번호:data.주문번호,
+        송장번호:'', 택배사:data.택배사||null,
+        요청일:data.요청일, 출력일:null,
+        요청자:document.getElementById('nw요청자Input').value||null
+      };
+      _realtime.unshift(newRec);
+      closeNew();
+      setStatus('출력요청'); // 출력요청 탭으로 이동
+      updateCounts();
+      render();
+      // 입력 초기화
+      ['nw고객명','nw연락처','nw제품명','nw주소','nw주문번호','nw요청자Input','nw요청자Id'].forEach(id=>{
+        const el=document.getElementById(id); if(el) el.value='';
+      });
+      document.getElementById('nw택배사').value='';
+      document.getElementById('nw요청일').value=new Date().toISOString().slice(0,10);
+    } else {
+      alert('등록 실패: '+(d.msg||'오류'));
+    }
   }catch(e){alert('오류: '+e.message);}
   btn.disabled=false; btn.textContent='등록';
 }

@@ -264,7 +264,7 @@ textarea::placeholder{color:var(--text3);font-size:12px;}
 .d4{animation-delay:0.20s;}.d5{animation-delay:0.25s;}
 </style>
 </head>
-<body class="light-mode">
+<body>
 
 <div class="nav-prev" id="navPrev" onclick="navGo('prev')">
   ‹
@@ -507,75 +507,28 @@ PDF 저장
 </div>
 
 <!-- 토스트 -->
-<div id="navToast" style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--bg2);border:1px solid var(--border2);color:var(--text2);font-size:12px;font-weight:600;padding:10px 20px;border-radius:30px;z-index:9999;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;">
+<div id="navToast" style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(12px);background:#172240;border:1px solid rgba(80,140,255,0.35);color:#8aaad0;font-size:12px;font-weight:600;padding:10px 20px;border-radius:30px;z-index:9999;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;">
   📋 다음 회차는 준비 중입니다
 </div>
 
 <script>
-// ── 클립보드 복사 공통 함수 ──
-function copyToClipboard(text) {
-  if (navigator.clipboard && window.isSecureContext) {
-    return navigator.clipboard.writeText(text);
-  }
-
-  return new Promise((resolve, reject) => {
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.setAttribute('readonly', '');
-    textarea.style.position = 'fixed';
-    textarea.style.left = '-9999px';
-    textarea.style.top = '0';
-    document.body.appendChild(textarea);
-    textarea.focus();
-    textarea.select();
-
-    try {
-      const ok = document.execCommand('copy');
-      document.body.removeChild(textarea);
-      ok ? resolve() : reject(new Error('copy failed'));
-    } catch (err) {
-      document.body.removeChild(textarea);
-      reject(err);
-    }
-  });
-}
-
-function setCopyHint(message, colorVar) {
-  const hint = document.getElementById('copyHint');
-  if (!hint) return;
-  hint.textContent = message;
-  hint.style.color = colorVar;
-}
-
 // ── 결과물 미리보기 ──
 const AS6_PATH = 'https://ggumbi-cs.github.io/dashboard/tool/as6.html';
 (function() {
   const card  = document.getElementById('previewCard');
   const frame = document.getElementById('previewFrame');
   const ph    = document.getElementById('previewPh');
-  if (!card || !frame || !ph) return;
-
-  const loadPreview = () => {
-    if (frame.src) return;
-    frame.src = AS6_PATH;
-    frame.onload = () => {
-      frame.classList.add('loaded');
-      ph.style.display = 'none';
-    };
-  };
-
-  if ('IntersectionObserver' in window) {
-    const obs = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        loadPreview();
-        obs.disconnect();
-      }
-    }, { threshold: 0.1 });
-    obs.observe(card);
-  } else {
-    loadPreview();
-  }
-
+  const obs = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && !frame.src) {
+      frame.src = AS6_PATH;
+      frame.onload = () => {
+        frame.classList.add('loaded');
+        ph.style.display = 'none';
+      };
+      obs.disconnect();
+    }
+  }, { threshold: 0.1 });
+  obs.observe(card);
   card.addEventListener('click', e => {
     if (e.target.classList.contains('preview-open-btn') || e.target.closest('.preview-open-btn')) return;
     window.open(AS6_PATH, '_blank');
@@ -584,18 +537,14 @@ const AS6_PATH = 'https://ggumbi-cs.github.io/dashboard/tool/as6.html';
 
 // ── STEP 1 복사 ──
 function copyPrompt() {
-  const whatEl    = document.getElementById('inp-what');
-  const featureEl = document.getElementById('inp-feature');
-  const styleEl   = document.getElementById('inp-style');
-  const btn       = document.getElementById('copyBtn');
-
-  const what    = whatEl.value.trim();
-  const feature = featureEl.value.trim();
-  const style   = styleEl.value.trim();
+  const what    = document.getElementById('inp-what').value.trim();
+  const feature = document.getElementById('inp-feature').value.trim();
+  const style   = document.getElementById('inp-style').value.trim();
 
   if (!what) {
-    whatEl.focus();
-    setCopyHint('⚠ 첫 번째 칸을 먼저 채워주세요!', 'var(--orange)');
+    document.getElementById('inp-what').focus();
+    document.getElementById('copyHint').textContent = '⚠ 첫 번째 칸을 먼저 채워주세요!';
+    document.getElementById('copyHint').style.color = 'var(--orange)';
     return;
   }
 
@@ -603,75 +552,80 @@ function copyPrompt() {
   if (feature) text += '\n\n이런 기능이 있으면 좋겠어요:\n' + feature;
   if (style)   text += '\n\n이런 느낌이면 좋겠어요:\n' + style;
 
-  copyToClipboard(text).then(() => {
+  navigator.clipboard.writeText(text).then(() => {
+    const btn  = document.getElementById('copyBtn');
+    const hint = document.getElementById('copyHint');
     btn.textContent = '✅ 복사됐어요! GPT에 붙여넣으세요';
     btn.classList.add('copied');
-    setCopyHint('ChatGPT 열고 Ctrl+V (붙여넣기) → 전송!', 'var(--green)');
-
+    hint.textContent = 'ChatGPT 열고 Ctrl+V (붙여넣기) → 전송!';
+    hint.style.color = 'var(--green)';
+    // 스텝 배지 업데이트
     document.getElementById('pill-1').className = 'step-pill done';
     document.getElementById('pill-2').className = 'step-pill active';
-
-    clearTimeout(btn._copyTimer);
-    btn._copyTimer = setTimeout(() => {
+    setTimeout(() => {
       btn.textContent = '📋 GPT에게 보낼 내용 복사';
       btn.classList.remove('copied');
     }, 3000);
   }).catch(() => {
-    setCopyHint('⚠ 복사에 실패했어요. 브라우저 권한을 확인하거나 내용을 직접 복사해주세요.', 'var(--red)');
+    alert('복사에 실패했어요. 내용을 직접 선택해서 복사해주세요.');
   });
 }
 
 // ── 작은 복사 버튼 ──
 function copyText(btn, text) {
-  copyToClipboard(text).then(() => {
+  navigator.clipboard.writeText(text).then(() => {
     const orig = btn.innerHTML;
     btn.classList.add('copied');
     btn.innerHTML = '✅ 복사됐어요!';
-
+    // 스텝 3 배지
     document.getElementById('pill-2').className = 'step-pill done';
     document.getElementById('pill-3').className = 'step-pill active';
-
-    clearTimeout(btn._copyTimer);
-    btn._copyTimer = setTimeout(() => {
+    setTimeout(() => {
       btn.classList.remove('copied');
       btn.innerHTML = orig;
     }, 2000);
-  }).catch(() => {
-    alert('복사에 실패했어요. 브라우저 권한을 확인하거나 내용을 직접 복사해주세요.');
   });
 }
 
-// ── 회차 네비게이션 ──
+// ── 네비게이션 ──
 const NAV_CONFIG = {
   prev: 'training/ai교육/ai교육_7회차.html',
   next: 'training/ai교육/ai교육_9회차.html'
 };
-let _nextExists = false;
+function navGo(dir) {
+  const path = NAV_CONFIG[dir];
+  if (!path) return;
+  const isInIframe = (function(){ try { return window.parent && window.parent !== window; } catch(e){ return false; } })();
+  if (isInIframe) {
+    if (dir === 'next') {
+      window.parent.postMessage({ type:'TRAINING_NAV', path, checkOnly:true }, '*');
+      const _h = function(e) {
+        if (!e.data || e.data.type !== 'NAV_CHECK_RESULT' || e.data.path !== path) return;
+        window.removeEventListener('message', _h);
+        if (e.data.exists) { window.parent.postMessage({ type:'TRAINING_NAV', path }, '*'); }
+        else { showNavToast(); }
+      };
+      // ── 회차 네비게이션 ──
+let _nextExists = false; // training_main에서 NAV_INFO로 전달받음
 
 function navGo(dir) {
   const path = NAV_CONFIG[dir];
   if (!path) return;
-
-  const isInIframe = (() => {
-    try { return window.parent && window.parent !== window; }
-    catch(e) { return false; }
-  })();
-
+  const isInIframe = (function(){ try { return window.parent && window.parent !== window; } catch(e){ return false; } })();
   if (isInIframe) {
     if (dir === 'next') {
-      if (_nextExists) window.parent.postMessage({ type:'TRAINING_NAV', path }, '*');
-      else showNavToast();
+      if (_nextExists) {
+        window.parent.postMessage({ type: 'TRAINING_NAV', path }, '*');
+      } else {
+        showNavToast();
+      }
     } else {
-      window.parent.postMessage({ type:'TRAINING_NAV', path }, '*');
+      window.parent.postMessage({ type: 'TRAINING_NAV', path }, '*');
     }
-    return;
+  } else {
+    if (dir === 'next') { showNavToast(); return; }
+    window.location.href = path;
   }
-
-  if (dir === 'next') {
-    showNavToast();
-    return;
-  }
-  window.location.href = path;
 }
 
 function showNavToast() {
@@ -679,15 +633,15 @@ function showNavToast() {
   if (!t) {
     t = document.createElement('div');
     t.id = 'navToast';
+    t.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(12px);'+
+      'background:#172240;border:1px solid rgba(80,140,255,0.35);color:#8aaad0;'+
+      'font-size:12px;font-weight:600;padding:10px 20px;border-radius:30px;'+
+      'z-index:9999;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;';
     t.textContent = '📋 다음 회차는 준비 중입니다';
     document.body.appendChild(t);
   }
-  t.style.background = 'var(--bg2)';
-  t.style.border = '1px solid var(--border2)';
-  t.style.color = 'var(--text2)';
   t.style.opacity = '1';
   t.style.transform = 'translateX(-50%) translateY(0)';
-
   clearTimeout(t._timer);
   t._timer = setTimeout(() => {
     t.style.opacity = '0';
@@ -701,8 +655,8 @@ window.addEventListener('message', e => {
     _nextExists = !!e.data.nextExists;
   }
   if (e.data.type === 'THEME') {
-    if (e.data.mode === 'dark') document.body.classList.remove('light-mode');
-    else document.body.classList.add('light-mode');
+    if (e.data.mode === 'light') document.body.classList.add('light-mode');
+    else document.body.classList.remove('light-mode');
   }
 });
 </script>

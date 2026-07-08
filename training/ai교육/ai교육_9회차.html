@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI 교육 9회차 · 나만의 메인 대시보드 만들기</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#070d1a;--bg2:#0c1628;--bg3:#111e35;--bg4:#172240;
+  --border:rgba(80,140,255,0.12);--border2:rgba(80,140,255,0.25);
+  --blue:#4a8fff;--blue-dim:rgba(74,143,255,0.10);
+  --cyan:#00d4ff;--green:#00e5a0;--red:#ff5a5a;
+  --orange:#ffaa40;--gold:#f0c060;--purple:#a07aff;--teal:#00c8a0;
+  --text:#e4eeff;--text2:#8aaad0;--text3:#4a6a90;
+  --radius:14px;
+}
+body.light-mode{
+  --bg:#f0f4fa;--bg2:#ffffff;--bg3:#e8f0fb;--bg4:#dce8f7;
+  --border:rgba(26,78,180,0.12);--border2:rgba(26,78,180,0.28);
+  --blue:#1a5fd4;--blue-dim:rgba(26,95,212,0.08);
+  --cyan:#0090b8;--green:#007a50;--red:#c02020;--orange:#b06010;
+  --gold:#8a6000;--purple:#5030b0;--teal:#007a62;
+  --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6090;
+}
+body.light-mode .hero-glow{background:radial-gradient(ellipse,rgba(26,95,212,0.07) 0%,transparent 65%);}
+body.light-mode .quiz-option.selected{background:var(--blue-dim);}
+body.light-mode .gpt-bubble{background:var(--bg3);}
+body.light-mode .folder-box{background:var(--bg4);}
+body.light-mode .style-card:hover,.body.light-mode .style-card.selected{border-color:var(--blue);}
+
+html,body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo',sans-serif;font-size:14px;line-height:1.6;overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+.wrap{max-width:900px;margin:0 auto;padding:0 24px;}
+
+/* ══ 네비게이션 ══ */
+.nav-prev,.nav-next{
+  position:fixed;top:50%;transform:translateY(-50%);
+  width:44px;height:80px;display:flex;align-items:center;justify-content:center;
+  background:var(--bg2);border:1px solid var(--border2);cursor:pointer;z-index:999;
+  transition:background 0.15s,border-color 0.2s;font-size:18px;color:var(--text2);user-select:none;
+}
+.nav-prev{left:0;border-radius:0 10px 10px 0;border-left:none;}
+.nav-next{right:0;border-radius:10px 0 0 10px;border-right:none;}
+.nav-prev:hover,.nav-next:hover{background:var(--bg3);border-color:var(--blue);color:var(--blue);}
+.nav-prev.disabled{opacity:0.2;cursor:default;pointer-events:none;}
+.nav-tooltip{position:absolute;background:var(--bg4);border:1px solid var(--border2);border-radius:8px;padding:6px 10px;font-size:10px;color:var(--text2);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.15s;line-height:1.5;}
+.nav-prev .nav-tooltip{left:52px;top:50%;transform:translateY(-50%);}
+.nav-next .nav-tooltip{right:52px;top:50%;transform:translateY(-50%);}
+.nav-prev:hover .nav-tooltip,.nav-next:hover .nav-tooltip{opacity:1;}
+.nav-tooltip-round{display:block;font-weight:700;color:var(--text);}
+
+/* ══ 히어로 ══ */
+#hero{position:relative;background:linear-gradient(160deg,var(--bg) 0%,var(--bg2) 55%,var(--bg) 100%);border-bottom:1px solid var(--border);padding:44px 0 38px;overflow:hidden;}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:44px 44px;}
+.hero-glow{position:absolute;top:-80px;right:-40px;width:440px;height:320px;background:radial-gradient(ellipse,rgba(160,122,255,0.08) 0%,transparent 65%);pointer-events:none;}
+.hero-inner{position:relative;z-index:1;}
+.hero-eyebrow{font-size:11px;font-weight:700;color:var(--purple);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.hero-title{font-size:clamp(24px,4vw,36px);font-weight:800;line-height:1.2;margin-bottom:8px;color:var(--text);}
+.hero-sub{font-size:14px;color:var(--text2);margin-bottom:18px;}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-purple{background:rgba(160,122,255,0.10);color:var(--purple);border:1px solid rgba(160,122,255,0.25);}
+.badge-gold{background:rgba(240,192,96,0.10);color:var(--gold);border:1px solid rgba(240,192,96,0.25);}
+.badge-green{background:rgba(0,229,160,0.10);color:var(--green);border:1px solid rgba(0,229,160,0.25);}
+.badge-blue{background:var(--blue-dim);color:var(--blue);border:1px solid var(--border2);}
+.hero-pills{display:flex;gap:10px;flex-wrap:wrap;}
+
+/* ══ 공통 섹션 ══ */
+.sec{padding:36px 0 0;}
+.sec-head{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.sec-bar{width:3px;height:16px;border-radius:2px;flex-shrink:0;}
+.sec-title{font-size:15px;font-weight:700;color:var(--text);}
+.sec-sub{font-size:11px;color:var(--text3);}
+.step-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.step-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.step-num{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
+.sn-1{background:rgba(160,122,255,0.15);color:var(--purple);border:1px solid rgba(160,122,255,0.3);}
+.sn-2{background:rgba(0,212,255,0.12);color:var(--cyan);border:1px solid rgba(0,212,255,0.3);}
+.sn-3{background:rgba(0,229,160,0.12);color:var(--green);border:1px solid rgba(0,229,160,0.3);}
+.sn-4{background:rgba(74,143,255,0.15);color:var(--blue);border:1px solid rgba(74,143,255,0.3);}
+.sn-5{background:rgba(240,192,96,0.12);color:var(--gold);border:1px solid rgba(240,192,96,0.3);}
+.step-head-title{font-size:14px;font-weight:700;color:var(--text);}
+.step-head-sub{font-size:11px;color:var(--text3);}
+.step-body{padding:20px;}
+
+/* ══ STEP1 질문 카드 ══ */
+.quiz-wrap{display:flex;gap:16px;}
+.quiz-left{flex:1;min-width:0;}
+.quiz-right{width:220px;flex-shrink:0;}
+.quiz-group{margin-bottom:18px;}
+.quiz-group-title{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.quiz-options{display:flex;flex-wrap:wrap;gap:6px;}
+.quiz-option{
+  padding:7px 13px;border-radius:8px;font-size:12px;font-weight:600;
+  background:var(--bg3);border:1px solid var(--border);color:var(--text2);
+  cursor:pointer;transition:all 0.15s;user-select:none;
+}
+.quiz-option:hover{border-color:var(--border2);color:var(--text);}
+.quiz-option.selected{background:var(--blue-dim);border-color:var(--border2);color:var(--blue);}
+.quiz-option.has-preview{
+  display:flex;flex-direction:column;padding:0;overflow:hidden;
+  width:120px;flex-shrink:0;
+}
+.quiz-option.has-preview .op-preview{
+  width:100%;height:72px;overflow:hidden;border-bottom:1px solid var(--border);
+  background:var(--bg4);
+}
+.quiz-option.has-preview .op-label{
+  padding:6px 8px;font-size:11px;font-weight:600;text-align:center;
+}
+.quiz-options.preview-mode{flex-wrap:nowrap;overflow-x:auto;gap:8px;padding-bottom:4px;}
+
+/* GPT 추천 말풍선 */
+.gpt-panel{position:sticky;top:20px;}
+.gpt-bubble{
+  background:var(--bg3);border:1px solid var(--border);border-radius:12px;
+  padding:14px;font-size:11.5px;color:var(--text2);line-height:1.7;
+  min-height:80px;transition:all 0.3s;
+}
+.gpt-avatar{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.gpt-name{font-size:10px;font-weight:700;color:var(--teal);}
+.gpt-text{font-size:11.5px;line-height:1.7;color:var(--text2);}
+.gpt-highlight{
+  margin-top:10px;padding:8px 10px;background:rgba(0,200,160,0.08);
+  border:1px solid rgba(0,200,160,0.2);border-radius:7px;
+  font-size:10.5px;color:var(--teal);
+}
+
+/* ══ STEP2 집 비유 ══ */
+.house-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
+.house-visual{
+  background:var(--bg3);border:1px solid var(--border);border-radius:12px;
+  padding:20px;text-align:center;
+}
+.house-icon{font-size:48px;margin-bottom:8px;}
+.house-label{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.house-desc{font-size:11.5px;color:var(--text2);line-height:1.6;}
+.rooms{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;}
+.room{padding:7px 10px;background:var(--bg4);border:1px solid var(--border);border-radius:7px;font-size:10.5px;color:var(--text2);text-align:center;}
+.room.active{background:var(--blue-dim);border-color:var(--border2);color:var(--blue);}
+
+.folder-box{
+  background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;
+  font-family:monospace;font-size:12px;line-height:1.9;color:var(--text2);
+}
+.f-root{color:var(--gold);font-weight:700;}
+.f-dir{color:var(--blue);}
+.f-file{color:var(--green);}
+.f-file.index{color:var(--purple);font-weight:700;}
+.f-indent{padding-left:16px;}
+.f-indent2{padding-left:32px;}
+
+.emphasis-box{
+  grid-column:1/-1;
+  background:linear-gradient(135deg,rgba(255,90,90,0.07),rgba(160,122,255,0.05));
+  border:1px solid rgba(255,90,90,0.2);border-radius:10px;
+  padding:14px 18px;text-align:center;
+}
+.emphasis-box .em-text{font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px;}
+.emphasis-box .em-sub{font-size:11.5px;color:var(--text2);}
+
+/* ══ STEP3 연결 흐름 ══ */
+.connect-flow{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;}
+.cf-item{
+  background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+  padding:14px 18px;text-align:center;min-width:120px;
+}
+.cf-icon{font-size:24px;margin-bottom:5px;}
+.cf-label{font-size:11px;font-weight:700;color:var(--text);}
+.cf-sub{font-size:10px;color:var(--text3);margin-top:2px;}
+.cf-arr{font-size:20px;color:var(--border2);padding:0 8px;}
+
+/* ══ STEP4 스타일 카드 ══ */
+.style-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px;}
+.style-card{
+  background:var(--bg3);border:2px solid var(--border);border-radius:12px;
+  padding:16px 12px;cursor:pointer;transition:all 0.15s;text-align:center;
+  position:relative;overflow:hidden;
+}
+.style-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.style-card.selected{border-color:var(--purple);background:rgba(160,122,255,0.08);}
+.style-card.selected::after{content:'✓';position:absolute;top:8px;right:10px;font-size:12px;color:var(--purple);font-weight:800;}
+.style-preview{
+  height:80px;border-radius:7px;margin-bottom:10px;overflow:hidden;
+  background:var(--bg4);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+}
+.style-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.style-desc{font-size:10px;color:var(--text3);}
+
+/* ══ STEP5 선택 요약 ══ */
+.summary-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;}
+.chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:5px 11px;border-radius:20px;font-size:11.5px;font-weight:600;
+  background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);color:var(--green);
+}
+.chip-empty{color:var(--text3);font-size:11px;}
+
+/* ══ STEP6 프롬프트 ══ */
+.prompt-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.prompt-box{background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.prompt-head{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.prompt-head-label{font-size:11px;font-weight:700;}
+.prompt-body{padding:14px;font-size:11.5px;color:var(--text2);line-height:1.7;min-height:100px;white-space:pre-wrap;}
+.copy-btn{
+  padding:10px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;
+  background:linear-gradient(135deg,var(--purple),rgba(160,122,255,0.7));
+  color:#fff;transition:opacity 0.15s;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  width:100%;margin-top:8px;
+}
+.copy-btn:hover{opacity:0.85;}
+.copy-btn.copied{background:linear-gradient(135deg,var(--green),var(--teal));color:#051a10;}
+
+/* ══ 마지막 요약 ══ */
+#summary{
+  margin:36px 0 0;padding:28px;
+  background:linear-gradient(135deg,var(--bg2),var(--bg4));
+  border:1px solid var(--border2);border-radius:var(--radius);
+  position:relative;overflow:hidden;text-align:center;
+}
+#summary::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(160,122,255,0.07) 0%,transparent 60%);}
+.summary-inner{position:relative;z-index:1;}
+.learn-flow{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;margin-bottom:18px;}
+.lf-item{padding:8px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;color:var(--text2);}
+.lf-arr{font-size:14px;color:var(--border2);padding:0 6px;}
+.summary-quote{font-size:14px;font-weight:700;color:var(--text);line-height:1.7;}
+.summary-author{font-size:11px;color:var(--text3);margin-top:10px;}
+
+.sec-bottom{height:48px;}
+
+@media(max-width:680px){
+  .quiz-wrap{flex-direction:column;}
+  .quiz-right{width:100%;}
+  .house-grid{grid-template-columns:1fr;}
+  .prompt-grid{grid-template-columns:1fr;}
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.anim{animation:fadeUp 0.4s ease both;}
+.d1{animation-delay:0.05s;}.d2{animation-delay:0.1s;}.d3{animation-delay:0.15s;}
+.d4{animation-delay:0.2s;}.d5{animation-delay:0.25s;}.d6{animation-delay:0.3s;}
+</style>
+</head>
+<body>
+
+<div class="nav-prev" id="navPrev" onclick="navGo('prev')">
+  ‹
+  <div class="nav-tooltip"><span class="nav-tooltip-round">8회차</span>AI와 첫 업무툴 만들기</div>
+</div>
+<div class="nav-next" id="navNext" onclick="navGo('next')">
+  ›
+  <div class="nav-tooltip"><span class="nav-tooltip-round">다음 회차</span>준비 중</div>
+</div>
+
+<!-- 히어로 -->
+<div id="hero">
+  <div class="hero-grid"></div><div class="hero-glow"></div>
+  <div class="wrap hero-inner anim d1">
+    <div class="hero-eyebrow">
+      AI 교육 9회차
+      <div class="badge badge-purple">🛠 실습②</div>
+      <div class="badge badge-gold">⏱ 15분</div>
+    </div>
+    <div class="hero-title">나만의 메인 대시보드 만들기</div>
+    <div class="hero-sub">index.html은 모든 페이지의 시작입니다 — 현관을 만들어요</div>
+    <div class="hero-pills">
+      <span class="badge badge-purple">✅ 선택하면 프롬프트 자동생성</span>
+      <span class="badge badge-green">🏠 집 비유로 쉽게</span>
+      <span class="badge badge-blue">🎮 게임처럼 재미있게</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- STEP 1 -->
+<div class="sec anim d2">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-1">1</div>
+      <div>
+        <div class="step-head-title">몇 가지만 먼저 정해볼까요?</div>
+        <div class="step-head-sub">AI가 코딩 전에 먼저 물어보는 것들이에요</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="quiz-wrap">
+        <div class="quiz-left">
+
+          <div class="quiz-group">
+            <div class="quiz-group-title">🏢 어떤 느낌으로 만들까요?</div>
+            <div class="quiz-options preview-mode" data-group="style">
+
+              <div class="quiz-option has-preview" data-val="회사 업무용" onclick="selectOption(this)">
+                <div class="op-preview"><svg viewBox="0 0 120 72" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><rect width="120" height="72" fill="#070d1a"/><rect x="0" y="0" width="28" height="72" fill="#0c1628"/><rect x="3" y="8" width="22" height="4" rx="2" fill="#4a8fff" opacity="0.8"/><rect x="3" y="17" width="18" height="3" rx="1.5" fill="#4a6a90" opacity="0.5"/><rect x="3" y="24" width="20" height="3" rx="1.5" fill="#4a6a90" opacity="0.5"/><rect x="3" y="31" width="16" height="3" rx="1.5" fill="#4a6a90" opacity="0.5"/><rect x="32" y="6" width="50" height="5" rx="2" fill="#4a8fff" opacity="0.4"/><rect x="32" y="16" width="26" height="18" rx="3" fill="#111e35" stroke="#1e3a5f" stroke-width="0.5"/><rect x="35" y="19" width="12" height="3" rx="1" fill="#4a8fff" opacity="0.7"/><rect x="35" y="25" width="18" height="2" rx="1" fill="#4a6a90" opacity="0.4"/><rect x="62" y="16" width="26" height="18" rx="3" fill="#111e35" stroke="#1e3a5f" stroke-width="0.5"/><rect x="65" y="19" width="12" height="3" rx="1" fill="#00c8a0" opacity="0.7"/><rect x="65" y="25" width="18" height="2" rx="1" fill="#4a6a90" opacity="0.4"/><rect x="92" y="16" width="24" height="18" rx="3" fill="#111e35" stroke="#1e3a5f" stroke-width="0.5"/><rect x="95" y="19" width="12" height="3" rx="1" fill="#f0c060" opacity="0.7"/><rect x="32" y="40" width="84" height="24" rx="3" fill="#111e35" stroke="#1e3a5f" stroke-width="0.5"/><rect x="35" y="44" width="78" height="3" rx="1" fill="#172240"/><rect x="35" y="50" width="78" height="2" rx="1" fill="#172240" opacity="0.7"/><rect x="35" y="55" width="78" height="2" rx="1" fill="#172240" opacity="0.5"/></svg></div>
+                <div class="op-label">회사 업무용</div>
+              </div>
+
+              <div class="quiz-option has-preview" data-val="게임 런처 느낌" onclick="selectOption(this)">
+                <div class="op-preview"><svg viewBox="0 0 120 72" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><rect width="120" height="72" fill="#050810"/><rect x="1" y="1" width="118" height="70" rx="3" fill="none" stroke="#a07aff" stroke-width="0.8" opacity="0.5"/><rect x="35" y="6" width="50" height="5" rx="2" fill="#a07aff" opacity="0.6"/><rect x="6" y="18" width="32" height="32" rx="4" fill="#0c0f1e" stroke="#a07aff" stroke-width="0.8"/><rect x="14" y="26" width="16" height="16" rx="3" fill="#a07aff" opacity="0.3"/><rect x="42" y="18" width="32" height="32" rx="4" fill="#0c0f1e" stroke="#00d4ff" stroke-width="0.8"/><rect x="50" y="26" width="16" height="16" rx="3" fill="#00d4ff" opacity="0.25"/><rect x="78" y="18" width="36" height="32" rx="4" fill="#0c0f1e" stroke="#00e5a0" stroke-width="0.8"/><rect x="86" y="26" width="16" height="16" rx="3" fill="#00e5a0" opacity="0.25"/><rect x="6" y="57" width="108" height="10" rx="3" fill="#0c0f1e" stroke="#a07aff" stroke-width="0.5"/><rect x="9" y="60" width="28" height="4" rx="2" fill="#a07aff" opacity="0.5"/></svg></div>
+                <div class="op-label">게임 런처</div>
+              </div>
+
+              <div class="quiz-option has-preview" data-val="심플한 홈페이지" onclick="selectOption(this)">
+                <div class="op-preview"><svg viewBox="0 0 120 72" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><rect width="120" height="72" fill="#f8faff"/><rect x="0" y="0" width="120" height="13" fill="#ffffff"/><rect x="6" y="4" width="24" height="5" rx="2" fill="#1a5fd4" opacity="0.8"/><rect x="76" y="5" width="12" height="3" rx="1.5" fill="#dce8f7"/><rect x="92" y="5" width="12" height="3" rx="1.5" fill="#dce8f7"/><rect x="0" y="13" width="120" height="0.5" fill="#dce8f7"/><rect x="6" y="19" width="70" height="6" rx="2" fill="#1a2e50" opacity="0.8"/><rect x="6" y="29" width="48" height="3" rx="1.5" fill="#2a4e7a" opacity="0.4"/><rect x="6" y="37" width="24" height="7" rx="3" fill="#1a5fd4"/><rect x="34" y="37" width="24" height="7" rx="3" fill="#e8f0fb" stroke="#dce8f7" stroke-width="0.5"/><rect x="6" y="51" width="32" height="16" rx="3" fill="#ffffff" stroke="#dce8f7" stroke-width="0.8"/><rect x="10" y="55" width="16" height="3" rx="1" fill="#1a2e50" opacity="0.6"/><rect x="44" y="51" width="32" height="16" rx="3" fill="#ffffff" stroke="#dce8f7" stroke-width="0.8"/><rect x="48" y="55" width="16" height="3" rx="1" fill="#1a2e50" opacity="0.6"/><rect x="82" y="51" width="32" height="16" rx="3" fill="#ffffff" stroke="#dce8f7" stroke-width="0.8"/><rect x="86" y="55" width="16" height="3" rx="1" fill="#1a2e50" opacity="0.6"/></svg></div>
+                <div class="op-label">심플 홈페이지</div>
+              </div>
+
+              <div class="quiz-option has-preview" data-val="카드형" onclick="selectOption(this)">
+                <div class="op-preview"><svg viewBox="0 0 120 72" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><rect width="120" height="72" fill="#070d1a"/><rect x="4" y="4" width="112" height="10" rx="3" fill="#111e35" stroke="#1e3a5f" stroke-width="0.5"/><rect x="8" y="7" width="30" height="4" rx="1.5" fill="#4a8fff" opacity="0.6"/><rect x="4" y="18" width="54" height="22" rx="4" fill="#111e35" stroke="#1e3a5f" stroke-width="0.5"/><rect x="8" y="22" width="20" height="3" rx="1" fill="#4a8fff" opacity="0.7"/><rect x="8" y="28" width="40" height="2" rx="1" fill="#4a6a90" opacity="0.4"/><rect x="8" y="33" width="32" height="2" rx="1" fill="#4a6a90" opacity="0.3"/><rect x="62" y="18" width="54" height="22" rx="4" fill="#111e35" stroke="#1e3a5f" stroke-width="0.5"/><rect x="66" y="22" width="20" height="3" rx="1" fill="#00c8a0" opacity="0.7"/><rect x="66" y="28" width="40" height="2" rx="1" fill="#4a6a90" opacity="0.4"/><rect x="4" y="44" width="54" height="22" rx="4" fill="#111e35" stroke="#1e3a5f" stroke-width="0.5"/><rect x="8" y="48" width="20" height="3" rx="1" fill="#f0c060" opacity="0.7"/><rect x="8" y="54" width="40" height="2" rx="1" fill="#4a6a90" opacity="0.4"/><rect x="62" y="44" width="54" height="22" rx="4" fill="#111e35" stroke="#1e3a5f" stroke-width="0.5"/><rect x="66" y="48" width="20" height="3" rx="1" fill="#a07aff" opacity="0.7"/><rect x="66" y="54" width="40" height="2" rx="1" fill="#4a6a90" opacity="0.4"/></svg></div>
+                <div class="op-label">카드형</div>
+              </div>
+
+              <div class="quiz-option has-preview" data-val="사이드메뉴형" onclick="selectOption(this)">
+                <div class="op-preview"><svg viewBox="0 0 120 72" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><rect width="120" height="72" fill="#070d1a"/><rect x="0" y="0" width="30" height="72" fill="#0c1628"/><rect x="3" y="6" width="24" height="24" rx="3" fill="#111e35" stroke="#1e3a5f" stroke-width="0.5"/><rect x="6" y="10" width="14" height="3" rx="1" fill="#4a8fff" opacity="0.7"/><rect x="6" y="16" width="18" height="2" rx="1" fill="#4a6a90" opacity="0.4"/><rect x="6" y="20" width="14" height="2" rx="1" fill="#4a6a90" opacity="0.3"/><rect x="3" y="34" width="24" height="8" rx="3" fill="#4a8fff" opacity="0.15" stroke="#4a8fff" stroke-width="0.5"/><rect x="6" y="37" width="14" height="2" rx="1" fill="#4a8fff" opacity="0.8"/><rect x="3" y="45" width="24" height="8" rx="3" fill="none"/><rect x="6" y="48" width="14" height="2" rx="1" fill="#4a6a90" opacity="0.5"/><rect x="3" y="56" width="24" height="8" rx="3" fill="none"/><rect x="6" y="59" width="14" height="2" rx="1" fill="#4a6a90" opacity="0.5"/><rect x="34" y="6" width="82" height="6" rx="2" fill="#4a8fff" opacity="0.3"/><rect x="34" y="18" width="38" height="26" rx="3" fill="#111e35" stroke="#1e3a5f" stroke-width="0.5"/><rect x="38" y="22" width="24" height="3" rx="1" fill="#4a8fff" opacity="0.6"/><rect x="38" y="28" width="28" height="2" rx="1" fill="#4a6a90" opacity="0.4"/><rect x="38" y="33" width="22" height="2" rx="1" fill="#4a6a90" opacity="0.3"/><rect x="76" y="18" width="40" height="26" rx="3" fill="#111e35" stroke="#1e3a5f" stroke-width="0.5"/><rect x="80" y="22" width="24" height="3" rx="1" fill="#00c8a0" opacity="0.6"/><rect x="34" y="50" width="82" height="16" rx="3" fill="#111e35" stroke="#1e3a5f" stroke-width="0.5"/></svg></div>
+                <div class="op-label">사이드메뉴형</div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="quiz-group">
+            <div class="quiz-group-title">🎨 색상은?</div>
+            <div class="quiz-options" data-group="color">
+              <div class="quiz-option" data-val="블랙" onclick="selectOption(this)">⬛ 블랙</div>
+              <div class="quiz-option" data-val="화이트" onclick="selectOption(this)">⬜ 화이트</div>
+              <div class="quiz-option" data-val="네이비" onclick="selectOption(this)">🟦 네이비</div>
+              <div class="quiz-option" data-val="자동 추천" onclick="selectOption(this)">✨ 자동 추천</div>
+            </div>
+          </div>
+
+          <div class="quiz-group">
+            <div class="quiz-group-title">🔐 로그인 기능이 필요할까요?</div>
+            <div class="quiz-options" data-group="login">
+              <div class="quiz-option" data-val="필요없음" onclick="selectOption(this)">필요없음</div>
+              <div class="quiz-option" data-val="비밀번호만" onclick="selectOption(this)">비밀번호만</div>
+              <div class="quiz-option" data-val="로그인 화면" onclick="selectOption(this)">로그인 화면</div>
+              <div class="quiz-option" data-val="나중에 추가" onclick="selectOption(this)">나중에 추가</div>
+            </div>
+          </div>
+
+          <div class="quiz-group">
+            <div class="quiz-group-title">📦 앞으로 툴이 많아질 예정인가요?</div>
+            <div class="quiz-options" data-group="scale">
+              <div class="quiz-option" data-val="아니요" onclick="selectOption(this)">아니요</div>
+              <div class="quiz-option" data-val="5개 이하" onclick="selectOption(this)">5개 이하</div>
+              <div class="quiz-option" data-val="10개 이상" onclick="selectOption(this)">10개 이상</div>
+              <div class="quiz-option" data-val="계속 추가 예정" onclick="selectOption(this)">계속 추가 예정</div>
+            </div>
+          </div>
+
+          <div class="quiz-group">
+            <div class="quiz-group-title">📋 메뉴 형태는?</div>
+            <div class="quiz-options" data-group="menu">
+              <div class="quiz-option" data-val="카드형" onclick="selectOption(this)">카드형</div>
+              <div class="quiz-option" data-val="버튼형" onclick="selectOption(this)">버튼형</div>
+              <div class="quiz-option" data-val="아이콘형" onclick="selectOption(this)">아이콘형</div>
+              <div class="quiz-option" data-val="AI 추천" onclick="selectOption(this)">AI 추천</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GPT 추천 패널 -->
+        <div class="quiz-right">
+          <div class="gpt-panel">
+            <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:6px;letter-spacing:1px;">🤖 GPT 추천</div>
+            <div class="gpt-bubble" id="gptBubble">
+              <div class="gpt-avatar">
+                <span style="font-size:16px;">🤖</span>
+                <span class="gpt-name">ChatGPT</span>
+              </div>
+              <div class="gpt-text" id="gptText">선택하면 제가 추천을 드릴게요! 😊</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div class="sec anim d3">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-2">2</div>
+      <div>
+        <div class="step-head-title">index.html이 하는 일</div>
+        <div class="step-head-sub">집으로 비유하면 딱 이해돼요</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="house-grid">
+        <div class="house-visual">
+          <div class="house-icon">🏠</div>
+          <div class="house-label">index.html = 현관</div>
+          <div class="house-desc">집에 들어오면 현관부터 시작하듯,<br>모든 페이지는 index.html에서 시작해요.</div>
+          <div class="rooms">
+            <div class="room active">🚪 index.html<br><span style="font-size:9px;">현관</span></div>
+            <div class="room">📄 pdf.html<br><span style="font-size:9px;">서재</span></div>
+            <div class="room">🖼 image.html<br><span style="font-size:9px;">작업실</span></div>
+            <div class="room">📊 csv.html<br><span style="font-size:9px;">회의실</span></div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">📂 폴더 구조 예시</div>
+          <div class="folder-box">
+            <div class="f-root">📁 dashboard/</div>
+            <div class="f-indent"><span class="f-file index">📄 index.html</span> <span style="font-size:9px;color:var(--purple);">← 현관</span></div>
+            <div class="f-indent"><span class="f-dir">📁 tools/</span></div>
+            <div class="f-indent2"><span class="f-file">📄 pdf.html</span></div>
+            <div class="f-indent2"><span class="f-file">📄 image.html</span></div>
+            <div class="f-indent2"><span class="f-file">📄 csv.html</span></div>
+            <div class="f-indent"><span class="f-dir">📁 images/</span></div>
+            <div class="f-indent2"><span style="color:var(--text3);">🖼 logo.png</span></div>
+          </div>
+        </div>
+
+        <div class="emphasis-box">
+          <div class="em-text">⚠ AI는 파일이 어디 있는지 모릅니다</div>
+          <div class="em-sub">경로와 파일명을 반드시 알려주세요<br>예) <code style="color:var(--gold);">tools/pdf.html</code></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div class="sec anim d4">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-3">3</div>
+      <div>
+        <div class="step-head-title">8회차 툴 연결하기</div>
+        <div class="step-head-sub">만든 툴을 대시보드에 붙이는 방법</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="connect-flow">
+        <div class="cf-item">
+          <div class="cf-icon">🛠</div>
+          <div class="cf-label">as6.html</div>
+          <div class="cf-sub">8회차에서 만든 툴</div>
+        </div>
+        <div class="cf-arr">→</div>
+        <div class="cf-item">
+          <div class="cf-icon">📋</div>
+          <div class="cf-label">경로 알려주기</div>
+          <div class="cf-sub">tools/as6.html</div>
+        </div>
+        <div class="cf-arr">→</div>
+        <div class="cf-item">
+          <div class="cf-icon">🤖</div>
+          <div class="cf-label">AI에게 전달</div>
+          <div class="cf-sub">버튼 연결 요청</div>
+        </div>
+        <div class="cf-arr">→</div>
+        <div class="cf-item">
+          <div class="cf-icon">🏠</div>
+          <div class="cf-label">index.html</div>
+          <div class="cf-sub">카드 클릭 → 실행</div>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding:12px 16px;background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.15);border-radius:9px;font-size:12px;color:var(--text2);">
+        💡 <strong style="color:var(--green);">"tools/as6.html을 카드 버튼으로 연결해줘"</strong> 이 한 마디면 충분합니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 5 -->
+<div class="sec anim d5">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-5">5</div>
+      <div>
+        <div class="step-head-title">지금까지 선택한 내용</div>
+        <div class="step-head-sub">이걸 바탕으로 프롬프트가 만들어져요</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="summary-chips" id="summaryChips">
+        <span class="chip-empty">위에서 선택하면 여기에 나타나요 👆</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 6 -->
+<div class="sec anim d6">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num" style="background:rgba(240,192,96,0.15);color:var(--gold);border:1px solid rgba(240,192,96,0.3);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;">6</div>
+      <div>
+        <div class="step-head-title">GPT에게 보낼 프롬프트</div>
+        <div class="step-head-sub">선택한 내용이 자동으로 반영돼요</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="prompt-grid">
+        <div class="prompt-box">
+          <div class="prompt-head">
+            <span class="prompt-head-label" style="color:var(--teal);">💬 초보자 버전</span>
+            <span style="font-size:9.5px;color:var(--text3);">짧고 편하게</span>
+          </div>
+          <div class="prompt-body" id="promptSimple">위에서 선택하면 자동으로 생성돼요!</div>
+          <button class="copy-btn" id="copySimple" onclick="copyPrompt('simple')">📋 복사하기</button>
+        </div>
+        <div class="prompt-box">
+          <div class="prompt-head">
+            <span class="prompt-head-label" style="color:var(--purple);">⚡ 추천 프롬프트</span>
+            <span style="font-size:9.5px;color:var(--text3);">더 구체적으로</span>
+          </div>
+          <div class="prompt-body" id="promptPro">위에서 선택하면 자동으로 생성돼요!</div>
+          <button class="copy-btn" id="copyPro" onclick="copyPrompt('pro')">📋 복사하기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 마지막 -->
+<div id="summary" class="anim" style="animation-delay:0.35s;">
+  <div class="summary-inner">
+    <div style="font-size:24px;margin-bottom:14px;">🎯</div>
+    <div class="learn-flow">
+      <div class="lf-item">🤖 AI가 먼저 질문</div>
+      <div class="lf-arr">→</div>
+      <div class="lf-item">✅ 내가 선택</div>
+      <div class="lf-arr">→</div>
+      <div class="lf-item">📋 프롬프트 생성</div>
+      <div class="lf-arr">→</div>
+      <div class="lf-item">🏠 대시보드 완성</div>
+    </div>
+    <div class="summary-quote">
+      AI는 갑자기 코딩을 시작하지 않습니다.<br>
+      먼저 <strong>몇 가지를 함께 결정합니다.</strong><br>
+      그 선택들이 좋은 결과물을 만듭니다.
+    </div>
+    <div class="summary-author">AI 교육 9회차 · 엄마감동팀</div>
+  </div>
+</div>
+
+<div class="sec-bottom"></div>
+</div>
+
+<div id="navToast" style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(12px);background:#172240;border:1px solid rgba(80,140,255,0.35);color:#8aaad0;font-size:12px;font-weight:600;padding:10px 20px;border-radius:30px;z-index:9999;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;">
+  📋 다음 회차는 준비 중입니다
+</div>
+
+<script>
+// ── 선택 상태 ──
+const state = { style:'', color:'', login:'', scale:'', menu:'', dashStyle:'' };
+
+const GPT_TIPS = {
+  style: {
+    '회사 업무용': '회사 업무용으로 만들면 팀원들이 공유하는 내부 포털처럼 활용할 수 있어요.',
+    '게임 런처 느낌': '게임 런처 스타일은 다크 네온 색상에 아이콘 중심 UI로 만들면 정말 멋있어요! 🎮',
+    '심플한 홈페이지': '심플한 스타일은 흰 배경에 큰 버튼으로 구성하면 누구나 쉽게 쓸 수 있어요.',
+    '카드형': '카드형은 툴이 늘어날수록 깔끔하게 정리되는 구조라 추천해요!',
+    '사이드메뉴형': '사이드메뉴형은 카테고리가 많을 때 특히 편리해요.',
+  },
+  color: {
+    '블랙': '블랙톤은 눈의 피로가 적어서 장시간 사용에 좋아요.',
+    '화이트': '화이트 배경은 출력하거나 공유할 때도 깔끔하게 보여요.',
+    '네이비': '네이비는 전문적인 느낌을 주면서도 부드러워서 인기가 많아요.',
+    '자동 추천': '다른 선택 항목들을 보고 제가 가장 어울리는 색상을 추천해드릴게요! ✨',
+  },
+  login: {
+    '필요없음': '로그인 없이 바로 쓸 수 있어서 팀원들이 편하게 접근할 수 있어요.',
+    '비밀번호만': '간단한 비밀번호 하나로 외부인은 막고 팀원만 쓸 수 있게 할 수 있어요.',
+    '로그인 화면': '로그인 화면을 넣으면 회사 내부 시스템처럼 만들 수도 있어요.',
+    '나중에 추가': '일단 만들고 나중에 추가하는 것도 좋은 방법이에요. 먼저 뼈대부터 완성해봐요!',
+  },
+  scale: {
+    '계속 추가 예정': '툴이 계속 추가될 예정이라면 카드가 자동으로 정렬되는 구조로 만들어달라고 하면 좋아요.',
+    '10개 이상': '10개 이상이라면 카테고리로 묶는 구조도 요청해보세요.',
+    '5개 이하': '5개 이하라면 심플하게 큰 카드로 만드는 게 보기 좋아요.',
+    '아니요': '툴이 고정되어 있다면 더 예쁜 디자인에 집중할 수 있어요.',
+  },
+};
+
+function selectOption(el) {
+  const group = el.closest('[data-group]').dataset.group;
+  el.closest('[data-group]').querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  state[group] = el.dataset.val;
+  updateGptTip(group, el.dataset.val);
+  updateSummary();
+  updatePrompts();
+}
+
+function updateGptTip(group, val) {
+  const tips = GPT_TIPS[group];
+  if (tips && tips[val]) {
+    document.getElementById('gptText').textContent = tips[val];
+  }
+}
+
+function selectStyle(el) {
+  document.querySelectorAll('.style-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state.dashStyle = el.dataset.style;
+  updateSummary();
+  updatePrompts();
+}
+
+function updateSummary() {
+  const chips = document.getElementById('summaryChips');
+  const labels = {
+    style: state.style, color: state.color, login: state.login,
+    scale: state.scale, menu: state.menu,
+    dashStyle: { business:'회사 업무 스타일', game:'게임 런처 스타일', simple:'심플 홈페이지', windows:'Windows 스타일', appstore:'앱스토어 스타일' }[state.dashStyle]
+  };
+  const active = Object.values(labels).filter(Boolean);
+  if (!active.length) {
+    chips.innerHTML = '<span class="chip-empty">위에서 선택하면 여기에 나타나요 👆</span>';
+    return;
+  }
+  chips.innerHTML = active.map(v => `<span class="chip">✓ ${v}</span>`).join('');
+}
+
+const STYLE_MAP = {
+  business: { desc:'회사 업무용 메인 페이지', ui:'사이드메뉴 + 카드형 UI', extra:'업무 효율을 높이는' },
+  game:     { desc:'게임 런처 스타일 메인 페이지', ui:'다크 네온 아이콘 UI', extra:'멋있고 세련된' },
+  simple:   { desc:'심플한 홈페이지 스타일 메인 페이지', ui:'흰 배경 버튼형 UI', extra:'누구나 쉽게 쓸 수 있는' },
+  windows:  { desc:'Windows 시작메뉴 스타일 메인 페이지', ui:'타일형 그리드 UI', extra:'익숙하고 편리한' },
+  appstore: { desc:'앱스토어 스타일 메인 페이지', ui:'카드 그리드 + 검색 UI', extra:'앱을 찾기 쉬운' },
+};
+
+function updatePrompts() {
+  const s = state;
+  const sm = STYLE_MAP[s.dashStyle] || { desc:'메인 페이지', ui:'카드형 UI', extra:'사용하기 편한' };
+  const color = s.color || '블랙';
+  const login = s.login === '필요없음' ? '로그인 기능 없이' : s.login ? `${s.login} 방식으로` : '';
+  const scale = s.scale === '계속 추가 예정' ? '나중에 툴을 계속 추가할 수 있게' : '';
+
+  const simple = `${sm.extra} ${sm.desc}를 만들고 싶어요.\n8회차에서 만든 이미지 PDF 프로그램도 연결해주세요.\n${s.menu || '카드형'}으로 만들고 ${color}톤이면 좋겠습니다.${scale ? '\n' + scale + ' 확장성도 고려해주세요.' : ''}`;
+
+  const pro = `index.html ${sm.desc}를 제작해주세요.
+${color}톤 ${sm.ui}로 구성해주세요.
+현재는 tools/as6.html (이미지→PDF 변환기)를 카드로 연결해주세요.${s.scale && s.scale !== '아니요' ? '\n툴이 ' + s.scale + ' 예정이므로 확장 가능한 구조로 만들어주세요.' : ''}${login ? '\n' + login + ' 만들어주세요.' : ''}
+모든 CSS와 JS는 HTML 내부에 포함해주세요.
+외부 라이브러리는 사용하지 마세요.`;
+
+  document.getElementById('promptSimple').textContent = simple;
+  document.getElementById('promptPro').textContent = pro;
+}
+
+function copyPrompt(type) {
+  const text = document.getElementById(type === 'simple' ? 'promptSimple' : 'promptPro').textContent;
+  const btn = document.getElementById(type === 'simple' ? 'copySimple' : 'copyPro');
+  if (text.includes('자동으로 생성')) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✅ 복사됐어요!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── 네비게이션 ──
+const NAV_CONFIG = {
+  prev: 'training/ai교육/ai교육_8회차.html',
+  next: 'training/ai교육/ai교육_10회차.html'
+};
+let _nextExists = false;
+function navGo(dir) {
+  const path = NAV_CONFIG[dir];
+  if (!path) return;
+  const isInIframe = (function(){ try { return window.parent && window.parent !== window; } catch(e){ return false; } })();
+  if (isInIframe) {
+    if (dir === 'next') {
+      if (_nextExists) { window.parent.postMessage({ type:'TRAINING_NAV', path }, '*'); }
+      else { showNavToast(); }
+    } else {
+      window.parent.postMessage({ type:'TRAINING_NAV', path }, '*');
+    }
+  } else {
+    if (dir === 'next') { showNavToast(); return; }
+    window.location.href = path;
+  }
+}
+function showNavToast() {
+  const t = document.getElementById('navToast');
+  t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(12px)'; }, 2200);
+}
+window.addEventListener('message', e => {
+  if (!e.data) return;
+  if (e.data.type === 'NAV_INFO') { _nextExists = !!e.data.nextExists; }
+  if (e.data.type === 'THEME') {
+    document.body.classList.toggle('light-mode', e.data.mode === 'light');
+  }
+});
+
+// 초기 프롬프트
+updatePrompts();
+</script>
+</body>
+</html>

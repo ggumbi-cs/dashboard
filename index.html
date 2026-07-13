@@ -965,6 +965,18 @@ function applyRolePermissions(role) {
   updateVisBtnDisplay();
 }
 
+// ── 뒤로가기 버그 방지: iframe 이동은 location.replace로 처리 ──
+// frame.src=... 방식은 매번 브라우저 joint session history에 새 항목을 쌓아서,
+// 사용자가 브라우저 뒤로가기를 누르면 (상단 nav/사이드바 상태는 그대로인 채) iframe만 예전 페이지로
+// 돌아가버리는 불일치 버그를 일으킴. location.replace는 history 항목을 추가하지 않아 이 문제를 원천 차단.
+function navFrame(url) {
+  const frame = document.getElementById('mainFrame');
+  try {
+    if (frame && frame.contentWindow) { frame.contentWindow.location.replace(url); return; }
+  } catch(e) {}
+  frame.src = url; // 크로스오리진 등 예외 상황 폴백
+}
+
 function loadHome() {
   const frame = document.getElementById('mainFrame');
   // state 초기화 — 이전 탭 잔재 제거
@@ -993,7 +1005,7 @@ function loadHome() {
     } catch(e) {}
   };
   frame.addEventListener('load', handler);
-  frame.src = 'main.html?' + ts;
+  navFrame('main.html?' + ts);
 }
 
 // main.html → GO_TAB 수신 / tool_main.html → TOOL_NAV 수신
@@ -1011,7 +1023,7 @@ window.addEventListener('message', e => {
       if (sb) sb.style.display = 'none';
       const path = /^https?:\/\//i.test(tabName) ? tabName : tabName.replace(/\\/g,'/').replace(/^\/+/, '');
       const frame = document.getElementById('mainFrame');
-      frame.src = path;
+      navFrame(path);
       frame.onload = () => { sendThemeToFrame(); };
       return;
     }
@@ -1041,7 +1053,7 @@ window.addEventListener('message', e => {
       } catch(err) {}
     };
     frame.addEventListener('load', _tHandler);
-    frame.src = e.data.path;
+    navFrame(e.data.path);
   }
 });
 
@@ -1259,7 +1271,7 @@ function _applyTab(tabName, role) {
         frame.contentWindow.postMessage({ type:'THEME', mode: t || 'dark' }, '*');
       } catch(e) {}
     };
-    frame.src = 'training/training_main.html?' + Date.now();
+    navFrame('training/training_main.html?' + Date.now());
   } else if (isKnowledgeTab) {
     const frame = document.getElementById('mainFrame');
     frame.onload = () => {
@@ -1270,7 +1282,7 @@ function _applyTab(tabName, role) {
         frame.contentWindow.postMessage({ type:'THEME', mode: t || 'dark' }, '*');
       } catch(e) {}
     };
-    frame.src = (TAB_MAP['지식DB'] || '지식db/지식db.html') + '?' + Date.now();
+    navFrame((TAB_MAP['지식DB'] || '지식db/지식db.html') + '?' + Date.now());
   } else if (isIssueTab) {
     const firstItem = document.querySelector('#issueSidebar .sb-item');
     if (firstItem) onceNav(firstItem.getAttribute('onclick').match(/'([^']+)'/)[1], firstItem);
@@ -1393,7 +1405,7 @@ function meetNav(path, el) {
     el.classList.add('active');
   }
   const frame = document.getElementById('mainFrame');
-  frame.src = path;
+  navFrame(path);
   const _h = () => { frame.removeEventListener('load',_h); sendThemeToFrame(); };
   frame.addEventListener('load', _h);
 }
@@ -1521,14 +1533,14 @@ function devNav(path, el) {
   const role = sessionStorage.getItem('userRole') || '';
   const readOnly = role === 'leader' ? '?readonly=1' : '';
   const frame = document.getElementById('mainFrame');
-  frame.src = path + readOnly;
+  navFrame(path + readOnly);
   const _h = () => { frame.removeEventListener('load',_h); sendThemeToFrame(); };
   frame.addEventListener('load', _h);
 }
 function onceNav(path, el) {
   if (el) { document.querySelectorAll('#onceSidebar .sb-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); }
   const frame = document.getElementById('mainFrame');
-  frame.src = path;
+  navFrame(path);
   const _h = () => { frame.removeEventListener('load',_h); sendThemeToFrame(); };
   frame.addEventListener('load', _h);
 }
@@ -1552,7 +1564,7 @@ function switchTabByName(tabName, sidebarEl) {
 function smtNav(path, el) {
   if (el) { document.querySelectorAll('#smtSidebar .sb-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); }
   const frame = document.getElementById('mainFrame');
-  frame.src = path;
+  navFrame(path);
   const _h = () => { frame.removeEventListener('load',_h); sendThemeToFrame(); };
   frame.addEventListener('load', _h);
 }
@@ -1564,13 +1576,13 @@ function toolNav(path, el) {
   const frame = document.getElementById('mainFrame');
   const role  = sessionStorage.getItem('userRole') || '';
   const devParam = role === 'dev' ? (path.includes('?') ? '&dev=1' : '?dev=1') : '';
-  frame.src = path + devParam;
+  navFrame(path + devParam);
   frame.onload = () => { if (typeof pushCSVToFrame === 'function') pushCSVToFrame(); sendThemeToFrame(); };
 }
 function toolNavExternal(url, el) {
   hideNoPermission(); // 코딩요청 카드 등 닫기
   if (el) { document.querySelectorAll('#toolSidebar .sb-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); }
-  document.getElementById('mainFrame').src = url;
+  navFrame(url);
 }
 
 // 코딩요청 — Notion은 X-Frame-Options 차단으로 iframe 불가
@@ -1746,7 +1758,7 @@ function updateFrame() {
   const url=`${base}?type=${encodeURIComponent(state.type)}&period=${encodeURIComponent(periodParam)}`;
   const frame=document.getElementById('mainFrame');
   frame.onload=()=>{ try{const role=sessionStorage.getItem('userRole')||'';frame.contentWindow.postMessage({type:'SCRIPT_URL',url:SCRIPT_URL,userRole:role},'*'); const t=localStorage.getItem('ggumbi-theme');if(t==='light')frame.contentWindow.postMessage({type:'THEME',mode:'light'},'*');}catch(e){} if(typeof pushCSVToFrame==='function')pushCSVToFrame(); };
-  frame.src=url;
+  navFrame(url);
 }
 function updateHeader() {
   const {type,period}=state; let label='';
@@ -1875,6 +1887,15 @@ function toggleTheme() {
   if (saved === 'light') applyTheme('light');
 })();
 
+
+// 뒤로가기/앞으로가기로 상단 페이지 자체가 bfcache에서 복원된 경우 안전망
+// (평소엔 navFrame이 iframe 히스토리 오염을 막아주지만, 만일을 대비한 이중 방어)
+window.addEventListener('pageshow', function(e) {
+  if (e.persisted) {
+    const role = sessionStorage.getItem('userRole');
+    if (role) { applyRolePermissions(role); }
+  }
+});
 
 init();
 </script>

@@ -788,8 +788,8 @@ const ROLE_LEVEL = { admin: 0, leader: 1, ggumbi: 2, affiliate: 3 };
 // ── 역할별 기본 허용 탭 (null = 전체허용) ──
 const ROLE_TABS = {
   'admin':     null,
-  'leader':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','qc_main','스마트스토어','건별Issue','건별보고','팀Tool','개발자','주피미','월피미','팀원교육','지식DB'],
-  'ggumbi':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','qc_main','스마트스토어','건별Issue','건별보고','팀Tool','주피미','월피미','팀원교육','지식DB'],
+  'leader':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','qc_main','스마트스토어','채널톡현황','건별Issue','건별보고','팀Tool','개발자','주피미','월피미','팀원교육','지식DB'],
+  'ggumbi':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','qc_main','스마트스토어','채널톡현황','건별Issue','건별보고','팀Tool','주피미','월피미','팀원교육','지식DB'],
   'affiliate': ['팀Tool','지식DB'],
 };
 
@@ -1904,8 +1904,20 @@ function toggleTheme() {
 })();
 
 
-// 뒤로가기/앞으로가기로 상단 페이지 자체가 bfcache에서 복원된 경우 안전망
-// (평소엔 navFrame이 iframe 히스토리 오염을 막아주지만, 만일을 대비한 이중 방어)
+// ═══════════════════════════════════════════
+//  뒤로가기 완전 흡수 (History Wall)
+//  이 앱은 탭 전환 시 URL을 바꾸지 않는 SPA라, 브라우저 자체 히스토리 항목이
+//  탭 전환과 무관하게 쌓일 수 있음 (예: 과거에 새로고침했던 시점, iframe 내부 탐색 등).
+//  이로 인해 "뒤로가기"가 화면 일부(사이드바)만, 또는 콘텐츠만 옛 상태로 되돌리는
+//  불일치가 반복적으로 발생했음. → 근본 해결: 뒤로가기 제스처 자체를 붙잡아서
+//  실제 브라우저 탐색은 막고, 항상 앱 내부에서 Home으로 복귀시킴.
+history.pushState({ ggumbiApp:true }, '', location.href);
+window.addEventListener('popstate', function() {
+  history.pushState({ ggumbiApp:true }, '', location.href); // 다시 마커를 쌓아 실제 이탈 방지
+  loadHome();
+});
+
+// 뒤로가기/앞으로가기로 상단 페이지 자체가 bfcache에서 복원된 경우 안전망 (이중 방어)
 window.addEventListener('pageshow', function(e) {
   if (e.persisted) {
     const role = sessionStorage.getItem('userRole');

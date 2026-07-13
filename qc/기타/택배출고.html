@@ -82,6 +82,17 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 .ld-dots span{width:7px;height:7px;border-radius:50%;background:var(--cyan);animation:ldot 1.2s infinite;}
 .ld-dots span:nth-child(2){animation-delay:0.2s;} .ld-dots span:nth-child(3){animation-delay:0.4s;}
 @keyframes ldot{0%,80%,100%{opacity:0.2;transform:scale(0.8);}40%{opacity:1;transform:scale(1);}}
+
+/* 페이지네이션 */
+#pager{display:flex;align-items:center;justify-content:center;gap:10px;padding:16px 0 4px;}
+.pager-btn{padding:5px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font-en);}
+.pager-btn:hover:not(:disabled){border-color:var(--border2);color:var(--cyan);}
+.pager-btn:disabled{opacity:0.35;cursor:not-allowed;}
+.pager-info{font-size:11px;color:var(--text3);font-family:var(--font-en);}
+
+/* 모델명/출고품 조합 미리보기 */
+.combo-preview{font-size:11px;color:var(--text3);padding:6px 10px;background:var(--bg3);border:1px dashed var(--border2);border-radius:7px;margin-top:2px;}
+.combo-preview b{color:var(--cyan);font-weight:600;}
 </style>
 </head>
 <body>
@@ -99,8 +110,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
   <div class="s-tab active" data-status="출력요청" onclick="setStatus('출력요청')" style="--tab-c:var(--pink);">
     <span class="realtime-dot"></span>출력요청<span class="tab-cnt" id="cnt출력요청">-</span>
   </div>
-  <div class="s-tab" data-status="출고완료(취합대기)" onclick="setStatus('출고완료(취합대기)')" style="--tab-c:var(--orange);">취합대기<span class="tab-cnt" id="cnt취합대기">-</span></div>
-  <div class="s-tab" data-status="출고완료(취합완료)" onclick="setStatus('출고완료(취합완료)')" style="--tab-c:var(--green);">취합완료<span class="tab-cnt" id="cnt취합완료">-</span></div>
+  <div class="s-tab" data-status="출고완료" onclick="setStatus('출고완료')" style="--tab-c:var(--green);">출고완료<span class="tab-cnt" id="cnt출고완료">-</span></div>
   <div class="s-tab" data-status="미출고(실물X)" onclick="setStatus('미출고(실물X)')" style="--tab-c:var(--red);">미출고<span class="tab-cnt" id="cnt미출고">-</span></div>
   <div class="s-tab" data-status="출고보류(예약)" onclick="setStatus('출고보류(예약)')" style="--tab-c:var(--text3);">보류<span class="tab-cnt" id="cnt보류">-</span></div>
 </div>
@@ -109,15 +119,11 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 <div class="wrap" id="mainWrap" style="display:none;">
   <div style="overflow-x:auto;">
     <table class="rec-table">
-      <thead>
-        <tr>
-          <th>요청일</th><th>출력일</th><th>요청자</th><th>고객명</th><th>제품명</th><th>주문번호</th>
-          <th>택배사</th><th>상태</th><th>송장번호</th><th>연락처</th><th>주소</th>
-        </tr>
-      </thead>
+      <thead id="recThead"></thead>
       <tbody id="recTbody"></tbody>
     </table>
   </div>
+  <div id="pager"></div>
 </div>
 
 <!-- 신규등록 모달 -->
@@ -125,6 +131,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
   <div class="modal-box">
     <button class="modal-close" onclick="closeNew()">✕</button>
     <div class="modal-title">🚚 택배출고 신규등록</div>
+    <div style="font-size:10.5px;color:var(--text3);margin:-10px 0 14px;">📅 요청일은 등록 시각 기준 오늘 날짜로 자동 저장됩니다.</div>
     <div class="modal-grid">
       <div class="modal-field"><div class="field-label">고객명 *</div><input class="field-input" id="nw고객명" placeholder="홍길동"></div>
       <div class="modal-field"><div class="field-label">연락처</div><input class="field-input" id="nw연락처" placeholder="010-0000-0000"></div>
@@ -137,7 +144,15 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
         </div>
         <input type="hidden" id="nw요청자Id">
       </div>
-      <div class="modal-field full"><div class="field-label">제품명</div><input class="field-input" id="nw제품명" placeholder="휴대용 분유포트 뚜껑"></div>
+      <div class="modal-field full">
+        <div class="field-label">모델명 <span style="text-transform:none;font-weight:400;">(선택 또는 신규 입력)</span></div>
+        <input class="field-input" list="modelDatalist" id="nw모델명" placeholder="[꿈비] 휴대용 분유포트" oninput="updateComboPreview()">
+        <datalist id="modelDatalist"></datalist>
+      </div>
+      <div class="modal-field full"><div class="field-label">출고품</div><input class="field-input" id="nw출고품" placeholder="뚜껑(체결불량)" oninput="updateComboPreview()"></div>
+      <div class="modal-field full" style="margin-top:-6px;">
+        <div class="combo-preview">출고정보 미리보기: <b id="comboPreviewText">-</b></div>
+      </div>
       <div class="modal-field full"><div class="field-label">주소</div><input class="field-input" id="nw주소" placeholder="서울시 강남구..."></div>
       <div class="modal-field"><div class="field-label">주문번호</div><input class="field-input" id="nw주문번호" placeholder="2026051234567890"></div>
       <div class="modal-field"><div class="field-label">택배사</div>
@@ -145,7 +160,6 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
           <option value="">선택</option><option value="CJ">CJ</option><option value="한진">한진</option>
         </select>
       </div>
-      <div class="modal-field"><div class="field-label">요청일</div><input class="field-input" type="date" id="nw요청일"></div>
     </div>
     <button class="modal-btn" id="newSaveBtn" onclick="saveNew()">등록</button>
   </div>
@@ -156,14 +170,31 @@ const GAS = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYo
 const DATA_PATH  = '../qc_data.json';
 const USERS_PATH = '../users.json';
 const STATUS_OPTS=['출력요청','출고완료(취합대기)','출고완료(취합완료)','미출고(실물X)','출고보류(예약)'];
+const PAGE_SIZE = 50;
 let _static=[], _realtime=[], _curStatus='출력요청', _query='';
-let _users=[], _acIdx=-1;
+let _users=[], _acIdx=-1, _models=[], _page=1;
 
 window.addEventListener('message',e=>{if(e.data&&e.data.type==='THEME')document.body.classList.toggle('light',e.data.mode==='light');});
 if(sessionStorage.getItem('_theme')==='light')document.body.classList.add('light');
 
-// 오늘 날짜 기본값
-document.getElementById('nw요청일').value = new Date().toISOString().slice(0,10);
+// ── 모델명 목록 로드 (신규등록 콤보박스 자동완성) ──
+async function loadModels() {
+  try {
+    const res = await fetch(`${GAS}?action=getTaekbaeModels`, {redirect:'follow'});
+    const d = await res.json();
+    if (d.ok && d.models) {
+      _models = d.models;
+      document.getElementById('modelDatalist').innerHTML = _models.map(m=>`<option value="${m.replace(/"/g,'&quot;')}">`).join('');
+    }
+  } catch(e) {}
+}
+
+// ── 모델명+출고품 조합 미리보기 (수식(내용조합) = 모델명 + "_" + 출고품, 실제 값은 Notion 저장 후 자동 계산됨) ──
+function updateComboPreview() {
+  const m = document.getElementById('nw모델명').value.trim();
+  const g = document.getElementById('nw출고품').value.trim();
+  document.getElementById('comboPreviewText').textContent = (m || g) ? `${m||'(모델명)'}_${g||'(출고품)'}` : '-';
+}
 
 // ── 직원 목록 로드 ──
 async function loadUsers() {
@@ -235,61 +266,122 @@ function getCombined(){
   return [..._realtime, ..._static];
 }
 
+// 출고정보(수식(내용조합)) 표시용 헬퍼: Notion 수식값 우선, 없으면 모델명_출고품 조합, 그마저 없으면 구버전 제품명 폴백
+function displayGoods(r){
+  return r.수식내용조합 || (r.모델명||r.출고품 ? [r.모델명,r.출고품].filter(Boolean).join('_') : '') || r.제품명 || '-';
+}
+
 function updateCounts(){
   const all=getCombined();
   document.getElementById('cnt출력요청').textContent=_realtime.length;
-  document.getElementById('cnt취합대기').textContent=all.filter(r=>r.상태==='출고완료(취합대기)').length;
-  document.getElementById('cnt취합완료').textContent=all.filter(r=>r.상태==='출고완료(취합완료)').length;
+  document.getElementById('cnt출고완료').textContent=all.filter(r=>r.상태==='출고완료(취합대기)'||r.상태==='출고완료(취합완료)').length;
   document.getElementById('cnt미출고').textContent=all.filter(r=>r.상태==='미출고(실물X)').length;
   document.getElementById('cnt보류').textContent=all.filter(r=>r.상태==='출고보류(예약)').length;
 }
 
 function setStatus(s){
   _curStatus=s;
+  _page=1;
   document.querySelectorAll('.s-tab').forEach(t=>t.classList.toggle('active',t.dataset.status===s));
   render();
 }
 
-function doSearch(){_query=document.getElementById('searchInput').value.trim().toLowerCase(); render();}
+function doSearch(){_query=document.getElementById('searchInput').value.trim().toLowerCase(); _page=1; render();}
 
 function getFiltered(){
-  const src = _curStatus==='출력요청' ? _realtime : _static.filter(r=>r.상태===_curStatus);
+  let src;
+  if(_curStatus==='출력요청') src=_realtime;
+  else if(_curStatus==='출고완료') src=_static.filter(r=>r.상태==='출고완료(취합대기)'||r.상태==='출고완료(취합완료)');
+  else src=_static.filter(r=>r.상태===_curStatus);
   if(!_query)return src;
-  return src.filter(r=>[r.고객명,r.제품명,r.주문번호,r.연락처].join(' ').toLowerCase().includes(_query));
+  return src.filter(r=>[r.고객명,r.모델명,r.출고품,r.수식내용조합,r.제품명,r.주문번호,r.연락처].join(' ').toLowerCase().includes(_query));
 }
 
-function render(){
-  const list=getFiltered().sort((a,b)=>(b.요청일||'').localeCompare(a.요청일||''));
-  document.getElementById('phCount').textContent=`${list.length}건`;
-  document.getElementById('loadState').style.display='none';
-  if(!list.length){document.getElementById('mainWrap').style.display='none';document.getElementById('emptyState').style.display='';return;}
-  document.getElementById('emptyState').style.display='none';
-  document.getElementById('mainWrap').style.display='';
-  const stOpts=s=>STATUS_OPTS.map(o=>`<option value="${o}"${s===o?' selected':''}>${o}</option>`).join('');
-  document.getElementById('recTbody').innerHTML=list.map(r=>`
+// 탭별 컬럼 구성
+// 출력요청: 상태, 요청일, 요청자, 고객명, 출고품목(수식(내용조합)), 주문번호, 연락처, 주소
+// 그 외(출고완료/미출고/보류): 상태, 출력일, 요청자, 택배사, 송장번호, 고객명, 제품명, 연락처, 주소
+function renderThead(){
+  const thead=document.getElementById('recThead');
+  if(_curStatus==='출력요청'){
+    thead.innerHTML=`<tr><th>상태</th><th>요청일</th><th>요청자</th><th>고객명</th><th>출고품목(수식(내용조합))</th><th>주문번호</th><th>연락처</th><th>주소</th></tr>`;
+  }else{
+    thead.innerHTML=`<tr><th>상태</th><th>출력일</th><th>요청자</th><th>택배사</th><th>송장번호</th><th>고객명</th><th>제품명</th><th>연락처</th><th>주소</th></tr>`;
+  }
+}
+
+function renderRowRealtime(r,stOpts){
+  return `
     <tr onclick="openNotion('${r.url||''}','${r.id}')">
+      <td onclick="event.stopPropagation()">
+        <select class="status-sel" onchange="updateStatus('${r.id}',this)">${stOpts(r.상태)}</select>
+      </td>
       <td style="font-family:var(--font-en);white-space:nowrap;">${r.요청일||'-'}</td>
+      <td style="font-size:10px;color:var(--text3);white-space:nowrap;">${r.요청자||'-'}</td>
+      <td style="font-weight:500;color:var(--text);">${r.고객명||'-'}</td>
+      <td style="word-break:keep-all;">${displayGoods(r)}</td>
+      <td style="font-family:var(--font-en);font-size:10px;color:var(--text3);">${r.주문번호||'-'}</td>
+      <td style="font-family:var(--font-en);font-size:10px;">${r.연락처||'-'}</td>
+      <td style="max-width:160px;font-size:10px;color:var(--text3);">${r.주소||'-'}</td>
+    </tr>`;
+}
+
+function renderRowStatic(r,stOpts){
+  return `
+    <tr onclick="openNotion('${r.url||''}','${r.id}')">
+      <td onclick="event.stopPropagation()">
+        <select class="status-sel" onchange="updateStatus('${r.id}',this)">${stOpts(r.상태)}</select>
+      </td>
       <td onclick="event.stopPropagation()">
         <input type="date" class="edit-input" style="width:108px;"
           value="${r.출력일||''}"
           onchange="updatePrintDate('${r.id}',this.value)">
       </td>
       <td style="font-size:10px;color:var(--text3);white-space:nowrap;">${r.요청자||'-'}</td>
-      <td style="font-weight:500;color:var(--text);">${r.고객명||'-'}</td>
-      <td style="word-break:keep-all;">${r.제품명||'-'}</td>
-      <td style="font-family:var(--font-en);font-size:10px;color:var(--text3);">${r.주문번호||'-'}</td>
       <td>${r.택배사||'-'}</td>
-      <td onclick="event.stopPropagation()">
-        <select class="status-sel" onchange="updateStatus('${r.id}',this)">${stOpts(r.상태)}</select>
-      </td>
       <td onclick="event.stopPropagation()">
         <input class="edit-input" type="text" value="${r.송장번호||''}" placeholder="운송장"
           onblur="updateWaybill('${r.id}',this.value)">
       </td>
+      <td style="font-weight:500;color:var(--text);">${r.고객명||'-'}</td>
+      <td style="word-break:keep-all;">${displayGoods(r)}</td>
       <td style="font-family:var(--font-en);font-size:10px;">${r.연락처||'-'}</td>
       <td style="max-width:160px;font-size:10px;color:var(--text3);">${r.주소||'-'}</td>
-    </tr>`).join('');
+    </tr>`;
 }
+
+function render(){
+  const fullList=getFiltered().sort((a,b)=>(b.요청일||'').localeCompare(a.요청일||''));
+  document.getElementById('phCount').textContent=`${fullList.length}건`;
+  document.getElementById('loadState').style.display='none';
+  if(!fullList.length){document.getElementById('mainWrap').style.display='none';document.getElementById('emptyState').style.display='';return;}
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('mainWrap').style.display='';
+
+  // 페이지네이션 (50개씩) — 대용량 탭(출고완료 등)의 렉 방지
+  const totalPages=Math.max(1,Math.ceil(fullList.length/PAGE_SIZE));
+  if(_page>totalPages)_page=totalPages;
+  const startIdx=(_page-1)*PAGE_SIZE;
+  const list=fullList.slice(startIdx,startIdx+PAGE_SIZE);
+
+  renderThead();
+  const stOpts=s=>STATUS_OPTS.map(o=>`<option value="${o}"${s===o?' selected':''}>${o}</option>`).join('');
+  const isRealtime=_curStatus==='출력요청';
+  document.getElementById('recTbody').innerHTML=list.map(r=>isRealtime?renderRowRealtime(r,stOpts):renderRowStatic(r,stOpts)).join('');
+
+  // 페이저 렌더
+  const pager=document.getElementById('pager');
+  if(fullList.length<=PAGE_SIZE){ pager.innerHTML=''; }
+  else{
+    pager.innerHTML=`
+      <button class="pager-btn" ${_page<=1?'disabled':''} onclick="gotoPage(1)">≪ 처음</button>
+      <button class="pager-btn" ${_page<=1?'disabled':''} onclick="gotoPage(_page-1)">‹ 이전</button>
+      <span class="pager-info">${_page} / ${totalPages} 페이지 · ${fullList.length}건</span>
+      <button class="pager-btn" ${_page>=totalPages?'disabled':''} onclick="gotoPage(_page+1)">다음 ›</button>
+      <button class="pager-btn" ${_page>=totalPages?'disabled':''} onclick="gotoPage(${totalPages})">마지막 ≫</button>`;
+  }
+}
+
+function gotoPage(p){_page=p; render();}
 
 function openNotion(url,id){if(!url&&id)url=`https://notion.so/${id.replace(/-/g,'')}`; if(url)window.open(url,'_blank');}
 
@@ -315,14 +407,16 @@ async function saveNew(){
   const btn=document.getElementById('newSaveBtn');
   btn.disabled=true; btn.textContent='등록 중...';
 
+  const 모델명=document.getElementById('nw모델명').value.trim();
+  const 출고품=document.getElementById('nw출고품').value.trim();
+
   const data={
     고객명,
     연락처: document.getElementById('nw연락처').value.trim(),
-    제품명: document.getElementById('nw제품명').value.trim(),
+    모델명, 출고품,
     주소:   document.getElementById('nw주소').value.trim(),
     주문번호:document.getElementById('nw주문번호').value.trim(),
     택배사: document.getElementById('nw택배사').value,
-    요청일: document.getElementById('nw요청일').value,
     요청자Id: document.getElementById('nw요청자Id').value||null
   };
 
@@ -331,27 +425,35 @@ async function saveNew(){
     const res=await fetch(`${GAS}?action=createTaekbaeItem&data=${p}`,{redirect:'follow'});
     const d=await res.json();
     if(d.ok){
-      // GAS 재호출 없이 로컬로 즉시 추가 (새로고침 없이 바로 표시)
+      // GAS 재호출 없이 로컬로 즉시 추가 (새로고침 없이 바로 표시). 요청일은 서버가 오늘 날짜로 자동 설정.
+      const 오늘=d.요청일||new Date().toISOString().slice(0,10);
       const newRec={
         id:'tmp-'+Date.now(), url:'',
         고객명:data.고객명, 상태:'출력요청',
-        제품명:data.제품명, 연락처:data.연락처,
+        모델명:data.모델명, 출고품:data.출고품,
+        수식내용조합:[data.모델명,data.출고품].filter(Boolean).join('_'),
+        연락처:data.연락처,
         주소:data.주소, 주문번호:data.주문번호,
         송장번호:'', 택배사:data.택배사||null,
-        요청일:data.요청일, 출력일:null,
+        요청일:오늘, 출력일:null,
         요청자:document.getElementById('nw요청자Input').value||null
       };
       _realtime.unshift(newRec);
+      // 신규 모델명이면 자동완성 목록에도 즉시 반영
+      if(모델명 && !_models.includes(모델명)){
+        _models.push(모델명);
+        document.getElementById('modelDatalist').innerHTML += `<option value="${모델명.replace(/"/g,'&quot;')}">`;
+      }
       closeNew();
       setStatus('출력요청'); // 출력요청 탭으로 이동
       updateCounts();
       render();
       // 입력 초기화
-      ['nw고객명','nw연락처','nw제품명','nw주소','nw주문번호','nw요청자Input','nw요청자Id'].forEach(id=>{
+      ['nw고객명','nw연락처','nw모델명','nw출고품','nw주소','nw주문번호','nw요청자Input','nw요청자Id'].forEach(id=>{
         const el=document.getElementById(id); if(el) el.value='';
       });
       document.getElementById('nw택배사').value='';
-      document.getElementById('nw요청일').value=new Date().toISOString().slice(0,10);
+      updateComboPreview();
     } else {
       alert('등록 실패: '+(d.msg||'오류'));
     }
@@ -367,7 +469,8 @@ async function updatePrintDate(pageId, val) {
 }
 
 function showLoading(){document.getElementById('loadState').style.display='';document.getElementById('emptyState').style.display='none';document.getElementById('mainWrap').style.display='none';}
-loadUsers(); // 직원 목록 별도 로드 (비동기, 메인 로딩과 병렬)
+loadUsers();  // 직원 목록 별도 로드 (비동기, 메인 로딩과 병렬)
+loadModels(); // 모델명 자동완성 목록 로드 (비동기)
 loadData();
 </script>
 </body>

@@ -1002,6 +1002,19 @@ window.addEventListener('message', e => {
   if (!e.data) return;
   if (e.data.type === 'GO_TAB') {
     const tabName = e.data.tab;
+    // 파일 경로(.html) 또는 외부링크(http)면 탭 매칭 없이 바로 iframe 로드 (main.html 퀵액세스/카드용)
+    if (typeof tabName === 'string' && (/^https?:\/\//i.test(tabName) || /\.html(\?|$)/i.test(tabName))) {
+      hideNoPermission();
+      document.querySelectorAll('.nav-item.active').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-parent.has-active').forEach(el => el.classList.remove('has-active'));
+      const sb = document.getElementById('sidebar');
+      if (sb) sb.style.display = 'none';
+      const path = /^https?:\/\//i.test(tabName) ? tabName : tabName.replace(/\\/g,'/').replace(/^\/+/, '');
+      const frame = document.getElementById('mainFrame');
+      frame.src = path;
+      frame.onload = () => { sendThemeToFrame(); };
+      return;
+    }
     const tabEl = document.querySelector(`.nav-item[data-tab="${tabName}"]`);
     if (tabEl) { switchTab(tabEl); return; }
     const parentEl = document.querySelector(`.nav-parent[data-tab="${tabName}"]`);
@@ -1324,8 +1337,8 @@ function _switchSidebar(tabName) {
   const isTrainingTab = tabName === '팀원교육';
   const isKnowledgeTab = tabName === '지식DB';
 
-  // 팀원교육 / 지식DB: 사이드바 완전 숨김
-  if (isTrainingTab || isKnowledgeTab) {
+  // 팀원교육 / 지식DB / 품질관리(QC): 사이드바 완전 숨김 → content(iframe)가 flex:1로 자동 확장
+  if (isTrainingTab || isKnowledgeTab || isQcTab) {
     if (sb) sb.style.display = 'none';
     return;
   }

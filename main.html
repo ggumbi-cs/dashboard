@@ -163,8 +163,8 @@ body.is-admin .admin-gear { display:flex; }
 .notice-date { font-size:10px; color:var(--text3); font-family:var(--font-en); flex-shrink:0; }
 
 /* 설정 모달 */
-#settingModal { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); align-items:center; justify-content:center; }
-#settingModal.open { display:flex; }
+#settingModal, #bannerEditModal { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); align-items:center; justify-content:center; }
+#settingModal.open, #bannerEditModal.open { display:flex; }
 .modal-box { background:var(--bg2); border:1px solid var(--border2); border-radius:20px; padding:28px 32px; width:560px; max-height:85vh; overflow-y:auto; position:relative; }
 .modal-title { font-size:15px; font-weight:700; color:var(--text); margin-bottom:6px; }
 .modal-sub { font-size:12px; color:var(--text3); margin-bottom:24px; }
@@ -214,6 +214,20 @@ body.is-admin .admin-gear { display:flex; }
 .notice-admin-gear { display:none; position:absolute; top:14px; right:14px; width:24px; height:24px; background:rgba(240,192,96,0.15); border:1px solid rgba(240,192,96,0.3); border-radius:6px; cursor:pointer; align-items:center; justify-content:center; font-size:13px; color:var(--gold); transition:all 0.15s; z-index:10; }
 .notice-admin-gear:hover { background:rgba(240,192,96,0.3); }
 body.is-admin .notice-admin-gear { display:flex; }
+
+/* 배너 관리자 기어 */
+.banner-admin-gear { display:none; position:absolute; top:16px; right:16px; width:26px; height:26px; background:rgba(240,192,96,0.15); border:1px solid rgba(240,192,96,0.3); border-radius:7px; cursor:pointer; align-items:center; justify-content:center; font-size:14px; color:var(--gold); transition:all 0.15s; z-index:10; }
+.banner-admin-gear:hover { background:rgba(240,192,96,0.3); }
+body.is-admin .banner-admin-gear { display:flex; }
+
+/* 경로/외부링크 안내 및 타입 뱃지 (퀵액세스·카드 설정) */
+.modal-path-hint { font-size:10.5px; color:var(--text3); line-height:1.6; margin:-8px 0 16px; padding:8px 10px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; }
+.modal-path-hint code { color:var(--cyan); background:var(--cyan-dim); padding:1px 5px; border-radius:4px; font-family:var(--font-en); font-size:10px; }
+.cfg-tab-row { display:flex; align-items:center; gap:6px; flex:1; }
+.cfg-tab-type { flex-shrink:0; font-size:9.5px; padding:2px 6px; border-radius:5px; font-family:var(--font-en); white-space:nowrap; }
+.cfg-tab-type.t-internal { background:var(--cyan-dim); color:var(--cyan); }
+.cfg-tab-type.t-external { background:var(--gold-dim); color:var(--gold); }
+.cfg-tab-type.t-tabname { background:rgba(0,229,160,0.12); color:var(--green); }
 
 /* 공지 편집 모달 */
 #noticeEditModal { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); align-items:center; justify-content:center; }
@@ -271,10 +285,11 @@ body.is-admin .notice-admin-gear { display:flex; }
 <div id="mainWrap">
   <div id="welcomeBanner">
     <div class="wb-grid"></div><div class="wb-glow"></div><div class="wb-glow2"></div>
+    <div class="banner-admin-gear" onclick="openBannerEdit()" title="인사말 배너 편집">⚙</div>
     <div class="wb-content">
       <div class="wb-left">
-        <div class="wb-eyebrow">Dashboard</div>
-        <div class="wb-title">안녕하세요,<br><span class="hl" id="wbName">엄마감동팀</span> 님 엄마감동팀 소통채널 입니다</div>
+        <div class="wb-eyebrow" id="wbEyebrow">Dashboard</div>
+        <div class="wb-title"><span id="wbGreetPrefix">안녕하세요,</span><br><span class="hl" id="wbName">엄마감동팀</span> <span id="wbGreetSuffix">님 엄마감동팀 소통채널 입니다</span></div>
         <div class="wb-sub" id="wbDate">오늘도 고객의 마음을 움직이는 하루를 만들어가세요.</div>
       </div>
       <div class="wb-right">
@@ -331,6 +346,27 @@ body.is-admin .notice-admin-gear { display:flex; }
     <button class="modal-close" onclick="closeModal()">✕</button>
     <div class="modal-title">⚙ 홈 화면 설정</div>
     <div class="modal-sub">아이콘 · 카드 구성 · 클릭 권한을 설정합니다.</div>
+    <div class="modal-path-hint">🔗 이동 위치 입력 예시 — 탭 이름: <code>주요kpi</code>, <code>품질관리</code> 등 · 내부 페이지 경로: <code>qc/qc_main.html</code>, <code>qc/기타/택배출고.html</code> (사이트 루트 기준) · 외부 링크: <code>https://example.com</code></div>
+    <datalist id="tabDatalist">
+      <option value="주요kpi">주요 KPI 탭</option>
+      <option value="스마트스토어">스마트스토어 탭</option>
+      <option value="상담분석">상담분석 탭</option>
+      <option value="반품현황">반품현황 탭</option>
+      <option value="처리현황">처리현황 탭</option>
+      <option value="품질관리">(구)품질관리 탭</option>
+      <option value="AI보고">AI보고 탭</option>
+      <option value="건별Issue">건별Issue 탭</option>
+      <option value="건별보고">건별보고 탭</option>
+      <option value="팀Tool">팀Tool 탭</option>
+      <option value="개발자">개발자 탭</option>
+      <option value="qc/qc_main.html">품질관리 메인 (파일경로)</option>
+      <option value="qc/모니터링/불량현황.html">불량현황 (파일경로)</option>
+      <option value="qc/액션현황/액션현황.html">액션현황 (파일경로)</option>
+      <option value="qc/반품입고/반품처리금액.html">반품처리금액 (파일경로)</option>
+      <option value="qc/기타/자재발주.html">자재발주 (파일경로)</option>
+      <option value="qc/기타/택배출고.html">택배출고요청 (파일경로)</option>
+      <option value="qc/기타/유상처리단가.html">유상처리단가 (파일경로)</option>
+    </datalist>
     <div class="modal-section">
       <div class="modal-section-title">빠른 바로가기</div>
       <div id="cfgQuickList"></div>
@@ -341,6 +377,32 @@ body.is-admin .notice-admin-gear { display:flex; }
       <div id="cfgCardList"></div>
     </div>
     <button class="modal-btn" onclick="saveSettings()">💾 저장</button>
+  </div>
+</div>
+
+<!-- 인사말 배너 편집 모달 -->
+<div id="bannerEditModal">
+  <div class="modal-box" style="width:460px;">
+    <button class="modal-close" onclick="closeBannerEdit()">✕</button>
+    <div class="modal-title">⚙ 인사말 배너 편집</div>
+    <div class="modal-sub">홈 화면 상단 배너 문구를 수정합니다. 날짜/요일은 자동으로 표시돼요.</div>
+    <div class="modal-section">
+      <div class="modal-section-title">라벨 (Dashboard)</div>
+      <input class="modal-input" id="bnEyebrow" placeholder="Dashboard">
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">인사말 앞문구</div>
+      <input class="modal-input" id="bnGreetPrefix" placeholder="안녕하세요,">
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">인사말 뒷문구 <span style="text-transform:none;font-weight:400;">(이름 뒤에 붙어요)</span></div>
+      <input class="modal-input" id="bnGreetSuffix" placeholder="님 엄마감동팀 소통채널 입니다">
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">날짜 옆 안내문구</div>
+      <input class="modal-input" id="bnTagline" placeholder="오늘도 고객의 마음을 움직이는 하루를 만들어가세요.">
+    </div>
+    <button class="modal-btn" onclick="saveBannerEdit()">💾 저장</button>
   </div>
 </div>
 
@@ -449,6 +511,7 @@ let DEFAULT_NOTICES_OPS = [
 // ─────────────────────────────────────────────
 let _scriptUrl = '', _userRole = '', _isAdmin = false;
 let _quickItems = [], _cardItems = [];
+let _bannerCfg = { eyebrow:'Dashboard', greetPrefix:'안녕하세요,', greetSuffix:'님 엄마감동팀 소통채널 입니다', tagline:'오늘도 고객의 마음을 움직이는 하루를 만들어가세요.' };
 let _sliderIdx = 0, _sliderPer = 3;
 let _pickerTarget = null, _pickerType = null, _pickerIdx = null;
 let _noticeEditType = 'update'; // 현재 편집 중인 공지 타입
@@ -493,8 +556,11 @@ function applyUserInfo() {
   const displayName=nameMap[_userRole]||_userRole||'방문자';
   document.getElementById('sbUser').textContent=displayName;
   document.getElementById('wbName').textContent=displayName;
+  document.getElementById('wbEyebrow').textContent=_bannerCfg.eyebrow;
+  document.getElementById('wbGreetPrefix').textContent=_bannerCfg.greetPrefix;
+  document.getElementById('wbGreetSuffix').textContent=_bannerCfg.greetSuffix;
   const now=new Date(), days=['일','월','화','수','목','금','토'], m=now.getMonth()+1, d=now.getDate();
-  document.getElementById('wbDate').textContent=`${now.getFullYear()}년 ${m}월 ${d}일 ${days[now.getDay()]}요일 · 오늘도 고객의 마음을 움직이는 하루를 만들어가세요.`;
+  document.getElementById('wbDate').textContent=`${now.getFullYear()}년 ${m}월 ${d}일 ${days[now.getDay()]}요일 · ${_bannerCfg.tagline}`;
   document.getElementById('wbDateNum').innerHTML=`${d}<span class="unit">일</span>`;
   document.getElementById('wbWeekDay').textContent=days[now.getDay()]+'요일';
 }
@@ -525,8 +591,11 @@ async function loadSettings() {
     if (data.ok && data.settings) {
       if (data.settings.noticeUpdate?.length) DEFAULT_NOTICES_UPDATE = data.settings.noticeUpdate;
       if (data.settings.noticeOps?.length)    DEFAULT_NOTICES_OPS    = data.settings.noticeOps;
+      // 배너 문구 불러오기
+      if (data.settings.banner) _bannerCfg = { ..._bannerCfg, ...data.settings.banner };
     }
   } catch(e) { useDefaults(); }
+  applyUserInfo(); // 배너 문구 갱신 반영
   renderAll();
 }
 
@@ -755,6 +824,37 @@ function closePermBlock() { document.getElementById('permBlock').classList.remov
 // ─────────────────────────────────────────────
 function openItemEdit(type, i) { openModal(type, i); }
 
+// ─────────────────────────────────────────────
+// 인사말 배너 편집
+// ─────────────────────────────────────────────
+function openBannerEdit() {
+  document.getElementById('bnEyebrow').value      = _bannerCfg.eyebrow;
+  document.getElementById('bnGreetPrefix').value  = _bannerCfg.greetPrefix;
+  document.getElementById('bnGreetSuffix').value  = _bannerCfg.greetSuffix;
+  document.getElementById('bnTagline').value      = _bannerCfg.tagline;
+  document.getElementById('bannerEditModal').classList.add('open');
+}
+function closeBannerEdit() { document.getElementById('bannerEditModal').classList.remove('open'); }
+
+async function saveBannerEdit() {
+  _bannerCfg = {
+    eyebrow:     document.getElementById('bnEyebrow').value.trim()     || 'Dashboard',
+    greetPrefix: document.getElementById('bnGreetPrefix').value.trim() || '안녕하세요,',
+    greetSuffix: document.getElementById('bnGreetSuffix').value.trim() || '',
+    tagline:     document.getElementById('bnTagline').value.trim()     || ''
+  };
+  applyUserInfo();
+  closeBannerEdit();
+  if (!_scriptUrl) { showToast('⚠ GAS URL 없음 — 화면에만 적용됨'); return; }
+  try {
+    // banner 키만 전송 — 서버는 키 단위로 병합 저장하므로 quick/cards는 그대로 보존됨
+    const payload = encodeURIComponent(JSON.stringify({ banner:_bannerCfg }));
+    const res  = await fetch(`${_scriptUrl}?action=saveHomeSettings&data=${payload}`, { redirect:'follow' });
+    const data = await res.json();
+    showToast(data.ok ? '✅ 배너 저장 완료' : '⚠ 저장 실패: '+(data.msg||''));
+  } catch(e) { showToast('⚠ 저장 오류'); }
+}
+
 function openModal(focusType, focusIdx) {
   renderCfgList('quick', document.getElementById('cfgQuickList'), _quickItems);
   renderCfgList('card',  document.getElementById('cfgCardList'),  _cardItems);
@@ -779,7 +879,10 @@ function renderCfgList(type, container, items) {
         <div class="cfg-icon-preview ${it.color||it.iconCls||'qi-cyan'}" style="background:${colorBg}" onclick="openIconPicker('${type}',${i},this)">${it.icon}</div>
         <div class="cfg-fields">
           <input class="modal-input" value="${it.label||it.title||''}" placeholder="라벨" oninput="updateItem('${type}',${i},'label',this.value);updateItem('${type}',${i},'title',this.value)">
-          <input class="modal-input" value="${it.tab||''}" placeholder="탭명" oninput="updateItem('${type}',${i},'tab',this.value)">
+          <div class="cfg-tab-row">
+            <input class="modal-input" list="tabDatalist" value="${it.tab||''}" placeholder="탭명 또는 qc/기타/택배출고.html" oninput="updateItem('${type}',${i},'tab',this.value);updateTabBadge('${type}',${i})" onblur="normalizeTabField(this,'${type}',${i})">
+            <span class="cfg-tab-type ${tabTypeClass(it.tab)}" id="tabType-${type}-${i}">${tabTypeLabel(it.tab)}</span>
+          </div>
         </div>
         ${type==='quick'?`<button class="cfg-del" onclick="removeItem('quick',${i})">✕</button>`:''}
       </div>
@@ -796,6 +899,38 @@ function renderCfgList(type, container, items) {
 function updateItem(type, i, key, val) {
   const arr = type==='quick' ? _quickItems : _cardItems;
   arr[i][key] = val;
+}
+
+// ── 이동 위치 판별 · 정규화 (탭 이름 / 내부 파일경로 / 외부 링크 지원) ──
+function tabTypeClass(tab) {
+  if (!tab) return 't-tabname';
+  if (/^https?:\/\//i.test(tab)) return 't-external';
+  if (tab.endsWith('.html')) return 't-internal';
+  return 't-tabname';
+}
+function tabTypeLabel(tab) {
+  if (!tab) return '미지정';
+  if (/^https?:\/\//i.test(tab)) return '🔗 외부링크';
+  if (tab.endsWith('.html')) return '📄 파일경로';
+  return '🏷 탭이름';
+}
+function updateTabBadge(type, i) {
+  const el = document.getElementById(`tabType-${type}-${i}`);
+  if (!el) return;
+  const arr = type==='quick' ? _quickItems : _cardItems;
+  const tab = arr[i].tab || '';
+  el.className = 'cfg-tab-type ' + tabTypeClass(tab);
+  el.textContent = tabTypeLabel(tab);
+}
+function normalizeTabField(inputEl, type, i) {
+  let v = (inputEl.value || '').trim();
+  if (v && !/^https?:\/\//i.test(v) && v.includes('.html')) {
+    v = v.replace(/\\/g, '/');   // 역슬래시 → 슬래시 (site 루트 기준 경로이므로 qc/ 접두어는 유지)
+    v = v.replace(/^\/+/, '');   // 맨 앞 슬래시 제거
+  }
+  inputEl.value = v;
+  updateItem(type, i, 'tab', v);
+  updateTabBadge(type, i);
 }
 
 function setMinRole(type, i, role, btn) {

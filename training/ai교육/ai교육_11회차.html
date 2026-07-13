@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI 교육 11회차 · GAS 배포 따라하기</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#070d1a;--bg2:#0c1628;--bg3:#111e35;--bg4:#172240;
+  --border:rgba(80,140,255,0.12);--border2:rgba(80,140,255,0.25);
+  --blue:#4a8fff;--blue-dim:rgba(74,143,255,0.10);
+  --cyan:#00d4ff;--green:#00e5a0;--red:#ff5a5a;
+  --orange:#ffaa40;--gold:#f0c060;--purple:#a07aff;--teal:#00c8a0;
+  --text:#e4eeff;--text2:#8aaad0;--text3:#4a6a90;
+  --radius:14px;
+}
+body.light-mode{
+  --bg:#f0f4fa;--bg2:#ffffff;--bg3:#e8f0fb;--bg4:#dce8f7;
+  --border:rgba(26,78,180,0.12);--border2:rgba(26,78,180,0.28);
+  --blue:#1a5fd4;--blue-dim:rgba(26,95,212,0.08);
+  --cyan:#0090b8;--green:#007a50;--red:#c02020;--orange:#b06010;
+  --gold:#8a6000;--purple:#5030b0;--teal:#007a62;
+  --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6090;
+}
+body.light-mode .hero-glow{background:radial-gradient(ellipse,rgba(26,95,212,0.07) 0%,transparent 65%);}
+body.light-mode .screen-mock{background:#fff;border-color:#dce8f7;}
+body.light-mode .screen-bar{background:#f0f4fa;}
+body.light-mode #summary::before{background:radial-gradient(ellipse at 50% 0%,rgba(26,95,212,0.06) 0%,transparent 60%);}
+
+html,body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo',sans-serif;font-size:14px;line-height:1.6;overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+.wrap{max-width:880px;margin:0 auto;padding:0 24px;}
+
+/* ══ 네비게이션 ══ */
+.nav-prev,.nav-next{
+  position:fixed;top:50%;transform:translateY(-50%);
+  width:44px;height:80px;display:flex;align-items:center;justify-content:center;
+  background:var(--bg2);border:1px solid var(--border2);cursor:pointer;z-index:999;
+  transition:background 0.15s,border-color 0.2s;font-size:18px;color:var(--text2);user-select:none;
+}
+.nav-prev{left:0;border-radius:0 10px 10px 0;border-left:none;}
+.nav-next{right:0;border-radius:10px 0 0 10px;border-right:none;}
+.nav-prev:hover,.nav-next:hover{background:var(--bg3);border-color:var(--blue);color:var(--blue);}
+.nav-prev.disabled{opacity:0.2;cursor:default;pointer-events:none;}
+.nav-tooltip{position:absolute;background:var(--bg4);border:1px solid var(--border2);border-radius:8px;padding:6px 10px;font-size:10px;color:var(--text2);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.15s;line-height:1.5;}
+.nav-prev .nav-tooltip{left:52px;top:50%;transform:translateY(-50%);}
+.nav-next .nav-tooltip{right:52px;top:50%;transform:translateY(-50%);}
+.nav-prev:hover .nav-tooltip,.nav-next:hover .nav-tooltip{opacity:1;}
+.nav-tooltip-round{display:block;font-weight:700;color:var(--text);}
+
+/* ══ 진행률 바 ══ */
+#progressBar{
+  position:sticky;top:0;z-index:990;background:var(--bg2);border-bottom:1px solid var(--border);
+  padding:10px 24px;display:flex;align-items:center;gap:12px;
+}
+.progress-steps{display:flex;gap:4px;flex:1;}
+.ps-item{flex:1;height:4px;border-radius:2px;background:var(--border);transition:background 0.3s;}
+.ps-item.done{background:var(--green);}
+.ps-item.active{background:var(--blue);}
+.progress-label{font-size:11px;font-weight:700;color:var(--text2);white-space:nowrap;}
+
+/* ══ 히어로 ══ */
+#hero{position:relative;background:linear-gradient(160deg,var(--bg) 0%,var(--bg2) 55%,var(--bg) 100%);border-bottom:1px solid var(--border);padding:44px 0 38px;overflow:hidden;}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:44px 44px;}
+.hero-glow{position:absolute;top:-80px;right:-40px;width:440px;height:320px;background:radial-gradient(ellipse,rgba(0,229,160,0.08) 0%,transparent 65%);pointer-events:none;}
+.hero-inner{position:relative;z-index:1;}
+.hero-eyebrow{font-size:11px;font-weight:700;color:var(--green);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.hero-title{font-size:clamp(24px,4vw,36px);font-weight:800;line-height:1.2;margin-bottom:8px;color:var(--text);}
+.hero-sub{font-size:14px;color:var(--text2);margin-bottom:18px;}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-green{background:rgba(0,229,160,0.10);color:var(--green);border:1px solid rgba(0,229,160,0.25);}
+.badge-gold{background:rgba(240,192,96,0.10);color:var(--gold);border:1px solid rgba(240,192,96,0.25);}
+.badge-blue{background:var(--blue-dim);color:var(--blue);border:1px solid var(--border2);}
+.badge-teal{background:rgba(0,200,160,0.10);color:var(--teal);border:1px solid rgba(0,200,160,0.25);}
+.hero-pills{display:flex;gap:10px;flex-wrap:wrap;}
+
+/* ══ 공통 섹션 ══ */
+.sec{padding:36px 0 0;}
+.step-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.step-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.step-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;}
+.sn-g{background:rgba(0,229,160,0.15);color:var(--green);border:1px solid rgba(0,229,160,0.3);}
+.sn-b{background:rgba(74,143,255,0.15);color:var(--blue);border:1px solid rgba(74,143,255,0.3);}
+.sn-o{background:rgba(240,192,96,0.15);color:var(--gold);border:1px solid rgba(240,192,96,0.3);}
+.sn-t{background:rgba(0,200,160,0.15);color:var(--teal);border:1px solid rgba(0,200,160,0.3);}
+.sn-r{background:rgba(255,90,90,0.15);color:var(--red);border:1px solid rgba(255,90,90,0.3);}
+.sn-p{background:rgba(160,122,255,0.15);color:var(--purple);border:1px solid rgba(160,122,255,0.3);}
+.step-head-title{font-size:14px;font-weight:700;color:var(--text);}
+.step-head-sub{font-size:11px;color:var(--text3);}
+.step-body{padding:22px;}
+
+/* ══ 스크린샷 카드 ══ */
+.screen-wrap{border-radius:12px;overflow:hidden;border:1px solid var(--border2);box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+.screen-bar{background:var(--bg4);padding:8px 12px;display:flex;align-items:center;gap:5px;border-bottom:1px solid var(--border);}
+.screen-dot{width:8px;height:8px;border-radius:50%;}
+.screen-url{flex:1;font-size:9px;color:var(--text3);font-family:monospace;background:var(--bg3);padding:2px 8px;border-radius:4px;margin-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.screen-img{width:100%;display:block;}
+.screen-caption{padding:10px 14px;background:var(--bg3);border-top:1px solid var(--border);font-size:12px;color:var(--text2);display:flex;align-items:center;gap:8px;}
+.success-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(0,229,160,0.12);color:var(--green);border:1px solid rgba(0,229,160,0.25);}
+
+/* ══ 배포 타임라인 ══ */
+.deploy-timeline{display:flex;flex-direction:column;gap:0;position:relative;padding-left:32px;}
+.deploy-timeline::before{content:'';position:absolute;left:13px;top:16px;bottom:16px;width:2px;background:linear-gradient(to bottom,var(--blue),var(--green));border-radius:1px;}
+.dt-item{display:flex;gap:16px;align-items:flex-start;padding-bottom:14px;position:relative;}
+.dt-item:last-child{padding-bottom:0;}
+.dt-dot{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;position:absolute;left:-32px;z-index:1;border:2px solid var(--bg2);}
+.dt-content{flex:1;}
+.dt-step{background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.dt-step-head{padding:9px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.dt-num{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:1px;}
+.dt-title{font-size:12.5px;font-weight:700;color:var(--text);}
+.dt-step-body{padding:0;}
+.dt-step-body img{width:100%;display:block;border-radius:0 0 8px 8px;}
+.dt-step-desc{padding:8px 14px;font-size:11.5px;color:var(--text2);}
+
+/* ══ URL 강조 ══ */
+.url-box{
+  background:var(--bg3);border:2px solid var(--border2);border-radius:12px;padding:16px 20px;
+  position:relative;overflow:hidden;
+}
+.url-box::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,212,255,0.05),transparent);pointer-events:none;}
+.url-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:1.5px;margin-bottom:6px;}
+.url-text{font-size:11px;font-family:monospace;color:var(--cyan);word-break:break-all;line-height:1.6;}
+.url-emphasis{margin-top:14px;padding:14px;background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.2);border-radius:9px;text-align:center;font-size:14px;font-weight:800;color:var(--text);}
+
+/* ══ 대화 말풍선 ══ */
+.chat-wrap{display:flex;flex-direction:column;gap:10px;}
+.chat-row{display:flex;gap:9px;align-items:flex-start;}
+.chat-row.user{flex-direction:row-reverse;}
+.chat-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;border:1px solid var(--border);}
+.av-user{background:var(--blue-dim);}
+.av-ai{background:rgba(0,200,160,0.12);}
+.chat-bubble-user{background:var(--blue-dim);border:1px solid var(--border2);padding:9px 13px;border-radius:12px 4px 12px 12px;font-size:12px;color:var(--text);max-width:80%;line-height:1.6;}
+.chat-bubble-ai{background:var(--bg3);border:1px solid var(--border);border-left:2px solid var(--teal);padding:9px 13px;border-radius:4px 12px 12px 12px;font-size:12px;color:var(--text2);max-width:80%;line-height:1.6;}
+.chat-name{font-size:9px;font-weight:700;margin-bottom:3px;}
+.cn-user{color:var(--blue);text-align:right;}
+.cn-ai{color:var(--teal);}
+
+/* ══ URL 변경 안됨 강조 ══ */
+.url-same-wrap{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;}
+.url-same-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.usc-head{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;}
+.usc-body{padding:14px;}
+.usc-url{font-size:10px;font-family:monospace;color:var(--cyan);word-break:break-all;padding:8px;background:var(--bg4);border-radius:6px;margin-bottom:8px;line-height:1.5;}
+.usc-badge{display:inline-block;padding:3px 9px;border-radius:6px;font-size:10px;font-weight:700;}
+.same-arrow{text-align:center;font-size:28px;color:var(--green);}
+.url-same-msg{grid-column:1/-1;text-align:center;padding:14px;background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.2);border-radius:10px;font-size:15px;font-weight:800;color:var(--text);}
+
+/* ══ 업무 플로우 ══ */
+.workflow{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0;margin:0 -4px;}
+.wf-item{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 8px;text-align:center;min-width:72px;}
+.wf-icon{font-size:22px;}
+.wf-label{font-size:10px;font-weight:700;color:var(--text2);line-height:1.3;}
+.wf-arr{font-size:14px;color:var(--border2);padding:0 2px;align-self:center;margin-top:-14px;}
+.wf-highlight .wf-icon{font-size:26px;}
+.wf-highlight .wf-label{color:var(--green);}
+
+/* ══ 막히면 ══ */
+.help-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.help-card{background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:16px 12px;text-align:center;}
+.hc-num{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:1.5px;margin-bottom:8px;}
+.hc-icon{font-size:28px;margin-bottom:8px;}
+.hc-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.hc-desc{font-size:10.5px;color:var(--text3);line-height:1.5;}
+.hc-arr{display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--border2);padding-top:18px;}
+
+/* ══ 마지막 요약 ══ */
+#summary{
+  margin:36px 0 0;padding:30px;
+  background:linear-gradient(135deg,var(--bg2),var(--bg4));
+  border:1px solid var(--border2);border-radius:var(--radius);
+  position:relative;overflow:hidden;text-align:center;
+}
+#summary::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(0,229,160,0.07) 0%,transparent 60%);}
+.summary-inner{position:relative;z-index:1;}
+.learn-list{display:flex;flex-direction:column;gap:8px;max-width:480px;margin:0 auto 18px;}
+.learn-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:9px;font-size:12.5px;}
+.li-bad{background:rgba(255,90,90,0.07);border:1px solid rgba(255,90,90,0.15);color:var(--text2);}
+.li-good{background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.15);color:var(--text2);}
+.li-icon{font-size:15px;flex-shrink:0;}
+.li-arr{font-size:16px;color:var(--border2);text-align:center;}
+.summary-quote{font-size:13px;font-weight:700;color:var(--text);line-height:1.7;}
+.summary-author{font-size:11px;color:var(--text3);margin-top:12px;}
+
+.sec-bottom{height:48px;}
+
+@media(max-width:640px){
+  .help-grid{grid-template-columns:1fr 1fr;}
+  .url-same-wrap{grid-template-columns:1fr;}
+  .same-arrow{transform:rotate(90deg);}
+  .url-same-msg{grid-column:1;}
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.anim{animation:fadeUp 0.4s ease both;}
+.d1{animation-delay:0.05s;}.d2{animation-delay:0.1s;}.d3{animation-delay:0.15s;}
+.d4{animation-delay:0.2s;}.d5{animation-delay:0.25s;}
+</style>
+</head>
+<body>
+
+<div class="nav-prev" id="navPrev" onclick="navGo('prev')">
+  ‹
+  <div class="nav-tooltip"><span class="nav-tooltip-round">10회차</span>설정 저장 기능 만들기</div>
+</div>
+<div class="nav-next" id="navNext" onclick="navGo('next')">
+  ›
+  <div class="nav-tooltip"><span class="nav-tooltip-round">다음 회차</span>준비 중</div>
+</div>
+
+<!-- 진행률 -->
+<div id="progressBar">
+  <div class="progress-steps">
+    <div class="ps-item" id="ps1"></div>
+    <div class="ps-item" id="ps2"></div>
+    <div class="ps-item" id="ps3"></div>
+    <div class="ps-item" id="ps4"></div>
+    <div class="ps-item" id="ps5"></div>
+    <div class="ps-item" id="ps6"></div>
+    <div class="ps-item" id="ps7"></div>
+    <div class="ps-item" id="ps8"></div>
+  </div>
+  <div class="progress-label" id="progressLabel">1 / 8</div>
+</div>
+
+<!-- 히어로 -->
+<div id="hero">
+  <div class="hero-grid"></div><div class="hero-glow"></div>
+  <div class="wrap hero-inner anim d1">
+    <div class="hero-eyebrow">
+      AI 교육 11회차
+      <div class="badge badge-green">🛠 실습④</div>
+      <div class="badge badge-gold">⏱ 10분</div>
+    </div>
+    <div class="hero-title">GAS 배포 따라하기</div>
+    <div class="hero-sub">AI가 준 GS코드, 직접 배포해보기 — 복사·붙여넣기·배포·URL 전달, 이게 전부입니다</div>
+    <div class="hero-pills">
+      <span class="badge badge-teal">📸 사진 보고 그대로 따라하기</span>
+      <span class="badge badge-blue">✅ 단계마다 완료 체크</span>
+      <span class="badge badge-green">🔗 URL은 변경되지 않아요</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- STEP 1 -->
+<div class="sec anim d2" id="step1">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-g">1</div>
+      <div>
+        <div class="step-head-title">Google Sheet 열기</div>
+        <div class="step-head-sub">확장 프로그램 → Apps Script</div>
+      </div>
+      <div class="success-badge" style="margin-left:auto;">1 / 8</div>
+    </div>
+    <div class="step-body">
+      <div class="screen-wrap" style="margin-bottom:14px;">
+        <div class="screen-bar">
+          <div class="screen-dot" style="background:#ff5f57;"></div>
+          <div class="screen-dot" style="background:#febc2e;margin:0 3px;"></div>
+          <div class="screen-dot" style="background:#28c840;"></div>
+          <div class="screen-url">docs.google.com/spreadsheets/...</div>
+        </div>
+        <img src="images/6.PNG" class="screen-img" alt="Google Sheet 화면">
+        <div class="screen-caption">
+          <span>📌 Google Sheet를 열고</span>
+          <strong style="color:var(--gold);">확장 프로그램 → Apps Script</strong>
+          <span>를 클릭하세요</span>
+        </div>
+      </div>
+      <div class="screen-wrap">
+        <div class="screen-bar">
+          <div class="screen-dot" style="background:#ff5f57;"></div>
+          <div class="screen-dot" style="background:#febc2e;margin:0 3px;"></div>
+          <div class="screen-dot" style="background:#28c840;"></div>
+          <div class="screen-url">docs.google.com/spreadsheets/...</div>
+        </div>
+        <img src="images/7.PNG" class="screen-img" alt="Apps Script 메뉴">
+        <div class="screen-caption">
+          <span style="color:var(--green);font-weight:700;">✅ Apps Script 클릭!</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div class="sec anim d2" id="step2">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-b">2</div>
+      <div>
+        <div class="step-head-title">GS 코드 붙여넣기</div>
+        <div class="step-head-sub">기존 내용 전체 선택 후 삭제 → AI 코드 붙여넣기</div>
+      </div>
+      <div class="success-badge" style="margin-left:auto;">2 / 8</div>
+    </div>
+    <div class="step-body">
+      <div class="screen-wrap" style="margin-bottom:14px;">
+        <div class="screen-bar">
+          <div class="screen-dot" style="background:#ff5f57;"></div>
+          <div class="screen-dot" style="background:#febc2e;margin:0 3px;"></div>
+          <div class="screen-dot" style="background:#28c840;"></div>
+          <div class="screen-url">script.google.com/...</div>
+        </div>
+        <img src="images/8.PNG" class="screen-img" alt="Apps Script 편집기">
+        <div class="screen-caption">
+          <span>📋 기존 코드를 모두 지우고 AI가 준 코드를 붙여넣으세요</span>
+        </div>
+      </div>
+      <div style="padding:12px 16px;background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.15);border-radius:9px;font-size:12px;color:var(--text2);text-align:center;">
+        💬 "코드가 무슨 뜻인지 몰라도 괜찮습니다. 그냥 붙여넣으면 됩니다."
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div class="sec anim d3" id="step3">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-o">3</div>
+      <div>
+        <div class="step-head-title">배포하기</div>
+        <div class="step-head-sub">우측 상단 배포 버튼 → 새 배포 → 웹앱 선택 → 배포</div>
+      </div>
+      <div class="success-badge" style="margin-left:auto;">3 / 8</div>
+    </div>
+    <div class="step-body">
+      <div class="deploy-timeline">
+
+        <div class="dt-item">
+          <div class="dt-dot sn-o" style="background:rgba(240,192,96,0.2);color:var(--gold);border-color:var(--gold);">①</div>
+          <div class="dt-content">
+            <div class="dt-step">
+              <div class="dt-step-head">
+                <div class="dt-title">배포 버튼 클릭 → <strong style="color:var(--gold);">새 배포</strong> 선택</div>
+              </div>
+              <img src="images/9.PNG" class="screen-img" style="border-radius:0 0 8px 8px;" alt="배포 메뉴">
+            </div>
+          </div>
+        </div>
+
+        <div class="dt-item">
+          <div class="dt-dot sn-o" style="background:rgba(240,192,96,0.2);color:var(--gold);border-color:var(--gold);">②</div>
+          <div class="dt-content">
+            <div class="dt-step">
+              <div class="dt-step-head">
+                <div class="dt-title">유형 선택 → <strong style="color:var(--gold);">웹 앱</strong> 클릭</div>
+              </div>
+              <img src="images/1.PNG" class="screen-img" style="border-radius:0 0 8px 8px;" alt="웹앱 선택">
+            </div>
+          </div>
+        </div>
+
+        <div class="dt-item">
+          <div class="dt-dot sn-o" style="background:rgba(240,192,96,0.2);color:var(--gold);border-color:var(--gold);">③</div>
+          <div class="dt-content">
+            <div class="dt-step">
+              <div class="dt-step-head">
+                <div class="dt-title">설명 입력 → 액세스 권한 <strong style="color:var(--gold);">모든 사용자</strong> → 배포</div>
+              </div>
+              <img src="images/2.PNG" class="screen-img" style="border-radius:0 0 8px 8px;" alt="배포 설정">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 4 -->
+<div class="sec anim d3" id="step4">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-t">4</div>
+      <div>
+        <div class="step-head-title">URL 복사</div>
+        <div class="step-head-sub">배포 완료 화면의 웹앱 URL을 복사하세요</div>
+      </div>
+      <div class="success-badge" style="margin-left:auto;">4 / 8</div>
+    </div>
+    <div class="step-body">
+      <div class="screen-wrap" style="margin-bottom:16px;">
+        <div class="screen-bar">
+          <div class="screen-dot" style="background:#ff5f57;"></div>
+          <div class="screen-dot" style="background:#febc2e;margin:0 3px;"></div>
+          <div class="screen-dot" style="background:#28c840;"></div>
+          <div class="screen-url">script.google.com/...</div>
+        </div>
+        <img src="images/3.PNG" class="screen-img" alt="배포 완료 URL">
+        <div class="screen-caption">
+          <span>🔗 <strong style="color:var(--cyan);">웹앱 URL</strong> 옆 복사 버튼을 클릭하세요</span>
+        </div>
+      </div>
+      <div class="url-box">
+        <div class="url-label">웹앱 URL 예시</div>
+        <div class="url-text">https://script.google.com/macros/s/AKfycbwEwEWzKw6aX-M75pmJl0O95pzHj4JJCHEduxT7thZj2Msx.../exec</div>
+        <div class="url-emphasis">⚠ 이 URL이 HTML과 GAS를 연결하는 주소입니다</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 5 -->
+<div class="sec anim d4" id="step5">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-b">5</div>
+      <div>
+        <div class="step-head-title">AI에게 URL 보내기</div>
+        <div class="step-head-sub">복사한 URL을 AI 대화창에 붙여넣으세요</div>
+      </div>
+      <div class="success-badge" style="margin-left:auto;">5 / 8</div>
+    </div>
+    <div class="step-body">
+      <div class="chat-wrap">
+        <div class="chat-row user">
+          <div class="chat-avatar av-user">👤</div>
+          <div>
+            <div class="chat-name cn-user">나</div>
+            <div class="chat-bubble-user">"배포 완료했습니다!"</div>
+          </div>
+        </div>
+        <div class="chat-row user">
+          <div class="chat-avatar av-user">👤</div>
+          <div>
+            <div class="chat-name cn-user">나</div>
+            <div class="chat-bubble-user" style="font-family:monospace;font-size:11px;color:var(--cyan);">https://script.google.com/macros/s/AKfycb.../exec</div>
+          </div>
+        </div>
+        <div class="chat-row">
+          <div class="chat-avatar av-ai">🤖</div>
+          <div>
+            <div class="chat-name cn-ai">AI</div>
+            <div class="chat-bubble-ai">"받았습니다. HTML에 연결해드리겠습니다. 아래 코드를 붙여넣으세요 ✅"</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding:14px 18px;background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.2);border-radius:10px;text-align:center;font-size:15px;font-weight:800;color:var(--text);">
+        🔗 배포 URL은 AI도 알아야 합니다
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 6 -->
+<div class="sec anim d4" id="step6">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-g">6</div>
+      <div>
+        <div class="step-head-title">수정해도 URL은 그대로입니다</div>
+        <div class="step-head-sub">많은 분들이 걱정하는 부분 — 미리 알아두세요</div>
+      </div>
+      <div class="success-badge" style="margin-left:auto;">6 / 8</div>
+    </div>
+    <div class="step-body">
+      <div style="margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="screen-wrap">
+          <div class="screen-bar">
+            <div class="screen-dot" style="background:#ff5f57;"></div>
+            <div class="screen-dot" style="background:#febc2e;margin:0 3px;"></div>
+            <div class="screen-dot" style="background:#28c840;"></div>
+          </div>
+          <img src="images/4.PNG" class="screen-img" alt="배포 관리">
+          <div class="screen-caption" style="font-size:11px;">배포 관리 → 수정 아이콘 클릭</div>
+        </div>
+        <div class="screen-wrap">
+          <div class="screen-bar">
+            <div class="screen-dot" style="background:#ff5f57;"></div>
+            <div class="screen-dot" style="background:#febc2e;margin:0 3px;"></div>
+            <div class="screen-dot" style="background:#28c840;"></div>
+          </div>
+          <img src="images/5.PNG" class="screen-img" alt="새 버전 선택">
+          <div class="screen-caption" style="font-size:11px;">버전 → 새 버전 → 배포</div>
+        </div>
+      </div>
+
+      <div class="url-same-wrap">
+        <div class="url-same-card">
+          <div class="usc-head" style="color:var(--text3);">😟 코드 수정 전</div>
+          <div class="usc-body">
+            <div class="usc-url">https://script.google.com/macros/s/AKfycb<strong style="color:var(--cyan);">XXXXXX</strong>.../exec</div>
+            <div class="usc-badge" style="background:rgba(74,143,255,0.1);color:var(--blue);border:1px solid rgba(74,143,255,0.2);">배포 URL</div>
+          </div>
+        </div>
+        <div class="same-arrow">✓</div>
+        <div class="url-same-card">
+          <div class="usc-head" style="color:var(--green);">✅ 코드 수정 후</div>
+          <div class="usc-body">
+            <div class="usc-url">https://script.google.com/macros/s/AKfycb<strong style="color:var(--cyan);">XXXXXX</strong>.../exec</div>
+            <div class="usc-badge" style="background:rgba(0,229,160,0.1);color:var(--green);border:1px solid rgba(0,229,160,0.2);">동일한 URL ✅</div>
+          </div>
+        </div>
+        <div class="url-same-msg">
+          ✅ 같은 URL을 계속 사용합니다 — HTML 수정 불필요
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 7 -->
+<div class="sec anim d5" id="step7">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-p">7</div>
+      <div>
+        <div class="step-head-title">실무에서 가장 많이 하는 순서</div>
+        <div class="step-head-sub">이 흐름이 반복됩니다</div>
+      </div>
+      <div class="success-badge" style="margin-left:auto;">7 / 8</div>
+    </div>
+    <div class="step-body">
+      <div class="workflow">
+        <div class="wf-item wf-highlight">
+          <div class="wf-icon">🤖</div>
+          <div class="wf-label">GPT에게<br>요청</div>
+        </div>
+        <div class="wf-arr">→</div>
+        <div class="wf-item">
+          <div class="wf-icon">📋</div>
+          <div class="wf-label">GS 코드<br>받기</div>
+        </div>
+        <div class="wf-arr">→</div>
+        <div class="wf-item">
+          <div class="wf-icon">📄</div>
+          <div class="wf-label">Apps Script<br>붙여넣기</div>
+        </div>
+        <div class="wf-arr">→</div>
+        <div class="wf-item wf-highlight">
+          <div class="wf-icon">🚀</div>
+          <div class="wf-label">배포</div>
+        </div>
+        <div class="wf-arr">→</div>
+        <div class="wf-item">
+          <div class="wf-icon">🔗</div>
+          <div class="wf-label">URL<br>복사</div>
+        </div>
+        <div class="wf-arr">→</div>
+        <div class="wf-item">
+          <div class="wf-icon">🤖</div>
+          <div class="wf-label">URL<br>전달</div>
+        </div>
+        <div class="wf-arr">→</div>
+        <div class="wf-item">
+          <div class="wf-icon">✏</div>
+          <div class="wf-label">HTML<br>수정</div>
+        </div>
+        <div class="wf-arr">→</div>
+        <div class="wf-item">
+          <div class="wf-icon">☁</div>
+          <div class="wf-label">GitHub<br>업로드</div>
+        </div>
+        <div class="wf-arr">→</div>
+        <div class="wf-item wf-highlight">
+          <div class="wf-icon">🎉</div>
+          <div class="wf-label">완성!</div>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding:10px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;font-size:11.5px;color:var(--text2);text-align:center;">
+        이 흐름이 실제 업무에서 <strong style="color:var(--text);">가장 많이 반복되는 패턴</strong>입니다
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 8 -->
+<div class="sec anim d5" id="step8">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-r">8</div>
+      <div>
+        <div class="step-head-title">막히면?</div>
+        <div class="step-head-sub">혼자 고민하지 마세요</div>
+      </div>
+      <div class="success-badge" style="margin-left:auto;">8 / 8</div>
+    </div>
+    <div class="step-body">
+      <div class="help-grid">
+        <div class="help-card">
+          <div class="hc-num">STEP 01</div>
+          <div class="hc-icon">📸</div>
+          <div class="hc-title">막힌 화면 캡처</div>
+          <div class="hc-desc">빨간 글씨나 오류 화면이 보이면 캡처</div>
+        </div>
+        <div class="help-card">
+          <div class="hc-num">STEP 02</div>
+          <div class="hc-icon">📤</div>
+          <div class="hc-title">GPT에게 보내기</div>
+          <div class="hc-desc">캡처 이미지를 GPT 대화창에 첨부</div>
+        </div>
+        <div class="help-card">
+          <div class="hc-num">STEP 03</div>
+          <div class="hc-icon">💬</div>
+          <div class="hc-title">"여기서 막혔어요"</div>
+          <div class="hc-desc">설명 없어도 됩니다. 한 마디면 충분</div>
+        </div>
+        <div class="help-card">
+          <div class="hc-num">STEP 04</div>
+          <div class="hc-icon">✅</div>
+          <div class="hc-title">다음 단계 안내</div>
+          <div class="hc-desc">AI가 보고 해결 방법을 알려줍니다</div>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding:14px;background:rgba(255,90,90,0.07);border:1px solid rgba(255,90,90,0.2);border-radius:10px;text-align:center;font-size:14px;font-weight:800;color:var(--text);">
+        📸 AI는 캡처를 정말 잘 이해합니다
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 마지막 요약 -->
+<div id="summary" class="anim" style="animation-delay:0.3s;">
+  <div class="summary-inner">
+    <div style="font-size:28px;margin-bottom:14px;">🎉</div>
+    <div class="learn-list">
+      <div class="learn-item li-bad"><div class="li-icon">❌</div>GAS는 어렵다</div>
+      <div class="li-arr">↓</div>
+      <div class="learn-item li-good"><div class="li-icon">✅</div>AI가 코드 만들어준다</div>
+      <div class="learn-item li-good"><div class="li-icon">📋</div>복사 → 붙여넣기 → 배포 → URL 전달</div>
+      <div class="learn-item li-good"><div class="li-icon">🎉</div>끝!</div>
+    </div>
+    <div class="summary-quote">
+      "잘하는 사람은 코드를 많이 아는 사람이 아니라,<br>
+      <strong>막히면 AI에게 바로 물어보는 사람입니다.</strong>"
+    </div>
+    <div class="summary-author">AI 교육 11회차 · 엄마감동팀</div>
+  </div>
+</div>
+
+<div class="sec-bottom"></div>
+</div>
+
+<div id="navToast" style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(12px);background:#172240;border:1px solid rgba(80,140,255,0.35);color:#8aaad0;font-size:12px;font-weight:600;padding:10px 20px;border-radius:30px;z-index:9999;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;">
+  📋 다음 회차는 준비 중입니다
+</div>
+
+<script>
+// ── 진행률 바 ──
+(function() {
+  const steps = document.querySelectorAll('[id^="step"]');
+  const items = document.querySelectorAll('.ps-item');
+  const label = document.getElementById('progressLabel');
+  const total = steps.length;
+
+  function update() {
+    let current = 1;
+    steps.forEach((el, i) => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight * 0.6) current = i + 1;
+    });
+    items.forEach((item, i) => {
+      item.classList.remove('done','active');
+      if (i < current - 1) item.classList.add('done');
+      else if (i === current - 1) item.classList.add('active');
+    });
+    label.textContent = current + ' / ' + total;
+  }
+  window.addEventListener('scroll', update, {passive:true});
+  update();
+})();
+
+// ── 네비게이션 ──
+const NAV_CONFIG = {
+  prev: 'training/ai교육/ai교육_10회차.html',
+  next: 'training/ai교육/ai교육_12회차.html'
+};
+let _nextExists = false;
+function navGo(dir) {
+  const path = NAV_CONFIG[dir];
+  if (!path) return;
+  const isInIframe = (function(){ try { return window.parent && window.parent !== window; } catch(e){ return false; } })();
+  if (isInIframe) {
+    if (dir === 'next') {
+      if (_nextExists) { window.parent.postMessage({ type:'TRAINING_NAV', path }, '*'); }
+      else { showNavToast(); }
+    } else {
+      window.parent.postMessage({ type:'TRAINING_NAV', path }, '*');
+    }
+  } else {
+    if (dir === 'next') { showNavToast(); return; }
+    window.location.href = path;
+  }
+}
+function showNavToast() {
+  const t = document.getElementById('navToast');
+  t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(12px)'; }, 2200);
+}
+window.addEventListener('message', e => {
+  if (!e.data) return;
+  if (e.data.type === 'NAV_INFO') { _nextExists = !!e.data.nextExists; }
+  if (e.data.type === 'THEME') {
+    document.body.classList.toggle('light-mode', e.data.mode === 'light');
+  }
+});
+</script>
+</body>
+</html>

@@ -1012,6 +1012,22 @@ function loadHome() {
 // ── 팀원교육 허용 경로 (training_main TRAINING_DATA의 status:'done' 경로와 동기화)
 window.addEventListener('message', e => {
   if (!e.data) return;
+  // main.html(홈 화면)이 떴다고 알려오면, 어떤 경로로 그렇게 됐든(뒤로가기/bfcache 복원 등)
+  // 상단 사이드바·네비 하이라이트도 강제로 Home 상태로 동기화 (콘텐츠는 이미 Home인데
+  // 사이드바만 이전 탭 상태로 남는 불일치 방지). iframe은 이미 로드된 상태라 재로드는 하지 않음.
+  if (e.data.type === 'HOME_LOADED') {
+    state.tab = '';
+    hideNoPermission();
+    ['dashSidebar','statusSidebar','newStatusSidebar','qcSidebar','toolSidebar','onceSidebar','smtSidebar','issueSidebar','devSidebar'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    const sb = document.getElementById('sidebar');
+    if (sb) sb.style.display = 'none';
+    document.querySelectorAll('.nav-item.active').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-parent.has-active').forEach(el => el.classList.remove('has-active'));
+    return;
+  }
   if (e.data.type === 'GO_TAB') {
     const tabName = e.data.tab;
     // 파일 경로(.html) 또는 외부링크(http)면 탭 매칭 없이 바로 iframe 로드 (main.html 퀵액세스/카드용)

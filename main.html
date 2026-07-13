@@ -1094,6 +1094,17 @@ function showToast(msg) {
   _toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
 }
 
+// ─────────────────────────────────────────────
+// 부모창(index.html)에 "홈 화면 로드됨" 알림
+// 브라우저 뒤로가기 등으로 이 iframe만 다시 떠도(bfcache 복원 포함),
+// 부모의 사이드바/네비 상태가 stale하게 남는 문제를 막기 위한 안전장치.
+// ─────────────────────────────────────────────
+function notifyParentHomeLoaded() {
+  try { window.parent.postMessage({ type:'HOME_LOADED' }, '*'); } catch(e) {}
+}
+notifyParentHomeLoaded();
+window.addEventListener('pageshow', notifyParentHomeLoaded);
+
 // fallback — sessionStorage 캐시 우선 사용
 setTimeout(() => {
   if (!_scriptUrl) {

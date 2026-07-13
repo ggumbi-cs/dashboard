@@ -319,13 +319,6 @@ body.is-admin .notice-admin-gear { display:flex; }
 .modal-section-title { font-size:11px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:12px; }
 .modal-input { width:100%; padding:8px 10px; background:var(--bg3); border:1px solid var(--border); border-radius:7px; color:var(--text); font-size:12px; font-family:var(--font-kr); outline:none; }
 .modal-input:focus { border-color:var(--border2); }
-.modal-path-hint { font-size:10.5px; color:var(--text3); line-height:1.6; margin:-4px 0 14px; padding:8px 10px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; }
-.modal-path-hint code { color:var(--cyan); background:var(--cyan-dim); padding:1px 5px; border-radius:4px; font-family:var(--font-en); font-size:10px; }
-.cfg-tab-row { display:flex; align-items:center; gap:6px; }
-.cfg-tab-type { flex-shrink:0; font-size:9.5px; padding:2px 6px; border-radius:5px; font-family:var(--font-en); white-space:nowrap; }
-.cfg-tab-type.t-internal { background:var(--cyan-dim); color:var(--cyan); }
-.cfg-tab-type.t-external { background:var(--gold-dim); color:var(--gold); }
-.cfg-tab-type.t-empty { background:var(--bg4); color:var(--text3); }
 .modal-btn { width:100%; padding:11px; background:var(--cyan); color:#000; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; font-family:var(--font-kr); }
 .modal-btn:hover { opacity:0.85; }
 
@@ -495,13 +488,13 @@ body.is-admin .notice-admin-gear { display:flex; }
         <span style="font-size:15px;">🚚</span>
         <span class="nav-item-label">택배출고</span>
       </div>
-      <div class="nav-item" data-tab="" onclick="goTab('')">
-        <span style="font-size:15px;">📝</span>
-        <span class="nav-item-label">제품스크립트</span>
-      </div>
       <div class="nav-item" data-tab="기타/유상처리단가.html" onclick="goTab('기타/유상처리단가.html')">
         <span style="font-size:15px;">💰</span>
         <span class="nav-item-label">유상처리단가</span>
+      </div>
+      <div class="nav-item" data-tab="" onclick="goTab('')">
+        <span style="font-size:15px;">📝</span>
+        <span class="nav-item-label">제품스크립트(API X)</span>
       </div>
 
     </nav>
@@ -723,17 +716,6 @@ body.is-admin .notice-admin-gear { display:flex; }
     <button class="modal-close" onclick="closeModal()">✕</button>
     <div class="modal-title">⚙ 홈 화면 설정</div>
     <div class="modal-sub">아이콘 · 카드 구성 · 클릭 권한을 설정합니다.</div>
-    <div class="modal-path-hint">🔗 경로 입력 예시 — 내부 페이지: <code>기타/택배출고.html</code> (qc_main.html 기준 상대경로, 앞에 <code>qc/</code> 붙이지 않음) · 외부 링크: <code>https://example.com</code></div>
-    <datalist id="qcPagePaths">
-      <option value="home">대시보드 홈</option>
-      <option value="모니터링/불량현황.html">불량현황</option>
-      <option value="액션현황/액션현황.html">액션현황 (S1~S5)</option>
-      <option value="액션현황/액션현황판.html">액션현황판 (준비중)</option>
-      <option value="반품입고/반품처리금액.html">반품처리금액</option>
-      <option value="기타/자재발주.html">자재발주</option>
-      <option value="기타/택배출고.html">택배출고</option>
-      <option value="기타/유상처리단가.html">유상처리단가</option>
-    </datalist>
     <div class="modal-section">
       <div class="modal-section-title">빠른 바로가기</div>
       <div id="cfgQuickList"></div>
@@ -1246,10 +1228,7 @@ function renderCfgList(type,container,items) {
         <div class="cfg-icon-preview ${it.color||it.iconCls||'qi-cyan'}" style="background:${colorBg}" onclick="openIconPicker('${type}',${i},this)">${it.icon}</div>
         <div class="cfg-fields">
           <input class="modal-input" value="${it.label||it.title||''}" placeholder="라벨" oninput="updateItem('${type}',${i},'label',this.value);updateItem('${type}',${i},'title',this.value)">
-          <div class="cfg-tab-row">
-            <input class="modal-input" list="qcPagePaths" value="${it.tab||''}" placeholder="예: 기타/택배출고.html 또는 https://..." oninput="updateItem('${type}',${i},'tab',this.value);updateTabBadge('${type}',${i})" onblur="normalizeTabField(this,'${type}',${i})">
-            <span class="cfg-tab-type ${tabTypeClass(it.tab)}" id="tabType-${type}-${i}">${tabTypeLabel(it.tab)}</span>
-          </div>
+          <input class="modal-input" value="${it.tab||''}" placeholder="탭명/경로" oninput="updateItem('${type}',${i},'tab',this.value)">
         </div>
         ${type==='quick'?`<button class="cfg-del" onclick="removeItem('quick',${i})">✕</button>`:''}
       </div>
@@ -1263,38 +1242,6 @@ function renderCfgList(type,container,items) {
 }
 
 function updateItem(type,i,key,val) { (type==='quick'?_quickItems:_cardItems)[i][key]=val; }
-
-// ── 경로 판별 · 정규화 (내부 페이지 상대경로 / 외부 링크 지원) ──
-function tabTypeClass(tab) {
-  if (!tab) return 't-empty';
-  if (/^https?:\/\//i.test(tab)) return 't-external';
-  if (tab === 'home' || tab.endsWith('.html')) return 't-internal';
-  return 't-empty';
-}
-function tabTypeLabel(tab) {
-  if (!tab) return '미지정';
-  if (/^https?:\/\//i.test(tab)) return '🔗 외부링크';
-  if (tab === 'home' || tab.endsWith('.html')) return '📄 내부페이지';
-  return '⚠ 레거시탭';
-}
-function updateTabBadge(type,i) {
-  const el = document.getElementById(`tabType-${type}-${i}`);
-  if (!el) return;
-  const tab = (type==='quick'?_quickItems:_cardItems)[i].tab || '';
-  el.className = 'cfg-tab-type ' + tabTypeClass(tab);
-  el.textContent = tabTypeLabel(tab);
-}
-function normalizeTabField(inputEl,type,i) {
-  let v = (inputEl.value || '').trim();
-  if (v && !/^https?:\/\//i.test(v)) {
-    v = v.replace(/\\/g, '/');           // 역슬래시 → 슬래시
-    v = v.replace(/^\/+/, '');           // 맨 앞 슬래시 제거
-    v = v.replace(/^(dashboard\/)?qc\//i, ''); // qc_main.html이 이미 qc/ 안에 있으므로 중복 접두어 제거
-  }
-  inputEl.value = v;
-  updateItem(type, i, 'tab', v);
-  updateTabBadge(type, i);
-}
 function setMinRole(type,i,role,btn) {
   (type==='quick'?_quickItems:_cardItems)[i].minRole=role;
   btn.closest('.cfg-perm-btns').querySelectorAll('.perm-btn').forEach(b=>b.classList.remove('active-perm'));
@@ -1407,11 +1354,27 @@ async function saveSettings() {
 const SYNC_STORAGE_KEY = 'qc_last_sync';
 
 function loadSyncStatus() {
+  // localStorage 먼저 (수동 동기화 기록)
   try {
     const saved = localStorage.getItem(SYNC_STORAGE_KEY);
-    if (!saved) return;
-    updateSyncUI(JSON.parse(saved));
+    if (saved) updateSyncUI(JSON.parse(saved));
   } catch(e) {}
+
+  // GAS Script Properties에서 자동 동기화 시간 읽기 (더 최신이면 덮어씀)
+  if (_scriptUrl) {
+    fetch(`${_scriptUrl}?action=getLastSyncTime`, {redirect:'follow'})
+      .then(r=>r.json())
+      .then(d=>{
+        if (!d.ok || !d.time) return;
+        const gasTime   = new Date(d.time).getTime();
+        const savedRaw  = localStorage.getItem(SYNC_STORAGE_KEY);
+        const localTime = savedRaw ? new Date(JSON.parse(savedRaw).time||0).getTime() : 0;
+        if (gasTime > localTime) {
+          const info = { ok:true, time:d.time, result:'성공', detail:`✅ 자동 동기화 완료 · ${new Date(d.time).toLocaleString('ko-KR')}<br>${d.summary||''}` };
+          updateSyncUI(info);
+        }
+      }).catch(()=>{});
+  }
 }
 
 function updateSyncUI(info) {

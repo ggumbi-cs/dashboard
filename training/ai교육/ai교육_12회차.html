@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI 교육 12회차 · CSV 집계 페이지 만들기</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#070d1a;--bg2:#0c1628;--bg3:#111e35;--bg4:#172240;
+  --border:rgba(80,140,255,0.12);--border2:rgba(80,140,255,0.25);
+  --blue:#4a8fff;--blue-dim:rgba(74,143,255,0.10);
+  --cyan:#00d4ff;--green:#00e5a0;--red:#ff5a5a;
+  --orange:#ffaa40;--gold:#f0c060;--purple:#a07aff;--teal:#00c8a0;
+  --text:#e4eeff;--text2:#8aaad0;--text3:#4a6a90;
+  --radius:14px;
+}
+body.light-mode{
+  --bg:#f0f4fa;--bg2:#ffffff;--bg3:#e8f0fb;--bg4:#dce8f7;
+  --border:rgba(26,78,180,0.12);--border2:rgba(26,78,180,0.28);
+  --blue:#1a5fd4;--blue-dim:rgba(26,95,212,0.08);
+  --cyan:#0090b8;--green:#007a50;--red:#c02020;--orange:#b06010;
+  --gold:#8a6000;--purple:#5030b0;--teal:#007a62;
+  --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6090;
+}
+body.light-mode .hero-glow{background:radial-gradient(ellipse,rgba(26,95,212,0.07) 0%,transparent 65%);}
+body.light-mode .week-block{background:var(--bg3);}
+body.light-mode .mock-screen{background:var(--bg4);border-color:var(--border2);}
+
+html,body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo',sans-serif;font-size:14px;line-height:1.6;overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+.wrap{max-width:920px;margin:0 auto;padding:0 24px;}
+
+/* ══ 네비게이션 ══ */
+.nav-prev,.nav-next{
+  position:fixed;top:50%;transform:translateY(-50%);
+  width:44px;height:80px;display:flex;align-items:center;justify-content:center;
+  background:var(--bg2);border:1px solid var(--border2);cursor:pointer;z-index:999;
+  transition:background 0.15s,border-color 0.2s;font-size:18px;color:var(--text2);user-select:none;
+}
+.nav-prev{left:0;border-radius:0 10px 10px 0;border-left:none;}
+.nav-next{right:0;border-radius:10px 0 0 10px;border-right:none;}
+.nav-prev:hover,.nav-next:hover{background:var(--bg3);border-color:var(--blue);color:var(--blue);}
+.nav-prev.disabled{opacity:0.2;cursor:default;pointer-events:none;}
+.nav-tooltip{position:absolute;background:var(--bg4);border:1px solid var(--border2);border-radius:8px;padding:6px 10px;font-size:10px;color:var(--text2);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.15s;line-height:1.5;}
+.nav-prev .nav-tooltip{left:52px;top:50%;transform:translateY(-50%);}
+.nav-next .nav-tooltip{right:52px;top:50%;transform:translateY(-50%);}
+.nav-prev:hover .nav-tooltip,.nav-next:hover .nav-tooltip{opacity:1;}
+.nav-tooltip-round{display:block;font-weight:700;color:var(--text);}
+
+/* ══ 진행률 ══ */
+#progressBar{position:sticky;top:0;z-index:990;background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:12px;}
+.progress-steps{display:flex;gap:6px;flex:1;}
+.ps-item{flex:1;height:4px;border-radius:2px;background:var(--border);transition:background 0.3s;}
+.ps-item.done{background:var(--green);}
+.ps-item.active{background:var(--blue);}
+.progress-label{font-size:11px;font-weight:700;color:var(--text2);white-space:nowrap;}
+
+/* ══ 히어로 ══ */
+#hero{position:relative;background:linear-gradient(160deg,var(--bg) 0%,var(--bg2) 55%,var(--bg) 100%);border-bottom:1px solid var(--border);padding:44px 0 38px;overflow:hidden;}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:44px 44px;}
+.hero-glow{position:absolute;top:-80px;right:-40px;width:440px;height:320px;background:radial-gradient(ellipse,rgba(0,229,160,0.08) 0%,transparent 65%);pointer-events:none;}
+.hero-inner{position:relative;z-index:1;}
+.hero-eyebrow{font-size:11px;font-weight:700;color:var(--green);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.hero-title{font-size:clamp(22px,4vw,34px);font-weight:800;line-height:1.2;margin-bottom:8px;color:var(--text);}
+.hero-sub{font-size:14px;color:var(--text2);margin-bottom:18px;}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-green{background:rgba(0,229,160,0.10);color:var(--green);border:1px solid rgba(0,229,160,0.25);}
+.badge-gold{background:rgba(240,192,96,0.10);color:var(--gold);border:1px solid rgba(240,192,96,0.25);}
+.badge-blue{background:var(--blue-dim);color:var(--blue);border:1px solid var(--border2);}
+.badge-teal{background:rgba(0,200,160,0.10);color:var(--teal);border:1px solid rgba(0,200,160,0.25);}
+.hero-pills{display:flex;gap:10px;flex-wrap:wrap;}
+
+/* ══ 공통 ══ */
+.sec{padding:36px 0 0;}
+.step-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:0;}
+.step-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.step-num{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
+.sn-1{background:rgba(0,229,160,0.15);color:var(--green);border:1px solid rgba(0,229,160,0.3);}
+.sn-2{background:rgba(74,143,255,0.15);color:var(--blue);border:1px solid rgba(74,143,255,0.3);}
+.sn-3{background:rgba(240,192,96,0.15);color:var(--gold);border:1px solid rgba(240,192,96,0.3);}
+.sn-4{background:rgba(160,122,255,0.15);color:var(--purple);border:1px solid rgba(160,122,255,0.3);}
+.sn-5{background:rgba(0,200,160,0.15);color:var(--teal);border:1px solid rgba(0,200,160,0.3);}
+.sn-6{background:rgba(255,170,64,0.15);color:var(--orange);border:1px solid rgba(255,170,64,0.3);}
+.sn-7{background:rgba(255,90,90,0.15);color:var(--red);border:1px solid rgba(255,90,90,0.3);}
+.step-head-title{font-size:14px;font-weight:700;color:var(--text);}
+.step-head-sub{font-size:11px;color:var(--text3);}
+.step-body{padding:22px;}
+
+/* ══ STEP1 CSV 미리보기 ══ */
+.csv-info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.csv-info-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;}
+.cic-num{font-size:22px;font-weight:800;color:var(--blue);margin-bottom:3px;}
+.cic-label{font-size:10px;color:var(--text3);}
+.csv-col-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+.col-tag{padding:5px 12px;border-radius:8px;font-size:11.5px;font-weight:600;}
+.ct-date{background:rgba(0,212,255,0.10);color:var(--cyan);border:1px solid rgba(0,212,255,0.2);}
+.ct-num {background:rgba(0,229,160,0.10);color:var(--green);border:1px solid rgba(0,229,160,0.2);}
+.ct-cat {background:rgba(160,122,255,0.10);color:var(--purple);border:1px solid rgba(160,122,255,0.2);}
+.ct-etc {background:var(--bg4);color:var(--text3);border:1px solid var(--border);}
+.csv-table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:11.5px;}
+th{background:var(--bg4);color:var(--text2);font-weight:700;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:7px 12px;border-bottom:1px solid var(--border);color:var(--text2);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(74,143,255,0.04);}
+.th-cyan{color:var(--cyan);}
+.th-green{color:var(--green);}
+.th-purple{color:var(--purple);}
+.ai-tip{margin-top:12px;padding:12px 16px;background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.15);border-radius:9px;font-size:12px;color:var(--teal);}
+
+/* ══ STEP2 선택 ══ */
+.select-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.select-group{background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:16px;}
+.sg-title{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+.check-options{display:flex;flex-direction:column;gap:6px;}
+.check-opt{display:flex;align-items:center;gap:9px;cursor:pointer;padding:7px 10px;border-radius:7px;border:1px solid var(--border);transition:all 0.15s;font-size:12.5px;color:var(--text2);}
+.check-opt:hover{border-color:var(--border2);color:var(--text);}
+.check-opt.selected{background:var(--blue-dim);border-color:var(--border2);color:var(--blue);}
+.check-opt input{display:none;}
+.check-box-ui{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;transition:all 0.15s;}
+.check-opt.selected .check-box-ui{background:var(--blue);border-color:var(--blue);color:#fff;}
+.selection-summary{margin-top:14px;padding:12px 16px;background:var(--bg4);border:1px solid var(--border);border-radius:9px;font-size:11.5px;color:var(--text2);}
+.sel-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.sel-chip{padding:3px 10px;border-radius:20px;font-size:10.5px;font-weight:600;background:rgba(0,229,160,0.08);color:var(--green);border:1px solid rgba(0,229,160,0.2);}
+
+/* ══ STEP3 주간 기준 시각화 ══ */
+.week-strip{display:flex;align-items:center;gap:0;overflow-x:auto;padding-bottom:4px;}
+.week-block{
+  flex-shrink:0;min-width:68px;padding:10px 8px;text-align:center;
+  background:var(--bg3);border:1px solid var(--border);
+  font-size:11px;
+}
+.week-block:first-child{border-radius:8px 0 0 8px;}
+.week-block:last-child{border-radius:0 8px 8px 0;background:rgba(0,229,160,0.12);border-color:rgba(0,229,160,0.3);}
+.wb-day{font-size:10px;color:var(--text3);margin-bottom:3px;}
+.wb-date{font-size:12px;font-weight:700;color:var(--text);}
+.wb-deadline{margin-top:5px;font-size:9px;font-weight:700;color:var(--green);}
+.week-arr{flex-shrink:0;color:var(--border2);font-size:13px;padding:0 2px;}
+.question-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;}
+.q-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.q-num{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:1px;margin-bottom:5px;}
+.q-text{font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:5px;}
+.q-hint{font-size:11px;color:var(--text3);line-height:1.5;}
+
+/* ══ STEP4 프롬프트 ══ */
+.prompt-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.prompt-box{background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.prompt-head{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.prompt-label{font-size:11px;font-weight:700;}
+.prompt-body{padding:14px;font-size:11.5px;color:var(--text2);line-height:1.8;min-height:120px;white-space:pre-wrap;}
+.copy-btn{
+  width:100%;padding:10px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;
+  background:linear-gradient(135deg,var(--teal),rgba(0,200,160,0.7));color:#051a10;
+  border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;
+  transition:opacity 0.15s;
+}
+.copy-btn:hover{opacity:0.85;}
+.copy-btn.copied{background:linear-gradient(135deg,var(--green),var(--teal));}
+
+/* ══ STEP5 체크리스트 ══ */
+.checklist{display:flex;flex-direction:column;gap:8px;}
+.cl-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;cursor:pointer;transition:all 0.15s;}
+.cl-item:hover{border-color:var(--border2);}
+.cl-item.checked{background:rgba(0,229,160,0.07);border-color:rgba(0,229,160,0.2);}
+.cl-box{width:20px;height:20px;border-radius:5px;border:2px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;transition:all 0.15s;}
+.cl-item.checked .cl-box{background:var(--green);border-color:var(--green);color:#051a10;}
+.cl-text{font-size:12.5px;color:var(--text2);}
+.cl-item.checked .cl-text{color:var(--text3);text-decoration:line-through;}
+
+/* ══ STEP6 결과 확인 ══ */
+.check-items-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+
+/* ══ STEP7 오류 수정 ══ */
+.error-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.error-card{background:var(--bg3);border:1px solid var(--border);border-radius:11px;overflow:hidden;}
+.ec-head{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--orange);display:flex;align-items:center;gap:6px;}
+.ec-body{padding:12px 14px;font-size:11.5px;color:var(--text2);line-height:1.7;white-space:pre-wrap;}
+.ec-copy{display:block;width:100%;padding:8px;border:none;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;background:rgba(255,170,64,0.10);color:var(--orange);border-top:1px solid var(--border);transition:background 0.15s;}
+.ec-copy:hover{background:rgba(255,170,64,0.18);}
+.ec-copy.copied{background:rgba(0,229,160,0.12);color:var(--green);}
+.error-msg{margin-top:14px;padding:12px 16px;background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.15);border-radius:9px;font-size:12px;color:var(--teal);text-align:center;font-weight:700;}
+
+/* ══ 결과물 미리보기 목업 ══ */
+.mock-screen{
+  background:var(--bg3);border:1px solid var(--border2);border-radius:12px;overflow:hidden;
+}
+.mock-topbar{background:var(--bg4);padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;}
+.mock-dot{width:8px;height:8px;border-radius:50%;}
+.mock-title{flex:1;font-size:10px;color:var(--text3);text-align:center;}
+.mock-body{padding:16px;}
+.mock-upload{border:2px dashed var(--border2);border-radius:9px;padding:14px;text-align:center;margin-bottom:14px;font-size:11.5px;color:var(--text3);}
+.mock-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.mock-card{background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;}
+.mc-val{font-size:16px;font-weight:800;color:var(--blue);margin-bottom:2px;}
+.mc-label{font-size:9px;color:var(--text3);}
+.mock-table{border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:10.5px;margin-bottom:14px;}
+.mock-table table th{font-size:10px;padding:6px 10px;}
+.mock-table table td{padding:5px 10px;}
+.mock-bars{display:flex;flex-direction:column;gap:5px;}
+.mock-bar-row{display:flex;align-items:center;gap:8px;font-size:10px;}
+.mock-bar-label{width:60px;color:var(--text3);text-align:right;flex-shrink:0;}
+.mock-bar-track{flex:1;height:10px;background:var(--bg4);border-radius:5px;overflow:hidden;}
+.mock-bar-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--blue),var(--cyan));}
+
+/* ══ 최종 플로우 ══ */
+.final-flow{display:flex;flex-direction:column;align-items:center;gap:0;}
+.ff-item{
+  background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+  padding:12px 24px;text-align:center;font-size:13px;font-weight:700;color:var(--text);
+  min-width:220px;
+}
+.ff-arr{font-size:18px;color:var(--border2);padding:4px 0;}
+.ff-item.hl{background:rgba(0,229,160,0.08);border-color:rgba(0,229,160,0.25);color:var(--green);}
+
+/* ══ 마지막 ══ */
+#summary{
+  margin:36px 0 0;padding:28px;
+  background:linear-gradient(135deg,var(--bg2),var(--bg4));
+  border:1px solid var(--border2);border-radius:var(--radius);
+  position:relative;overflow:hidden;text-align:center;
+}
+#summary::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(0,229,160,0.07) 0%,transparent 60%);}
+.summary-inner{position:relative;z-index:1;}
+.summary-quote{font-size:clamp(13px,2vw,15px);font-weight:700;color:var(--text);line-height:1.7;margin-bottom:10px;}
+.summary-author{font-size:11px;color:var(--text3);}
+
+.sec-bottom{height:48px;}
+
+@media(max-width:640px){
+  .select-grid,.prompt-grid,.question-cards,.error-cards,.check-items-grid{grid-template-columns:1fr;}
+  .mock-cards{grid-template-columns:1fr 1fr;}
+  .csv-info-grid{grid-template-columns:1fr 1fr;}
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.anim{animation:fadeUp 0.4s ease both;}
+.d1{animation-delay:0.05s;}.d2{animation-delay:0.1s;}.d3{animation-delay:0.15s;}
+.d4{animation-delay:0.2s;}.d5{animation-delay:0.25s;}
+</style>
+</head>
+<body>
+
+<div class="nav-prev" id="navPrev" onclick="navGo('prev')">
+  ‹
+  <div class="nav-tooltip"><span class="nav-tooltip-round">11회차</span>GAS 배포 따라하기</div>
+</div>
+<div class="nav-next" id="navNext" onclick="navGo('next')">
+  ›
+  <div class="nav-tooltip"><span class="nav-tooltip-round">다음 회차</span>준비 중</div>
+</div>
+
+<!-- 진행률 -->
+<div id="progressBar">
+  <div class="progress-steps">
+    <div class="ps-item active" id="ps1"></div>
+    <div class="ps-item" id="ps2"></div>
+    <div class="ps-item" id="ps3"></div>
+    <div class="ps-item" id="ps4"></div>
+    <div class="ps-item" id="ps5"></div>
+    <div class="ps-item" id="ps6"></div>
+    <div class="ps-item" id="ps7"></div>
+  </div>
+  <div class="progress-label" id="progressLabel">STEP 1 / 7</div>
+</div>
+
+<!-- 히어로 -->
+<div id="hero">
+  <div class="hero-grid"></div><div class="hero-glow"></div>
+  <div class="wrap hero-inner anim d1">
+    <div class="hero-eyebrow">
+      AI 교육 12회차
+      <div class="badge badge-green">🛠 실습⑤</div>
+      <div class="badge badge-gold">⏱ 15분</div>
+    </div>
+    <div class="hero-title">CSV 집계 페이지 만들기</div>
+    <div class="hero-sub">내 데이터를 주간·월간 실적으로 바꿔보기 — 반품관리 CSV로 직접 실습해요</div>
+    <div class="hero-pills">
+      <span class="badge badge-teal">📋 CSV 확인 → 기준 선택 → GPT 요청</span>
+      <span class="badge badge-blue">📊 주간·월간 집계 자동화</span>
+      <span class="badge badge-green">✅ 코딩 지식 불필요</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- STEP 1 -->
+<div class="sec anim d2" id="step1">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-1">1</div>
+      <div>
+        <div class="step-head-title">CSV에는 무엇이 들어 있나요?</div>
+        <div class="step-head-sub">반품관리 데이터를 먼저 살펴봐요</div>
+      </div>
+      <div class="badge badge-teal" style="margin-left:auto;">클로드_반품관리.csv</div>
+    </div>
+    <div class="step-body">
+      <div class="csv-info-grid">
+        <div class="csv-info-card"><div class="cic-num">1,092</div><div class="cic-label">전체 데이터 행수</div></div>
+        <div class="csv-info-card"><div class="cic-num" style="color:var(--green);">18,298</div><div class="cic-label">건수 합계</div></div>
+        <div class="csv-info-card"><div class="cic-num" style="color:var(--gold);">30</div><div class="cic-label">마감회차 수</div></div>
+        <div class="csv-info-card"><div class="cic-num" style="color:var(--purple);">8</div><div class="cic-label">열(컬럼) 수</div></div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;margin-bottom:8px;">📌 열(컬럼) 구성</div>
+      <div class="csv-col-tags">
+        <span class="col-tag ct-date">📅 주/월 — 주간/월간 구분</span>
+        <span class="col-tag ct-date">📅 마감회차 — 날짜 기준</span>
+        <span class="col-tag ct-cat">🏷 구분 — 꿈비/소브</span>
+        <span class="col-tag ct-cat">🏷 사유 — 반품 사유</span>
+        <span class="col-tag ct-cat">🏷 품목 — 가전외/가전</span>
+        <span class="col-tag ct-cat">🏷 교환/반품</span>
+        <span class="col-tag ct-num">🔢 건수 — 집계 수치</span>
+        <span class="col-tag ct-etc">📝 비고</span>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;margin-bottom:8px;">🔍 데이터 예시 (5행)</div>
+      <div class="csv-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="th-cyan">주/월</th>
+              <th class="th-cyan">마감회차</th>
+              <th class="th-purple">구분</th>
+              <th class="th-purple">사유</th>
+              <th class="th-purple">품목</th>
+              <th class="th-purple">교환/반품</th>
+              <th class="th-green">건수</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>주간</td><td>260619</td><td>꿈비</td><td>오가닉불량(용기)</td><td>가전외</td><td>교환</td><td>2</td></tr>
+            <tr><td>주간</td><td>260619</td><td>꿈비</td><td>출고전취소</td><td>가전외</td><td>교환</td><td>1</td></tr>
+            <tr><td>주간</td><td>260619</td><td>소브</td><td>단순변심</td><td>가전외</td><td>반품</td><td>3</td></tr>
+            <tr><td>주간</td><td>260522</td><td>꿈비</td><td>기타(제품불량)</td><td>가전</td><td>반품</td><td>1</td></tr>
+            <tr><td>월간</td><td>26.05월</td><td>꿈비</td><td>작동불량</td><td>가전외</td><td>교환</td><td>4</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top:12px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:11.5px;color:var(--text2);">
+        💡 <strong style="color:var(--text);">마감회차 형식</strong> — 주간은 <span style="color:var(--cyan);">260619</span>(YYMMDD), 월간은 <span style="color:var(--gold);">26.05월</span> 형식이에요
+      </div>
+
+      <div class="ai-tip">
+        🤖 AI에게 CSV를 같이 주면, 열 이름을 내가 일일이 설명하지 않아도 파일을 보고 구조를 파악할 수 있습니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div class="sec anim d2" id="step2">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-2">2</div>
+      <div>
+        <div class="step-head-title">무엇을 보고 싶은지 선택하기</div>
+        <div class="step-head-sub">선택하면 아래에 자동으로 정리돼요</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="select-grid">
+        <div class="select-group">
+          <div class="sg-title">📅 집계 기간</div>
+          <div class="check-options" id="grp-period">
+            <label class="check-opt selected" onclick="toggleOpt(this,'period')">
+              <div class="check-box-ui">✓</div> 주간 + 월간 모두
+            </label>
+            <label class="check-opt" onclick="toggleOpt(this,'period')">
+              <div class="check-box-ui"></div> 주간만
+            </label>
+            <label class="check-opt" onclick="toggleOpt(this,'period')">
+              <div class="check-box-ui"></div> 월간만
+            </label>
+          </div>
+        </div>
+        <div class="select-group">
+          <div class="sg-title">🔢 집계할 값</div>
+          <div class="check-options" id="grp-value">
+            <label class="check-opt selected" onclick="toggleOpt(this,'value')">
+              <div class="check-box-ui">✓</div> 건수 합계
+            </label>
+            <label class="check-opt" onclick="toggleOpt(this,'value')">
+              <div class="check-box-ui"></div> 데이터 행 수
+            </label>
+          </div>
+        </div>
+        <div class="select-group">
+          <div class="sg-title">🏷 구분 기준</div>
+          <div class="check-options" id="grp-cat">
+            <label class="check-opt selected" onclick="toggleOpt(this,'cat')">
+              <div class="check-box-ui">✓</div> 구분별 (꿈비/소브)
+            </label>
+            <label class="check-opt" onclick="toggleOpt(this,'cat')">
+              <div class="check-box-ui"></div> 교환/반품별
+            </label>
+            <label class="check-opt" onclick="toggleOpt(this,'cat')">
+              <div class="check-box-ui"></div> 사유별
+            </label>
+            <label class="check-opt" onclick="toggleOpt(this,'cat')">
+              <div class="check-box-ui"></div> 전체 합계만
+            </label>
+          </div>
+        </div>
+        <div class="select-group">
+          <div class="sg-title">🎨 화면 형태</div>
+          <div class="check-options" id="grp-ui">
+            <label class="check-opt selected" onclick="toggleOpt(this,'ui')">
+              <div class="check-box-ui">✓</div> 카드 + 표 함께
+            </label>
+            <label class="check-opt" onclick="toggleOpt(this,'ui')">
+              <div class="check-box-ui"></div> 표 중심
+            </label>
+            <label class="check-opt" onclick="toggleOpt(this,'ui')">
+              <div class="check-box-ui"></div> 막대그래프 포함
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="selection-summary">
+        <div style="font-size:10.5px;font-weight:700;color:var(--text3);margin-bottom:6px;">✅ 선택 요약</div>
+        <div class="sel-chips" id="selChips">
+          <span class="sel-chip">주간 + 월간</span>
+          <span class="sel-chip">건수 합계</span>
+          <span class="sel-chip">구분별(꿈비/소브)</span>
+          <span class="sel-chip">카드 + 표</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div class="sec anim d3" id="step3">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-3">3</div>
+      <div>
+        <div class="step-head-title">방향을 먼저 정해보기</div>
+        <div class="step-head-sub">주간 기준이 특별해요 — 토요일~금요일</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div style="font-size:11.5px;font-weight:700;color:var(--text2);margin-bottom:10px;">📅 이번 데이터의 주간 마감 기준</div>
+      <div class="week-strip">
+        <div class="week-block">
+          <div class="wb-day">토</div>
+          <div class="wb-date">6/14</div>
+        </div>
+        <div class="week-arr">→</div>
+        <div class="week-block">
+          <div class="wb-day">일</div>
+          <div class="wb-date">6/15</div>
+        </div>
+        <div class="week-arr">→</div>
+        <div class="week-block">
+          <div class="wb-day">월</div>
+          <div class="wb-date">6/16</div>
+        </div>
+        <div class="week-arr">→</div>
+        <div class="week-block">
+          <div class="wb-day">화</div>
+          <div class="wb-date">6/17</div>
+        </div>
+        <div class="week-arr">→</div>
+        <div class="week-block">
+          <div class="wb-day">수</div>
+          <div class="wb-date">6/18</div>
+        </div>
+        <div class="week-arr">→</div>
+        <div class="week-block">
+          <div class="wb-day">목</div>
+          <div class="wb-date">6/19</div>
+        </div>
+        <div class="week-arr">→</div>
+        <div class="week-block" style="min-width:80px;">
+          <div class="wb-day">금</div>
+          <div class="wb-date">6/20</div>
+          <div class="wb-deadline">✅ 6/20 마감</div>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;padding:10px 14px;background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.15);border-radius:8px;font-size:11.5px;color:var(--teal);">
+        💡 이 데이터의 마감회차 <strong>260619</strong>는 26년 6월 19일 마감을 의미해요. 토요일(6/14)부터 해당 금요일(6/20)까지가 한 주예요.
+      </div>
+
+      <div class="question-cards" style="margin-top:16px;">
+        <div class="q-card">
+          <div class="q-num">Q1</div>
+          <div class="q-text">어떤 날짜 열을 기준으로 집계할까요?</div>
+          <div class="q-hint">→ <strong style="color:var(--cyan);">마감회차</strong> 열 (주간: 260619 / 월간: 26.05월)</div>
+        </div>
+        <div class="q-card">
+          <div class="q-num">Q2</div>
+          <div class="q-text">무엇을 합산할까요?</div>
+          <div class="q-hint">→ <strong style="color:var(--green);">건수</strong> 열 숫자 합산</div>
+        </div>
+        <div class="q-card">
+          <div class="q-num">Q3</div>
+          <div class="q-text">주간 마감 기준은?</div>
+          <div class="q-hint">→ 토요일~금요일, 마지막 <strong style="color:var(--gold);">금요일 날짜</strong>로 마감 표시</div>
+        </div>
+        <div class="q-card">
+          <div class="q-num">Q4</div>
+          <div class="q-text">어떤 기준으로 나눠 볼까요?</div>
+          <div class="q-hint">→ <strong style="color:var(--purple);">구분</strong>(꿈비/소브), 교환/반품 별로 구분</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 4 -->
+<div class="sec anim d3" id="step4">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-4">4</div>
+      <div>
+        <div class="step-head-title">GPT에게 보낼 프롬프트 만들기</div>
+        <div class="step-head-sub">복사해서 바로 붙여넣으세요</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="prompt-grid">
+        <div class="prompt-box">
+          <div class="prompt-head">
+            <span class="prompt-label" style="color:var(--teal);">💬 초보자용</span>
+            <span style="font-size:9.5px;color:var(--text3);">짧고 편하게</span>
+          </div>
+          <div class="prompt-body">첨부한 반품관리 CSV를 이용해서
+실적 집계 HTML 페이지를 만들어주세요.
+
+CSV를 드래그하면 바로 읽어주고,
+주간과 월간 반품·교환 건수를 볼 수 있으면 좋겠어요.
+
+주간은 토요일부터 금요일까지 묶고,
+마지막 금요일 날짜를 마감일로 표시해주세요.
+
+꿈비와 소브로 나눠서도 볼 수 있게 해주시고,
+초보자도 보기 쉽게 카드와 표로 만들어주세요.</div>
+          <button class="copy-btn" id="copyBtn1" onclick="copyPrompt(1)">📋 복사하기</button>
+        </div>
+        <div class="prompt-box">
+          <div class="prompt-head">
+            <span class="prompt-label" style="color:var(--purple);">⚡ 추천 버전</span>
+            <span style="font-size:9.5px;color:var(--text3);">더 구체적으로</span>
+          </div>
+          <div class="prompt-body">첨부한 CSV를 분석하여 주간·월간 반품 집계용 단일 HTML을 제작해주세요.
+CSV 드래그 또는 파일 선택으로 불러오고 브라우저에서 즉시 분석해주세요.
+날짜 기준은 [마감회차] 열 사용 (주간: YYMMDD, 월간: YY.MM월).
+주간은 토요일~금요일로 묶고 마지막 금요일을 마감일로 표시해주세요.
+월간은 연도와 월을 함께 구분하여 집계해주세요.
+[건수] 열을 합산하고 [구분](꿈비/소브), [교환/반품] 기준 결과도 제공해주세요.
+상단 요약카드, 기간별 표, 구분별 필터를 포함해주세요.
+CSV가 바뀌면 결과도 즉시 다시 계산되게 해주세요.
+모든 CSS와 JS는 HTML 내부에 포함해주세요.</div>
+          <button class="copy-btn" id="copyBtn2" onclick="copyPrompt(2)">📋 복사하기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 5 -->
+<div class="sec anim d4" id="step5">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-5">5</div>
+      <div>
+        <div class="step-head-title">GPT에 함께 전달할 것</div>
+        <div class="step-head-sub">이것들을 같이 보내야 해요</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="checklist" id="sendList">
+        <div class="cl-item" onclick="toggleCheck(this)">
+          <div class="cl-box"></div>
+          <div class="cl-text">📄 클로드_반품관리.csv 파일 첨부</div>
+        </div>
+        <div class="cl-item" onclick="toggleCheck(this)">
+          <div class="cl-box"></div>
+          <div class="cl-text">📋 방금 복사한 프롬프트 붙여넣기</div>
+        </div>
+        <div class="cl-item" onclick="toggleCheck(this)">
+          <div class="cl-box"></div>
+          <div class="cl-text">🎨 원하는 색상이나 분위기 (예: 다크모드, 블랙톤)</div>
+        </div>
+        <div class="cl-item" onclick="toggleCheck(this)">
+          <div class="cl-box"></div>
+          <div class="cl-text">📅 주간 기준: 토요일~금요일, 금요일 날짜를 마감일로</div>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding:14px 18px;background:rgba(255,90,90,0.07);border:1px solid rgba(255,90,90,0.15);border-radius:9px;font-size:12.5px;font-weight:700;color:var(--text);text-align:center;">
+        ⚠ CSV를 빼고 프롬프트만 보내면 AI가 실제 열 이름과 데이터 형식을 알 수 없습니다.<br>
+        <span style="color:var(--orange);">프롬프트와 CSV를 반드시 함께 보내주세요.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 6 결과 확인 -->
+<div class="sec anim d4" id="step6">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-6">6</div>
+      <div>
+        <div class="step-head-title">결과 확인하기</div>
+        <div class="step-head-sub">GPT가 만든 HTML에서 체크해보세요</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="check-items-grid">
+        <div class="checklist">
+          <div class="cl-item" onclick="toggleCheck(this)">
+            <div class="cl-box"></div>
+            <div class="cl-text">CSV가 정상적으로 올라가는가?</div>
+          </div>
+          <div class="cl-item" onclick="toggleCheck(this)">
+            <div class="cl-box"></div>
+            <div class="cl-text">전체 건수가 1,092건으로 맞는가?</div>
+          </div>
+          <div class="cl-item" onclick="toggleCheck(this)">
+            <div class="cl-box"></div>
+            <div class="cl-text">건수 합계가 18,298로 맞는가?</div>
+          </div>
+          <div class="cl-item" onclick="toggleCheck(this)">
+            <div class="cl-box"></div>
+            <div class="cl-text">토요일~금요일이 한 주로 묶였는가?</div>
+          </div>
+        </div>
+        <div class="checklist">
+          <div class="cl-item" onclick="toggleCheck(this)">
+            <div class="cl-box"></div>
+            <div class="cl-text">금요일 날짜가 마감일로 표시되는가?</div>
+          </div>
+          <div class="cl-item" onclick="toggleCheck(this)">
+            <div class="cl-box"></div>
+            <div class="cl-text">꿈비/소브 구분이 나눠서 보이는가?</div>
+          </div>
+          <div class="cl-item" onclick="toggleCheck(this)">
+            <div class="cl-box"></div>
+            <div class="cl-text">월간 합계가 원본 CSV와 맞는가?</div>
+          </div>
+          <div class="cl-item" onclick="toggleCheck(this)">
+            <div class="cl-box"></div>
+            <div class="cl-text">새 CSV를 넣었을 때 결과가 바뀌는가?</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 결과물 목업 미리보기 -->
+      <div style="margin-top:18px;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;margin-bottom:10px;">🖥 완성 예상 화면</div>
+      <div class="mock-screen">
+        <div class="mock-topbar">
+          <div class="mock-dot" style="background:#ff5f57;"></div>
+          <div class="mock-dot" style="background:#febc2e;margin:0 3px;"></div>
+          <div class="mock-dot" style="background:#28c840;"></div>
+          <div class="mock-title">반품관리 집계 대시보드</div>
+        </div>
+        <div class="mock-body">
+          <div class="mock-upload">📂 CSV 파일을 여기에 끌어다 놓거나 클릭해서 선택하세요</div>
+          <div class="mock-cards">
+            <div class="mock-card"><div class="mc-val">18,298</div><div class="mc-label">전체 건수</div></div>
+            <div class="mock-card"><div class="mc-val" style="color:var(--teal);">438</div><div class="mc-label">이번 주</div></div>
+            <div class="mock-card"><div class="mc-val" style="color:var(--gold);">2,841</div><div class="mc-label">이번 달</div></div>
+            <div class="mock-card"><div class="mc-val" style="color:var(--purple);">1,092</div><div class="mc-label">데이터 행수</div></div>
+          </div>
+          <div class="mock-table">
+            <table>
+              <thead><tr><th>마감일</th><th>꿈비</th><th>소브</th><th>합계</th></tr></thead>
+              <tbody>
+                <tr><td>26/06/20</td><td>312</td><td>48</td><td>360</td></tr>
+                <tr><td>26/06/13</td><td>298</td><td>52</td><td>350</td></tr>
+                <tr><td>26/06/06</td><td>276</td><td>44</td><td>320</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:7px;">구분별 비율</div>
+          <div class="mock-bars">
+            <div class="mock-bar-row">
+              <div class="mock-bar-label">꿈비</div>
+              <div class="mock-bar-track"><div class="mock-bar-fill" style="width:87%;background:linear-gradient(90deg,var(--blue),var(--cyan));"></div></div>
+              <div style="font-size:9px;color:var(--text3);margin-left:6px;">87%</div>
+            </div>
+            <div class="mock-bar-row">
+              <div class="mock-bar-label">소브</div>
+              <div class="mock-bar-track"><div class="mock-bar-fill" style="width:13%;background:linear-gradient(90deg,var(--purple),var(--teal));"></div></div>
+              <div style="font-size:9px;color:var(--text3);margin-left:6px;">13%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 7 오류 수정 -->
+<div class="sec anim d5" id="step7">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-7">7</div>
+      <div>
+        <div class="step-head-title">결과가 다르면 이렇게 말하기</div>
+        <div class="step-head-sub">복사해서 GPT에게 그대로 보내세요</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="error-cards">
+        <div class="error-card">
+          <div class="ec-head">⚠ 주간 기준이 틀렸을 때</div>
+          <div class="ec-body" id="err1">주간 집계 기준이 다릅니다.
+월요일~일요일이 아니라
+토요일부터 금요일까지 한 주로 묶고,
+마지막 금요일 날짜를 마감일로 표시해주세요.</div>
+          <button class="ec-copy" onclick="copyError(this,'err1')">📋 복사하기</button>
+        </div>
+        <div class="error-card">
+          <div class="ec-head">⚠ 합계가 맞지 않을 때</div>
+          <div class="ec-body" id="err2">CSV 원본과 화면의 합계가 맞지 않습니다.
+전체 건수는 1,092행, 건수 합계는 18,298이어야 합니다.
+[건수] 열을 숫자로 계산했는지 확인하고,
+빈칸이나 문자 형식의 숫자도 점검해주세요.</div>
+          <button class="ec-copy" onclick="copyError(this,'err2')">📋 복사하기</button>
+        </div>
+        <div class="error-card">
+          <div class="ec-head">⚠ 날짜 형식이 이상할 때</div>
+          <div class="ec-body" id="err3">마감회차 열의 형식을 다시 확인해주세요.
+주간은 YYMMDD(예: 260619),
+월간은 YY.MM월(예: 26.05월) 형식입니다.
+연도와 월이 바뀌는 구간에서도
+토요일~금요일 기준이 유지되게 수정해주세요.</div>
+          <button class="ec-copy" onclick="copyError(this,'err3')">📋 복사하기</button>
+        </div>
+        <div class="error-card">
+          <div class="ec-head">⚠ 구분이 안 나뉠 때</div>
+          <div class="ec-body" id="err4">전체 합계만 나오고 있습니다.
+CSV의 [구분] 열(꿈비/소브)을 기준으로
+항목별 실적도 나눠서 보여주세요.
+[교환/반품] 열로도 구분해주시면 좋겠어요.</div>
+          <button class="ec-copy" onclick="copyError(this,'err4')">📋 복사하기</button>
+        </div>
+      </div>
+      <div class="error-msg">
+        💡 틀린 결과가 나오면 실패한 것이 아니라,<br>AI에게 기준을 한 번 더 알려주는 과정입니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 최종 플로우 -->
+<div class="sec anim d5">
+  <div style="padding:28px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);">
+    <div style="font-size:13px;font-weight:700;color:var(--text3);text-align:center;margin-bottom:18px;">📋 전체 흐름 정리</div>
+    <div class="final-flow">
+      <div class="ff-item">📄 CSV 파일 준비</div>
+      <div class="ff-arr">↓</div>
+      <div class="ff-item">🎯 집계 기준 결정 (주간/월간/구분)</div>
+      <div class="ff-arr">↓</div>
+      <div class="ff-item">🤖 GPT에 CSV + 프롬프트 전달</div>
+      <div class="ff-arr">↓</div>
+      <div class="ff-item">📄 HTML 집계 페이지 생성</div>
+      <div class="ff-arr">↓</div>
+      <div class="ff-item">📂 CSV 업로드</div>
+      <div class="ff-arr">↓</div>
+      <div class="ff-item hl">✅ 주간·월간 실적 확인</div>
+    </div>
+  </div>
+</div>
+
+<!-- 마지막 -->
+<div id="summary" class="anim" style="animation-delay:0.3s;">
+  <div class="summary-inner">
+    <div style="font-size:28px;margin-bottom:14px;">📊</div>
+    <div class="summary-quote">
+      데이터를 직접 계산하는 것이 아니라,<br>
+      <strong>어떤 기준으로 보고 싶은지를 AI에게 알려주는 것이 시작입니다.</strong>
+    </div>
+    <div style="margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;">
+      <div class="badge badge-teal">📋 CSV 확인</div>
+      <span style="color:var(--text3);">→</span>
+      <div class="badge badge-blue">🎯 기준 결정</div>
+      <span style="color:var(--text3);">→</span>
+      <div class="badge badge-gold">🤖 GPT 요청</div>
+      <span style="color:var(--text3);">→</span>
+      <div class="badge badge-green">✅ 실적 확인</div>
+    </div>
+    <div class="summary-author" style="margin-top:16px;">AI 교육 12회차 · 엄마감동팀</div>
+  </div>
+</div>
+
+<div class="sec-bottom"></div>
+</div>
+
+<div id="navToast" style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(12px);background:#172240;border:1px solid rgba(80,140,255,0.35);color:#8aaad0;font-size:12px;font-weight:600;padding:10px 20px;border-radius:30px;z-index:9999;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;">
+  📋 다음 회차는 준비 중입니다
+</div>
+
+<script>
+// ── 진행률 ──
+(function(){
+  const steps = document.querySelectorAll('[id^="step"]');
+  const items = document.querySelectorAll('.ps-item');
+  const label = document.getElementById('progressLabel');
+  function update(){
+    let cur = 1;
+    steps.forEach((el,i)=>{ if(el.getBoundingClientRect().top < window.innerHeight*0.6) cur=i+1; });
+    items.forEach((item,i)=>{ item.classList.remove('done','active'); if(i<cur-1) item.classList.add('done'); else if(i===cur-1) item.classList.add('active'); });
+    label.textContent = 'STEP ' + cur + ' / ' + steps.length;
+  }
+  window.addEventListener('scroll',update,{passive:true}); update();
+})();
+
+// ── 선택 토글 ──
+function toggleOpt(el, grp) {
+  const siblings = el.closest('[id^="grp-"]').querySelectorAll('.check-opt');
+  const wasSelected = el.classList.contains('selected');
+  siblings.forEach(s=>{ s.classList.remove('selected'); s.querySelector('.check-box-ui').textContent=''; });
+  if(!wasSelected){ el.classList.add('selected'); el.querySelector('.check-box-ui').textContent='✓'; }
+  updateSummary();
+}
+function updateSummary(){
+  const chips = document.getElementById('selChips');
+  const vals = [];
+  document.querySelectorAll('.check-opt.selected').forEach(el=>{ vals.push(el.textContent.trim()); });
+  chips.innerHTML = vals.length ? vals.map(v=>`<span class="sel-chip">${v}</span>`).join('') : '<span style="color:var(--text3);font-size:11px;">선택해주세요</span>';
+}
+
+// ── 체크박스 ──
+function toggleCheck(el){
+  el.classList.toggle('checked');
+  const box = el.querySelector('.cl-box');
+  box.textContent = el.classList.contains('checked') ? '✓' : '';
+}
+
+// ── 프롬프트 복사 ──
+const PROMPTS = {
+  1: `첨부한 반품관리 CSV를 이용해서
+실적 집계 HTML 페이지를 만들어주세요.
+
+CSV를 드래그하면 바로 읽어주고,
+주간과 월간 반품·교환 건수를 볼 수 있으면 좋겠어요.
+
+주간은 토요일부터 금요일까지 묶고,
+마지막 금요일 날짜를 마감일로 표시해주세요.
+
+꿈비와 소브로 나눠서도 볼 수 있게 해주시고,
+초보자도 보기 쉽게 카드와 표로 만들어주세요.`,
+  2: `첨부한 CSV를 분석하여 주간·월간 반품 집계용 단일 HTML을 제작해주세요.
+CSV 드래그 또는 파일 선택으로 불러오고 브라우저에서 즉시 분석해주세요.
+날짜 기준은 [마감회차] 열 사용 (주간: YYMMDD, 월간: YY.MM월).
+주간은 토요일~금요일로 묶고 마지막 금요일을 마감일로 표시해주세요.
+월간은 연도와 월을 함께 구분하여 집계해주세요.
+[건수] 열을 합산하고 [구분](꿈비/소브), [교환/반품] 기준 결과도 제공해주세요.
+상단 요약카드, 기간별 표, 구분별 필터를 포함해주세요.
+CSV가 바뀌면 결과도 즉시 다시 계산되게 해주세요.
+모든 CSS와 JS는 HTML 내부에 포함해주세요.`
+};
+function copyPrompt(n){
+  const btn = document.getElementById('copyBtn'+n);
+  navigator.clipboard.writeText(PROMPTS[n]).then(()=>{
+    const orig = btn.innerHTML;
+    btn.innerHTML='✅ GPT에 붙여넣어 보세요!'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.innerHTML=orig; btn.classList.remove('copied'); },2500);
+  });
+}
+
+// ── 오류 문구 복사 ──
+function copyError(btn, id){
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const orig = btn.textContent;
+    btn.textContent='✅ 복사됐어요!'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent=orig; btn.classList.remove('copied'); },2000);
+  });
+}
+
+// ── 네비게이션 ──
+const NAV_CONFIG = {
+  prev: 'training/ai교육/ai교육_11회차.html',
+  next: 'training/ai교육/ai교육_13회차.html'
+};
+let _nextExists = false;
+function navGo(dir){
+  const path = NAV_CONFIG[dir];
+  if(!path) return;
+  const isInIframe=(function(){ try{return window.parent&&window.parent!==window;}catch(e){return false;} })();
+  if(isInIframe){
+    if(dir==='next'){ if(_nextExists){window.parent.postMessage({type:'TRAINING_NAV',path},'*');}else{showNavToast();} }
+    else{ window.parent.postMessage({type:'TRAINING_NAV',path},'*'); }
+  } else {
+    if(dir==='next'){showNavToast();return;}
+    window.location.href=path;
+  }
+}
+function showNavToast(){
+  const t=document.getElementById('navToast');
+  t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(12px)';},2200);
+}
+window.addEventListener('message',e=>{
+  if(!e.data) return;
+  if(e.data.type==='NAV_INFO'){_nextExists=!!e.data.nextExists;}
+  if(e.data.type==='THEME'){ document.body.classList.toggle('light-mode',e.data.mode==='light'); }
+});
+</script>
+</body>
+</html>

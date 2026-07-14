@@ -49,6 +49,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 .rec-table tr:last-child td{border-bottom:none;}
 .rec-table tr:hover td{background:var(--bg3);cursor:pointer;}
 .status-sel{font-size:10px;font-weight:600;font-family:var(--font-kr);padding:2px 6px;border-radius:5px;border:1px solid var(--border);cursor:pointer;outline:none;background:var(--bg3);color:var(--text2);max-width:130px;}
+.row-edit-btn{width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text3);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.row-edit-btn:hover{border-color:var(--border2);color:var(--cyan);background:var(--cyan-dim);}
 .edit-input{background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text2);font-size:11px;font-family:var(--font-en);width:90px;padding:1px 2px;outline:none;}
 .edit-input:focus{border-bottom-color:var(--cyan);}
 
@@ -130,8 +132,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 <div id="newModal">
   <div class="modal-box">
     <button class="modal-close" onclick="closeNew()">✕</button>
-    <div class="modal-title">🚚 택배출고 신규등록</div>
-    <div style="font-size:10.5px;color:var(--text3);margin:-10px 0 14px;">📅 요청일은 등록 시각 기준 오늘 날짜로 자동 저장됩니다.</div>
+    <div class="modal-title" id="newModalTitle">🚚 택배출고 신규등록</div>
+    <div style="font-size:10.5px;color:var(--text3);margin:-10px 0 14px;" id="newModalDateHint">📅 요청일은 등록 시각 기준 오늘 날짜로 자동 저장됩니다.</div>
     <div class="modal-grid">
       <div class="modal-field"><div class="field-label">고객명 *</div><input class="field-input" id="nw고객명" placeholder="홍길동"></div>
       <div class="modal-field"><div class="field-label">연락처</div><input class="field-input" id="nw연락처" placeholder="010-0000-0000"></div>
@@ -303,7 +305,7 @@ function getFiltered(){
 function renderThead(){
   const thead=document.getElementById('recThead');
   if(_curStatus==='출력요청'){
-    thead.innerHTML=`<tr><th>상태</th><th>요청일</th><th>요청자</th><th>고객명</th><th>출고품목(수식(내용조합))</th><th>주문번호</th><th>연락처</th><th>주소</th></tr>`;
+    thead.innerHTML=`<tr><th style="width:36px;"></th><th>상태</th><th>요청일</th><th>요청자</th><th>고객명</th><th>출고품목(수식(내용조합))</th><th>주문번호</th><th>연락처</th><th>주소</th></tr>`;
   }else{
     thead.innerHTML=`<tr><th>상태</th><th>출력일</th><th>요청자</th><th>택배사</th><th>송장번호</th><th>고객명</th><th>제품명</th><th>연락처</th><th>주소</th></tr>`;
   }
@@ -312,6 +314,9 @@ function renderThead(){
 function renderRowRealtime(r,stOpts){
   return `
     <tr onclick="openNotion('${r.url||''}','${r.id}')">
+      <td onclick="event.stopPropagation()">
+        <button class="row-edit-btn" title="수정" onclick="openEdit('${r.id}')">✏️</button>
+      </td>
       <td onclick="event.stopPropagation()">
         <select class="status-sel" onchange="updateStatus('${r.id}',this)">${stOpts(r.상태)}</select>
       </td>
@@ -397,11 +402,47 @@ async function updateWaybill(pageId,val){
   try{const p=encodeURIComponent(JSON.stringify({pageId,property:'송장번호',value:val,type:'text'})); await fetch(`${GAS}?action=updateTaekbaeItem&data=${p}`,{redirect:'follow'});}catch(e){}
 }
 
-// 신규등록
-function openNew(){document.getElementById('newModal').classList.add('open');}
-function closeNew(){document.getElementById('newModal').classList.remove('open');}
+// 신규등록 · 수정
+let _editingId = null;
+
+function openNew(){
+  _editingId = null;
+  document.getElementById('newModalTitle').textContent = '🚚 택배출고 신규등록';
+  document.getElementById('newModalDateHint').style.display = '';
+  document.getElementById('newSaveBtn').textContent = '등록';
+  document.getElementById('newModal').classList.add('open');
+}
+function closeNew(){
+  document.getElementById('newModal').classList.remove('open');
+  _editingId = null;
+}
+
+// 출력요청 행의 ✏️ 아이콘 클릭 → 신규등록과 동일한 팝업이 기존 입력값이 채워진 채로 뜸
+function openEdit(id){
+  const rec = _realtime.find(r=>r.id===id);
+  if(!rec){ alert('항목을 찾을 수 없습니다.'); return; }
+  _editingId = id;
+  document.getElementById('nw고객명').value = rec.고객명||'';
+  document.getElementById('nw연락처').value = rec.연락처||'';
+  document.getElementById('nw모델명').value = rec.모델명||'';
+  document.getElementById('nw출고품').value = rec.출고품||'';
+  document.getElementById('nw주소').value   = rec.주소||'';
+  document.getElementById('nw주문번호').value = rec.주문번호||'';
+  document.getElementById('nw택배사').value = rec.택배사||'';
+  document.getElementById('nw요청자Input').value = rec.요청자||'';
+  // 요청자 ID는 저장돼있지 않으므로 이름으로 직원목록 역조회 (동명이인 있으면 첫 번째로 매칭)
+  const matchedUser = _users.find(u=>u.name===rec.요청자);
+  document.getElementById('nw요청자Id').value = matchedUser ? matchedUser.id : '';
+  updateComboPreview();
+
+  document.getElementById('newModalTitle').textContent = '✏️ 택배출고 수정';
+  document.getElementById('newModalDateHint').style.display = 'none'; // 요청일은 수정 대상 아님
+  document.getElementById('newSaveBtn').textContent = '수정 완료';
+  document.getElementById('newModal').classList.add('open');
+}
 
 async function saveNew(){
+  if(_editingId){ return saveEdit(); }
   const 고객명=document.getElementById('nw고객명').value.trim();
   if(!고객명){alert('고객명은 필수입니다.');return;}
   const btn=document.getElementById('newSaveBtn');
@@ -459,6 +500,62 @@ async function saveNew(){
     }
   }catch(e){alert('오류: '+e.message);}
   btn.disabled=false; btn.textContent='등록';
+}
+
+// 기존 출력요청 건 수정 저장 — 필드별로 updateTaekbaeItem 호출 후 로컬 즉시 반영
+async function saveEdit(){
+  const pageId = _editingId;
+  const rec = _realtime.find(r=>r.id===pageId);
+  if(!rec){ closeNew(); return; }
+
+  const 고객명 = document.getElementById('nw고객명').value.trim();
+  if(!고객명){ alert('고객명은 필수입니다.'); return; }
+  const btn = document.getElementById('newSaveBtn');
+  btn.disabled = true; btn.textContent = '수정 중...';
+
+  const 연락처 = document.getElementById('nw연락처').value.trim();
+  const 모델명 = document.getElementById('nw모델명').value.trim();
+  const 출고품 = document.getElementById('nw출고품').value.trim();
+  const 주소   = document.getElementById('nw주소').value.trim();
+  const 주문번호 = document.getElementById('nw주문번호').value.trim();
+  const 택배사 = document.getElementById('nw택배사').value;
+  const 요청자Input = document.getElementById('nw요청자Input').value.trim();
+  const 요청자Id = document.getElementById('nw요청자Id').value || '';
+
+  const calls = [
+    { property:'고객명',   value:고객명,   type:'title' },
+    { property:'연락처',   value:연락처,   type:'text'  },
+    { property:'출고품',   value:출고품,   type:'text'  },
+    { property:'주소',     value:주소,     type:'text'  },
+    { property:'주문번호', value:주문번호, type:'text'  },
+  ];
+  if (모델명) calls.push({ property:'모델명', value:모델명, type:'select' });
+  if (택배사) calls.push({ property:'택배사', value:택배사, type:'select' });
+  if (요청자Id) calls.push({ property:'요청자', value:요청자Id, type:'people' });
+
+  try {
+    await Promise.all(calls.map(c=>{
+      const p = encodeURIComponent(JSON.stringify({ pageId, property:c.property, value:c.value, type:c.type }));
+      return fetch(`${GAS}?action=updateTaekbaeItem&data=${p}`,{redirect:'follow'});
+    }));
+
+    // 로컬 레코드 즉시 패치 (재조회 없이 화면 바로 반영)
+    Object.assign(rec, {
+      고객명, 연락처, 모델명, 출고품, 주소, 주문번호,
+      택배사: 택배사||null,
+      요청자: 요청자Input || rec.요청자,
+      수식내용조합: [모델명,출고품].filter(Boolean).join('_')
+    });
+    if (모델명 && !_models.includes(모델명)) {
+      _models.push(모델명);
+      document.getElementById('modelDatalist').innerHTML += `<option value="${모델명.replace(/"/g,'&quot;')}">`;
+    }
+    closeNew();
+    render();
+  } catch(e) {
+    alert('수정 중 오류: '+e.message);
+  }
+  btn.disabled = false; btn.textContent = '등록';
 }
 
 async function updatePrintDate(pageId, val) {

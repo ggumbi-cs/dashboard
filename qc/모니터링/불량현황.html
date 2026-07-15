@@ -255,7 +255,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
   <!-- 하단 분석 2단 -->
   <div id="bottomGrid">
     <div class="analysis-card">
-      <div class="sec-hd cyan" style="margin-bottom:10px;">확인불량 Top 10</div>
+      <div class="sec-hd cyan" style="margin-bottom:10px;">접수불량 Top 10</div>
       <div class="fault-tabs" id="faultTabs"></div>
       <div class="fault-list" id="faultTop10"></div>
     </div>
@@ -267,7 +267,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 
   <!-- 개선진행여부 -->
   <div id="improveSection">
-    <div class="sec-hd green" style="margin-bottom:14px;">불량 Top5 × 확인불량 Top10 — 개선진행여부</div>
+    <div class="sec-hd green" style="margin-bottom:14px;">불량 Top5 × 접수불량 Top10 — 개선진행여부</div>
     <table class="improve-table" id="improveTable">
       <colgroup>
         <col class="col-prod"><col class="col-fault"><col class="col-cnt">
@@ -276,7 +276,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
       <thead>
         <tr>
           <th>제품명</th>
-          <th>확인불량</th>
+          <th>접수불량</th>
           <th>건수</th>
           <th>진행여부</th>
           <th>비고</th>
@@ -570,6 +570,15 @@ function setFaultFilter(key) {
   renderFaultTop10(cur);
 }
 
+// ── 접수불량 우선, 없으면 확인불량으로 보완 (공통 헬퍼) ──
+function faultsOf(r) {
+  const jsFaults = Array.isArray(r.접수불량) ? r.접수불량 : JSON.parse(r.접수불량||'[]');
+  const cfFaults = Array.isArray(r.확인불량)  ? r.확인불량  : JSON.parse(r.확인불량||'[]');
+  return jsFaults.filter(f=>f&&f!=='특이사항없음'&&f!=='미확인').length > 0
+    ? jsFaults
+    : cfFaults;
+}
+
 // ── 확인불량 Top10 (접수불량 우선, 확인불량 보완) ──
 function renderFaultTop10(records) {
   const target = _faultFilter === 'all'
@@ -579,12 +588,7 @@ function renderFaultTop10(records) {
   // 접수불량 우선, 없는 건만 확인불량으로 보완
   const counts = {};
   target.forEach(r => {
-    const jsFaults = Array.isArray(r.접수불량) ? r.접수불량 : JSON.parse(r.접수불량||'[]');
-    const cfFaults = Array.isArray(r.확인불량)  ? r.확인불량  : JSON.parse(r.확인불량||'[]');
-    // 접수불량이 있으면 접수불량 사용, 없으면 확인불량 사용
-    const useFaults = jsFaults.filter(f=>f&&f!=='특이사항없음'&&f!=='미확인').length > 0
-      ? jsFaults
-      : cfFaults;
+    const useFaults = faultsOf(r);
     useFaults.forEach(f => { if(f&&f!=='특이사항없음'&&f!=='미확인') counts[f]=(counts[f]||0)+1; });
   });
 
@@ -643,7 +647,7 @@ function renderImprove(records) {
     if (!r.제품명 || r.제품명.startsWith('[집계]')) return;
     const n = shortName(r.제품명);
     prodCnt[n] = (prodCnt[n]||0)+1;
-    const faults = Array.isArray(r.확인불량) ? r.확인불량 : JSON.parse(r.확인불량||'[]');
+    const faults = faultsOf(r);
     faults.forEach(f => { if(f && f!=='특이사항없음' && f!=='미확인') faultCnt[f]=(faultCnt[f]||0)+1; });
   });
 
@@ -656,7 +660,7 @@ function renderImprove(records) {
     top10fault.forEach(fault => {
       const cnt = records.filter(r => {
         if (!r.제품명 || shortName(r.제품명) !== prod) return false;
-        const faults = Array.isArray(r.확인불량) ? r.확인불량 : JSON.parse(r.확인불량||'[]');
+        const faults = faultsOf(r);
         return faults.includes(fault);
       }).length;
       if (cnt > 0) rows.push({ prod, fault, cnt });

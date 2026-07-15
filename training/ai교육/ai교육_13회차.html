@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI 교육 13회차 · 매일 13시 자동 동기화</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#070d1a;--bg2:#0c1628;--bg3:#111e35;--bg4:#172240;
+  --border:rgba(80,140,255,0.12);--border2:rgba(80,140,255,0.25);
+  --blue:#4a8fff;--blue-dim:rgba(74,143,255,0.10);
+  --cyan:#00d4ff;--green:#00e5a0;--red:#ff5a5a;
+  --orange:#ffaa40;--gold:#f0c060;--purple:#a07aff;--teal:#00c8a0;
+  --text:#e4eeff;--text2:#8aaad0;--text3:#4a6a90;
+  --radius:14px;
+}
+body.light-mode{
+  --bg:#f0f4fa;--bg2:#ffffff;--bg3:#e8f0fb;--bg4:#dce8f7;
+  --border:rgba(26,78,180,0.12);--border2:rgba(26,78,180,0.28);
+  --blue:#1a5fd4;--blue-dim:rgba(26,95,212,0.08);
+  --cyan:#0090b8;--green:#007a50;--red:#c02020;--orange:#b06010;
+  --gold:#8a6000;--purple:#5030b0;--teal:#007a62;
+  --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6090;
+}
+body.light-mode .hero-glow{background:radial-gradient(ellipse,rgba(26,95,212,0.07) 0%,transparent 65%);}
+body.light-mode #summary::before{background:radial-gradient(ellipse at 50% 0%,rgba(26,95,212,0.06) 0%,transparent 60%);}
+
+html,body{background:var(--bg);color:var(--text);font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo',sans-serif;font-size:14px;line-height:1.6;overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.wrap{max-width:900px;margin:0 auto;padding:0 24px;}
+
+/* ══ 네비게이션 ══ */
+.nav-prev,.nav-next{position:fixed;top:50%;transform:translateY(-50%);width:44px;height:80px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--border2);cursor:pointer;z-index:999;transition:background 0.15s,border-color 0.2s;font-size:18px;color:var(--text2);user-select:none;}
+.nav-prev{left:0;border-radius:0 10px 10px 0;border-left:none;}
+.nav-next{right:0;border-radius:10px 0 0 10px;border-right:none;}
+.nav-prev:hover,.nav-next:hover{background:var(--bg3);border-color:var(--blue);color:var(--blue);}
+.nav-prev.disabled{opacity:0.2;cursor:default;pointer-events:none;}
+.nav-tooltip{position:absolute;background:var(--bg4);border:1px solid var(--border2);border-radius:8px;padding:6px 10px;font-size:10px;color:var(--text2);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity 0.15s;line-height:1.5;}
+.nav-prev .nav-tooltip{left:52px;top:50%;transform:translateY(-50%);}
+.nav-next .nav-tooltip{right:52px;top:50%;transform:translateY(-50%);}
+.nav-prev:hover .nav-tooltip,.nav-next:hover .nav-tooltip{opacity:1;}
+.nav-tooltip-round{display:block;font-weight:700;color:var(--text);}
+
+/* ══ 진행률 ══ */
+#progressBar{position:sticky;top:0;z-index:990;background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:12px;}
+.progress-steps{display:flex;gap:4px;flex:1;}
+.ps-item{flex:1;height:4px;border-radius:2px;background:var(--border);transition:background 0.3s;}
+.ps-item.done{background:var(--green);}
+.ps-item.active{background:var(--blue);}
+.progress-label{font-size:11px;font-weight:700;color:var(--text2);white-space:nowrap;}
+
+/* ══ 히어로 ══ */
+#hero{position:relative;background:linear-gradient(160deg,var(--bg) 0%,var(--bg2) 55%,var(--bg) 100%);border-bottom:1px solid var(--border);padding:44px 0 38px;overflow:hidden;}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:44px 44px;}
+.hero-glow{position:absolute;top:-80px;right:-40px;width:440px;height:320px;background:radial-gradient(ellipse,rgba(0,229,160,0.08) 0%,transparent 65%);pointer-events:none;}
+.hero-inner{position:relative;z-index:1;}
+.hero-eyebrow{font-size:11px;font-weight:700;color:var(--gold);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.hero-title{font-size:clamp(22px,4vw,34px);font-weight:800;line-height:1.2;margin-bottom:8px;color:var(--text);}
+.hero-sub{font-size:14px;color:var(--text2);margin-bottom:18px;}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-green{background:rgba(0,229,160,0.10);color:var(--green);border:1px solid rgba(0,229,160,0.25);}
+.badge-gold{background:rgba(240,192,96,0.10);color:var(--gold);border:1px solid rgba(240,192,96,0.25);}
+.badge-blue{background:var(--blue-dim);color:var(--blue);border:1px solid var(--border2);}
+.badge-teal{background:rgba(0,200,160,0.10);color:var(--teal);border:1px solid rgba(0,200,160,0.25);}
+.badge-orange{background:rgba(255,170,64,0.10);color:var(--orange);border:1px solid rgba(255,170,64,0.25);}
+.badge-new{background:rgba(255,90,90,0.12);color:var(--red);border:1px solid rgba(255,90,90,0.25);}
+.hero-pills{display:flex;gap:10px;flex-wrap:wrap;}
+
+/* ══ 공통 섹션 ══ */
+.sec{padding:36px 0 0;}
+.step-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.step-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.step-num{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
+.sn-1{background:rgba(240,192,96,0.15);color:var(--gold);border:1px solid rgba(240,192,96,0.3);}
+.sn-2{background:rgba(74,143,255,0.15);color:var(--blue);border:1px solid rgba(74,143,255,0.3);}
+.sn-3{background:rgba(160,122,255,0.15);color:var(--purple);border:1px solid rgba(160,122,255,0.3);}
+.sn-4{background:rgba(255,90,90,0.15);color:var(--red);border:1px solid rgba(255,90,90,0.3);}
+.sn-5{background:rgba(0,200,160,0.15);color:var(--teal);border:1px solid rgba(0,200,160,0.3);}
+.sn-6{background:rgba(0,229,160,0.15);color:var(--green);border:1px solid rgba(0,229,160,0.3);}
+.sn-7{background:rgba(255,170,64,0.15);color:var(--orange);border:1px solid rgba(255,170,64,0.3);}
+.step-head-title{font-size:14px;font-weight:700;color:var(--text);}
+.step-head-sub{font-size:11px;color:var(--text3);}
+.step-body{padding:22px;}
+
+/* ══ STEP1 자동화 원리 ══ */
+.compare-wrap{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start;}
+.compare-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.cc-head{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;}
+.cc-flow{padding:14px 16px;display:flex;flex-direction:column;gap:6px;}
+.cf-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);}
+.cf-icon{font-size:15px;flex-shrink:0;}
+.cf-arr{font-size:13px;color:var(--border2);padding-left:20px;}
+.compare-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:0 8px;}
+.compare-vs{font-size:11px;font-weight:700;color:var(--text3);border:1px solid var(--border);border-radius:20px;padding:4px 10px;}
+.trigger-emphasis{
+  margin-top:16px;padding:16px;
+  background:linear-gradient(135deg,rgba(240,192,96,0.08),rgba(74,143,255,0.05));
+  border:1px solid rgba(240,192,96,0.2);border-radius:10px;
+  text-align:center;font-size:15px;font-weight:800;color:var(--text);
+}
+
+/* 시계 시각화 */
+.clock-flow{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px;}
+.clock-icon{font-size:40px;margin-bottom:4px;}
+.clock-time{font-size:13px;font-weight:700;color:var(--gold);}
+.clock-step{font-size:11px;color:var(--text2);padding:4px 12px;background:var(--bg4);border-radius:6px;margin-top:2px;}
+.clock-arr{font-size:14px;color:var(--border2);}
+
+/* ══ STEP2 비교 ══ */
+.diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.diff-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.dc-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;}
+.dc-body{padding:14px 16px;}
+.dc-purpose{font-size:11px;color:var(--text3);margin-bottom:8px;}
+.dc-result{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:10px;}
+.dc-items{display:flex;flex-direction:column;gap:5px;}
+.dc-item{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--text2);}
+.dc-dot{width:5px;height:5px;border-radius:50%;background:var(--border2);flex-shrink:0;}
+.diff-msg{margin-top:14px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;font-size:12.5px;color:var(--text2);text-align:center;}
+
+/* ══ STEP3 프롬프트 ══ */
+.prompt-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.prompt-box{background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.prompt-head{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.prompt-label{font-size:11px;font-weight:700;}
+.prompt-body{padding:14px;font-size:11.5px;color:var(--text2);line-height:1.8;min-height:130px;white-space:pre-wrap;}
+.copy-btn{width:100%;padding:10px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;background:linear-gradient(135deg,var(--teal),rgba(0,200,160,0.7));color:#051a10;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;transition:opacity 0.15s;}
+.copy-btn:hover{opacity:0.85;}
+.copy-btn.copied{background:linear-gradient(135deg,var(--green),var(--teal));}
+
+/* ══ STEP4 함수 이름 ══ */
+.fn-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.fn-card{background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:16px;}
+.fn-type{font-size:9.5px;font-weight:700;letter-spacing:1.5px;color:var(--text3);margin-bottom:8px;}
+.fn-name{font-family:monospace;font-size:15px;font-weight:700;padding:8px 12px;border-radius:7px;margin-bottom:8px;display:inline-block;}
+.fn-desc{font-size:11.5px;color:var(--text2);line-height:1.6;}
+.fn-warning{margin-top:14px;padding:12px 16px;background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.15);border-radius:9px;font-size:12px;color:var(--teal);text-align:center;}
+
+/* ══ STEP5 복습 ══ */
+.review-flow{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0;}
+.rf-item{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;text-align:center;min-width:80px;}
+.rf-icon{font-size:20px;}
+.rf-label{font-size:10px;font-weight:700;color:var(--text2);line-height:1.3;}
+.rf-arr{font-size:14px;color:var(--border2);padding:0 4px;align-self:center;}
+
+/* ══ STEP6 수동 실행 ══ */
+.warn-card{background:rgba(255,90,90,0.07);border:2px solid rgba(255,90,90,0.25);border-radius:12px;padding:20px;margin-bottom:16px;}
+.warn-title{font-size:14px;font-weight:800;color:var(--red);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.warn-desc{font-size:12px;color:var(--text2);line-height:1.7;}
+.exec-flow{display:flex;flex-direction:column;gap:0;padding-left:24px;position:relative;}
+.exec-flow::before{content:'';position:absolute;left:9px;top:14px;bottom:14px;width:2px;background:linear-gradient(to bottom,var(--blue),var(--green));border-radius:1px;}
+.exec-item{display:flex;gap:14px;align-items:flex-start;padding-bottom:10px;position:relative;}
+.exec-item:last-child{padding-bottom:0;}
+.exec-dot{width:20px;height:20px;border-radius:50%;flex-shrink:0;position:absolute;left:-24px;z-index:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;border:2px solid var(--bg2);}
+.exec-content{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 13px;flex:1;}
+.exec-title{font-size:12px;font-weight:700;color:var(--text);}
+.exec-sub{font-size:10.5px;color:var(--text3);}
+.exec-emphasis{margin-top:14px;padding:12px 16px;background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.15);border-radius:9px;font-size:13px;font-weight:700;color:var(--text);text-align:center;}
+
+/* ══ STEP7 트리거 등록 ══ */
+.trigger-settings{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.ts-item{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:13px;}
+.ts-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:1px;margin-bottom:5px;}
+.ts-value{font-size:13px;font-weight:700;color:var(--text);}
+.ts-item.highlight{border-color:rgba(240,192,96,0.35);background:rgba(240,192,96,0.06);}
+.ts-item.highlight .ts-value{color:var(--gold);}
+.trigger-flow{display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:16px;}
+.trig-step{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 18px;font-size:12px;color:var(--text2);text-align:center;width:100%;max-width:320px;}
+.trig-step.hl{background:rgba(240,192,96,0.08);border-color:rgba(240,192,96,0.25);color:var(--gold);font-weight:700;}
+.trig-arr{font-size:14px;color:var(--border2);}
+.trig-warn{margin-top:12px;padding:10px 14px;background:rgba(255,170,64,0.07);border:1px solid rgba(255,170,64,0.2);border-radius:8px;font-size:11.5px;color:var(--orange);text-align:center;}
+
+/* ══ STEP8 확인 체크리스트 ══ */
+.checklist{display:flex;flex-direction:column;gap:7px;}
+.cl-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;cursor:pointer;transition:all 0.15s;}
+.cl-item:hover{border-color:var(--border2);}
+.cl-item.checked{background:rgba(0,229,160,0.07);border-color:rgba(0,229,160,0.2);}
+.cl-box{width:20px;height:20px;border-radius:5px;border:2px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;transition:all 0.15s;}
+.cl-item.checked .cl-box{background:var(--green);border-color:var(--green);color:#051a10;}
+.cl-text{font-size:12.5px;color:var(--text2);}
+.cl-item.checked .cl-text{color:var(--text3);text-decoration:line-through;}
+.dup-warn{margin-top:12px;padding:12px 16px;background:rgba(255,90,90,0.07);border:1px solid rgba(255,90,90,0.15);border-radius:9px;font-size:11.5px;color:var(--text2);}
+.dup-row{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--border);}
+.dup-row:last-child{border-bottom:none;}
+
+/* ══ STEP10 복사 카드 ══ */
+.msg-cards{display:flex;flex-direction:column;gap:12px;}
+.msg-card{background:var(--bg3);border:1px solid var(--border);border-radius:11px;overflow:hidden;}
+.mc-head{padding:10px 14px;border-bottom:1px solid var(--border);font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:7px;}
+.mc-body{padding:12px 14px;font-size:11.5px;color:var(--text2);line-height:1.7;white-space:pre-wrap;}
+.mc-copy{display:block;width:100%;padding:8px;border:none;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;background:var(--bg4);color:var(--text2);border-top:1px solid var(--border);transition:background 0.15s;}
+.mc-copy:hover{background:var(--blue-dim);color:var(--blue);}
+.mc-copy.copied{background:rgba(0,229,160,0.1);color:var(--green);}
+
+/* ══ STEP11 배포 판단 ══ */
+.deploy-cases{display:flex;flex-direction:column;gap:10px;}
+.dc2{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;align-items:flex-start;gap:12px;}
+.dc2-icon{font-size:22px;flex-shrink:0;}
+.dc2-cond{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.dc2-action{font-size:11.5px;color:var(--text2);}
+.dc2-badge{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:6px;font-size:10px;font-weight:700;margin-top:5px;}
+
+/* ══ 최종 플로우 ══ */
+.final-flow{display:flex;flex-direction:column;align-items:center;gap:0;}
+.ff-item{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:11px 24px;text-align:center;font-size:12.5px;font-weight:700;color:var(--text);min-width:240px;}
+.ff-item.hl{background:rgba(240,192,96,0.08);border-color:rgba(240,192,96,0.25);color:var(--gold);}
+.ff-arr{font-size:16px;color:var(--border2);padding:3px 0;}
+
+/* ══ 마지막 ══ */
+#summary{margin:36px 0 0;padding:28px;background:linear-gradient(135deg,var(--bg2),var(--bg4));border:1px solid var(--border2);border-radius:var(--radius);position:relative;overflow:hidden;text-align:center;}
+#summary::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(240,192,96,0.07) 0%,transparent 60%);}
+.summary-inner{position:relative;z-index:1;}
+.summary-quote{font-size:clamp(12px,1.8vw,14px);font-weight:700;color:var(--text);line-height:1.7;margin-bottom:12px;}
+.summary-author{font-size:11px;color:var(--text3);margin-top:14px;}
+
+.sec-bottom{height:48px;}
+
+@media(max-width:640px){
+  .compare-wrap,.diff-grid,.prompt-grid,.fn-grid,.trigger-settings{grid-template-columns:1fr;}
+  .compare-center{flex-direction:row;}
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.anim{animation:fadeUp 0.4s ease both;}
+.d1{animation-delay:0.05s;}.d2{animation-delay:0.1s;}.d3{animation-delay:0.15s;}
+.d4{animation-delay:0.2s;}.d5{animation-delay:0.25s;}
+</style>
+</head>
+<body>
+
+<div class="nav-prev" id="navPrev" onclick="navGo('prev')">
+  ‹
+  <div class="nav-tooltip"><span class="nav-tooltip-round">12회차</span>CSV 집계 페이지 만들기</div>
+</div>
+<div class="nav-next" id="navNext" onclick="navGo('next')">
+  ›
+  <div class="nav-tooltip"><span class="nav-tooltip-round">다음 회차</span>준비 중</div>
+</div>
+
+<!-- 진행률 -->
+<div id="progressBar">
+  <div class="progress-steps">
+    <div class="ps-item active" id="ps1"></div>
+    <div class="ps-item" id="ps2"></div>
+    <div class="ps-item" id="ps3"></div>
+    <div class="ps-item" id="ps4"></div>
+    <div class="ps-item" id="ps5"></div>
+    <div class="ps-item" id="ps6"></div>
+    <div class="ps-item" id="ps7"></div>
+    <div class="ps-item" id="ps8"></div>
+    <div class="ps-item" id="ps9"></div>
+    <div class="ps-item" id="ps10"></div>
+    <div class="ps-item" id="ps11"></div>
+  </div>
+  <div class="progress-label" id="progressLabel">STEP 1 / 11</div>
+</div>
+
+<!-- 히어로 -->
+<div id="hero">
+  <div class="hero-grid"></div><div class="hero-glow"></div>
+  <div class="wrap hero-inner anim d1">
+    <div class="hero-eyebrow">
+      AI 교육 13회차
+      <div class="badge badge-gold">🕐 자동화</div>
+      <div class="badge badge-orange">🔔 트리거</div>
+    </div>
+    <div class="hero-title">매일 13시 자동 동기화</div>
+    <div class="hero-sub">GAS 트리거로 반복 작업 예약하기 — 설정 한 번으로 매일 자동 실행돼요</div>
+    <div class="hero-pills">
+      <span class="badge badge-gold">🕐 매일 오후 1시경 자동</span>
+      <span class="badge badge-green">✅ 최초 1회만 수동 실행</span>
+      <span class="badge badge-blue">🔗 배포 URL 변경 없음</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- STEP 1 -->
+<div class="sec anim d2" id="step1">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-1">1</div>
+      <div>
+        <div class="step-head-title">자동 동기화는 어떤 원리인가요?</div>
+        <div class="step-head-sub">사람이 하던 일을 GAS가 대신합니다</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="compare-wrap">
+        <!-- 자동화 전 -->
+        <div class="compare-card">
+          <div class="cc-head" style="color:var(--red);">😩 자동화 전 — 매일 직접</div>
+          <div class="cc-flow">
+            <div class="cf-row"><div class="cf-icon">👤</div> 담당자가 직접 접속</div>
+            <div class="cf-arr">↓</div>
+            <div class="cf-row"><div class="cf-icon">📥</div> 파일 다운로드</div>
+            <div class="cf-arr">↓</div>
+            <div class="cf-row"><div class="cf-icon">📋</div> 시트에 붙여넣기</div>
+            <div class="cf-arr">↓</div>
+            <div class="cf-row"><div class="cf-icon">🔄</div> HTML 새로고침</div>
+          </div>
+        </div>
+
+        <!-- 가운데 -->
+        <div class="compare-center">
+          <div class="clock-icon">🔔</div>
+          <div class="clock-time">매일 오후 1시경</div>
+          <div class="compare-vs">트리거</div>
+        </div>
+
+        <!-- 자동화 후 -->
+        <div class="compare-card">
+          <div class="cc-head" style="color:var(--green);">✅ 자동화 후 — GAS가 대신</div>
+          <div class="cc-flow">
+            <div class="cf-row"><div class="cf-icon">🕐</div> 오후 1시경 알람 발동</div>
+            <div class="cf-arr">↓</div>
+            <div class="cf-row"><div class="cf-icon">🤖</div> GAS 동기화 함수 자동 실행</div>
+            <div class="cf-arr">↓</div>
+            <div class="cf-row"><div class="cf-icon">📊</div> Google Sheet 자동 갱신</div>
+            <div class="cf-arr">↓</div>
+            <div class="cf-row"><div class="cf-icon">🌐</div> HTML에서 최신 데이터 확인</div>
+          </div>
+        </div>
+      </div>
+      <div class="trigger-emphasis">🔔 트리거는 GAS에게 달아주는 알람입니다</div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div class="sec anim d2" id="step2">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-2">2</div>
+      <div>
+        <div class="step-head-title">지난 회차와 무엇이 다른가요?</div>
+        <div class="step-head-sub">웹앱 배포 ≠ 시간 트리거</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="diff-grid">
+        <div class="diff-card">
+          <div class="dc-head"><span>📡</span> 지난 회차 — 웹앱 배포</div>
+          <div class="dc-body">
+            <div class="dc-purpose">목적</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">HTML과 GAS가 서로 데이터를 주고받도록 연결</div>
+            <div class="dc-result" style="background:rgba(74,143,255,0.1);color:var(--blue);border:1px solid rgba(74,143,255,0.2);">🔗 핵심 결과물 — 배포 URL</div>
+            <div class="dc-items">
+              <div class="dc-item"><div class="dc-dot"></div> GS 코드 등록</div>
+              <div class="dc-item"><div class="dc-dot"></div> 웹앱 배포</div>
+              <div class="dc-item"><div class="dc-dot"></div> URL 복사</div>
+              <div class="dc-item"><div class="dc-dot"></div> HTML에 URL 연결</div>
+            </div>
+          </div>
+        </div>
+        <div class="diff-card" style="border-color:rgba(240,192,96,0.3);">
+          <div class="dc-head" style="color:var(--gold);"><span>🔔</span> 이번 회차 — 시간 트리거 <span class="badge badge-new" style="font-size:9px;">NEW</span></div>
+          <div class="dc-body">
+            <div class="dc-purpose">목적</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">사람이 실행하지 않아도 정해진 시간에 자동 실행</div>
+            <div class="dc-result" style="background:rgba(240,192,96,0.10);color:var(--gold);border:1px solid rgba(240,192,96,0.2);">🕐 핵심 결과물 — 매일 13시대 실행 예약</div>
+            <div class="dc-items">
+              <div class="dc-item"><div class="dc-dot" style="background:var(--gold);"></div> 동기화 함수 확인</div>
+              <div class="dc-item"><div class="dc-dot" style="background:var(--gold);"></div> 최초 1회 수동 실행</div>
+              <div class="dc-item"><div class="dc-dot" style="background:var(--gold);"></div> 권한 승인</div>
+              <div class="dc-item"><div class="dc-dot" style="background:var(--gold);"></div> 트리거 생성</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="diff-msg">
+        💡 <strong style="color:var(--text);">웹앱 배포</strong>는 HTML과 연결하는 문이고,
+        <strong style="color:var(--gold);">트리거</strong>는 정해진 시간에 일을 시작시키는 알람입니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div class="sec anim d3" id="step3">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-3">3</div>
+      <div>
+        <div class="step-head-title">AI에게 무엇을 요청하나요?</div>
+        <div class="step-head-sub">복사해서 바로 보내세요</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="prompt-grid">
+        <div class="prompt-box">
+          <div class="prompt-head">
+            <span class="prompt-label" style="color:var(--teal);">💬 초보자용</span>
+            <span style="font-size:9.5px;color:var(--text3);">짧고 편하게</span>
+          </div>
+          <div class="prompt-body">현재 사용 중인 GAS 코드에
+매일 오후 1시경 자동으로 데이터를 동기화하는 기능을 추가하고 싶어요.
+
+자동 실행할 함수도 만들어주시고,
+처음 사용하는 사람도 따라 할 수 있게
+트리거 설정 방법을 순서대로 알려주세요.
+
+처음에 수동으로 한 번 실행해야 하는 함수가 있다면
+그 함수 이름과 이유도 알려주세요.</div>
+          <button class="copy-btn" id="cpBtn1" onclick="copyPrompt(1)">📋 복사하기</button>
+        </div>
+        <div class="prompt-box">
+          <div class="prompt-head">
+            <span class="prompt-label" style="color:var(--purple);">⚡ 추천 버전</span>
+            <span style="font-size:9.5px;color:var(--text3);">더 구체적으로</span>
+          </div>
+          <div class="prompt-body">기존 Google Apps Script 프로젝트에 매일 13시대 자동 동기화 기능을 추가해주세요.
+동기화 본체 함수와 시간 기반 트리거 생성 함수를 구분해서 작성해주세요.
+최초 설정 시 사용자가 수동으로 1회 실행해야 할 함수명을 명확히 표시해주세요.
+권한 승인, 트리거 중복 생성 방지, 실행 실패 확인 방법도 포함해주세요.
+기존 웹앱 배포 URL은 변경하지 않고 사용할 수 있도록 구성해주세요.
+초보자가 따라 할 수 있는 등록 순서도 함께 설명해주세요.</div>
+          <button class="copy-btn" id="cpBtn2" onclick="copyPrompt(2)">📋 복사하기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 4 -->
+<div class="sec anim d3" id="step4">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-4">4</div>
+      <div>
+        <div class="step-head-title">AI 답변에서 딱 두 가지만 찾으세요</div>
+        <div class="step-head-sub">함수 이름 두 개만 확인하면 됩니다</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="fn-grid">
+        <div class="fn-card" style="border-color:rgba(0,200,160,0.3);">
+          <div class="fn-type">① 실제 동기화 함수</div>
+          <div class="fn-name" style="background:rgba(0,200,160,0.1);color:var(--teal);">syncData</div>
+          <div class="fn-desc">실제로 데이터를 읽고 Google Sheet를 갱신하는 함수예요. 트리거가 매일 이 함수를 자동으로 불러요.</div>
+        </div>
+        <div class="fn-card" style="border-color:rgba(240,192,96,0.3);">
+          <div class="fn-type">② 트리거 설치 함수</div>
+          <div class="fn-name" style="background:rgba(240,192,96,0.10);color:var(--gold);">setupDailyTrigger</div>
+          <div class="fn-desc">매일 오후 1시경 syncData가 실행되도록 예약을 등록하는 함수예요. 딱 한 번만 실행하면 돼요.</div>
+        </div>
+      </div>
+      <div class="fn-warning">
+        ⚠ 함수 이름은 AI가 작성한 코드에 따라 달라질 수 있어요.<br>
+        <strong>AI가 "이 함수를 최초 한 번 실행하세요"라고 지정한 함수명을 확인하세요.</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 5 -->
+<div class="sec anim d3" id="step5">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-5">5</div>
+      <div>
+        <div class="step-head-title">GS 코드 등록하기</div>
+        <div class="step-head-sub">지난 회차와 동일한 방법이에요</div>
+      </div>
+      <div class="badge" style="background:rgba(74,143,255,0.08);color:var(--blue);border:1px solid rgba(74,143,255,0.2);margin-left:auto;font-size:9.5px;">🔁 지난 회차 복습</div>
+    </div>
+    <div class="step-body">
+      <div class="review-flow">
+        <div class="rf-item"><div class="rf-icon">📊</div><div class="rf-label">Google Sheet</div></div>
+        <div class="rf-arr">→</div>
+        <div class="rf-item"><div class="rf-icon">🔧</div><div class="rf-label">확장 프로그램</div></div>
+        <div class="rf-arr">→</div>
+        <div class="rf-item"><div class="rf-icon">📄</div><div class="rf-label">Apps Script</div></div>
+        <div class="rf-arr">→</div>
+        <div class="rf-item"><div class="rf-icon">🗑</div><div class="rf-label">기존 코드<br>확인</div></div>
+        <div class="rf-arr">→</div>
+        <div class="rf-item"><div class="rf-icon">📋</div><div class="rf-label">AI 코드<br>붙여넣기</div></div>
+        <div class="rf-arr">→</div>
+        <div class="rf-item" style="background:rgba(0,229,160,0.08);border-color:rgba(0,229,160,0.25);"><div class="rf-icon">💾</div><div class="rf-label" style="color:var(--green);">저장</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 6 -->
+<div class="sec anim d4" id="step6">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-6">6</div>
+      <div>
+        <div class="step-head-title">최초 1회 수동 실행</div>
+        <div class="step-head-sub">이번 회차에서 가장 중요한 단계예요</div>
+      </div>
+      <div class="badge badge-new" style="margin-left:auto;">🆕 이번 회차 핵심</div>
+    </div>
+    <div class="step-body">
+      <div class="warn-card">
+        <div class="warn-title">❓ 자동화인데 왜 처음에는 직접 실행하나요?</div>
+        <div class="warn-desc">
+          최초 실행 시 Google이 확인해야 할 사항이 있어요.<br>
+          · 이 코드가 시트를 수정해도 되는지<br>
+          · 외부 데이터를 불러와도 되는지<br>
+          · 사용자가 이 자동화를 허용했는지<br>
+          <br>그래서 트리거 설정 전에 AI가 지정한 함수를 <strong>딱 한 번만 수동으로 실행</strong>해요.
+        </div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;margin-bottom:10px;">실행 순서</div>
+      <div class="exec-flow">
+        <div class="exec-item">
+          <div class="exec-dot" style="background:rgba(74,143,255,0.2);color:var(--blue);border-color:var(--blue);">1</div>
+          <div class="exec-content"><div class="exec-title">상단 함수 선택 드롭다운 클릭</div><div class="exec-sub">AI가 지정한 함수명 선택</div></div>
+        </div>
+        <div class="exec-item">
+          <div class="exec-dot" style="background:rgba(74,143,255,0.2);color:var(--blue);border-color:var(--blue);">2</div>
+          <div class="exec-content"><div class="exec-title">▶ 실행 버튼 클릭</div><div class="exec-sub">처음엔 권한 요청 팝업이 뜰 수 있어요</div></div>
+        </div>
+        <div class="exec-item">
+          <div class="exec-dot" style="background:rgba(240,192,96,0.2);color:var(--gold);border-color:var(--gold);">3</div>
+          <div class="exec-content"><div class="exec-title">권한 요청 → 허용</div><div class="exec-sub">Google 계정으로 허용해주세요</div></div>
+        </div>
+        <div class="exec-item">
+          <div class="exec-dot" style="background:rgba(0,229,160,0.2);color:var(--green);border-color:var(--green);">4</div>
+          <div class="exec-content"><div class="exec-title">실행 완료 확인</div><div class="exec-sub">하단 실행 로그에서 오류 없는지 확인</div></div>
+        </div>
+      </div>
+
+      <!-- 방식 A/B -->
+      <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;">
+          <div style="font-size:10px;font-weight:700;color:var(--blue);margin-bottom:7px;">방식 A — 트리거 자동 등록</div>
+          <div style="font-size:11.5px;color:var(--text2);line-height:1.6;"><span style="font-family:monospace;color:var(--gold);">setupDailyTrigger</span> 같은 설치 함수를 한 번 실행하면 자동으로 매일 실행 예약이 생성돼요.</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;">
+          <div style="font-size:10px;font-weight:700;color:var(--teal);margin-bottom:7px;">방식 B — 직접 등록</div>
+          <div style="font-size:11.5px;color:var(--text2);line-height:1.6;">Apps Script 트리거 메뉴에서 직접 예약을 만들고 실행할 함수로 <span style="font-family:monospace;color:var(--teal);">syncData</span>를 선택해요.</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;padding:10px 14px;background:rgba(74,143,255,0.07);border:1px solid rgba(74,143,255,0.15);border-radius:9px;font-size:12px;color:var(--text2);text-align:center;">
+        💡 AI가 준 설명에서 <strong style="color:var(--text);">"자동 등록 방식"</strong>인지 <strong style="color:var(--text);">"직접 등록 방식"</strong>인지 먼저 확인하세요.
+      </div>
+      <div class="exec-emphasis">한 번 실행하는 것은 매일 직접 실행하라는 뜻이 아닙니다.<br><span style="font-size:12px;font-weight:400;color:var(--text3);">처음 문을 열어주는 과정이에요. 이후에는 트리거가 자동으로 실행해요.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 7 -->
+<div class="sec anim d4" id="step7">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-7">7</div>
+      <div>
+        <div class="step-head-title">트리거 직접 등록 방법</div>
+        <div class="step-head-sub">시계 아이콘 → 트리거 추가</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="trigger-flow">
+        <div class="trig-step">⏰ 왼쪽 시계 아이콘 클릭</div>
+        <div class="trig-arr">↓</div>
+        <div class="trig-step">➕ 트리거 추가 버튼</div>
+        <div class="trig-arr">↓</div>
+        <div class="trig-step hl">⚙ 아래 설정값 입력</div>
+        <div class="trig-arr">↓</div>
+        <div class="trig-step" style="background:rgba(0,229,160,0.08);border-color:rgba(0,229,160,0.2);color:var(--green);font-weight:700;">💾 저장</div>
+      </div>
+
+      <div class="trigger-settings">
+        <div class="ts-item">
+          <div class="ts-label">실행할 함수</div>
+          <div class="ts-value" style="font-family:monospace;color:var(--teal);">AI가 지정한 동기화 함수</div>
+        </div>
+        <div class="ts-item">
+          <div class="ts-label">배포 선택</div>
+          <div class="ts-value">Head</div>
+        </div>
+        <div class="ts-item">
+          <div class="ts-label">이벤트 소스</div>
+          <div class="ts-value">시간 기반</div>
+        </div>
+        <div class="ts-item">
+          <div class="ts-label">시간 기반 트리거 유형</div>
+          <div class="ts-value">일 단위 타이머</div>
+        </div>
+        <div class="ts-item highlight" style="grid-column:1/-1;">
+          <div class="ts-label">시간대</div>
+          <div class="ts-value">오후 1시 ~ 오후 2시 사이</div>
+        </div>
+      </div>
+      <div class="trig-warn">⚠ 13시 정각이 아니라 <strong>13시대에 실행될 수 있습니다.</strong> 알람처럼 정확한 시각이 아닌 범위 내 자동 실행이에요.</div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 8 -->
+<div class="sec anim d4" id="step8">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-1">8</div>
+      <div>
+        <div class="step-head-title">자동화가 등록됐는지 확인하기</div>
+        <div class="step-head-sub">트리거 목록에서 체크하세요</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="checklist" style="margin-bottom:14px;">
+        <div class="cl-item" onclick="toggleCheck(this)"><div class="cl-box"></div><div class="cl-text">트리거 목록에 함수명이 보이는가?</div></div>
+        <div class="cl-item" onclick="toggleCheck(this)"><div class="cl-box"></div><div class="cl-text">이벤트가 시간 기반으로 표시되는가?</div></div>
+        <div class="cl-item" onclick="toggleCheck(this)"><div class="cl-box"></div><div class="cl-text">매일 실행으로 등록됐는가?</div></div>
+        <div class="cl-item" onclick="toggleCheck(this)"><div class="cl-box"></div><div class="cl-text">시간대가 오후 1시~2시로 표시되는가?</div></div>
+        <div class="cl-item" onclick="toggleCheck(this)"><div class="cl-box"></div><div class="cl-text">동일한 트리거가 여러 개 생기지 않았는가?</div></div>
+      </div>
+      <div class="dup-warn">
+        <div style="font-size:11px;font-weight:700;color:var(--orange);margin-bottom:6px;">⚠ 트리거 중복 주의</div>
+        <div class="dup-row"><span style="font-size:14px;">✅</span><span style="font-size:11.5px;color:var(--text2);">트리거 1개 = 하루 1회 실행</span></div>
+        <div class="dup-row"><span style="font-size:14px;">❌</span><span style="font-size:11.5px;color:var(--text2);">트리거 2개 = 같은 작업이 하루 2회 실행될 수 있음</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 9 -->
+<div class="sec anim d5" id="step9">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-2">9</div>
+      <div>
+        <div class="step-head-title">바로 테스트하기</div>
+        <div class="step-head-sub">다음 날까지 기다리지 않아도 돼요</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div style="display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;margin-bottom:14px;">
+        <div style="padding:10px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text2);text-align:center;">동기화 함수 선택</div>
+        <div style="font-size:14px;color:var(--border2);padding:0 6px;">→</div>
+        <div style="padding:10px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text2);text-align:center;">▶ 실행</div>
+        <div style="font-size:14px;color:var(--border2);padding:0 6px;">→</div>
+        <div style="padding:10px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text2);text-align:center;">Google Sheet 확인</div>
+        <div style="font-size:14px;color:var(--border2);padding:0 6px;">→</div>
+        <div style="padding:10px 16px;background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.25);border-radius:8px;font-size:12px;font-weight:700;color:var(--green);text-align:center;">데이터 갱신 확인 ✅</div>
+      </div>
+      <div style="padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;font-size:11.5px;color:var(--text2);">
+        💡 이 수동 실행은 <strong style="color:var(--text);">테스트 목적</strong>이에요. 트리거가 제대로 예약됐는지는 트리거 목록과 실행 기록에서 확인하세요.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 10 -->
+<div class="sec anim d5" id="step10">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-3">10</div>
+      <div>
+        <div class="step-head-title">완료 후 AI에게 알려주기</div>
+        <div class="step-head-sub">상황에 맞는 문장을 복사해서 보내세요</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="msg-cards">
+        <div class="msg-card">
+          <div class="mc-head" style="color:var(--green);">✅ 정상 등록된 경우</div>
+          <div class="mc-body" id="msg1">GAS 코드 등록과 최초 실행을 완료했고,
+매일 오후 1시~2시 시간 기반 트리거도 생성했습니다.
+
+이제 HTML이나 기존 코드에서 추가로 수정할 부분이 있는지 확인해주세요.</div>
+          <button class="mc-copy" onclick="copyMsg(this,'msg1')">📋 복사하기</button>
+        </div>
+        <div class="msg-card">
+          <div class="mc-head" style="color:var(--red);">❌ 실행 오류가 난 경우</div>
+          <div class="mc-body" id="msg2">GAS 함수를 수동 실행했는데 오류가 발생했습니다.
+오류 화면과 실행 로그를 함께 첨부할게요.
+어느 부분을 수정해야 하는지 초보자도 이해할 수 있게 알려주세요.</div>
+          <button class="mc-copy" onclick="copyMsg(this,'msg2')">📋 복사하기</button>
+        </div>
+        <div class="msg-card">
+          <div class="mc-head" style="color:var(--orange);">⚠ 트리거가 실행되지 않는 경우</div>
+          <div class="mc-body" id="msg3">시간 기반 트리거는 등록되어 있지만 데이터가 갱신되지 않았습니다.
+트리거 설정 화면과 실행 기록을 첨부할게요.
+함수명과 권한, 실행 오류를 확인해주세요.</div>
+          <button class="mc-copy" onclick="copyMsg(this,'msg3')">📋 복사하기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 11 -->
+<div class="sec anim d5" id="step11">
+  <div class="step-card">
+    <div class="step-head">
+      <div class="step-num sn-6">11</div>
+      <div>
+        <div class="step-head-title">수정 배포는 필요한가요?</div>
+        <div class="step-head-sub">상황마다 달라요</div>
+      </div>
+    </div>
+    <div class="step-body">
+      <div class="deploy-cases">
+        <div class="dc2">
+          <div class="dc2-icon">🔔</div>
+          <div>
+            <div class="dc2-cond">트리거만 추가한 경우</div>
+            <div class="dc2-action">기존 웹앱 URL을 바꿀 필요 없어요. 트리거는 GAS 프로젝트 내부에서 작동해요.</div>
+            <div class="dc2-badge" style="background:rgba(0,229,160,0.08);color:var(--green);border:1px solid rgba(0,229,160,0.2);">URL 변경 없음</div>
+          </div>
+        </div>
+        <div class="dc2">
+          <div class="dc2-icon">📄</div>
+          <div>
+            <div class="dc2-cond">HTML 코드도 함께 수정된 경우</div>
+            <div class="dc2-action">AI가 수정한 HTML을 다시 GitHub에 올려요.</div>
+            <div class="dc2-badge" style="background:rgba(74,143,255,0.08);color:var(--blue);border:1px solid rgba(74,143,255,0.2);">GitHub 재업로드</div>
+          </div>
+        </div>
+        <div class="dc2">
+          <div class="dc2-icon">📡</div>
+          <div>
+            <div class="dc2-cond">웹앱 GAS 코드가 변경된 경우</div>
+            <div class="dc2-action">기존 배포 관리에서 <strong>새 버전으로 업데이트</strong>해요. 새 배포를 별도로 만들어 URL을 바꾸지 않아요.</div>
+            <div class="dc2-badge" style="background:rgba(240,192,96,0.08);color:var(--gold);border:1px solid rgba(240,192,96,0.2);">기존 배포 새 버전</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 최종 플로우 -->
+<div class="sec anim d5">
+  <div style="padding:26px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);">
+    <div style="font-size:13px;font-weight:700;color:var(--text3);text-align:center;margin-bottom:16px;">📋 전체 흐름 한눈에</div>
+    <div class="final-flow">
+      <div class="ff-item">🤖 AI에게 자동 동기화 요청</div>
+      <div class="ff-arr">↓</div>
+      <div class="ff-item">📋 GS 코드 붙여넣기</div>
+      <div class="ff-arr">↓</div>
+      <div class="ff-item hl">▶ AI가 지정한 함수 최초 1회 실행</div>
+      <div class="ff-arr">↓</div>
+      <div class="ff-item">✅ 권한 승인</div>
+      <div class="ff-arr">↓</div>
+      <div class="ff-item hl">🔔 매일 13시대 트리거 등록</div>
+      <div class="ff-arr">↓</div>
+      <div class="ff-item">🧪 동기화 함수 테스트</div>
+      <div class="ff-arr">↓</div>
+      <div class="ff-item" style="background:rgba(0,229,160,0.08);border-color:rgba(0,229,160,0.25);color:var(--green);">🎉 다음부터 자동 실행!</div>
+    </div>
+  </div>
+</div>
+
+<!-- 마지막 -->
+<div id="summary" class="anim" style="animation-delay:0.3s;">
+  <div class="summary-inner">
+    <div style="font-size:32px;margin-bottom:14px;">🔔</div>
+    <div class="summary-quote">
+      트리거는 어려운 자동화 기술이 아니라,<br>
+      GAS에게 <strong>"매일 이 시간에 이 함수를 실행해줘"</strong>라고<br>
+      알람을 설정하는 것입니다.
+    </div>
+    <div style="margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;">
+      <div class="badge badge-gold">🔔 트리거 = 알람</div>
+      <span style="color:var(--text3);">·</span>
+      <div class="badge badge-green">✅ 최초 1회만 수동</div>
+      <span style="color:var(--text3);">·</span>
+      <div class="badge badge-blue">🔗 URL 변경 없음</div>
+    </div>
+    <div class="summary-author" style="margin-top:16px;">AI 교육 13회차 · 엄마감동팀</div>
+  </div>
+</div>
+
+<div class="sec-bottom"></div>
+</div>
+
+<div id="navToast" style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(12px);background:#172240;border:1px solid rgba(80,140,255,0.35);color:#8aaad0;font-size:12px;font-weight:600;padding:10px 20px;border-radius:30px;z-index:9999;opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap;">
+  📋 다음 회차는 준비 중입니다
+</div>
+
+<script>
+// 진행률
+(function(){
+  const steps=document.querySelectorAll('[id^="step"]');
+  const items=document.querySelectorAll('.ps-item');
+  const label=document.getElementById('progressLabel');
+  function update(){
+    let cur=1;
+    steps.forEach((el,i)=>{ if(el.getBoundingClientRect().top<window.innerHeight*0.6) cur=i+1; });
+    items.forEach((item,i)=>{ item.classList.remove('done','active'); if(i<cur-1) item.classList.add('done'); else if(i===cur-1) item.classList.add('active'); });
+    label.textContent='STEP '+cur+' / '+steps.length;
+  }
+  window.addEventListener('scroll',update,{passive:true}); update();
+})();
+
+// 체크박스
+function toggleCheck(el){ el.classList.toggle('checked'); el.querySelector('.cl-box').textContent=el.classList.contains('checked')?'✓':''; }
+
+// 프롬프트 복사
+const PROMPTS={
+  1:`현재 사용 중인 GAS 코드에\n매일 오후 1시경 자동으로 데이터를 동기화하는 기능을 추가하고 싶어요.\n\n자동 실행할 함수도 만들어주시고,\n처음 사용하는 사람도 따라 할 수 있게\n트리거 설정 방법을 순서대로 알려주세요.\n\n처음에 수동으로 한 번 실행해야 하는 함수가 있다면\n그 함수 이름과 이유도 알려주세요.`,
+  2:`기존 Google Apps Script 프로젝트에 매일 13시대 자동 동기화 기능을 추가해주세요.\n동기화 본체 함수와 시간 기반 트리거 생성 함수를 구분해서 작성해주세요.\n최초 설정 시 사용자가 수동으로 1회 실행해야 할 함수명을 명확히 표시해주세요.\n권한 승인, 트리거 중복 생성 방지, 실행 실패 확인 방법도 포함해주세요.\n기존 웹앱 배포 URL은 변경하지 않고 사용할 수 있도록 구성해주세요.\n초보자가 따라 할 수 있는 등록 순서도 함께 설명해주세요.`
+};
+function copyPrompt(n){
+  const btn=document.getElementById('cpBtn'+n);
+  navigator.clipboard.writeText(PROMPTS[n]).then(()=>{
+    const orig=btn.innerHTML; btn.innerHTML='✅ 복사됐어요!'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.innerHTML=orig; btn.classList.remove('copied'); },2500);
+  });
+}
+function copyMsg(btn,id){
+  navigator.clipboard.writeText(document.getElementById(id).textContent).then(()=>{
+    const orig=btn.textContent; btn.textContent='✅ 복사됐어요!'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent=orig; btn.classList.remove('copied'); },2000);
+  });
+}
+
+// 네비게이션
+const NAV_CONFIG={ prev:'training/ai교육/ai교육_12회차.html', next:'training/ai교육/ai교육_14회차.html' };
+let _nextExists=false;
+function navGo(dir){
+  const path=NAV_CONFIG[dir]; if(!path) return;
+  const isInIframe=(function(){ try{return window.parent&&window.parent!==window;}catch(e){return false;} })();
+  if(isInIframe){ if(dir==='next'){ if(_nextExists) window.parent.postMessage({type:'TRAINING_NAV',path},'*'); else showNavToast(); } else window.parent.postMessage({type:'TRAINING_NAV',path},'*'); }
+  else{ if(dir==='next'){showNavToast();return;} window.location.href=path; }
+}
+function showNavToast(){
+  const t=document.getElementById('navToast');
+  t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';
+  clearTimeout(t._timer); t._timer=setTimeout(()=>{ t.style.opacity='0';t.style.transform='translateX(-50%) translateY(12px)'; },2200);
+}
+window.addEventListener('message',e=>{
+  if(!e.data) return;
+  if(e.data.type==='NAV_INFO') _nextExists=!!e.data.nextExists;
+  if(e.data.type==='THEME') document.body.classList.toggle('light-mode',e.data.mode==='light');
+});
+</script>
+</body>
+</html>

@@ -244,10 +244,14 @@ function getFiltered(){
 function won(n){if(!n&&n!==0)return'-'; return '₩'+Math.round(n).toLocaleString('ko-KR');}
 
 // ── 그룹 토글 ──
+function safeGroupId(prod){
+  return 'grp_'+String(prod).replace(/[^a-zA-Z가-힣0-9]/g,'_');
+}
+
 function toggleGroup(prod){
   if(_openGroups.has(prod)) _openGroups.delete(prod);
   else _openGroups.add(prod);
-  const el=document.getElementById('grp_'+CSS.escape(prod));
+  const el=document.getElementById(safeGroupId(prod));
   if(el) el.classList.toggle('open',_openGroups.has(prod));
 }
 
@@ -264,7 +268,7 @@ function render(){
 
   document.getElementById('mainWrap').innerHTML=Object.entries(grouped).map(([prod,rows])=>{
     const isOpen=_openGroups.has(prod);
-    const safeId='grp_'+prod.replace(/[^a-zA-Z가-힣0-9]/g,'_');
+    const safeId=safeGroupId(prod);
     return `
     <div class="prod-group${isOpen?' open':''}" id="${safeId}">
       <div class="prod-group-hd" onclick="toggleGroup('${prod.replace(/'/g,"\\'")}')">

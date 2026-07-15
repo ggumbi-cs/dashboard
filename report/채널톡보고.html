@@ -341,10 +341,12 @@ svg.chart{width:100%;display:block;}
         <div class="meta-chip" id="periodChip"><b>기간 로딩 중...</b></div>
         <div class="meta-chip ch" id="apiStatusChip">📊 Sheets 연동</div>
         <div class="meta-chip" id="lastFetchChip" style="display:none;">⏱ <b id="lastFetchTime">-</b></div>
+        <div class="meta-chip" id="lastSyncChip" style="display:none;">🔄 동기화 <b id="lastSyncTime">-</b> <span id="lastSyncSource"></span></div>
       </div>
     </div>
     <div class="hdr-right">
       <span class="load-badge loading" id="loadBadge"><span class="spinner"></span> 로딩 중...</span>
+      <button class="hdr-btn" id="syncBtn" onclick="manualSync()">🔄 채널톡 동기화</button>
       <button class="hdr-btn" onclick="fetchAll()">↺ 새로고침</button>
       <button class="hdr-btn" id="saveBtn" onclick="saveSummaryData()" style="background:rgba(16,163,74,0.2);border-color:rgba(16,163,74,0.5);color:#6ee7b7;" disabled>💾 마감저장</button>
       <button class="ai-btn" id="aiBtn" onclick="runAllAI()" disabled>✦ AI 분석</button>
@@ -1487,9 +1489,53 @@ window.addEventListener('message',function(e){
 document.getElementById('promptModal').addEventListener('click',function(e){if(e.target===this)closePromptModal();});
 
 // ════════════════════════════════════
+// 채널톡 동기화 (수동 버튼 + 최종 동기화 시각)
+// ════════════════════════════════════
+function renderSyncStatus(status){
+  const chip = document.getElementById('lastSyncChip');
+  const timeEl = document.getElementById('lastSyncTime');
+  const srcEl  = document.getElementById('lastSyncSource');
+  if(!status || !status.lastSync){ chip.style.display='none'; return; }
+  timeEl.textContent = status.lastSync;
+  srcEl.textContent = status.source==='auto' ? '(자동·새벽1시)' : '(수동)';
+  chip.style.display = '';
+  chip.style.opacity = status.ok===false ? '0.6' : '1';
+  if(status.ok===false) chip.title = status.msg||'동기화 실패';
+}
+
+async function loadSyncStatus(){
+  try {
+    const res = await fetch(`${SCRIPT_URL_CH}?action=getSyncStatus`);
+    const json = await res.json();
+    if(json.ok) renderSyncStatus(json.status);
+  } catch(e){ console.warn('동기화 상태 조회 실패', e); }
+}
+
+async function manualSync(){
+  const btn = document.getElementById('syncBtn');
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.textContent = '⏳ 동기화 중...';
+  try {
+    const res = await fetch(`${SCRIPT_URL_CH}?action=manualSync`);
+    const json = await res.json();
+    if(!json.ok) throw new Error(json.msg||'동기화 실패');
+    renderSyncStatus(json);
+    btn.textContent = '✓ 완료';
+    fetchAll(); // 동기화된 데이터로 화면 갱신
+  } catch(e){
+    console.warn(e);
+    btn.textContent = '⚠ 실패';
+  } finally {
+    setTimeout(()=>{ btn.textContent = origText; btn.disabled = false; }, 2000);
+  }
+}
+
+// ════════════════════════════════════
 // 초기화
 // ════════════════════════════════════
 buildPeriodTabs();
+loadSyncStatus();
 // 초기 탭: 토요일(6)부터는 이번주, 그 이전(월~금)은 지난주
 (function(){
   const now = new Date();

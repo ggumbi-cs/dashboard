@@ -653,7 +653,8 @@ svg.chart{width:100%;display:block;}
 // ════════════════════════════════════
 // 상수
 // ════════════════════════════════════
-const SCRIPT_URL       = 'https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec';
+const SCRIPT_URL_CH     = 'https://script.google.com/macros/s/AKfycbwvEW1UaZW7tgbRTstQZTyerkMGbAwW4n0qy05wcOFSpnhnxLOjQpWq5XCT1f_8WtAW/exec'; // 채널톡 전용 독립 프로젝트
+const SCRIPT_URL_MAIN   = 'https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec'; // AI인사이트/프롬프트/요약저장 등 기존 메인 프로젝트
 const CH_ACCESS_KEY    = '6a225a50ad66691b784d';
 const CH_ACCESS_SECRET = '521bdc134241c92aa6ff4ec76d8f22a6';
 
@@ -832,7 +833,7 @@ async function fetchAll() {
       endDate:   fmtDateFull(fetchEnd),
       type:      DATA.type,
     }))}`;
-    const res  = await fetch(SCRIPT_URL + qs);
+    const res  = await fetch(SCRIPT_URL_CH + qs);
     const json = await res.json();
     if (!json.ok) throw new Error(json.msg || '데이터 없음');
 
@@ -1323,7 +1324,7 @@ function closePromptModal(){document.getElementById('promptModal').classList.rem
 function savePrompts(){
   AI_TYPES.forEach(k=>{const el=document.getElementById('pt-'+k);if(el)PROMPTS[k]=el.value;});
   showToast('✓ 프롬프트 저장 완료','ok');closePromptModal();
-  fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'savePrompts',prompts:PROMPTS})}).catch(e=>console.warn(e));
+  fetch(SCRIPT_URL_MAIN,{method:'POST',body:JSON.stringify({action:'savePrompts',prompts:PROMPTS})}).catch(e=>console.warn(e));
 }
 function togglePanel(type){
   const body=document.getElementById('aiBody-'+type);const btn=document.getElementById('expandBtn-'+type);
@@ -1360,21 +1361,21 @@ async function runAICore(type,force=false){
   const output=document.getElementById('aiOutput-'+type);const savedAt=document.getElementById('aiSavedAt-'+type);
   const ds=buildDataSummary();const prompt=(PROMPTS[type]||DEFAULT_PROMPTS[type])+ds;
   try{
-    const resp=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'ai',prompt})});
+    const resp=await fetch(SCRIPT_URL_MAIN,{method:'POST',body:JSON.stringify({action:'ai',prompt})});
     const data=await resp.json();if(!data.ok)throw new Error(data.msg);
     if(output){output.className='ai-output';output.innerHTML=renderMarkdown(data.text);}
     openPanel(type);
     const saveKey=`채널톡__${DATA.period}__${type}`;const now=new Date().toLocaleString('ko-KR');
     if(savedAt)savedAt.textContent=`마지막 분석: ${now}`;
     document.getElementById('aiSavedInfo').innerHTML=`마지막 분석: <b>${now}</b>`;
-    fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'saveInsight',period:saveKey,insights:{_aiReport:data.text,_type:type,_period:DATA.period,_savedAt:now}})}).catch(e=>console.warn(e));
+    fetch(SCRIPT_URL_MAIN,{method:'POST',body:JSON.stringify({action:'saveInsight',period:saveKey,insights:{_aiReport:data.text,_type:type,_period:DATA.period,_savedAt:now}})}).catch(e=>console.warn(e));
   }catch(e){if(output){output.className='ai-output';output.textContent='⚠ 오류: '+e.message;}}
 }
 
 async function loadInsightFromSheet(type){
   const saveKey=`채널톡__${DATA.period}__${type}`;
   try{
-    const res=await fetch(`${SCRIPT_URL}?type=insight&period=${encodeURIComponent(saveKey)}&t=${Date.now()}`);
+    const res=await fetch(`${SCRIPT_URL_MAIN}?type=insight&period=${encodeURIComponent(saveKey)}&t=${Date.now()}`);
     const data=await res.json();
     if(data.ok&&data.insights&&data.insights._aiReport){
       const output=document.getElementById('aiOutput-'+type);const savedAt=document.getElementById('aiSavedAt-'+type);
@@ -1415,7 +1416,7 @@ function saveSummaryData() {
     savedAt:    new Date().toLocaleString('ko-KR')
   };
 
-  fetch(SCRIPT_URL, {
+  fetch(SCRIPT_URL_MAIN, {
     method: 'POST',
     body: JSON.stringify({
       action:  'saveSummary',

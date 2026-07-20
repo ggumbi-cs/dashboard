@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>반품현황</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#080f1e;--bg2:#0d1830;--bg3:#111e35;--bg4:#162240;
+  --border:rgba(0,200,255,0.10);--border2:rgba(0,200,255,0.20);
+  --cyan:#00c8ff;--cyan-dim:rgba(0,200,255,0.08);
+  --gold:#f0c060;--green:#00e5a0;--red:#ff5a6e;--orange:#ff9040;--purple:#a080ff;--blue:#4a9eff;
+  --text:#e8f0f8;--text2:#a8c8e0;--text3:#6a8faa;
+  --font-kr:'Noto Sans KR',sans-serif;--font-en:'Inter',sans-serif;
+}
+body.light{
+  --bg:#f0f4fa;--bg2:#ffffff;--bg3:#e8f0fb;--bg4:#dce8f7;
+  --border:rgba(26,78,180,0.12);--border2:rgba(26,78,180,0.25);
+  --cyan:#1a6eb8;--cyan-dim:rgba(26,110,184,0.08);
+  --gold:#b07800;--green:#007a50;--red:#c02020;--orange:#c05010;--purple:#5030b0;--blue:#1a5eb8;
+  --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6a9a;
+}
+html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--font-kr);overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+#pageHeader{padding:16px 24px 0;display:flex;align-items:center;justify-content:space-between;}
+.ph-title{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.ph-title::before{content:'';display:inline-block;width:3px;height:16px;background:var(--red);border-radius:2px;}
+.ph-sync{font-size:11px;color:var(--text3);}
+
+#tabBar{display:flex;align-items:center;gap:4px;padding:14px 24px 0;}
+.tab-btn{padding:6px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);font-family:var(--font-kr);transition:all 0.15s;}
+.tab-btn:hover{border-color:var(--border2);color:var(--text2);}
+.tab-btn.active{background:var(--cyan-dim);border-color:var(--border2);color:var(--cyan);}
+.tab-divider{width:1px;height:18px;background:var(--border);margin:0 8px;}
+
+#periodNav{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.pnav-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.pnav-btn:hover{border-color:var(--border2);color:var(--cyan);}
+#periodLabel{font-size:12px;font-weight:600;color:var(--text2);min-width:80px;text-align:center;}
+
+#mainContent{padding:16px 24px 40px;}
+
+.sec-hd{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:700;font-family:var(--font-en);color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;}
+.sec-hd::before{content:'';display:inline-block;width:3px;height:12px;border-radius:2px;}
+.sec-hd.red::before{background:var(--red);}
+.sec-hd.cyan::before{background:var(--cyan);}
+.sec-hd.green::before{background:var(--green);}
+.sec-hd.gold::before{background:var(--gold);}
+.sec-hd.purple::before{background:var(--purple);}
+.sec-hd .tag{margin-left:6px;font-size:9px;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0;}
+
+/* KPI */
+#kpiRow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden;}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi-card.total::before{background:var(--text3);}
+.kpi-card.appliance::before{background:var(--blue);}
+.kpi-card.mat::before{background:var(--purple);}
+.kpi-card.return::before{background:var(--red);}
+.kpi-card.exchange::before{background:var(--gold);}
+.kpi-label{font-size:10px;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.kpi-val{font-size:24px;font-weight:700;font-family:var(--font-en);line-height:1;}
+.kpi-val.total{color:var(--text);}
+.kpi-val.appliance{color:var(--blue);}
+.kpi-val.mat{color:var(--purple);}
+.kpi-val.return{color:var(--red);}
+.kpi-val.exchange{color:var(--gold);}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:4px;}
+
+/* 반품교환율 히어로 + 추이 */
+#rateRow{display:grid;grid-template-columns:1fr 1.4fr;gap:16px;margin-bottom:20px;}
+.rate-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
+.rate-hero{display:flex;align-items:baseline;gap:8px;margin-bottom:6px;}
+.rate-num{font-size:38px;font-weight:700;font-family:var(--font-en);color:var(--red);line-height:1;}
+.rate-unit{font-size:15px;color:var(--text3);font-weight:600;}
+.rate-sub{font-size:11px;color:var(--text3);}
+.rate-mini-row{display:flex;gap:10px;margin-top:14px;}
+.rate-mini{flex:1;background:var(--bg3);border-radius:9px;padding:9px 12px;border:1px solid var(--border);}
+.rate-mini-label{font-size:9px;color:var(--text3);margin-bottom:3px;}
+.rate-mini-val{font-size:14px;font-weight:700;font-family:var(--font-en);color:var(--text2);}
+
+.trend-chart{display:flex;align-items:flex-end;gap:14px;height:120px;padding-top:10px;}
+.trend-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px;}
+.trend-bar{width:100%;max-width:30px;border-radius:5px 5px 0 0;background:var(--red);transition:height 0.4s ease;}
+.trend-label{font-size:9px;color:var(--text3);font-family:var(--font-en);white-space:nowrap;}
+.trend-val{font-size:9px;color:var(--text2);font-family:var(--font-en);}
+
+/* 랭킹/사유 리스트 */
+#bottomGrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.analysis-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
+.rank-list{display:flex;flex-direction:column;gap:9px;}
+.rank-row{display:flex;align-items:center;gap:10px;}
+.rank-no{font-size:9px;font-weight:700;font-family:var(--font-en);color:var(--text3);width:16px;text-align:right;flex-shrink:0;}
+.rank-name{font-size:11px;color:var(--text2);min-width:88px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rank-bar-wrap{flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;}
+.rank-bar-fill{height:100%;border-radius:3px;transition:width 0.4s ease;}
+.rank-count{font-size:11px;font-weight:600;font-family:var(--font-en);color:var(--text);min-width:26px;text-align:right;}
+.rank-pct{font-size:10px;color:var(--text3);min-width:38px;text-align:right;}
+
+/* 가전 vs 가전외 사유 2단 */
+#reasonGrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+
+/* 이동/처리 결과 + 상위모델 유형비중 */
+#modelGrid{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;margin-bottom:20px;}
+.model-mini-row{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+.model-mini{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:9px 12px;}
+.model-mini-name{font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.model-mini-bar{height:10px;border-radius:5px;overflow:hidden;display:flex;background:var(--bg4);}
+.model-mini-seg{height:100%;}
+.model-mini-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:5px;}
+.mml-item{font-size:9px;color:var(--text3);display:flex;align-items:center;gap:3px;}
+.mml-dot{width:6px;height:6px;border-radius:50%;}
+
+.disp-bar-wrap{height:14px;border-radius:7px;overflow:hidden;display:flex;background:var(--bg4);margin-bottom:10px;}
+.disp-seg{height:100%;transition:width 0.4s ease;}
+.disp-legend{display:flex;gap:14px;flex-wrap:wrap;}
+.dl-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);}
+.dl-dot{width:8px;height:8px;border-radius:50%;}
+.dl-val{font-weight:700;font-family:var(--font-en);color:var(--text);}
+
+/* 재상품화 금액 */
+#restoreSection{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:20px;}
+.restore-hero-row{display:flex;gap:10px;margin-bottom:16px;}
+.restore-card{flex:1;background:var(--bg3);border-radius:10px;padding:11px 13px;border:1px solid var(--border);}
+.restore-label{font-size:9px;color:var(--text3);margin-bottom:4px;}
+.restore-val{font-size:17px;font-weight:700;font-family:var(--font-en);color:var(--green);}
+
+/* 빈 상태 / 로딩 */
+#emptyState{display:none;text-align:center;padding:60px 24px;}
+.empty-icon{font-size:48px;margin-bottom:16px;}
+.empty-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;}
+.empty-sub{font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:20px;}
+.empty-btn{padding:9px 24px;background:var(--green);color:#000;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-kr);}
+
+#loadingState{text-align:center;padding:60px 24px;}
+.loading-dots{display:inline-flex;gap:5px;margin-bottom:16px;}
+.loading-dots span{width:8px;height:8px;border-radius:50%;background:var(--cyan);animation:ldot 1.2s infinite;}
+.loading-dots span:nth-child(2){animation-delay:0.2s;}
+.loading-dots span:nth-child(3){animation-delay:0.4s;}
+@keyframes ldot{0%,80%,100%{opacity:0.2;transform:scale(0.8);}40%{opacity:1;transform:scale(1);}}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.fade-in{animation:fadeUp 0.4s ease both;}
+</style>
+</head>
+<body>
+
+<div id="pageHeader">
+  <div class="ph-title">↩️ 반품현황 — 반품 · 교환 통합</div>
+  <div class="ph-sync" id="syncInfo">-</div>
+</div>
+
+<div id="tabBar">
+  <button class="tab-btn" data-tab="weekly" onclick="setTab('weekly')">주간</button>
+  <button class="tab-btn active" data-tab="monthly" onclick="setTab('monthly')">월간</button>
+  <button class="tab-btn" data-tab="yearly" onclick="setTab('yearly')">연간</button>
+  <div class="tab-divider"></div>
+  <div id="periodNav">
+    <button class="pnav-btn" onclick="movePeriod(-1)">◀</button>
+    <div id="periodLabel">-</div>
+    <button class="pnav-btn" onclick="movePeriod(1)">▶</button>
+  </div>
+</div>
+
+<div id="loadingState">
+  <div class="loading-dots"><span></span><span></span><span></span></div>
+  <div style="font-size:13px;color:var(--text3);">데이터 불러오는 중...</div>
+</div>
+
+<div id="emptyState">
+  <div class="empty-icon">📭</div>
+  <div class="empty-title">데이터 동기화가 필요합니다</div>
+  <div class="empty-sub">노션과의 동기화가 아직 진행되지 않았습니다.<br>동기화 설정에서 수동 동기화를 실행해 주세요.</div>
+  <button class="empty-btn" onclick="goSync()">🔄 동기화 설정으로 이동</button>
+</div>
+
+<div id="mainContent" style="display:none;">
+
+  <!-- KPI -->
+  <div class="sec-hd red" style="margin-top:8px;">Overview <span class="tag">마감회차 기준 · 꿈비+소브 합산</span></div>
+  <div id="kpiRow">
+    <div class="kpi-card total">
+      <div class="kpi-label">📋 총 반품+교환</div>
+      <div class="kpi-val total" id="kpiTotal">-</div>
+      <div class="kpi-sub" id="kpiTotalSub">-</div>
+    </div>
+    <div class="kpi-card appliance">
+      <div class="kpi-label">🔌 가전</div>
+      <div class="kpi-val appliance" id="kpiAppliance">-</div>
+      <div class="kpi-sub" id="kpiApplianceSub">-</div>
+    </div>
+    <div class="kpi-card mat">
+      <div class="kpi-label">🛏️ 가전외</div>
+      <div class="kpi-val mat" id="kpiMat">-</div>
+      <div class="kpi-sub" id="kpiMatSub">-</div>
+    </div>
+    <div class="kpi-card return">
+      <div class="kpi-label">↩️ 반품</div>
+      <div class="kpi-val return" id="kpiReturn">-</div>
+      <div class="kpi-sub" id="kpiReturnSub">-</div>
+    </div>
+    <div class="kpi-card exchange">
+      <div class="kpi-label">🔄 교환</div>
+      <div class="kpi-val exchange" id="kpiExchange">-</div>
+      <div class="kpi-sub" id="kpiExchangeSub">-</div>
+    </div>
+  </div>
+
+  <!-- 반품/교환율 -->
+  <div class="sec-hd cyan">반품 · 교환율 <span class="tag">월간 고정 · 꿈비+소브 합산 (가전/가전외 구분 없음)</span></div>
+  <div id="rateRow">
+    <div class="rate-card">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:600;">이번 달 반품·교환율</div>
+      <div class="rate-hero">
+        <div class="rate-num" id="rateNum">-</div>
+        <div class="rate-unit">%</div>
+      </div>
+      <div class="rate-sub" id="rateSub">-</div>
+      <div class="rate-mini-row">
+        <div class="rate-mini">
+          <div class="rate-mini-label">월간 배송수량</div>
+          <div class="rate-mini-val" id="rateShip">-</div>
+        </div>
+        <div class="rate-mini">
+          <div class="rate-mini-label">월간 교환/반품 수량</div>
+          <div class="rate-mini-val" id="rateReturn">-</div>
+        </div>
+      </div>
+    </div>
+    <div class="rate-card">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600;">최근 6개월 추이</div>
+      <div class="trend-chart" id="rateTrendChart"></div>
+    </div>
+  </div>
+
+  <!-- 가전 vs 가전외 사유 -->
+  <div class="sec-hd gold">사유별 비중 <span class="tag">품목 구분 · DB1 사유 22종 기준</span></div>
+  <div id="reasonGrid">
+    <div class="analysis-card">
+      <div class="sec-hd cyan" style="margin-bottom:10px;">🔌 가전 <span class="tag">사유 Top 8</span></div>
+      <div class="rank-list" id="reasonApplianceList"></div>
+    </div>
+    <div class="analysis-card">
+      <div class="sec-hd purple" style="margin-bottom:10px;">🛏️ 가전외(매트 등) <span class="tag">사유 Top 8</span></div>
+      <div class="rank-list" id="reasonMatList"></div>
+    </div>
+  </div>
+
+  <!-- 상위 모델 + 이동/처리 결과 -->
+  <div class="sec-hd blue">모델별 반품유형 <span class="tag">반품검사 현황 · DB3 반품유형 기준 (사유 22종과 다른 카테고리)</span></div>
+  <div id="modelGrid">
+    <div class="analysis-card">
+      <div class="sec-hd blue" style="margin-bottom:6px;">반품 많은 상위 모델 Top 5 <span class="tag">모델별 반품유형 구성비</span></div>
+      <div class="model-mini-row" id="modelMiniList"></div>
+    </div>
+    <div class="analysis-card">
+      <div class="sec-hd green" style="margin-bottom:10px;">이동/처리 결과 분포</div>
+      <div class="disp-bar-wrap" id="dispBar"></div>
+      <div class="disp-legend" id="dispLegend"></div>
+    </div>
+  </div>
+
+  <!-- 재상품화 입고 금액 -->
+  <div id="restoreSection">
+    <div class="sec-hd green" style="margin-bottom:6px;">재상품화 입고 금액 <span class="tag">기존 반품처리 데이터 재사용 · 일반반품 재상품화 실적</span></div>
+    <div class="restore-hero-row">
+      <div class="restore-card"><div class="restore-label">이번 기간 처리금액</div><div class="restore-val" id="restoreVal">-</div></div>
+      <div class="restore-card"><div class="restore-label">처리건수</div><div class="restore-val" id="restoreCount">-</div></div>
+      <div class="restore-card"><div class="restore-label">전 기간 처리금액</div><div class="restore-val" id="restorePrev">-</div></div>
+    </div>
+    <div class="trend-chart" id="restoreTrendChart"></div>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// 설정
+// ─────────────────────────────────────────────
+const QC_GAS_URL = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
+const DATA_PATH  = '../qc_data.json';
+
+const RANK_COLORS = ['#4a9eff','#00e5a0','#f0c060','#ff5a6e','#a080ff','#4a9eff','#00e5a0','#f0c060'];
+const TYPE_COLORS = { '일반반품':'#4a9eff','변심반품':'#a080ff','불량반품':'#ff5a6e','불량교환':'#ff9040','AS':'#00e5a0','검수':'#6a8faa' };
+
+// ─────────────────────────────────────────────
+// 상태
+// ─────────────────────────────────────────────
+let _tab      = 'monthly';
+let _period   = todayPeriod('monthly');
+let _magam    = [];  // 반품마감 (DB1)
+let _rate     = [];  // 반품율 (DB2)
+let _inspect  = [];  // 반품검사 (DB3)
+let _restore  = [];  // 반품처리(재상품화 금액, 기존 데이터 재사용)
+
+// ─────────────────────────────────────────────
+// postMessage (테마)
+// ─────────────────────────────────────────────
+window.addEventListener('message', e => {
+  if (!e.data) return;
+  if (e.data.type === 'THEME') {
+    document.body.classList.toggle('light', e.data.mode === 'light');
+  }
+});
+const savedTheme = sessionStorage.getItem('_theme') || 'dark';
+if (savedTheme === 'light') document.body.classList.add('light');
+
+// ─────────────────────────────────────────────
+// 기간 유틸
+// ─────────────────────────────────────────────
+function todayPeriod(tab) {
+  const now = new Date();
+  if (tab === 'monthly') return { year: now.getFullYear(), month: now.getMonth()+1 };
+  if (tab === 'yearly')  return { year: now.getFullYear() };
+  const d = new Date(now);
+  d.setDate(d.getDate() - d.getDay() + 1);
+  return { year: d.getFullYear(), month: d.getMonth()+1, date: d.getDate() };
+}
+function periodLabel(tab, p) {
+  if (tab === 'monthly') return `${p.year}년 ${p.month}월`;
+  if (tab === 'yearly')  return `${p.year}년`;
+  return `${p.year}.${String(p.month).padStart(2,'0')}.${String(p.date).padStart(2,'0')} 주`;
+}
+function prevPeriod(tab, p) {
+  if (tab === 'monthly') { let m=p.month-1,y=p.year; if(m<1){m=12;y--;} return {year:y,month:m}; }
+  if (tab === 'yearly')  return {year:p.year-1};
+  const d=new Date(p.year,p.month-1,p.date); d.setDate(d.getDate()-7);
+  return {year:d.getFullYear(),month:d.getMonth()+1,date:d.getDate()};
+}
+function nextPeriod(tab, p) {
+  if (tab === 'monthly') { let m=p.month+1,y=p.year; if(m>12){m=1;y++;} return {year:y,month:m}; }
+  if (tab === 'yearly')  return {year:p.year+1};
+  const d=new Date(p.year,p.month-1,p.date); d.setDate(d.getDate()+7);
+  return {year:d.getFullYear(),month:d.getMonth()+1,date:d.getDate()};
+}
+function toISO(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function yy(year) { return String(year).slice(2); }
+function monthCode(year, month) { return `${yy(year)}.${String(month).padStart(2,'0')}월`; }
+function weekCode(year, month, date) { return `${yy(year)}${String(month).padStart(2,'0')}${String(date).padStart(2,'0')}`; }
+
+// 마감회차 필터: tab에 맞는 DB1 레코드 반환 (주간=weekCode 일치, 월간/연간=월간데이터 중 매칭)
+function filterMagam(records, tab, p) {
+  if (tab === 'weekly') {
+    const code = weekCode(p.year, p.month, p.date);
+    return records.filter(r => r.주월 === '주간' && r.마감회차 === code);
+  }
+  if (tab === 'monthly') {
+    const code = monthCode(p.year, p.month);
+    return records.filter(r => r.주월 === '월간' && r.마감회차 === code);
+  }
+  // yearly: 해당 연도의 월간 전체 합산
+  const prefix = yy(p.year) + '.';
+  return records.filter(r => r.주월 === '월간' && r.마감회차 && r.마감회차.startsWith(prefix));
+}
+
+function periodRange(tab, p) {
+  if (tab === 'monthly') {
+    const s = new Date(p.year, p.month-1, 1);
+    const e = new Date(p.year, p.month, 0);
+    return { start: toISO(s), end: toISO(e) };
+  }
+  if (tab === 'yearly') return { start:`${p.year}-01-01`, end:`${p.year}-12-31` };
+  const mon = new Date(p.year, p.month-1, p.date);
+  const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+  return { start: toISO(mon), end: toISO(sun) };
+}
+function filterByDate(records, dateField, tab, p) {
+  const {start, end} = periodRange(tab, p);
+  return records.filter(r => r[dateField] && r[dateField] >= start && r[dateField] <= end);
+}
+
+// ─────────────────────────────────────────────
+// 탭 / 기간 조작
+// ─────────────────────────────────────────────
+function setTab(tab) {
+  _tab = tab;
+  _period = todayPeriod(tab);
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  render();
+}
+function movePeriod(dir) {
+  _period = dir < 0 ? prevPeriod(_tab, _period) : nextPeriod(_tab, _period);
+  render();
+}
+
+// ─────────────────────────────────────────────
+// 데이터 로드
+// ─────────────────────────────────────────────
+async function loadData() {
+  showLoading();
+  try {
+    const res  = await fetch(DATA_PATH + '?t=' + Date.now());
+    const data = await res.json();
+
+    _magam   = (data.반품마감 && data.반품마감.records) || [];
+    _rate    = (data.반품율 && data.반품율.records) || [];
+    _inspect = (data.반품검사 && data.반품검사.records) || [];
+    _restore = (data.반품처리 && data.반품처리.records) || [];
+
+    if (!_magam.length) { showEmpty(); return; }
+
+    document.getElementById('syncInfo').textContent =
+      data.lastSynced ? `최근 동기화: ${new Date(data.lastSynced).toLocaleString('ko-KR')}` : '-';
+
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('mainContent').style.display  = '';
+    render();
+  } catch(e) {
+    showEmpty();
+  }
+}
+
+// ─────────────────────────────────────────────
+// 렌더 총괄
+// ─────────────────────────────────────────────
+function render() {
+  document.getElementById('periodLabel').textContent = periodLabel(_tab, _period);
+
+  const curMagam = filterMagam(_magam, _tab, _period);
+  const curInspect = filterByDate(_inspect, '등록일자', _tab, _period);
+  const curRestore = filterByDate(_restore, '처리일', _tab, _period);
+  const prevRestore = filterByDate(_restore, '처리일', _tab, prevPeriod(_tab, _period));
+
+  renderKpi(curMagam);
+  renderRate();
+  renderReason(curMagam);
+  renderModelAndDisposal(curInspect);
+  renderRestore(curRestore, prevRestore);
+}
+
+// ─────────────────────────────────────────────
+// KPI (DB1 건수 합산)
+// ─────────────────────────────────────────────
+function sumBy(records, filterFn) {
+  return records.filter(filterFn).reduce((s,r) => s + (r.건수||0), 0);
+}
+function renderKpi(cur) {
+  const total = sumBy(cur, ()=>true);
+  const appliance = sumBy(cur, r => r.품목 === '가전');
+  const mat = sumBy(cur, r => r.품목 === '가전외');
+  const ret = sumBy(cur, r => r.교환반품 === '반품');
+  const exc = sumBy(cur, r => r.교환반품 === '교환');
+
+  document.getElementById('kpiTotal').textContent = total;
+  document.getElementById('kpiTotalSub').textContent = `꿈비+소브 합산`;
+  document.getElementById('kpiAppliance').textContent = appliance;
+  document.getElementById('kpiApplianceSub').textContent = total? (appliance/total*100).toFixed(1)+'%' : '-';
+  document.getElementById('kpiMat').textContent = mat;
+  document.getElementById('kpiMatSub').textContent = total? (mat/total*100).toFixed(1)+'%' : '-';
+  document.getElementById('kpiReturn').textContent = ret;
+  document.getElementById('kpiReturnSub').textContent = total? (ret/total*100).toFixed(1)+'%' : '-';
+  document.getElementById('kpiExchange').textContent = exc;
+  document.getElementById('kpiExchangeSub').textContent = total? (exc/total*100).toFixed(1)+'%' : '-';
+}
+
+// ─────────────────────────────────────────────
+// 사유별 비중 (가전 / 가전외 각각)
+// ─────────────────────────────────────────────
+function renderReasonList(cur, gubun, elId) {
+  const rows = cur.filter(r => r.품목 === gubun);
+  const cnt = {};
+  rows.forEach(r => { cnt[r.사유] = (cnt[r.사유]||0) + (r.건수||0); });
+  const arr = Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const total = rows.reduce((s,r)=>s+(r.건수||0),0) || 1;
+  const el = document.getElementById(elId);
+  if (!arr.length) { el.innerHTML = '<div style="font-size:11px;color:var(--text3);">데이터 없음</div>'; return; }
+  el.innerHTML = arr.map(([name,count],i) => `
+    <div class="rank-row">
+      <div class="rank-no">${i+1}</div>
+      <div class="rank-name" title="${name}">${name}</div>
+      <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${count/arr[0][1]*100}%;background:${RANK_COLORS[i]}"></div></div>
+      <div class="rank-count">${count}</div>
+      <div class="rank-pct">${(count/total*100).toFixed(1)}%</div>
+    </div>`).join('');
+}
+function renderReason(cur) {
+  renderReasonList(cur, '가전', 'reasonApplianceList');
+  renderReasonList(cur, '가전외', 'reasonMatList');
+}
+
+// ─────────────────────────────────────────────
+// 상위 모델(Top5) + 모델별 반품유형 구성비, 이동/처리 결과 분포
+// ─────────────────────────────────────────────
+function renderModelAndDisposal(cur) {
+  // 상위 모델 Top5
+  const modelCnt = {};
+  cur.forEach(r => { const k = r.제품명 || '미지정'; modelCnt[k] = (modelCnt[k]||0)+1; });
+  const topModels = Object.entries(modelCnt).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  const el = document.getElementById('modelMiniList');
+  if (!topModels.length) { el.innerHTML = '<div style="font-size:11px;color:var(--text3);">데이터 없음</div>'; }
+  else {
+    el.innerHTML = topModels.map(([name,count]) => {
+      const rows = cur.filter(r => (r.제품명||'미지정') === name);
+      const typeCnt = {};
+      rows.forEach(r => { const t = r.반품유형 || '미지정'; typeCnt[t] = (typeCnt[t]||0)+1; });
+      const segs = Object.entries(typeCnt).sort((a,b)=>b[1]-a[1]);
+      const segHtml = segs.map(([t,c]) => `<div class="model-mini-seg" style="width:${c/count*100}%;background:${TYPE_COLORS[t]||'#6a8faa'}"></div>`).join('');
+      const legendHtml = segs.map(([t,c]) => `<div class="mml-item"><span class="mml-dot" style="background:${TYPE_COLORS[t]||'#6a8faa'}"></span>${t} ${c}</div>`).join('');
+      return `<div class="model-mini">
+        <div class="model-mini-name" title="${name}">${shortName(name)} <span style="color:var(--text3);font-weight:400;">· ${count}건</span></div>
+        <div class="model-mini-bar">${segHtml}</div>
+        <div class="model-mini-legend">${legendHtml}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // 이동/처리 결과 분포
+  const dispCnt = { 재상품화:0, 폐기:0, 원자재화:0, 미선택:0 };
+  cur.forEach(r => {
+    if (r.이동처리 === '안성물류이동') dispCnt.재상품화++;
+    else if (r.이동처리 === '안성폐기' || r.이동처리 === '자체폐기') dispCnt.폐기++;
+    else if (r.이동처리 === '원자재화') dispCnt.원자재화++;
+    else dispCnt.미선택++;
+  });
+  const dispTotal = Object.values(dispCnt).reduce((a,b)=>a+b,0) || 1;
+  const dispColors = { 재상품화:'var(--green)', 폐기:'var(--red)', 원자재화:'var(--gold)', 미선택:'var(--text3)' };
+  document.getElementById('dispBar').innerHTML = Object.entries(dispCnt).map(([k,v]) =>
+    `<div class="disp-seg" style="width:${v/dispTotal*100}%;background:${dispColors[k]}"></div>`).join('');
+  document.getElementById('dispLegend').innerHTML = Object.entries(dispCnt).map(([k,v]) =>
+    `<div class="dl-item"><span class="dl-dot" style="background:${dispColors[k]}"></span>${k} <span class="dl-val">${v}건</span></div>`).join('');
+}
+
+// ─────────────────────────────────────────────
+// 반품/교환율 (월간 고정, 꿈비+소브 합산 재계산)
+// ─────────────────────────────────────────────
+function monthlyRateAgg(records, year, month) {
+  const code = monthCode(year, month);
+  const rows = records.filter(r => r.마감월 === code);
+  const ship = rows.reduce((s,r)=>s+(r.월간배송수량||0),0);
+  const ret  = rows.reduce((s,r)=>s+(r.월간교환반품수량||0),0);
+  return { ship, ret, rate: ship? (ret/ship*100) : null };
+}
+function renderRate() {
+  // 탭이 주간/연간이어도 "월간 표시" 원칙 → 현재 period의 연/월(주간이면 그 주가 속한 월)을 기준으로 표시
+  const y = _period.year, m = _period.month || (new Date()).getMonth()+1;
+  const agg = monthlyRateAgg(_rate, y, m);
+  document.getElementById('rateNum').textContent = agg.rate!==null ? agg.rate.toFixed(2) : '-';
+  document.getElementById('rateSub').textContent = `${monthCode(y,m)} 기준 (월간 데이터만 존재)`;
+  document.getElementById('rateShip').textContent = agg.ship.toLocaleString()+'개';
+  document.getElementById('rateReturn').textContent = agg.ret.toLocaleString()+'건';
+
+  // 최근 6개월 추이
+  const now = new Date(y, (m||1)-1, 1);
+  const months = [];
+  for (let i=5;i>=0;i--) { const d=new Date(now.getFullYear(), now.getMonth()-i, 1); months.push({year:d.getFullYear(), month:d.getMonth()+1}); }
+  const vals = months.map(mm => monthlyRateAgg(_rate, mm.year, mm.month));
+  const maxVal = Math.max(...vals.map(v=>v.rate||0), 1);
+  const el = document.getElementById('rateTrendChart');
+  el.innerHTML = months.map((mm,i) => {
+    const v = vals[i].rate;
+    const h = v!==null ? Math.max(v/maxVal*100, 3) : 2;
+    return `<div class="trend-col">
+      <div class="trend-val">${v!==null? v.toFixed(1)+'%':'-'}</div>
+      <div class="trend-bar" style="height:${h}%;"></div>
+      <div class="trend-label">${mm.month}월</div>
+    </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+// 재상품화 입고 금액 (기존 반품처리 데이터 재사용)
+// ─────────────────────────────────────────────
+function renderRestore(cur, prev) {
+  const curSum = cur.reduce((s,r)=>s+(r.처리금액||0),0);
+  const prevSum = prev.reduce((s,r)=>s+(r.처리금액||0),0);
+  document.getElementById('restoreVal').textContent = curSum.toLocaleString()+'원';
+  document.getElementById('restoreCount').textContent = cur.length+'건';
+  document.getElementById('restorePrev').textContent = prevSum.toLocaleString()+'원';
+
+  const now = new Date();
+  const months = [];
+  for (let i=5;i>=0;i--) { const d=new Date(now.getFullYear(), now.getMonth()-i, 1); months.push({year:d.getFullYear(), month:d.getMonth()+1}); }
+  const monthly = months.map(mm => {
+    const start = `${mm.year}-${String(mm.month).padStart(2,'0')}-01`;
+    const end = toISO(new Date(mm.year, mm.month, 0));
+    const sum = _restore.filter(r => r.처리일 && r.처리일>=start && r.처리일<=end).reduce((s,r)=>s+(r.처리금액||0),0);
+    return { label:`${mm.month}월`, sum };
+  });
+  const maxVal = Math.max(...monthly.map(m=>m.sum), 1);
+  const el = document.getElementById('restoreTrendChart');
+  el.innerHTML = monthly.map(m => {
+    const h = Math.max(m.sum/maxVal*100, 2);
+    return `<div class="trend-col">
+      <div class="trend-val">${m.sum? (m.sum/10000).toFixed(0)+'만':'-'}</div>
+      <div class="trend-bar" style="height:${h}%;background:var(--green);"></div>
+      <div class="trend-label">${m.label}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+// 유틸
+// ─────────────────────────────────────────────
+function shortName(name) {
+  if (!name) return '-';
+  let n = String(name).replace(/\[집계\]\s*/g,'').replace(/\[.*?\]\s*/g,'').trim();
+  return n.length > 16 ? n.slice(0,15)+'..' : n;
+}
+function showLoading() {
+  document.getElementById('loadingState').style.display = '';
+  document.getElementById('emptyState').style.display   = 'none';
+  document.getElementById('mainContent').style.display  = 'none';
+}
+function showEmpty() {
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('emptyState').style.display   = '';
+  document.getElementById('mainContent').style.display  = 'none';
+}
+function goSync() {
+  window.parent.postMessage({type:'GO_TAB', tab:'sync'}, '*');
+}
+
+// ─────────────────────────────────────────────
+// 진입
+// ─────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>

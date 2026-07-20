@@ -431,13 +431,9 @@ body.is-admin .notice-admin-gear { display:flex; }
         <span class="nav-home-icon">🏠</span>
         <span>대시보드 홈</span>
       </div>
-      <div class="nav-home-item" data-tab="" onclick="goTab('')">
-        <span class="nav-home-icon">✨</span>
-        <span>종합 현황</span>
-      </div>
 
-      <!-- 품질 모니터링 -->
-      <div class="nav-category">품질 모니터링</div>
+      <!-- ✨종합 현황 (구 품질 모니터링) -->
+      <div class="nav-category">✨종합 현황</div>
       <div class="nav-item" data-tab="모니터링/불량현황.html" onclick="goTab('모니터링/불량현황.html')">
         <span style="font-size:15px;">📊</span>
         <span class="nav-item-label">불량현황</span>
@@ -445,6 +441,21 @@ body.is-admin .notice-admin-gear { display:flex; }
       <div class="nav-item" data-tab="모니터링/처리현황.html" onclick="goTab('모니터링/처리현황.html')">
         <span style="font-size:15px;">📦</span>
         <span class="nav-item-label">처리현황</span>
+      </div>
+      <div class="nav-item" data-tab="반품입고/반품현황.html" onclick="goTab('반품입고/반품현황.html')">
+        <span style="font-size:15px;">↩️</span>
+        <span class="nav-item-label">반품현황</span>
+      </div>
+
+      <!-- 품질 반품검사 -->
+      <div class="nav-category">품질 반품검사</div>
+      <div class="nav-item" data-tab="https://cs-as-app.vercel.app/" onclick="goTab('https://cs-as-app.vercel.app/')">
+        <span style="font-size:15px;">↩️</span>
+        <span class="nav-item-label">반품 종합검사</span>
+      </div>
+      <div class="nav-item" data-tab="반품입고/반품처리금액.html" onclick="goTab('반품입고/반품처리금액.html')">
+        <span class="nav-step">₩</span>
+        <span class="nav-item-label">반품입고 비용현황</span>
       </div>
 
       <!-- 품질 액션현황 -->
@@ -472,17 +483,6 @@ body.is-admin .notice-admin-gear { display:flex; }
       <div class="nav-item" data-tab="액션현황/액션현황.html" onclick="goTab('액션현황/액션현황.html')">
         <span class="nav-step">S5</span>
         <span class="nav-item-label">개선(검사)완료</span>
-      </div>
-
-      <!-- 품질 반품검사 -->
-      <div class="nav-category">품질 반품검사</div>
-      <div class="nav-item" data-tab="https://cs-as-app.vercel.app/" onclick="goTab('https://cs-as-app.vercel.app/')">
-        <span style="font-size:15px;">↩️</span>
-        <span class="nav-item-label">반품 종합검사</span>
-      </div>
-      <div class="nav-item" data-tab="반품입고/반품처리금액.html" onclick="goTab('반품입고/반품처리금액.html')">
-        <span class="nav-step">₩</span>
-        <span class="nav-item-label">반품입고 비용현황</span>
       </div>
 
       <!-- 기타 -->

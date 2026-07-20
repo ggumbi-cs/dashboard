@@ -161,6 +161,63 @@
 // ================================================================
 const GAS_URL = 'https://script.google.com/macros/s/AKfycby5wfJy4LMghTp4ILrdQ_hMLblDtV8gTigOEnpcJQT0dB1Xk-7XUyWbaryP9mrbFLrrCg/exec';
 
+// 품질관리/처리관리 원본 프로젝트들이 공용으로 쓰는 데이터 소스 GAS (읽기 전용, report_hub와는 별개)
+const QC_GAS_URL  = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
+const QC_DATA_PATH = '../qc_data.json'; // 정적 JSON 우선 시도, 실패 시 GAS 실시간 폴백
+
+// ── 공용: 'YYYY-MM-DD' 또는 유사 날짜 문자열 파싱 ──
+function parseYmd(str) {
+  if (!str) return null;
+  const s = String(str).trim();
+  const m = s.match(/(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/);
+  if (m) return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+// ── 공용: 브랜드/괄호 태그 제거한 짧은 이름 ──
+function stripTag(name) {
+  if (!name) return '';
+  return String(name).replace(/\[.*?\]\s*/g, '').trim();
+}
+
+// ── 공용: 상위 N개 집계 (이름별 카운트) ──
+function topNByCount(rows, getKey, n, excludeFn) {
+  const counts = {};
+  rows.forEach(r => {
+    const key = getKey(r);
+    if (!key) return;
+    if (excludeFn && excludeFn(key)) return;
+    counts[key] = (counts[key] || 0) + 1;
+  });
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,n).map(([name,cnt])=>({name,cnt}));
+}
+
+// ── 불량현황 전용: 접수불량 우선, 없으면 확인불량으로 보완 (원본 로직 그대로) ──
+function faultsOf(r) {
+  const parseArr = v => Array.isArray(v) ? v : (() => { try { return JSON.parse(v||'[]'); } catch { return []; } })();
+  const jsFaults = parseArr(r.접수불량);
+  const cfFaults = parseArr(r.확인불량);
+  const valid = arr => arr.filter(f => f && f!=='특이사항없음' && f!=='미확인');
+  const j = valid(jsFaults);
+  return j.length > 0 ? j : valid(cfFaults);
+}
+
+// ── 공용: 정적 JSON(키) 우선 → 실패 시 GAS action 폴백 ──
+async function loadQcData(jsonKey, gasAction) {
+  try {
+    const res = await fetch(QC_DATA_PATH);
+    if (res.ok) {
+      const json = await res.json();
+      if (json[jsonKey] && json[jsonKey].records) return json[jsonKey].records;
+    }
+  } catch (e) {}
+  const res2 = await fetch(`${QC_GAS_URL}?action=${gasAction}`, { redirect: 'follow' });
+  const json2 = await res2.json();
+  if (json2.ok && json2.records) return json2.records;
+  throw new Error('데이터 로드 실패 (' + jsonKey + ')');
+}
+
 // ── 스마트스토어 브랜드명 매핑 (원본 로직 이식) ──
 function ssShortName(orig) {
   const s = String(orig || '');
@@ -202,14 +259,134 @@ function buildDashboardSummary(rows, ratingKey) {
 const MODULES = {
 
   // ── 품질관리 ──
-  defect:  { name: '불량현황',       ready: false },
+  defect: {
+    name: '불량현황',
+    ready: true,
+    project: '불량현황',
+    async loadData() {
+      const records = await loadQcData('가전', 'getQcDefectData');
+      return records.map(r => ({ ...r, dateObj: parseYmd(r.접수일) }));
+    },
+    buildSummary(rows) {
+      const total = rows.length;
+      if (total === 0) return null;
+      const exchange = rows.filter(r => r.구분 === '교환/환불').length;
+      const material = rows.filter(r => r.구분 === '자재출고').length;
+      const repair   = rows.filter(r => r.구분 === '수리출고').length;
+      const top5Products = topNByCount(rows, r => r.제품명, 5, k => k.startsWith('[집계]'));
+      const top10Faults = topNByCount(
+        rows.flatMap(r => faultsOf(r).map(f => ({ __f: f }))),
+        r => r.__f, 10
+      );
+      return { total, exchange, material, repair, top5Products, top10Faults };
+    }
+  },
+
   action:  { name: '액션현황',       ready: false },
-  return:  { name: '반품현황',       ready: false },
+
+  return: {
+    name: '반품현황',
+    ready: true,
+    project: '반품현황',
+    async loadData() {
+      const records = await loadQcData('반품처리', 'getReturnCostData');
+      return records.map(r => ({ ...r, dateObj: parseYmd(r.처리일) }));
+    },
+    buildSummary(rows) {
+      const total = rows.length;
+      if (total === 0) return null;
+      const totalAmount = rows.reduce((s,r)=>s+(r.처리금액||0),0);
+      const totalQty    = rows.reduce((s,r)=>s+(r.처리수량||0),0);
+      const re = rows.filter(r => r.처리결과 === '재상품화');
+      const rm = rows.filter(r => r.처리결과 === '원자재화');
+      const reAmount = re.reduce((s,r)=>s+(r.처리금액||0),0);
+      const rmAmount = rm.reduce((s,r)=>s+(r.처리금액||0),0);
+      // 제품별 처리금액 Top5
+      const byProd = {};
+      rows.forEach(r => {
+        if (!r.제품명) return;
+        const n = stripTag(r.제품명);
+        if (!byProd[n]) byProd[n] = { amt:0, cnt:0 };
+        byProd[n].amt += r.처리금액 || 0;
+        byProd[n].cnt++;
+      });
+      const top5Products = Object.entries(byProd).sort((a,b)=>b[1].amt-a[1].amt).slice(0,5)
+        .map(([name,v]) => ({ name, amt: v.amt, cnt: v.cnt }));
+      return { total, totalAmount, totalQty, reCount: re.length, reAmount, rmCount: rm.length, rmAmount, top5Products };
+    }
+  },
 
   // ── 처리관리 ──
-  process:      { name: '처리현황',       ready: false },
+  process: { name: '처리현황', ready: false },
+
+  delivery: {
+    name: '택배출고 현황',
+    ready: true,
+    project: '택배출고 현황',
+    async loadData() {
+      // 정적 스냅샷(출력요청 제외) + 실시간 출력요청 건 합산 (원본 getCombined()와 동일)
+      let staticRows = [];
+      try {
+        const res = await fetch(QC_DATA_PATH);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.택배출고 && json.택배출고.records) {
+            staticRows = json.택배출고.records.filter(r => r.상태 !== '출력요청');
+          }
+        }
+      } catch (e) {}
+      let realtimeRows = [];
+      try {
+        const res2 = await fetch(`${QC_GAS_URL}?action=getTaekbaeRealtime`, { redirect: 'follow' });
+        const json2 = await res2.json();
+        if (json2.ok && json2.records) realtimeRows = json2.records;
+      } catch (e) {}
+      const all = [...realtimeRows, ...staticRows];
+      // '현황보기' 탭 원본 로직: 출력일이 기록된 건만 대상, 기간 필터도 출력일 기준
+      return all.filter(r => r.출력일).map(r => ({ ...r, dateObj: parseYmd(r.출력일) }));
+    },
+    buildSummary(rows) {
+      const total = rows.length;
+      if (total === 0) return null;
+      // 모델명 × 구분(대상/자재출고) 집계 — 원본 renderDashboard()의 map 로직 그대로
+      const byModel = {};
+      rows.forEach(r => {
+        const model = r.모델명 || '(모델명 미지정)';
+        if (!byModel[model]) byModel[model] = { model, total: 0, daesang: 0, jaeja: 0 };
+        byModel[model].total++;
+        if (r.구분 === '대상') byModel[model].daesang++; else byModel[model].jaeja++;
+      });
+      const modelRows = Object.values(byModel);
+      const daesangCount = modelRows.reduce((s,r)=>s+r.daesang, 0);
+      const jaejaCount   = modelRows.reduce((s,r)=>s+r.jaeja, 0);
+      const top5Models = modelRows.sort((a,b)=>b.total-a.total).slice(0,5)
+        .map(r => ({ name: r.model, cnt: r.total, daesang: r.daesang, jaeja: r.jaeja }));
+      return { total, daesangCount, jaejaCount, modelCount: modelRows.length, top5Models };
+    }
+  },
+
   material_out: { name: '자재출고 현황',   ready: false },
-  material_in:  { name: '자재발주 현황',   ready: false },
+
+  material_in: {
+    name: '자재발주 현황',
+    ready: true,
+    project: '자재발주 현황',
+    async loadData() {
+      const res = await fetch(`${QC_GAS_URL}?action=getZaejaeData`, { redirect: 'follow' });
+      const json = await res.json();
+      if (!json.ok || !json.records) throw new Error('자재발주 데이터 로드 실패');
+      return json.records.map(r => ({ ...r, dateObj: parseYmd(r.기안일) }));
+    },
+    buildSummary(rows) {
+      const total = rows.length;
+      if (total === 0) return null;
+      const statuses = ['사전체크','기안진행','결재대기','입고대기','미입고','중단'];
+      const byStatus = {};
+      statuses.forEach(s => { byStatus[s] = rows.filter(r => r.진행상태 === s).length; });
+      const top5Products = topNByCount(rows, r => r.제품구분, 5);
+      return { total, byStatus, top5Products };
+    }
+  },
 
   // ── 고객관리 ──
   smartstore: {
@@ -254,7 +431,7 @@ const MODULES = {
 // ================================================================
 const CATEGORIES = [
   { title: '품질관리', items: ['defect', 'action', 'return'] },
-  { title: '처리관리', items: ['process', 'material_out', 'material_in'] },
+  { title: '처리관리', items: ['process', 'delivery', 'material_out', 'material_in'] },
   { title: '고객관리', items: ['smartstore', 'channeltalk'] },
 ];
 

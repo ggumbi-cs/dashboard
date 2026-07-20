@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>통합 마감전송 허브</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f6fb; --surface: #ffffff; --surface2: #f0f3f9; --border: #dde3ef;
+    --accent: #4470e8; --accent2: #7c5cdb; --accent-low: #4470e812;
+    --green: #0d9e6e; --green-low: #0d9e6e12;
+    --yellow: #d97706; --yellow-low: #d9770612;
+    --red: #dc3545; --red-low: #dc354512;
+    --text: #1a1f2e; --text2: #4a5568; --text3: #9aa5b4;
+    --radius: 10px;
+    --font: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 14px; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+
+  .header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 8px rgba(0,0,0,.06); padding: 16px 24px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .header-title { font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: -.5px; }
+  .header-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  .content { max-width: 980px; margin: 0 auto; padding: 24px; }
+
+  .category { margin-bottom: 28px; }
+  .category-title {
+    font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .category-title .bar { width: 4px; height: 14px; background: var(--accent); border-radius: 2px; }
+
+  .item-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    margin-bottom: 10px; overflow: hidden;
+  }
+  .item-head {
+    display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+  }
+  .item-name { font-size: 13px; font-weight: 700; color: var(--text); min-width: 120px; }
+  .item-status { display: flex; gap: 8px; flex: 1; flex-wrap: wrap; }
+  .status-badge {
+    font-size: 11px; padding: 3px 10px; border-radius: 20px; font-family: var(--mono);
+    background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
+  }
+  .status-badge.monthly { color: var(--accent); border-color: var(--accent); background: var(--accent-low); }
+  .status-badge.weekly  { color: var(--green); border-color: var(--green); background: var(--green-low); }
+  .status-badge.none    { color: var(--text3); }
+
+  .item-toggle-btn {
+    background: linear-gradient(135deg, #4470e8, #7c5cdb); color: #fff; border: none;
+    border-radius: 8px; padding: 7px 14px; font-family: var(--font); font-size: 12px; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+  }
+  .item-toggle-btn:hover { opacity: .9; }
+  .item-toggle-btn:disabled { background: var(--surface2); color: var(--text3); cursor: not-allowed; }
+
+  .item-panel { display: none; border-top: 1px solid var(--border); padding: 16px 18px; background: var(--surface2); }
+  .item-panel.open { display: block; }
+
+  .panel-not-ready { font-size: 12px; color: var(--text3); line-height: 1.6; }
+
+  .period-type-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .period-type-btn {
+    flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+    padding: 7px 0; font-family: var(--font); font-size: 12px; font-weight: 600; color: var(--text2);
+    cursor: pointer; transition: all .15s;
+  }
+  .period-type-btn.active { background: var(--accent-low); border-color: var(--accent); color: var(--accent); }
+
+  .period-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 6px;
+    margin-bottom: 12px; max-height: 260px; overflow-y: auto; padding: 2px;
+  }
+  .period-check {
+    display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 7px 10px; font-size: 12px; cursor: pointer; user-select: none;
+  }
+  .period-check.sent { border-color: var(--green); background: var(--green-low); }
+  .period-check input { cursor: pointer; }
+  .period-check .lbl { flex: 1; }
+  .period-check .tag-sent { font-size: 10px; color: var(--green); font-weight: 700; }
+
+  .panel-actions { display: flex; align-items: center; gap: 10px; }
+  .btn-select-all {
+    background: none; border: 1px solid var(--border); border-radius: 6px; padding: 7px 12px;
+    font-family: var(--font); font-size: 12px; color: var(--text2); cursor: pointer;
+  }
+  .btn-select-all:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-send-selected {
+    background: linear-gradient(135deg, #4470e8, #7c5cdb); color: #fff; border: none; border-radius: 6px;
+    padding: 8px 16px; font-family: var(--font); font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .btn-send-selected:hover { opacity: .9; }
+  .btn-send-selected:disabled { opacity: .5; cursor: not-allowed; }
+
+  .panel-log { margin-top: 10px; font-size: 11px; color: var(--text2); font-family: var(--mono); max-height: 120px; overflow-y: auto; }
+  .panel-log div { padding: 2px 0; }
+  .panel-log .ok  { color: var(--green); }
+  .panel-log .err { color: var(--red); }
+  .panel-log .run { color: var(--yellow); }
+
+  /* ── 전역 일괄전송 바 ── */
+  .global-bar {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .global-bar-label { font-size: 12px; font-weight: 700; color: var(--text); margin-right: 4px; }
+  .btn-global-send {
+    background: linear-gradient(135deg, #0d9e6e, #4470e8); color: #fff; border: none; border-radius: 7px;
+    padding: 8px 16px; font-family: var(--font); font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .btn-global-send:hover { opacity: .9; }
+  .btn-global-send:disabled { opacity: .5; cursor: not-allowed; }
+  .global-bar-note { font-size: 11px; color: var(--text3); width: 100%; margin-top: 2px; }
+
+  /* ── 항목별 실시간 전송 상태 ── */
+  .live-status {
+    font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 4px; white-space: nowrap;
+  }
+  .live-status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); }
+  .live-status.idle    .dot { background: var(--text3); }
+  .live-status.running .dot { background: var(--yellow); animation: pulse 1s infinite; }
+  .live-status.ok       .dot { background: var(--green); }
+  .live-status.err      .dot { background: var(--red); }
+  .live-status.idle    { color: var(--text3); }
+  .live-status.running { color: var(--yellow); }
+  .live-status.ok       { color: var(--green); }
+  .live-status.err      { color: var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">📋 통합 마감전송 허브</div>
+  <div class="header-sub">각 프로젝트별 실적을 주간/월간 단위로 집계해서 GAS로 전송</div>
+</div>
+
+<div class="content">
+  <div class="global-bar">
+    <span class="global-bar-label">🚀 전체 일괄 마감전송</span>
+    <button class="btn-global-send" onclick="sendAllReady('monthly')">이번 달치 전체 전송</button>
+    <button class="btn-global-send" onclick="sendAllReady('weekly')">이번 주치(최근 마감주) 전체 전송</button>
+    <div class="global-bar-note">연동 완료된(⏳ 아닌) 항목들만 대상으로 각자 해당 기간을 집계해서 한 번에 전송합니다.</div>
+  </div>
+  <div id="content"></div>
+</div>
+
+<script>
+// ================================================================
+// 공통 설정
+// ================================================================
+const GAS_URL = 'https://script.google.com/macros/s/AKfycby5wfJy4LMghTp4ILrdQ_hMLblDtV8gTigOEnpcJQT0dB1Xk-7XUyWbaryP9mrbFLrrCg/exec';
+
+// ── 스마트스토어 브랜드명 매핑 (원본 로직 이식) ──
+function ssShortName(orig) {
+  const s = String(orig || '');
+  return s.replace(/^\[[^\]]*\]\s*/, '').slice(0, 24);
+}
+function ssGetBrand(name) {
+  const s = String(name || '');
+  if (s.includes('꿈비')) return '꿈비';
+  if (s.includes('리코코')) return '리코코';
+  if (s.includes('바바디토')) return '바바디토';
+  return '기타';
+}
+function ssParseDate(str) {
+  if (!str) return null;
+  const m = String(str).match(/(\d{4})\.(\d{2})\.(\d{2})/);
+  if (m) return new Date(m[1], m[2]-1, m[3]);
+  return null;
+}
+
+// 대시보드 핵심 지표만 집계 (시각화 없이 숫자만)
+function buildDashboardSummary(rows, ratingKey) {
+  const total = rows.length;
+  if (total === 0) return null;
+  const ratingDist = {1:0,2:0,3:0,4:0,5:0};
+  rows.forEach(r => { const v = r[ratingKey]; if (ratingDist[v] !== undefined) ratingDist[v]++; });
+  const avgRating = rows.reduce((s,r)=>s+(r[ratingKey]||0),0) / total;
+  const lowCount = rows.filter(r => r[ratingKey] <= 3).length;
+  const lowRate  = Math.round(lowCount/total*100);
+  return { total, avgRating: Math.round(avgRating*100)/100, ratingDist, lowCount, lowRate };
+}
+
+// ================================================================
+// 프로젝트 모듈 정의
+//  - ready:true  인 항목만 실제 데이터 로딩/집계 가능
+//  - ready:false 인 항목은 "연동 대기" 상태로만 표시
+//  - loadData(): 데이터 로드 → dateObj 필드 포함된 배열 반환
+//  - buildSummary(rows): 해당 기간 rows → {total, avgRating, lowCount, lowRate, ...} 반환
+// ================================================================
+const MODULES = {
+
+  // ── 품질관리 ──
+  defect:  { name: '불량현황',       ready: false },
+  action:  { name: '액션현황',       ready: false },
+  return:  { name: '반품현황',       ready: false },
+
+  // ── 처리관리 ──
+  process:      { name: '처리현황',       ready: false },
+  material_out: { name: '자재출고 현황',   ready: false },
+  material_in:  { name: '자재발주 현황',   ready: false },
+
+  // ── 고객관리 ──
+  smartstore: {
+    name: '스마트스토어',
+    ready: true,
+    project: '스마트스토어',
+    async loadData() {
+      const GITHUB_URL = 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/data/smtstore_review.xlsx';
+      let wb;
+      try {
+        const res = await fetch('./data/smtstore_review.xlsx');
+        if (!res.ok) throw new Error('local not found');
+        wb = XLSX.read(await res.arrayBuffer(), {type:'array'});
+      } catch {
+        const res = await fetch(GITHUB_URL);
+        wb = XLSX.read(await res.arrayBuffer(), {type:'array'});
+      }
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1});
+      const header = rows[0];
+      const idx = {
+        prodName: header.indexOf('상품명'),
+        rating:   header.indexOf('구매자평점'),
+        date:     header.indexOf('리뷰등록일'),
+      };
+      return rows.slice(1).map(r => ({
+        prodName: String(r[idx.prodName] || ''),
+        rating:   Number(r[idx.rating]) || 0,
+        dateObj:  ssParseDate(r[idx.date]),
+      })).filter(r => r.prodName);
+    },
+    buildSummary(rows) {
+      return buildDashboardSummary(rows, 'rating');
+    }
+  },
+
+  channeltalk: { name: '채널톡', ready: false },
+};
+
+// ================================================================
+// 카테고리 구성
+// ================================================================
+const CATEGORIES = [
+  { title: '품질관리', items: ['defect', 'action', 'return'] },
+  { title: '처리관리', items: ['process', 'material_out', 'material_in'] },
+  { title: '고객관리', items: ['smartstore', 'channeltalk'] },
+];
+
+// ================================================================
+// 렌더링
+// ================================================================
+function render() {
+  const el = document.getElementById('content');
+  el.innerHTML = CATEGORIES.map(cat => `
+    <div class="category">
+      <div class="category-title"><div class="bar"></div>${cat.title}</div>
+      ${cat.items.map(id => renderItemCard(id)).join('')}
+    </div>
+  `).join('');
+}
+
+function renderItemCard(id) {
+  const m = MODULES[id];
+  return `
+    <div class="item-card" id="card-${id}">
+      <div class="item-head">
+        <div class="item-name">${m.name}</div>
+        <div class="item-status" id="status-${id}">
+          <span class="status-badge none">상태 확인 중...</span>
+        </div>
+        <div class="live-status idle" id="live-${id}"><span class="dot"></span><span class="live-text">대기</span></div>
+        <button class="item-toggle-btn" ${m.ready ? '' : 'disabled'} onclick="togglePanel('${id}')">
+          ${m.ready ? '📤 마감전송 ▾' : '⏳ 연동 대기'}
+        </button>
+      </div>
+      <div class="item-panel" id="panel-${id}"></div>
+    </div>
+  `;
+}
+
+render();
+Object.keys(MODULES).forEach(id => { if (MODULES[id].ready) refreshStatus(id); });
+
+// ================================================================
+// 최근 마감 상태 뱃지 (GAS에서 최신 월간/주간 1건씩 조회)
+// ================================================================
+async function refreshStatus(id) {
+  const m = MODULES[id];
+  const statusEl = document.getElementById(`status-${id}`);
+  try {
+    const [monthly, weekly] = await Promise.all([
+      fetchSummary(m.project, 'monthly'),
+      fetchSummary(m.project, 'weekly'),
+    ]);
+    const badges = [];
+    if (monthly.length) badges.push(`<span class="status-badge monthly">월 최신 ${monthly[0].period}</span>`);
+    else badges.push(`<span class="status-badge none">월간 전송 이력 없음</span>`);
+    if (weekly.length) badges.push(`<span class="status-badge weekly">주 최신 ${weekly[0].period}</span>`);
+    else badges.push(`<span class="status-badge none">주간 전송 이력 없음</span>`);
+    statusEl.innerHTML = badges.join('');
+  } catch (e) {
+    statusEl.innerHTML = `<span class="status-badge none">상태 조회 실패</span>`;
+  }
+}
+
+async function fetchSummary(project, periodType) {
+  const url = `${GAS_URL}?action=getSummary&project=${encodeURIComponent(project)}&periodType=${periodType}`;
+  const res = await fetch(url);
+  const json = await res.json();
+  if (!json.ok) return [];
+  // period 내림차순 정렬 (최신 우선)
+  return (json.rows || []).sort((a,b) => String(b.period).localeCompare(String(a.period)));
+}
+
+// ================================================================
+// 마감전송 패널 (체크박스 다중선택 → 일괄전송)
+// ================================================================
+const panelState = {}; // id -> { periodType, sentMonthly:Set, sentWeekly:Set, dataCache }
+
+async function togglePanel(id) {
+  const panel = document.getElementById(`panel-${id}`);
+  const isOpen = panel.classList.contains('open');
+  if (isOpen) { panel.classList.remove('open'); return; }
+  panel.classList.add('open');
+  if (!panelState[id]) {
+    panel.innerHTML = `<div class="panel-not-ready">불러오는 중...</div>`;
+    await initPanel(id);
+  }
+}
+
+async function initPanel(id) {
+  const m = MODULES[id];
+  const panel = document.getElementById(`panel-${id}`);
+
+  const [monthlySent, weeklySent] = await Promise.all([
+    fetchSummary(m.project, 'monthly'),
+    fetchSummary(m.project, 'weekly'),
+  ]);
+
+  panelState[id] = {
+    periodType: 'monthly',
+    sentMonthly: new Set(monthlySent.map(r => r.period)),
+    sentWeekly:  new Set(weeklySent.map(r => r.period)),
+    rows: null, // loadData() 결과 캐시
+  };
+
+  panel.innerHTML = `
+    <div class="period-type-tabs">
+      <button type="button" class="period-type-btn active" id="ptbtn-${id}-monthly" onclick="setPeriodType('${id}','monthly')">월간</button>
+      <button type="button" class="period-type-btn" id="ptbtn-${id}-weekly" onclick="setPeriodType('${id}','weekly')">주간</button>
+    </div>
+    <div class="period-grid" id="grid-${id}"></div>
+    <div class="panel-actions">
+      <button class="btn-select-all" onclick="toggleSelectAll('${id}')">전체 선택/해제</button>
+      <button class="btn-send-selected" id="sendbtn-${id}" onclick="sendSelected('${id}')">선택 항목 전송</button>
+    </div>
+    <div class="panel-log" id="log-${id}"></div>
+  `;
+
+  renderPeriodGrid(id);
+}
+
+function setPeriodType(id, type) {
+  panelState[id].periodType = type;
+  document.getElementById(`ptbtn-${id}-monthly`).classList.toggle('active', type === 'monthly');
+  document.getElementById(`ptbtn-${id}-weekly`).classList.toggle('active', type === 'weekly');
+  renderPeriodGrid(id);
+}
+
+// 최근 12개월 / 최근 12주(토~금) 목록 생성
+function getRecentMonths(n) {
+  const now = new Date();
+  const list = [];
+  for (let i = 0; i < n; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    list.push({ year: d.getFullYear(), month: d.getMonth() + 1,
+      period: `${String(d.getFullYear()).slice(2)}.${String(d.getMonth()+1).padStart(2,'0')}`,
+      label: `${d.getFullYear()}년 ${d.getMonth()+1}월` });
+  }
+  return list;
+}
+function getRecentFridays(n) {
+  const now = new Date();
+  const dow = now.getDay();
+  const diffToFriday = (dow >= 5) ? (dow - 5) : (dow + 2);
+  const baseFriday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diffToFriday);
+  const list = [];
+  for (let i = 0; i < n; i++) {
+    const fri = new Date(baseFriday.getFullYear(), baseFriday.getMonth(), baseFriday.getDate() - 7*i);
+    const sat = new Date(fri.getFullYear(), fri.getMonth(), fri.getDate() - 6);
+    const pad = x => String(x).padStart(2,'0');
+    const period = `${String(fri.getFullYear()).slice(2)}${pad(fri.getMonth()+1)}${pad(fri.getDate())}`;
+    list.push({ sat, fri, period, label: `${sat.getMonth()+1}/${sat.getDate()} ~ ${fri.getMonth()+1}/${fri.getDate()}` });
+  }
+  return list;
+}
+
+function renderPeriodGrid(id) {
+  const state = panelState[id];
+  const grid = document.getElementById(`grid-${id}`);
+  const sentSet = state.periodType === 'monthly' ? state.sentMonthly : state.sentWeekly;
+  const list = state.periodType === 'monthly' ? getRecentMonths(12) : getRecentFridays(12);
+
+  grid.innerHTML = list.map((p, i) => {
+    const sent = sentSet.has(p.period);
+    return `
+      <label class="period-check ${sent ? 'sent' : ''}">
+        <input type="checkbox" data-idx="${i}">
+        <span class="lbl">${p.label}</span>
+        ${sent ? '<span class="tag-sent">✓전송됨</span>' : ''}
+      </label>
+    `;
+  }).join('');
+
+  state.currentList = list;
+}
+
+function toggleSelectAll(id) {
+  const grid = document.getElementById(`grid-${id}`);
+  const boxes = grid.querySelectorAll('input[type=checkbox]');
+  const allChecked = [...boxes].every(b => b.checked);
+  boxes.forEach(b => b.checked = !allChecked);
+}
+
+// ================================================================
+// 공용: 데이터 캐시 + 실시간 상태 표시 + 전송 1건 실행
+// ================================================================
+const rowsCache = {}; // id -> rows[] (loadData 결과, 최초 1회만 로드해서 재사용)
+
+async function getRowsCached(id) {
+  if (!rowsCache[id]) rowsCache[id] = await MODULES[id].loadData();
+  return rowsCache[id];
+}
+
+function setLiveStatus(id, status, text) {
+  const el = document.getElementById(`live-${id}`);
+  if (!el) return;
+  el.className = `live-status ${status}`;
+  el.querySelector('.live-text').textContent =
+    text || { idle:'대기', running:'전송 중', ok:'완료', err:'실패' }[status];
+}
+
+// 기간 rows 필터링 (월간/주간 공용)
+function filterRowsByPeriod(rows, periodType, p) {
+  if (periodType === 'monthly') {
+    return rows.filter(r => r.dateObj && r.dateObj.getFullYear() === p.year && r.dateObj.getMonth()+1 === p.month);
+  }
+  const start = new Date(p.sat.getFullYear(), p.sat.getMonth(), p.sat.getDate(), 0,0,0);
+  const end   = new Date(p.fri.getFullYear(), p.fri.getMonth(), p.fri.getDate(), 23,59,59,999);
+  return rows.filter(r => r.dateObj && r.dateObj >= start && r.dateObj <= end);
+}
+
+async function postSummary(project, periodType, period, summary) {
+  await fetch(GAS_URL, {
+    method: 'POST', mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'saveSummary', project, periodType, period,
+      data: { periodType, period, ...summary }
+    })
+  });
+}
+
+async function sendSelected(id) {
+  const m = MODULES[id];
+  const state = panelState[id];
+  const grid = document.getElementById(`grid-${id}`);
+  const log  = document.getElementById(`log-${id}`);
+  const btn  = document.getElementById(`sendbtn-${id}`);
+
+  const checked = [...grid.querySelectorAll('input[type=checkbox]:checked')].map(b => Number(b.dataset.idx));
+  if (checked.length === 0) { log.innerHTML = `<div class="err">선택된 기간이 없습니다</div>`; return; }
+
+  btn.disabled = true;
+  log.innerHTML = '';
+  setLiveStatus(id, 'running');
+
+  let rows;
+  try {
+    log.innerHTML += `<div class="run">데이터 로딩 중...</div>`;
+    rows = await getRowsCached(id);
+  } catch (e) {
+    log.innerHTML += `<div class="err">데이터 로드 실패: ${e.message}</div>`;
+    setLiveStatus(id, 'err');
+    btn.disabled = false;
+    return;
+  }
+
+  let hadError = false;
+  for (const idx of checked) {
+    const p = state.currentList[idx];
+    const label = p.label;
+    log.innerHTML += `<div class="run">[${label}] 전송 중...</div>`;
+
+    const periodRows = filterRowsByPeriod(rows, state.periodType, p);
+    const summary = m.buildSummary(periodRows);
+    if (!summary) {
+      log.innerHTML += `<div class="err">[${label}] 데이터 없음 - 건너뜀</div>`;
+      continue;
+    }
+
+    try {
+      await postSummary(m.project, state.periodType, p.period, summary);
+      log.innerHTML += `<div class="ok">[${label}] ✅ 전송 완료</div>`;
+      (state.periodType === 'monthly' ? state.sentMonthly : state.sentWeekly).add(p.period);
+    } catch (e) {
+      hadError = true;
+      log.innerHTML += `<div class="err">[${label}] ❌ 전송 실패: ${e.message}</div>`;
+    }
+    log.scrollTop = log.scrollHeight;
+  }
+
+  btn.disabled = false;
+  setLiveStatus(id, hadError ? 'err' : 'ok');
+  renderPeriodGrid(id);
+  refreshStatus(id);
+}
+
+// ================================================================
+// 전역 일괄전송 — 연동 완료된(ready) 모든 항목에 대해
+// '이번 달' 또는 '최근 마감주(가장 최근 지난 금요일 기준)'를 한 번에 전송
+// ================================================================
+async function sendAllReady(periodType) {
+  const readyIds = Object.keys(MODULES).filter(id => MODULES[id].ready);
+  if (readyIds.length === 0) { alert('연동된 항목이 없습니다.'); return; }
+
+  const p = periodType === 'monthly' ? getRecentMonths(1)[0] : getRecentFridays(1)[0];
+
+  for (const id of readyIds) {
+    setLiveStatus(id, 'running');
+    try {
+      const rows = await getRowsCached(id);
+      const periodRows = filterRowsByPeriod(rows, periodType, p);
+      const summary = MODULES[id].buildSummary(periodRows);
+      if (!summary) { setLiveStatus(id, 'err', '데이터 없음'); continue; }
+      await postSummary(MODULES[id].project, periodType, p.period, summary);
+      setLiveStatus(id, 'ok');
+      refreshStatus(id);
+    } catch (e) {
+      setLiveStatus(id, 'err');
+    }
+  }
+}
+</script>
+</body>
+</html>

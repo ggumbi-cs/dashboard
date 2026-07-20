@@ -499,6 +499,10 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
         <span class="nav-item-label">📅 월피미</span>
         <button class="vis-btn" data-tab="월피미" onclick="openVisModal(event,'월피미')">⚙</button>
       </div>
+      <div class="nav-item" data-tab="통합마감허브" onclick="switchTab(this)">
+        <span class="nav-item-label">📋 통합 마감전송 허브</span>
+        <button class="vis-btn" data-tab="통합마감허브" onclick="openVisModal(event,'통합마감허브')">⚙</button>
+      </div>
     </div>
   </div>
 
@@ -719,6 +723,7 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
       <div class="sb-item" onclick="toolNavExternal('https://cs-as-app.vercel.app/', this)">반품검사 기록</div>
       <div class="sb-item" onclick="toolNav('tool/수리내역서.html', this)">수리내역서</div>
       <div class="sb-item" onclick="toolNav('qc/기타/택배출고.html', this)">🚚 택배출고요청</div>
+      <div class="sb-item" onclick="toolNav('aggregated/aggregated.html', this)">📋 통합 마감전송 허브</div>
       <div class="sb-divider"></div>
       <div class="sb-label">팀복지</div>
       <div class="sb-item" onclick="toolNav('tool/팀간식룰렛.html', this)">이달의 간식 추첨</div>
@@ -773,6 +778,7 @@ const TAB_MAP = {
   '팀원교육':   'training/training_main.html',
   '지식DB':     '지식db/지식db.html',
   'qc_main':    'qc/qc_main.html',
+  '통합마감허브': 'aggregated/aggregated.html',
 };
 
 // ── 계정 정보 ──
@@ -790,8 +796,8 @@ const ROLE_LEVEL = { admin: 0, leader: 1, ggumbi: 2, affiliate: 3 };
 // ── 역할별 기본 허용 탭 (null = 전체허용) ──
 const ROLE_TABS = {
   'admin':     null,
-  'leader':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','qc_main','스마트스토어','채널톡현황','건별Issue','건별보고','팀Tool','개발자','주피미','월피미','팀원교육','지식DB'],
-  'ggumbi':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','qc_main','스마트스토어','채널톡현황','건별Issue','건별보고','팀Tool','주피미','월피미','팀원교육','지식DB'],
+  'leader':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','qc_main','스마트스토어','채널톡현황','건별Issue','건별보고','팀Tool','개발자','주피미','월피미','통합마감허브','팀원교육','지식DB'],
+  'ggumbi':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','qc_main','스마트스토어','채널톡현황','건별Issue','건별보고','팀Tool','주피미','월피미','통합마감허브','팀원교육','지식DB'],
   'affiliate': ['팀Tool','지식DB'],
 };
 
@@ -1366,9 +1372,10 @@ function _switchSidebar(tabName) {
   const isQcTab     = tabName === 'qc_main';
   const isTrainingTab = tabName === '팀원교육';
   const isKnowledgeTab = tabName === '지식DB';
+  const isHubTab = tabName === '통합마감허브';
 
-  // 팀원교육 / 지식DB / 품질관리(QC): 사이드바 완전 숨김 → content(iframe)가 flex:1로 자동 확장
-  if (isTrainingTab || isKnowledgeTab || isQcTab) {
+  // 팀원교육 / 지식DB / 품질관리(QC) / 통합마감허브: 사이드바 완전 숨김 → content(iframe)가 flex:1로 자동 확장
+  if (isTrainingTab || isKnowledgeTab || isQcTab || isHubTab) {
     if (sb) sb.style.display = 'none';
     return;
   }

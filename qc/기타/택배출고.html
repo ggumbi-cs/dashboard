@@ -107,18 +107,24 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 .dash-nav-btn:hover{border-color:var(--border2);color:var(--gold);}
 .dash-period-label{font-size:12px;font-weight:700;color:var(--text);min-width:150px;text-align:center;font-family:var(--font-en);}
 
-.dash-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
+.dash-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px;}
 .dash-stat-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
-.dash-stat-label{font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.4px;margin-bottom:5px;text-transform:uppercase;}
+.dash-stat-label{font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.4px;margin-bottom:5px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .dash-stat-value{font-size:20px;font-weight:700;font-family:var(--font-en);color:var(--text);}
 .dash-stat-value.gold{color:var(--gold);}
 .dash-stat-value.orange{color:var(--orange);}
 .dash-stat-value.cyan{color:var(--cyan);}
+.dash-stat-value.purple{color:var(--purple);}
+.dash-stat-value.green{color:var(--green);}
+.dash-stat-value.pink{color:var(--pink);}
 .dash-stat-sub{font-size:10px;color:var(--text3);margin-top:2px;}
+
+.dash-panels-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
+@media(max-width:820px){.dash-panels-row{grid-template-columns:1fr;}}
 
 .dash-panel{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:14px;}
 .dash-panel-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:6px;}
-.dash-panel-title .legend{margin-left:auto;display:flex;gap:12px;font-size:10px;font-weight:500;color:var(--text3);}
+.dash-panel-title .legend{margin-left:auto;display:flex;gap:10px;font-size:10px;font-weight:500;color:var(--text3);}
 .dash-legend-dot{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:4px;vertical-align:middle;}
 
 .bar-row{display:grid;grid-template-columns:110px 1fr 46px;align-items:center;gap:10px;padding:6px 0;}
@@ -126,8 +132,18 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 .bar-track{position:relative;height:16px;background:var(--bg4);border-radius:5px;overflow:hidden;display:flex;}
 .bar-seg{height:100%;transition:width .3s;}
 .bar-seg.jaeja{background:var(--cyan);}
-.bar-seg.daesang{background:var(--orange);}
+.bar-seg.suri{background:var(--purple);}
+.bar-seg.general{background:var(--green);}
+.bar-seg.support{background:var(--pink);}
 .bar-row .bar-total{font-size:11px;font-weight:700;color:var(--text);font-family:var(--font-en);text-align:right;}
+
+/* 출고 추이 (막대) */
+.trend-chart{display:flex;align-items:flex-end;gap:5px;height:150px;padding-top:10px;}
+.trend-bar-wrap{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:5px;height:100%;justify-content:flex-end;}
+.trend-total{font-size:9.5px;font-weight:700;color:var(--text2);font-family:var(--font-en);}
+.trend-bar{width:100%;max-width:28px;border-radius:4px 4px 0 0;overflow:hidden;display:flex;flex-direction:column-reverse;background:var(--bg4);min-height:2px;}
+.trend-seg{width:100%;}
+.trend-label{font-size:9px;color:var(--text3);font-family:var(--font-en);white-space:nowrap;transform:rotate(0deg);}
 
 .dash-table{width:100%;border-collapse:collapse;}
 .dash-table th{font-size:9.5px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;cursor:pointer;user-select:none;}
@@ -187,32 +203,51 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
     </div>
   </div>
 
-  <div class="dash-stats">
+  <div class="dash-stats" id="dashStats">
     <div class="dash-stat-card">
       <div class="dash-stat-label">전체 출고</div>
       <div class="dash-stat-value gold" id="dashTotalCnt">-</div>
       <div class="dash-stat-sub" id="dashTotalSub">건</div>
     </div>
     <div class="dash-stat-card">
-      <div class="dash-stat-label">🔶 대상 (제조사 과실)</div>
-      <div class="dash-stat-value orange" id="dashDaesangCnt">-</div>
-      <div class="dash-stat-sub" id="dashDaesangPct">-</div>
+      <div class="dash-stat-label">🔷 자재출고</div>
+      <div class="dash-stat-value cyan" id="dashCnt-자재출고">-</div>
+      <div class="dash-stat-sub" id="dashPct-자재출고">-</div>
     </div>
     <div class="dash-stat-card">
-      <div class="dash-stat-label">🔷 자재출고 대응</div>
-      <div class="dash-stat-value cyan" id="dashJaejaCnt">-</div>
-      <div class="dash-stat-sub" id="dashJaejaPct">-</div>
+      <div class="dash-stat-label">🔧 수리출고</div>
+      <div class="dash-stat-value purple" id="dashCnt-수리출고">-</div>
+      <div class="dash-stat-sub" id="dashPct-수리출고">-</div>
+    </div>
+    <div class="dash-stat-card">
+      <div class="dash-stat-label">⚪ 일반출고</div>
+      <div class="dash-stat-value green" id="dashCnt-일반출고">-</div>
+      <div class="dash-stat-sub" id="dashPct-일반출고">-</div>
+    </div>
+    <div class="dash-stat-card">
+      <div class="dash-stat-label">🤝 출고지원</div>
+      <div class="dash-stat-value pink" id="dashCnt-출고지원">-</div>
+      <div class="dash-stat-sub" id="dashPct-출고지원">-</div>
     </div>
   </div>
 
-  <div class="dash-panel">
-    <div class="dash-panel-title">모델별 출고 랭킹
-      <div class="legend">
-        <span><span class="dash-legend-dot" style="background:var(--orange);"></span>대상(과실)</span>
-        <span><span class="dash-legend-dot" style="background:var(--cyan);"></span>자재출고</span>
+  <div class="dash-panels-row">
+    <div class="dash-panel">
+      <div class="dash-panel-title">모델별 출고 랭킹
+        <div class="legend">
+          <span><span class="dash-legend-dot" style="background:var(--cyan);"></span>자재</span>
+          <span><span class="dash-legend-dot" style="background:var(--purple);"></span>수리</span>
+          <span><span class="dash-legend-dot" style="background:var(--green);"></span>일반</span>
+          <span><span class="dash-legend-dot" style="background:var(--pink);"></span>지원</span>
+        </div>
       </div>
+      <div id="dashBarChart"></div>
     </div>
-    <div id="dashBarChart"></div>
+
+    <div class="dash-panel">
+      <div class="dash-panel-title" id="dashTrendTitle">출고 추이</div>
+      <div id="dashTrendChart"></div>
+    </div>
   </div>
 
   <div class="dash-panel">
@@ -672,9 +707,28 @@ async function updatePrintDate(pageId, val) {
 }
 
 // ══════════════════════════════════════════════════════════════
-// 📊 현황보기 대시보드 — 출력일 기준 주간/월간 모델별 출고 랭킹
+// 📊 현황보기 대시보드 — 출력일 기준 주간/월간 모델별 출고 랭킹 + 추이
 // ══════════════════════════════════════════════════════════════
 let _dashMode='week', _dashOffset=0, _dashSort={key:'total',dir:'desc'};
+const DASH_CATS=[
+  {key:'자재출고', cls:'jaeja',   color:'var(--cyan)',   emoji:'🔷'},
+  {key:'수리출고', cls:'suri',    color:'var(--purple)', emoji:'🔧'},
+  {key:'일반출고', cls:'general', color:'var(--green)',  emoji:'⚪'},
+  {key:'출고지원', cls:'support', color:'var(--pink)',   emoji:'🤝'}
+];
+
+// 분류 규칙 (우선순위 순):
+// 1) 구분='대상' → 자재출고
+// 2) 요청자에 심우승/이대훈 포함 → 수리출고
+// 3) 요청자에 '엄마감동팀' 포함 → 일반출고
+// 4) 그 외(타 부서 소속) → 출고지원
+function classifyOutbound(r){
+  if(r.구분==='대상') return '자재출고';
+  const req=r.요청자||'';
+  if(req.includes('심우승')||req.includes('이대훈')) return '수리출고';
+  if(req.includes('엄마감동팀')) return '일반출고';
+  return '출고지원';
+}
 
 function setDashMode(m){
   _dashMode=m; _dashOffset=0;
@@ -697,9 +751,9 @@ function isoWeekKey(dateStr){
 function monthKey(dateStr){ return dateStr.slice(0,7); }
 function dashKeyOf(dateStr){ return _dashMode==='week'?isoWeekKey(dateStr):monthKey(dateStr); }
 
-// 주차 키의 대표 시작일(월요일) 계산 — 정렬 및 이전/다음 이동용
+// 주차 키의 대표 시작일(월요일) 계산 — 정렬 및 이전/다음 이동, 추이차트 라벨용
 function weekKeyStart(key){
-  const [y,w]=key.split('-W').map((v,i)=>i===0?parseInt(v):parseInt(v));
+  const [y,w]=key.split('-W').map(v=>parseInt(v));
   const simple=new Date(y,0,1+(w-1)*7);
   const dow=simple.getDay();
   const monday=new Date(simple);
@@ -725,11 +779,14 @@ function renderDashboard(){
   if(!all.length){
     document.getElementById('dashPeriodLabel').textContent='데이터 없음';
     document.getElementById('dashBarChart').innerHTML='<div class="dash-empty">출력일이 기록된 데이터가 없습니다.</div>';
+    document.getElementById('dashTrendChart').innerHTML='<div class="dash-empty">데이터가 없습니다.</div>';
     document.getElementById('dashTable').innerHTML='';
-    ['dashTotalCnt','dashDaesangCnt','dashJaejaCnt'].forEach(id=>document.getElementById(id).textContent='0');
+    document.getElementById('dashTotalCnt').textContent='0';
     document.getElementById('dashTotalSub').textContent='건';
-    document.getElementById('dashDaesangPct').textContent='-';
-    document.getElementById('dashJaejaPct').textContent='-';
+    DASH_CATS.forEach(c=>{
+      document.getElementById(`dashCnt-${c.key}`).textContent='0';
+      document.getElementById(`dashPct-${c.key}`).textContent='-';
+    });
     return;
   }
 
@@ -744,44 +801,42 @@ function renderDashboard(){
 
   const periodRecs=all.filter(r=>dashKeyOf(r.출력일)===curKey);
 
-  // 모델별 집계
+  // 모델별 집계 (4분류)
   const map={};
   periodRecs.forEach(r=>{
     const model=r.모델명||'(모델명 미지정)';
-    if(!map[model]) map[model]={model,total:0,daesang:0,jaeja:0};
+    if(!map[model]){ map[model]={model,total:0}; DASH_CATS.forEach(c=>map[model][c.key]=0); }
     map[model].total++;
-    if(r.구분==='대상') map[model].daesang++; else map[model].jaeja++;
+    map[model][classifyOutbound(r)]++;
   });
   let rows=Object.values(map);
 
   const totalCnt=periodRecs.length;
-  const daesangCnt=rows.reduce((s,r)=>s+r.daesang,0);
-  const jaejaCnt=rows.reduce((s,r)=>s+r.jaeja,0);
   document.getElementById('dashTotalCnt').textContent=totalCnt;
   document.getElementById('dashTotalSub').textContent=`모델 ${rows.length}종`;
-  document.getElementById('dashDaesangCnt').textContent=daesangCnt;
-  document.getElementById('dashDaesangPct').textContent=totalCnt?`${Math.round(daesangCnt/totalCnt*100)}%`:'-';
-  document.getElementById('dashJaejaCnt').textContent=jaejaCnt;
-  document.getElementById('dashJaejaPct').textContent=totalCnt?`${Math.round(jaejaCnt/totalCnt*100)}%`:'-';
+  DASH_CATS.forEach(c=>{
+    const cnt=rows.reduce((s,r)=>s+r[c.key],0);
+    document.getElementById(`dashCnt-${c.key}`).textContent=cnt;
+    document.getElementById(`dashPct-${c.key}`).textContent=totalCnt?`${Math.round(cnt/totalCnt*100)}%`:'-';
+  });
 
   // ── 랭킹 바 차트 (총 건수 기준 상위 12개) ──
   const chartRows=[...rows].sort((a,b)=>b.total-a.total).slice(0,12);
   const maxTotal=Math.max(1,...chartRows.map(r=>r.total));
   document.getElementById('dashBarChart').innerHTML = chartRows.length ? chartRows.map(r=>{
-    const jaejaW=(r.jaeja/maxTotal*100).toFixed(1);
-    const daesangW=(r.daesang/maxTotal*100).toFixed(1);
+    const segs=DASH_CATS.map(c=>`<div class="bar-seg ${c.cls}" style="width:${(r[c.key]/maxTotal*100).toFixed(1)}%"></div>`).join('');
     return `<div class="bar-row">
       <div class="bar-name" title="${r.model}">${r.model}</div>
-      <div class="bar-track">
-        <div class="bar-seg jaeja" style="width:${jaejaW}%"></div>
-        <div class="bar-seg daesang" style="width:${daesangW}%"></div>
-      </div>
+      <div class="bar-track">${segs}</div>
       <div class="bar-total">${r.total}</div>
     </div>`;
   }).join('') : '<div class="dash-empty">해당 기간 데이터가 없습니다.</div>';
 
   // ── 정렬 가능한 상세 테이블 ──
   renderDashTable(rows);
+
+  // ── 출고 추이 차트 ──
+  renderDashTrend(all);
 }
 
 function renderDashTable(rows){
@@ -793,20 +848,19 @@ function renderDashTable(rows){
   });
   const arrow=k=>_dashSort.key===k?(_dashSort.dir==='asc'?' ▲':' ▼'):'';
   const table=document.getElementById('dashTable');
+  const catTh=DASH_CATS.map(c=>`<th class="num" onclick="dashSortBy('${c.key}')">${c.emoji}${c.key}${arrow(c.key)}</th>`).join('');
   table.innerHTML=`
     <thead><tr>
       <th onclick="dashSortBy('model')">모델명${arrow('model')}</th>
       <th class="num" onclick="dashSortBy('total')">전체${arrow('total')}</th>
-      <th class="num" onclick="dashSortBy('daesang')">🔶대상${arrow('daesang')}</th>
-      <th class="num" onclick="dashSortBy('jaeja')">🔷자재출고${arrow('jaeja')}</th>
+      ${catTh}
     </tr></thead>
     <tbody>${sorted.length?sorted.map(r=>`
       <tr>
         <td>${r.model}</td>
         <td class="num">${r.total}</td>
-        <td class="num" style="color:var(--orange);">${r.daesang}</td>
-        <td class="num" style="color:var(--cyan);">${r.jaeja}</td>
-      </tr>`).join(''):'<tr><td colspan="4" class="dash-empty">데이터 없음</td></tr>'}</tbody>`;
+        ${DASH_CATS.map(c=>`<td class="num" style="color:${c.color};">${r[c.key]}</td>`).join('')}
+      </tr>`).join(''):`<tr><td colspan="${2+DASH_CATS.length}" class="dash-empty">데이터 없음</td></tr>`}</tbody>`;
 }
 
 function dashSortBy(key){
@@ -818,6 +872,61 @@ function dashSortBy(key){
 function dashShift(delta){
   _dashOffset = delta===0 ? 0 : _dashOffset+delta;
   renderDashboard();
+}
+
+// ── 출고 추이 차트: 주간=최근 10주, 월간=2026년 1~12월 전체 ──
+function renderDashTrend(all){
+  const title=document.getElementById('dashTrendTitle');
+  let periodKeys;
+  if(_dashMode==='month'){
+    title.textContent='월별 출고 추이 (2026년)';
+    periodKeys=Array.from({length:12},(_,i)=>`2026-${String(i+1).padStart(2,'0')}`);
+  }else{
+    title.textContent='주별 출고 추이 (최근 10주)';
+    const today=new Date();
+    periodKeys=[];
+    for(let i=9;i>=0;i--){
+      const d=new Date(today); d.setDate(d.getDate()-i*7);
+      periodKeys.push(isoWeekKey(Utilities_toISODate(d)));
+    }
+  }
+
+  // 각 기간별 4분류 집계
+  const trendMap={};
+  periodKeys.forEach(k=>{ trendMap[k]={total:0}; DASH_CATS.forEach(c=>trendMap[k][c.key]=0); });
+  all.forEach(r=>{
+    const k=dashKeyOf(r.출력일);
+    if(trendMap[k]){ trendMap[k].total++; trendMap[k][classifyOutbound(r)]++; }
+  });
+
+  const maxTotal=Math.max(1,...periodKeys.map(k=>trendMap[k].total));
+  const labelOf=k=>{
+    if(_dashMode==='month') return `${parseInt(k.split('-')[1])}월`;
+    return `${weekKeyStart(k).getMonth()+1}/${weekKeyStart(k).getDate()}`;
+  };
+
+  document.getElementById('dashTrendChart').innerHTML = `
+    <div class="trend-chart">
+      ${periodKeys.map(k=>{
+        const d=trendMap[k];
+        const h=Math.max(2,Math.round(d.total/maxTotal*120));
+        const segs=DASH_CATS.map(c=>{
+          const segH=d.total? Math.round(d[c.key]/d.total*h) : 0;
+          return segH>0?`<div class="trend-seg" style="height:${segH}px;background:${c.color};"></div>`:'';
+        }).join('');
+        return `<div class="trend-bar-wrap">
+          <div class="trend-total">${d.total||''}</div>
+          <div class="trend-bar" style="height:${h}px;">${segs}</div>
+          <div class="trend-label">${labelOf(k)}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// 날짜 → YYYY-MM-DD (로컬 타임존 기준, toISOString 시간대 오차 방지)
+function Utilities_toISODate(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
 }
 
 function showLoading(){document.getElementById('loadState').style.display='';document.getElementById('emptyState').style.display='none';document.getElementById('mainWrap').style.display='none';}

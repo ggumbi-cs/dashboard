@@ -163,7 +163,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycby5wfJy4LMghTp4ILrdQ_hM
 
 // 품질관리/처리관리 원본 프로젝트들이 공용으로 쓰는 데이터 소스 GAS (읽기 전용, report_hub와는 별개)
 const QC_GAS_URL  = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
-const QC_DATA_PATH = '../qc_data.json'; // 정적 JSON 우선 시도, 실패 시 GAS 실시간 폴백
+const QC_DATA_PATH = '../qc/qc_data.json'; // qc/기타/ 폴더 기준 원본의 '../qc_data.json' = qc/qc_data.json (aggregated/ 폴더 기준 보정)
 
 // ── 공용: 'YYYY-MM-DD' 또는 유사 날짜 문자열 파싱 ──
 function parseYmd(str) {
@@ -324,10 +324,11 @@ const MODULES = {
     ready: true,
     project: '택배출고 현황',
     async loadData() {
-      // 정적 스냅샷(출력요청 제외) + 실시간 출력요청 건 합산 (원본 getCombined()와 동일)
+      // 원본 파일(qc/기타/택배출고.html) 기준 '../qc_data.json' = qc/qc_data.json
+      // aggregated.html은 aggregated/ 폴더에 있으므로 경로를 '../qc/qc_data.json'로 보정
       let staticRows = [];
       try {
-        const res = await fetch(QC_DATA_PATH);
+        const res = await fetch('../qc/qc_data.json');
         if (res.ok) {
           const json = await res.json();
           if (json.택배출고 && json.택배출고.records) {
@@ -348,20 +349,32 @@ const MODULES = {
     buildSummary(rows) {
       const total = rows.length;
       if (total === 0) return null;
-      // 모델명 × 구분(대상/자재출고) 집계 — 원본 renderDashboard()의 map 로직 그대로
+      // 4분류 원본 로직 그대로 (classifyOutbound)
+      // 1) 구분='대상' → 자재출고
+      // 2) 요청자에 심우승/이대훈 포함 → 수리출고
+      // 3) 요청자에 '엄마감동팀' 포함 → 일반출고
+      // 4) 그 외 → 출고지원
+      const classify = r => {
+        if (r.구분 === '대상') return '자재출고';
+        const req = r.요청자 || '';
+        if (req.includes('심우승') || req.includes('이대훈')) return '수리출고';
+        if (req.includes('엄마감동팀')) return '일반출고';
+        return '출고지원';
+      };
+      const CATS = ['자재출고','수리출고','일반출고','출고지원'];
       const byModel = {};
       rows.forEach(r => {
         const model = r.모델명 || '(모델명 미지정)';
-        if (!byModel[model]) byModel[model] = { model, total: 0, daesang: 0, jaeja: 0 };
+        if (!byModel[model]) { byModel[model] = { model, total: 0 }; CATS.forEach(c => byModel[model][c] = 0); }
         byModel[model].total++;
-        if (r.구분 === '대상') byModel[model].daesang++; else byModel[model].jaeja++;
+        byModel[model][classify(r)]++;
       });
       const modelRows = Object.values(byModel);
-      const daesangCount = modelRows.reduce((s,r)=>s+r.daesang, 0);
-      const jaejaCount   = modelRows.reduce((s,r)=>s+r.jaeja, 0);
+      const byCategory = {};
+      CATS.forEach(c => { byCategory[c] = modelRows.reduce((s,r)=>s+r[c], 0); });
       const top5Models = modelRows.sort((a,b)=>b.total-a.total).slice(0,5)
-        .map(r => ({ name: r.model, cnt: r.total, daesang: r.daesang, jaeja: r.jaeja }));
-      return { total, daesangCount, jaejaCount, modelCount: modelRows.length, top5Models };
+        .map(r => ({ name: r.model, cnt: r.total, ...Object.fromEntries(CATS.map(c=>[c, r[c]])) }));
+      return { total, byCategory, modelCount: modelRows.length, top5Models };
     }
   },
 

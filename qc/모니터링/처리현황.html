@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>처리현황</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#080f1e;--bg2:#0d1830;--bg3:#111e35;--bg4:#162240;
+  --border:rgba(0,200,255,0.10);--border2:rgba(0,200,255,0.20);
+  --cyan:#00c8ff;--cyan-dim:rgba(0,200,255,0.08);
+  --gold:#f0c060;--green:#00e5a0;--red:#ff5a6e;--orange:#ff9040;--purple:#a080ff;--blue:#4a9eff;
+  --text:#e8f0f8;--text2:#a8c8e0;--text3:#6a8faa;
+  --font-kr:'Noto Sans KR',sans-serif;--font-en:'Inter',sans-serif;
+}
+body.light{
+  --bg:#f0f4fa;--bg2:#ffffff;--bg3:#e8f0fb;--bg4:#dce8f7;
+  --border:rgba(26,78,180,0.12);--border2:rgba(26,78,180,0.25);
+  --cyan:#1a6eb8;--cyan-dim:rgba(26,110,184,0.08);
+  --gold:#b07800;--green:#007a50;--red:#c02020;--orange:#c05010;--purple:#5030b0;--blue:#1a5eb8;
+  --text:#1a2e50;--text2:#2a4e7a;--text3:#3a6a9a;
+}
+html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--font-kr);overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── 상단 헤더 ── */
+#pageHeader{padding:16px 24px 0;display:flex;align-items:center;justify-content:space-between;}
+.ph-title{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.ph-title::before{content:'';display:inline-block;width:3px;height:16px;background:var(--blue);border-radius:2px;}
+.ph-sync{font-size:11px;color:var(--text3);}
+
+/* ── 탭 ── */
+#tabBar{display:flex;align-items:center;gap:4px;padding:14px 24px 0;}
+.tab-btn{padding:6px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text3);font-family:var(--font-kr);transition:all 0.15s;}
+.tab-btn:hover{border-color:var(--border2);color:var(--text2);}
+.tab-btn.active{background:var(--cyan-dim);border-color:var(--border2);color:var(--cyan);}
+.tab-divider{width:1px;height:18px;background:var(--border);margin:0 8px;}
+
+#periodNav{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.pnav-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.pnav-btn:hover{border-color:var(--border2);color:var(--cyan);}
+#periodLabel{font-size:12px;font-weight:600;color:var(--text2);min-width:80px;text-align:center;}
+
+/* ── 메인 콘텐츠 ── */
+#mainContent{padding:16px 24px 40px;}
+
+.sec-hd{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:700;font-family:var(--font-en);color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;}
+.sec-hd::before{content:'';display:inline-block;width:3px;height:12px;border-radius:2px;}
+.sec-hd.blue::before{background:var(--blue);}
+.sec-hd.cyan::before{background:var(--cyan);}
+.sec-hd.green::before{background:var(--green);}
+.sec-hd.gold::before{background:var(--gold);}
+.sec-hd.purple::before{background:var(--purple);}
+.sec-hd .tag{margin-left:6px;font-size:9px;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0;}
+
+/* ── KPI 스트립 (5칸) ── */
+#kpiRow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden;}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi-card.total::before{background:var(--text3);}
+.kpi-card.repair::before{background:var(--cyan);}
+.kpi-card.material::before{background:var(--gold);}
+.kpi-card.exchange::before{background:var(--purple);}
+.kpi-card.check::before{background:var(--green);}
+.kpi-label{font-size:10px;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.kpi-val{font-size:24px;font-weight:700;font-family:var(--font-en);line-height:1;}
+.kpi-val.total{color:var(--text);}
+.kpi-val.repair{color:var(--cyan);}
+.kpi-val.material{color:var(--gold);}
+.kpi-val.exchange{color:var(--purple);}
+.kpi-val.check{color:var(--green);}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:4px;}
+.kpi-delta{position:absolute;top:12px;right:14px;font-size:10px;font-weight:600;padding:2px 6px;border-radius:5px;}
+.kpi-delta.up{background:rgba(255,90,110,0.12);color:var(--red);}
+.kpi-delta.dn{background:rgba(0,229,160,0.10);color:var(--green);}
+
+/* ── 소요일/유무상 스트립 ── */
+#qualityRow{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;margin-bottom:20px;}
+.quality-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
+.days-hero{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;}
+.days-num{font-size:38px;font-weight:700;font-family:var(--font-en);color:var(--cyan);line-height:1;}
+.days-unit{font-size:13px;color:var(--text3);font-weight:600;}
+.days-sub{font-size:11px;color:var(--text3);margin-bottom:14px;}
+.days-mini-row{display:flex;gap:10px;}
+.days-mini{flex:1;background:var(--bg3);border-radius:9px;padding:9px 12px;border:1px solid var(--border);}
+.days-mini-label{font-size:9px;color:var(--text3);margin-bottom:3px;}
+.days-mini-val{font-size:15px;font-weight:700;font-family:var(--font-en);color:var(--text2);}
+
+.paid-bar-wrap{height:14px;border-radius:7px;overflow:hidden;display:flex;background:var(--bg4);margin-bottom:10px;}
+.paid-seg{height:100%;transition:width 0.4s ease;}
+.paid-seg.paid{background:var(--gold);}
+.paid-seg.free{background:var(--text3);opacity:0.6;}
+.paid-legend{display:flex;gap:16px;margin-bottom:14px;}
+.pl-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);}
+.pl-dot{width:8px;height:8px;border-radius:50%;}
+.pl-dot.paid{background:var(--gold);}
+.pl-dot.free{background:var(--text3);}
+.pl-val{font-weight:700;font-family:var(--font-en);color:var(--text);}
+
+.cost-hero-row{display:flex;gap:10px;}
+.cost-card{flex:1;background:var(--bg3);border-radius:10px;padding:11px 13px;border:1px solid var(--border);}
+.cost-label{font-size:9px;color:var(--text3);margin-bottom:4px;}
+.cost-val{font-size:16px;font-weight:700;font-family:var(--font-en);}
+.cost-val.appliance{color:var(--blue);}
+.cost-val.mat{color:var(--purple);}
+.cost-val.total{color:var(--gold);}
+
+/* ── 랭킹 리스트 (제품명/사용부품 공통) ── */
+#bottomGrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.analysis-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
+.rank-list{display:flex;flex-direction:column;gap:9px;}
+.rank-row{display:flex;align-items:center;gap:10px;}
+.rank-no{font-size:9px;font-weight:700;font-family:var(--font-en);color:var(--text3);width:16px;text-align:right;flex-shrink:0;}
+.rank-name{font-size:11px;color:var(--text2);min-width:88px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rank-bar-wrap{flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;}
+.rank-bar-fill{height:100%;border-radius:3px;transition:width 0.4s ease;}
+.rank-count{font-size:11px;font-weight:600;font-family:var(--font-en);color:var(--text);min-width:26px;text-align:right;}
+.rank-pct{font-size:10px;color:var(--text3);min-width:38px;text-align:right;}
+
+/* ── 유상비용 추이(월별 스택바) ── */
+#costTrendSection{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:20px;}
+.trend-chart{display:flex;align-items:flex-end;gap:14px;height:140px;padding-top:10px;}
+.trend-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px;}
+.trend-bar-stack{width:100%;max-width:34px;display:flex;flex-direction:column;justify-content:flex-end;flex:1;border-radius:5px 5px 0 0;overflow:hidden;background:var(--bg4);}
+.trend-seg{width:100%;}
+.trend-seg.appliance{background:var(--blue);}
+.trend-seg.mat{background:var(--purple);}
+.trend-label{font-size:9px;color:var(--text3);font-family:var(--font-en);white-space:nowrap;}
+.trend-legend{display:flex;gap:16px;margin-top:14px;}
+
+/* ── 빈 상태 / 로딩 ── */
+#emptyState{display:none;text-align:center;padding:60px 24px;}
+.empty-icon{font-size:48px;margin-bottom:16px;}
+.empty-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;}
+.empty-sub{font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:20px;}
+.empty-btn{padding:9px 24px;background:var(--green);color:#000;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-kr);}
+
+#loadingState{text-align:center;padding:60px 24px;}
+.loading-dots{display:inline-flex;gap:5px;margin-bottom:16px;}
+.loading-dots span{width:8px;height:8px;border-radius:50%;background:var(--cyan);animation:ldot 1.2s infinite;}
+.loading-dots span:nth-child(2){animation-delay:0.2s;}
+.loading-dots span:nth-child(3){animation-delay:0.4s;}
+@keyframes ldot{0%,80%,100%{opacity:0.2;transform:scale(0.8);}40%{opacity:1;transform:scale(1);}}
+
+.c0{color:#4a9eff;} .c1{color:#00e5a0;} .c2{color:#f0c060;} .c3{color:#ff5a6e;} .c4{color:#a080ff;}
+.b0{background:#4a9eff;} .b1{background:#00e5a0;} .b2{background:#f0c060;} .b3{background:#ff5a6e;} .b4{background:#a080ff;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.fade-in{animation:fadeUp 0.4s ease both;}
+</style>
+</head>
+<body>
+
+<div id="pageHeader">
+  <div class="ph-title">📦 처리현황 — 처리품질 &amp; 실적</div>
+  <div class="ph-sync" id="syncInfo">-</div>
+</div>
+
+<div id="tabBar">
+  <button class="tab-btn" data-tab="weekly" onclick="setTab('weekly')">주간</button>
+  <button class="tab-btn active" data-tab="monthly" onclick="setTab('monthly')">월간</button>
+  <button class="tab-btn" data-tab="yearly" onclick="setTab('yearly')">연간</button>
+  <div class="tab-divider"></div>
+  <div id="periodNav">
+    <button class="pnav-btn" onclick="movePeriod(-1)">◀</button>
+    <div id="periodLabel">-</div>
+    <button class="pnav-btn" onclick="movePeriod(1)">▶</button>
+  </div>
+</div>
+
+<div id="loadingState">
+  <div class="loading-dots"><span></span><span></span><span></span></div>
+  <div style="font-size:13px;color:var(--text3);">데이터 불러오는 중...</div>
+</div>
+
+<div id="emptyState">
+  <div class="empty-icon">📭</div>
+  <div class="empty-title">데이터 동기화가 필요합니다</div>
+  <div class="empty-sub">노션과의 동기화가 아직 진행되지 않았습니다.<br>동기화 설정에서 수동 동기화를 실행해 주세요.</div>
+  <button class="empty-btn" onclick="goSync()">🔄 동기화 설정으로 이동</button>
+</div>
+
+<div id="mainContent" style="display:none;">
+
+  <!-- KPI -->
+  <div class="sec-hd blue" style="margin-top:8px;">Overview <span class="tag">처리일 기준</span></div>
+  <div id="kpiRow">
+    <div class="kpi-card total">
+      <div class="kpi-label">📋 총 처리 건수</div>
+      <div class="kpi-val total" id="kpiTotal">-</div>
+      <div class="kpi-sub" id="kpiTotalSub">-</div>
+    </div>
+    <div class="kpi-card repair">
+      <div class="kpi-label">🔧 수리출고</div>
+      <div class="kpi-val repair" id="kpiRepair">-</div>
+      <div class="kpi-sub" id="kpiRepairSub">-</div>
+      <div class="kpi-delta" id="kpiRepairDelta"></div>
+    </div>
+    <div class="kpi-card material">
+      <div class="kpi-label">📦 자재출고</div>
+      <div class="kpi-val material" id="kpiMaterial">-</div>
+      <div class="kpi-sub" id="kpiMaterialSub">-</div>
+      <div class="kpi-delta" id="kpiMaterialDelta"></div>
+    </div>
+    <div class="kpi-card exchange">
+      <div class="kpi-label">🔄 교환/환불</div>
+      <div class="kpi-val exchange" id="kpiExchange">-</div>
+      <div class="kpi-sub" id="kpiExchangeSub">-</div>
+      <div class="kpi-delta" id="kpiExchangeDelta"></div>
+    </div>
+    <div class="kpi-card check">
+      <div class="kpi-label">🔍 점검</div>
+      <div class="kpi-val check" id="kpiCheck">-</div>
+      <div class="kpi-sub" id="kpiCheckSub">-</div>
+      <div class="kpi-delta" id="kpiCheckDelta"></div>
+    </div>
+  </div>
+
+  <!-- 처리품질(소요일) + 유무상/비용 -->
+  <div class="sec-hd cyan">처리품질</div>
+  <div id="qualityRow">
+    <div class="quality-card">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:600;">평균 처리 소요일 <span style="font-weight:400;">(수리출고 기준, 입고~처리일)</span></div>
+      <div class="days-hero">
+        <div class="days-num" id="avgDays">-</div>
+        <div class="days-unit">일</div>
+      </div>
+      <div class="days-sub" id="daysSub">-</div>
+      <div class="days-mini-row">
+        <div class="days-mini">
+          <div class="days-mini-label">최소</div>
+          <div class="days-mini-val" id="minDays">-</div>
+        </div>
+        <div class="days-mini">
+          <div class="days-mini-label">중앙값</div>
+          <div class="days-mini-val" id="medDays">-</div>
+        </div>
+        <div class="days-mini">
+          <div class="days-mini-label">최대</div>
+          <div class="days-mini-val" id="maxDays">-</div>
+        </div>
+      </div>
+    </div>
+    <div class="quality-card">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:10px;font-weight:600;">유상 / 무상 비율</div>
+      <div class="paid-bar-wrap" id="paidBar"></div>
+      <div class="paid-legend">
+        <div class="pl-item"><span class="pl-dot paid"></span>유상 <span class="pl-val" id="paidCount">-</span></div>
+        <div class="pl-item"><span class="pl-dot free"></span>무상 <span class="pl-val" id="freeCount">-</span></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-weight:600;">유상비용 합계 <span style="font-weight:400;">(가전 + 가전외 매트)</span></div>
+      <div class="cost-hero-row">
+        <div class="cost-card"><div class="cost-label">가전</div><div class="cost-val appliance" id="costAppliance">-</div></div>
+        <div class="cost-card"><div class="cost-label">가전외(매트)</div><div class="cost-val mat" id="costMat">-</div></div>
+        <div class="cost-card"><div class="cost-label">합계</div><div class="cost-val total" id="costTotal">-</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 제품명별 비율 / 사용부품 Top -->
+  <div id="bottomGrid">
+    <div class="analysis-card">
+      <div class="sec-hd blue" style="margin-bottom:10px;">모델(제품명)별 처리 비율 <span class="tag">Top 10</span></div>
+      <div class="rank-list" id="modelRankList"></div>
+    </div>
+    <div class="analysis-card">
+      <div class="sec-hd gold" style="margin-bottom:10px;">사용부품 Top 10 <span class="tag">수리출고 기준</span></div>
+      <div class="rank-list" id="partsRankList"></div>
+    </div>
+  </div>
+
+  <!-- 유상비용 추이(가전+매트 통합, 최근 6개월) -->
+  <div id="costTrendSection">
+    <div class="sec-hd purple" style="margin-bottom:6px;">유상비용 통합 추이 <span class="tag">최근 6개월 · 가전 + 가전외(매트)</span></div>
+    <div class="trend-chart" id="trendChart"></div>
+    <div class="trend-legend">
+      <div class="pl-item"><span class="pl-dot" style="background:var(--blue);"></span>가전</div>
+      <div class="pl-item"><span class="pl-dot" style="background:var(--purple);"></span>가전외(매트)</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// 설정
+// ─────────────────────────────────────────────
+const QC_GAS_URL = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
+const DATA_PATH  = '../qc_data.json';
+
+const RANK_COLORS = ['#4a9eff','#00e5a0','#f0c060','#ff5a6e','#a080ff','#4a9eff','#00e5a0','#f0c060','#ff5a6e','#a080ff'];
+
+// ─────────────────────────────────────────────
+// 상태
+// ─────────────────────────────────────────────
+let _tab     = 'monthly';
+let _period  = todayPeriod('monthly');
+let _cheori  = [];   // 처리현황(가전) records
+let _mat     = [];   // 가전외AS(매트) records
+
+// ─────────────────────────────────────────────
+// postMessage (테마)
+// ─────────────────────────────────────────────
+window.addEventListener('message', e => {
+  if (!e.data) return;
+  if (e.data.type === 'THEME') {
+    document.body.classList.toggle('light', e.data.mode === 'light');
+  }
+});
+const savedTheme = sessionStorage.getItem('_theme') || 'dark';
+if (savedTheme === 'light') document.body.classList.add('light');
+
+// ─────────────────────────────────────────────
+// 기간 유틸 (불량현황과 동일 로직)
+// ─────────────────────────────────────────────
+function todayPeriod(tab) {
+  const now = new Date();
+  if (tab === 'monthly') return { year: now.getFullYear(), month: now.getMonth()+1 };
+  if (tab === 'yearly')  return { year: now.getFullYear() };
+  const d = new Date(now);
+  d.setDate(d.getDate() - d.getDay() + 1);
+  return { year: d.getFullYear(), month: d.getMonth()+1, date: d.getDate() };
+}
+function periodLabel(tab, p) {
+  if (tab === 'monthly') return `${p.year}년 ${p.month}월`;
+  if (tab === 'yearly')  return `${p.year}년`;
+  return `${p.year}.${String(p.month).padStart(2,'0')}.${String(p.date).padStart(2,'0')} 주`;
+}
+function periodRange(tab, p) {
+  if (tab === 'monthly') {
+    const s = new Date(p.year, p.month-1, 1);
+    const e = new Date(p.year, p.month, 0);
+    return { start: toISO(s), end: toISO(e) };
+  }
+  if (tab === 'yearly') return { start:`${p.year}-01-01`, end:`${p.year}-12-31` };
+  const mon = new Date(p.year, p.month-1, p.date);
+  const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+  return { start: toISO(mon), end: toISO(sun) };
+}
+function prevPeriod(tab, p) {
+  if (tab === 'monthly') { let m=p.month-1,y=p.year; if(m<1){m=12;y--;} return {year:y,month:m}; }
+  if (tab === 'yearly')  return {year:p.year-1};
+  const d=new Date(p.year,p.month-1,p.date); d.setDate(d.getDate()-7);
+  return {year:d.getFullYear(),month:d.getMonth()+1,date:d.getDate()};
+}
+function nextPeriod(tab, p) {
+  if (tab === 'monthly') { let m=p.month+1,y=p.year; if(m>12){m=1;y++;} return {year:y,month:m}; }
+  if (tab === 'yearly')  return {year:p.year+1};
+  const d=new Date(p.year,p.month-1,p.date); d.setDate(d.getDate()+7);
+  return {year:d.getFullYear(),month:d.getMonth()+1,date:d.getDate()};
+}
+function toISO(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+function filterCheoriByPeriod(records, tab, p) {
+  const {start, end} = periodRange(tab, p);
+  return records.filter(r => r.처리일 && r.처리일 >= start && r.처리일 <= end);
+}
+function filterMatByPeriod(records, tab, p) {
+  const {start, end} = periodRange(tab, p);
+  return records.filter(r => r.완료일자 && r.완료일자 >= start && r.완료일자 <= end);
+}
+
+// ─────────────────────────────────────────────
+// 탭 / 기간 조작
+// ─────────────────────────────────────────────
+function setTab(tab) {
+  _tab = tab;
+  _period = todayPeriod(tab);
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  render();
+}
+function movePeriod(dir) {
+  _period = dir < 0 ? prevPeriod(_tab, _period) : nextPeriod(_tab, _period);
+  render();
+}
+
+// ─────────────────────────────────────────────
+// 데이터 로드
+// ─────────────────────────────────────────────
+async function loadData() {
+  showLoading();
+  try {
+    const res  = await fetch(DATA_PATH + '?t=' + Date.now());
+    const data = await res.json();
+
+    _cheori = (data.처리현황 && data.처리현황.records) || [];
+    _mat    = (data.가전외AS && data.가전외AS.records) || [];
+
+    if (!_cheori.length) { showEmpty(); return; }
+
+    document.getElementById('syncInfo').textContent =
+      data.lastSynced ? `최근 동기화: ${new Date(data.lastSynced).toLocaleString('ko-KR')}` : '-';
+
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('mainContent').style.display  = '';
+    render();
+  } catch(e) {
+    showEmpty();
+  }
+}
+
+// ─────────────────────────────────────────────
+// 렌더 총괄
+// ─────────────────────────────────────────────
+function render() {
+  document.getElementById('periodLabel').textContent = periodLabel(_tab, _period);
+
+  const cur  = filterCheoriByPeriod(_cheori, _tab, _period);
+  const prev = filterCheoriByPeriod(_cheori, _tab, prevPeriod(_tab, _period));
+  const curMat = filterMatByPeriod(_mat, _tab, _period);
+
+  renderKpi(cur, prev);
+  renderQuality(cur, curMat);
+  renderModelRank(cur);
+  renderPartsRank(cur);
+  renderCostTrend();
+}
+
+// ─────────────────────────────────────────────
+// KPI
+// ─────────────────────────────────────────────
+function countGubun(records, name) { return records.filter(r => r.구분 === name).length; }
+
+function renderKpi(cur, prev) {
+  const total = cur.length;
+  document.getElementById('kpiTotal').textContent = total;
+  document.getElementById('kpiTotalSub').textContent = `전 기간 ${prev.length}건`;
+
+  const map = [
+    ['수리출고','kpiRepair','kpiRepairSub','kpiRepairDelta'],
+    ['자재출고','kpiMaterial','kpiMaterialSub','kpiMaterialDelta'],
+    ['교환/환불','kpiExchange','kpiExchangeSub','kpiExchangeDelta'],
+    ['점검','kpiCheck','kpiCheckSub','kpiCheckDelta'],
+  ];
+  map.forEach(([gubun, valId, subId, deltaId]) => {
+    const c = countGubun(cur, gubun);
+    const pc = countGubun(prev, gubun);
+    document.getElementById(valId).textContent = c;
+    document.getElementById(subId).textContent = `전 기간 ${pc}건`;
+    const diff = c - pc;
+    const dEl = document.getElementById(deltaId);
+    if (diff === 0) { dEl.textContent=''; }
+    else {
+      dEl.textContent = (diff>0?'▲':'▼') + Math.abs(diff);
+      dEl.className = 'kpi-delta ' + (diff>0?'up':'dn');
+    }
+  });
+}
+
+// ─────────────────────────────────────────────
+// 처리품질 (소요일 / 유무상 / 유상비용)
+// ─────────────────────────────────────────────
+function renderQuality(cur, curMat) {
+  const repairDays = cur.filter(r => r.구분 === '수리출고' && typeof r.소요일 === 'number').map(r => r.소요일);
+  if (repairDays.length) {
+    const avg = repairDays.reduce((a,b)=>a+b,0) / repairDays.length;
+    const sorted = [...repairDays].sort((a,b)=>a-b);
+    const med = sorted[Math.floor(sorted.length/2)];
+    document.getElementById('avgDays').textContent = avg.toFixed(1);
+    document.getElementById('daysSub').textContent = `수리출고 ${repairDays.length}건 기준`;
+    document.getElementById('minDays').textContent = sorted[0] + '일';
+    document.getElementById('medDays').textContent = med + '일';
+    document.getElementById('maxDays').textContent = sorted[sorted.length-1] + '일';
+  } else {
+    document.getElementById('avgDays').textContent = '-';
+    document.getElementById('daysSub').textContent = '해당 기간 수리출고 데이터 없음';
+    ['minDays','medDays','maxDays'].forEach(id => document.getElementById(id).textContent = '-');
+  }
+
+  const paidCnt = cur.filter(r => r.유무상 === '유상수리').length;
+  const freeCnt = cur.filter(r => r.유무상 === '무상수리').length;
+  const totalPF = paidCnt + freeCnt || 1;
+  document.getElementById('paidBar').innerHTML =
+    `<div class="paid-seg paid" style="width:${paidCnt/totalPF*100}%"></div>` +
+    `<div class="paid-seg free" style="width:${freeCnt/totalPF*100}%"></div>`;
+  document.getElementById('paidCount').textContent = paidCnt + '건';
+  document.getElementById('freeCount').textContent = freeCnt + '건';
+
+  const costAppliance = cur.filter(r => r.유무상==='유상수리').reduce((s,r)=>s+(r.유상AS비용||0),0);
+  const costMat = curMat.filter(r => r.유무상==='유상').reduce((s,r)=>s+(r.비용||0),0);
+  document.getElementById('costAppliance').textContent = costAppliance.toLocaleString()+'원';
+  document.getElementById('costMat').textContent = costMat.toLocaleString()+'원';
+  document.getElementById('costTotal').textContent = (costAppliance+costMat).toLocaleString()+'원';
+}
+
+// ─────────────────────────────────────────────
+// 모델(제품명)별 처리 비율
+// ─────────────────────────────────────────────
+function renderModelRank(cur) {
+  const cnt = {};
+  cur.forEach(r => { const k = r.제품명 || '미지정'; cnt[k] = (cnt[k]||0)+1; });
+  const arr = Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const total = cur.length || 1;
+  const el = document.getElementById('modelRankList');
+  if (!arr.length) { el.innerHTML = '<div style="font-size:11px;color:var(--text3);">데이터 없음</div>'; return; }
+  el.innerHTML = arr.map(([name,count],i) => `
+    <div class="rank-row">
+      <div class="rank-no">${i+1}</div>
+      <div class="rank-name" title="${name}">${shortName(name)}</div>
+      <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${count/arr[0][1]*100}%;background:${RANK_COLORS[i]}"></div></div>
+      <div class="rank-count">${count}</div>
+      <div class="rank-pct">${(count/total*100).toFixed(1)}%</div>
+    </div>`).join('');
+}
+
+// ─────────────────────────────────────────────
+// 사용부품 Top 10 (수리출고 기준)
+// ─────────────────────────────────────────────
+function renderPartsRank(cur) {
+  const repairRecords = cur.filter(r => r.구분 === '수리출고');
+  const cnt = {};
+  repairRecords.forEach(r => (r.사용부품||[]).forEach(part => { cnt[part] = (cnt[part]||0)+1; }));
+  const arr = Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const total = repairRecords.length || 1;
+  const el = document.getElementById('partsRankList');
+  if (!arr.length) { el.innerHTML = '<div style="font-size:11px;color:var(--text3);">데이터 없음</div>'; return; }
+  el.innerHTML = arr.map(([name,count],i) => `
+    <div class="rank-row">
+      <div class="rank-no">${i+1}</div>
+      <div class="rank-name" title="${name}">${shortName(name)}</div>
+      <div class="rank-bar-wrap"><div class="rank-bar-fill" style="width:${count/arr[0][1]*100}%;background:${RANK_COLORS[i]}"></div></div>
+      <div class="rank-count">${count}</div>
+      <div class="rank-pct">${(count/total*100).toFixed(1)}%</div>
+    </div>`).join('');
+}
+
+// ─────────────────────────────────────────────
+// 유상비용 통합 추이 (최근 6개월, 탭/기간과 무관하게 고정 표시)
+// ─────────────────────────────────────────────
+function renderCostTrend() {
+  const now = new Date();
+  const months = [];
+  for (let i=5; i>=0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    months.push({ year:d.getFullYear(), month:d.getMonth()+1 });
+  }
+  const monthly = months.map(m => {
+    const start = `${m.year}-${String(m.month).padStart(2,'0')}-01`;
+    const endD  = new Date(m.year, m.month, 0);
+    const end   = toISO(endD);
+    const applianceCost = _cheori.filter(r => r.처리일 && r.처리일>=start && r.처리일<=end && r.유무상==='유상수리')
+      .reduce((s,r)=>s+(r.유상AS비용||0),0);
+    const matCost = _mat.filter(r => r.완료일자 && r.완료일자>=start && r.완료일자<=end && r.유무상==='유상')
+      .reduce((s,r)=>s+(r.비용||0),0);
+    return { label:`${m.month}월`, appliance:applianceCost, mat:matCost };
+  });
+  const maxVal = Math.max(...monthly.map(m=>m.appliance+m.mat), 1);
+  const el = document.getElementById('trendChart');
+  el.innerHTML = monthly.map(m => {
+    const total = m.appliance + m.mat;
+    const h = total/maxVal*100;
+    const applianceH = total? (m.appliance/total*100) : 0;
+    const matH = total? (m.mat/total*100) : 0;
+    return `<div class="trend-col">
+      <div style="font-size:9px;color:var(--text3);font-family:var(--font-en);">${total? (total/10000).toFixed(0)+'만':'-'}</div>
+      <div class="trend-bar-stack" style="height:${Math.max(h,2)}%;">
+        <div class="trend-seg mat" style="height:${matH}%;"></div>
+        <div class="trend-seg appliance" style="height:${applianceH}%;"></div>
+      </div>
+      <div class="trend-label">${m.label}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+// 유틸
+// ─────────────────────────────────────────────
+function shortName(name) {
+  if (!name) return '-';
+  let n = String(name).replace(/\[집계\]\s*/g,'').replace(/\[.*?\]\s*/g,'').trim();
+  return n.length > 14 ? n.slice(0,13)+'..' : n;
+}
+function showLoading() {
+  document.getElementById('loadingState').style.display = '';
+  document.getElementById('emptyState').style.display   = 'none';
+  document.getElementById('mainContent').style.display  = 'none';
+}
+function showEmpty() {
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('emptyState').style.display   = '';
+  document.getElementById('mainContent').style.display  = 'none';
+}
+function goSync() {
+  window.parent.postMessage({type:'GO_TAB', tab:'sync'}, '*');
+}
+
+// ─────────────────────────────────────────────
+// 진입
+// ─────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>

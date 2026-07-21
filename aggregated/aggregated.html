@@ -562,11 +562,16 @@ const MODULES = {
     name: '자재발주 현황',
     ready: true,
     project: '자재발주 현황',
+    // ★ 이 모듈은 기안일 기준 기간필터를 쓰지 않음 (snapshotMode)
+    //   기안-입고예정-입고완료로 여러 회차에 걸쳐 이어지는 건들이라,
+    //   "그 회차 마감 시점 기준 전체 건의 현재 상태"를 매 회차 빠짐없이 스냅샷으로 기록한다.
+    //   예) 7/1 기안, 7/21 입고 예정 건 → 7/17 마감엔 '미입고' 상태로, 7/24 마감엔 '입고완료' 상태로 각각 기록됨
+    snapshotMode: true,
     async loadData() {
       const res = await fetch(`${QC_GAS_URL}?action=getZaejaeData`, { redirect: 'follow' });
       const json = await res.json();
       if (!json.ok || !json.records) throw new Error('자재발주 데이터 로드 실패');
-      return json.records.map(r => ({ ...r, dateObj: parseYmd(r.기안일) }));
+      return json.records; // 날짜 필터 없이 전체 건을 그대로 사용
     },
     buildSummary(rows) {
       const total = rows.length;
@@ -575,7 +580,12 @@ const MODULES = {
       const byStatus = {};
       statuses.forEach(s => { byStatus[s] = rows.filter(r => r.진행상태 === s).length; });
       const top5Products = topNByCount(rows, r => r.제품구분, 5);
-      return { total, byStatus, top5Products };
+      // 전체 건 개별 스냅샷 (건명 / 제품구분 / 현재상태 / 기안일 / 입고일) — 건수가 적어(보통 5~10건) 전부 기록
+      const items = rows.map(r => ({
+        건명: r.건명 || '', 제품구분: r.제품구분 || '', 진행상태: r.진행상태 || '',
+        기안일: r.기안일 || '', 입고일: r.입고일 || '',
+      }));
+      return { total, byStatus, top5Products, items };
     }
   },
 
@@ -846,8 +856,12 @@ function buildCtx(periodType, p) {
   };
 }
 
-// loadData() 결과가 flat rows 배열이면 기존 방식, {_raw:true} 번들이면 ctx를 넘겨서 모듈이 직접 필터링
+// loadData() 결과가 flat rows 배열이면 기존 방식, {_raw:true} 번들이면 ctx를 넘겨서 모듈이 직접 필터링,
+// snapshotMode 모듈은 기간 필터 없이 전체 rows를 그대로 사용 (그 회차 마감 시점 스냅샷)
 function computeSummary(m, rows, periodType, p) {
+  if (m.snapshotMode) {
+    return m.buildSummary(rows);
+  }
   if (rows && rows._raw) {
     return m.buildSummary(rows, buildCtx(periodType, p));
   }

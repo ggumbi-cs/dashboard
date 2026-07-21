@@ -122,6 +122,42 @@
   .btn-global-send:disabled { opacity: .5; cursor: not-allowed; }
   .global-bar-note { font-size: 11px; color: var(--text3); width: 100%; margin-top: 2px; }
 
+  .btn-copy-claude {
+    background: linear-gradient(135deg, #7c5cdb, #4470e8); color: #fff; border: none; border-radius: 7px;
+    padding: 8px 16px; font-family: var(--font); font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .btn-copy-claude:hover { opacity: .9; }
+
+  /* ── 클로드 전송데이터 복사 모달 ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(10,15,30,.45);
+    z-index: 200; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--surface); border-radius: 14px; width: 560px; max-width: 92vw; max-height: 86vh;
+    overflow-y: auto; padding: 22px 24px; box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  }
+  .modal-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+  .modal-close { background: none; border: none; font-size: 16px; cursor: pointer; color: var(--text3); }
+  .modal-section-label { font-size: 12px; font-weight: 700; color: var(--text2); margin: 14px 0 6px; }
+  .modal-period-tabs { display: flex; gap: 6px; }
+  .modal-period-tabs .period-type-btn { flex: 1; }
+  .modal-project-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 6px; margin-top: 4px; }
+  .modal-project-item {
+    display: flex; align-items: center; gap: 6px; font-size: 12px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; cursor: pointer;
+  }
+  .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .modal-result {
+    margin-top: 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px; font-family: var(--mono); font-size: 11px; white-space: pre-wrap; max-height: 260px;
+    overflow-y: auto; display: none;
+  }
+  .modal-status { font-size: 12px; margin-top: 8px; min-height: 16px; }
+  .modal-status.ok { color: var(--green); }
+  .modal-status.err { color: var(--red); }
+
   /* ── 항목별 실시간 전송 상태 ── */
   .live-status {
     font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 4px; white-space: nowrap;
@@ -147,12 +183,45 @@
 
 <div class="content">
   <div class="global-bar">
+    <span class="global-bar-label">📋 클로드용</span>
+    <button class="btn-copy-claude" onclick="openCopyModal()">클로드 전송데이터 복사</button>
+    <div class="global-bar-note">원하는 항목·기간을 골라 GAS에 저장된 마감 데이터를 정리된 텍스트로 클립보드에 복사합니다. 클로드 채팅에 붙여넣기만 하면 됩니다.</div>
+  </div>
+
+  <div class="global-bar">
     <span class="global-bar-label">🚀 전체 일괄 마감전송</span>
     <button class="btn-global-send" onclick="sendAllReady('monthly')">이번 달치 전체 전송</button>
     <button class="btn-global-send" onclick="sendAllReady('weekly')">이번 주치(최근 마감주) 전체 전송</button>
     <div class="global-bar-note">연동 완료된(⏳ 아닌) 항목들만 대상으로 각자 해당 기간을 집계해서 한 번에 전송합니다.</div>
   </div>
   <div id="content"></div>
+</div>
+
+<div class="modal-overlay" id="copyModalOverlay">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span>📋 클로드 전송데이터 복사</span>
+      <button class="modal-close" onclick="closeCopyModal()">✕</button>
+    </div>
+
+    <div class="modal-section-label">기간 유형</div>
+    <div class="modal-period-tabs">
+      <button type="button" class="period-type-btn active" id="cm-type-monthly" onclick="cmSetPeriodType('monthly')">월간</button>
+      <button type="button" class="period-type-btn" id="cm-type-weekly" onclick="cmSetPeriodType('weekly')">주간</button>
+    </div>
+
+    <div class="modal-section-label">회차 선택</div>
+    <select id="cmPeriodSelect" style="width:100%;padding:8px 10px;border-radius:7px;border:1px solid var(--border);font-family:var(--font);font-size:12px;"></select>
+
+    <div class="modal-section-label">포함할 항목 <button class="btn-select-all" style="padding:3px 8px;font-size:10px;" onclick="cmToggleAll()">전체 선택/해제</button></div>
+    <div class="modal-project-grid" id="cmProjectGrid"></div>
+
+    <div class="modal-actions">
+      <button class="btn-send-selected" onclick="cmGenerateAndCopy()">✅ 확정 · 클립보드 복사</button>
+    </div>
+    <div class="modal-status" id="cmStatus"></div>
+    <div class="modal-result" id="cmResult"></div>
+  </div>
 </div>
 
 <script>
@@ -872,6 +941,146 @@ async function sendAllReady(periodType) {
     } catch (e) {
       setLiveStatus(id, 'err');
     }
+  }
+}
+
+// ================================================================
+// 📋 클로드 전송데이터 복사 모달
+// ================================================================
+let cmPeriodType = 'monthly';
+let cmPeriodList = [];
+
+function openCopyModal() {
+  document.getElementById('copyModalOverlay').classList.add('open');
+  document.getElementById('cmResult').style.display = 'none';
+  document.getElementById('cmResult').textContent = '';
+  document.getElementById('cmStatus').textContent = '';
+  document.getElementById('cmStatus').className = 'modal-status';
+  cmSetPeriodType('monthly');
+  cmRenderProjectGrid();
+}
+function closeCopyModal() {
+  document.getElementById('copyModalOverlay').classList.remove('open');
+}
+
+function cmSetPeriodType(type) {
+  cmPeriodType = type;
+  document.getElementById('cm-type-monthly').classList.toggle('active', type === 'monthly');
+  document.getElementById('cm-type-weekly').classList.toggle('active', type === 'weekly');
+  cmPeriodList = type === 'monthly' ? getRecentMonths(12) : getRecentFridays(12);
+  const sel = document.getElementById('cmPeriodSelect');
+  sel.innerHTML = cmPeriodList.map((p,i) => `<option value="${i}">${p.label} (${p.period})</option>`).join('');
+}
+
+function cmRenderProjectGrid() {
+  const grid = document.getElementById('cmProjectGrid');
+  const readyIds = Object.keys(MODULES).filter(id => MODULES[id].ready);
+  grid.innerHTML = readyIds.map(id => `
+    <label class="modal-project-item">
+      <input type="checkbox" value="${MODULES[id].project}" checked>
+      <span>${MODULES[id].name}</span>
+    </label>
+  `).join('');
+}
+
+function cmToggleAll() {
+  const boxes = document.querySelectorAll('#cmProjectGrid input[type=checkbox]');
+  const allChecked = [...boxes].every(b => b.checked);
+  boxes.forEach(b => b.checked = !allChecked);
+}
+
+// 데이터 오브젝트를 사람이 읽기 쉬운 텍스트로 변환 (필드명 = 라벨 그대로 노출해서 식별 가능하게)
+function cmFormatData(obj, pad) {
+  pad = pad || '  ';
+  const lines = [];
+  for (const [k, v] of Object.entries(obj || {})) {
+    if (v === null || v === undefined || v === '') continue;
+    if (Array.isArray(v)) {
+      if (v.length === 0) continue;
+      lines.push(`${pad}${k}:`);
+      v.forEach((item, i) => {
+        if (item && typeof item === 'object') {
+          const parts = Object.entries(item).map(([kk,vv]) => `${kk}=${vv}`).join(', ');
+          lines.push(`${pad}  ${i+1}. ${parts}`);
+        } else {
+          lines.push(`${pad}  ${i+1}. ${item}`);
+        }
+      });
+    } else if (typeof v === 'object') {
+      lines.push(`${pad}${k}:`);
+      lines.push(...cmFormatData(v, pad + '  '));
+    } else {
+      lines.push(`${pad}${k}: ${v}`);
+    }
+  }
+  return lines;
+}
+
+async function cmGenerateAndCopy() {
+  const status = document.getElementById('cmStatus');
+  const resultBox = document.getElementById('cmResult');
+  const idx = Number(document.getElementById('cmPeriodSelect').value);
+  const p = cmPeriodList[idx];
+  const checkedProjects = [...document.querySelectorAll('#cmProjectGrid input[type=checkbox]:checked')].map(b => b.value);
+
+  if (checkedProjects.length === 0) {
+    status.textContent = '항목을 1개 이상 선택해주세요.';
+    status.className = 'modal-status err';
+    return;
+  }
+
+  status.textContent = '데이터 불러오는 중...';
+  status.className = 'modal-status';
+
+  try {
+    const url = `${GAS_URL}?action=getAllForPeriod&periodType=${cmPeriodType}&period=${encodeURIComponent(p.period)}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.msg || '조회 실패');
+
+    const projects = json.projects || {};
+    const periodTypeLabel = cmPeriodType === 'monthly' ? '월간' : '주간';
+    const lines = [];
+    lines.push(`=== 통합 마감 데이터 (${periodTypeLabel} · ${p.label} · 회차코드 ${p.period}) ===`);
+    lines.push(`복사시각: ${new Date().toLocaleString('ko-KR')}`);
+    lines.push('');
+
+    const missing = [];
+    checkedProjects.forEach(projectName => {
+      const entry = projects[projectName];
+      if (!entry) { missing.push(projectName); return; }
+      lines.push(`■ ${projectName} (저장시각: ${entry.savedAt || '-'})`);
+      lines.push(...cmFormatData(entry.data));
+      lines.push('');
+    });
+
+    if (missing.length) {
+      lines.push(`(해당 회차 전송 이력 없음: ${missing.join(', ')})`);
+      lines.push('');
+    }
+
+    const text = lines.join('\n');
+    resultBox.textContent = text;
+    resultBox.style.display = '';
+
+    try {
+      await navigator.clipboard.writeText(text);
+      status.textContent = '✅ 클립보드에 복사 완료! 클로드 채팅에 붙여넣으세요.';
+      status.className = 'modal-status ok';
+    } catch (e) {
+      // 클립보드 API 실패 시 수동 선택 유도
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      status.textContent = '✅ 복사 완료 (대체 방식). 안 되면 아래 텍스트를 직접 드래그해서 복사해주세요.';
+      status.className = 'modal-status ok';
+    }
+  } catch (e) {
+    status.textContent = '❌ 실패: ' + e.message;
+    status.className = 'modal-status err';
   }
 }
 </script>

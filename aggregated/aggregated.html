@@ -580,10 +580,10 @@ const MODULES = {
       const byStatus = {};
       statuses.forEach(s => { byStatus[s] = rows.filter(r => r.진행상태 === s).length; });
       const top5Products = topNByCount(rows, r => r.제품구분, 5);
-      // 전체 건 개별 스냅샷 (건명 / 제품구분 / 현재상태 / 기안일 / 입고일) — 건수가 적어(보통 5~10건) 전부 기록
+      // 전체 건 개별 스냅샷 (건명 / 제품구분 / 현재상태 / 기안일 / 기안승인일 / 입고예정일 / 입고일) — 건수가 적어(보통 5~10건) 전부 기록
       const items = rows.map(r => ({
         건명: r.건명 || '', 제품구분: r.제품구분 || '', 진행상태: r.진행상태 || '',
-        기안일: r.기안일 || '', 입고일: r.입고일 || '',
+        기안일: r.기안일 || '', 기안승인일: r.기안승인 || '', 입고예정일: r.예상일정 || '', 입고일: r.입고일 || '',
       }));
       return { total, byStatus, top5Products, items };
     }

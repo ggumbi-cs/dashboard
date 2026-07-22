@@ -557,20 +557,10 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
     </div>
   </div>
 
-  <!-- 대분류3: 보고서 -->
+  <!-- 대분류3: 보고서 (신규, qc_main과 동일하게 독자적으로 동작) -->
   <div class="nav-group" id="ng-report">
-    <div class="nav-parent">
-      보고서 <span class="nav-arrow">▾</span>
-    </div>
-    <div class="nav-dropdown">
-      <div class="nav-item" data-tab="건별Issue" onclick="switchTab(this)">
-        <span class="nav-item-label">Issue</span>
-        <button class="vis-btn" data-tab="건별Issue" onclick="openVisModal(event,'건별Issue')">⚙</button>
-      </div>
-      <div class="nav-item" data-tab="건별보고" onclick="switchTab(this)">
-        <span class="nav-item-label">보고서</span>
-        <button class="vis-btn" data-tab="건별보고" onclick="openVisModal(event,'건별보고')">⚙</button>
-      </div>
+    <div class="nav-parent" data-tab="report_main" onclick="switchTabDirect('report_main')" style="cursor:pointer;">
+      📑 보고서
     </div>
   </div>
 
@@ -778,6 +768,7 @@ const TAB_MAP = {
   '팀원교육':   'training/training_main.html',
   '지식DB':     '지식db/지식db.html',
   'qc_main':    'qc/qc_main.html',
+  'report_main': 'report/report_main.html',
   '통합마감허브': 'aggregated/aggregated.html',
 };
 
@@ -796,8 +787,8 @@ const ROLE_LEVEL = { admin: 0, leader: 1, ggumbi: 2, affiliate: 3 };
 // ── 역할별 기본 허용 탭 (null = 전체허용) ──
 const ROLE_TABS = {
   'admin':     null,
-  'leader':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','qc_main','스마트스토어','채널톡현황','건별Issue','건별보고','팀Tool','개발자','주피미','월피미','통합마감허브','팀원교육','지식DB'],
-  'ggumbi':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','qc_main','스마트스토어','채널톡현황','건별Issue','건별보고','팀Tool','주피미','월피미','통합마감허브','팀원교육','지식DB'],
+  'leader':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','qc_main','스마트스토어','채널톡현황','건별Issue','건별보고','report_main','팀Tool','개발자','주피미','월피미','통합마감허브','팀원교육','지식DB'],
+  'ggumbi':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','qc_main','스마트스토어','채널톡현황','건별Issue','건별보고','report_main','팀Tool','주피미','월피미','통합마감허브','팀원교육','지식DB'],
   'affiliate': ['팀Tool','지식DB'],
 };
 
@@ -1370,12 +1361,13 @@ function _switchSidebar(tabName) {
   const isStatusTab = tabName === '주요kpi' || tabName === '상담분석';
   const isNewStatusTab = tabName === '스마트스토어' || tabName === '채널톡현황';
   const isQcTab     = tabName === 'qc_main';
+  const isReportTab = tabName === 'report_main';
   const isTrainingTab = tabName === '팀원교육';
   const isKnowledgeTab = tabName === '지식DB';
   const isHubTab = tabName === '통합마감허브';
 
-  // 팀원교육 / 지식DB / 품질관리(QC) / 통합마감허브: 사이드바 완전 숨김 → content(iframe)가 flex:1로 자동 확장
-  if (isTrainingTab || isKnowledgeTab || isQcTab || isHubTab) {
+  // 팀원교육 / 지식DB / 품질관리(QC) / 보고서 / 통합마감허브: 사이드바 완전 숨김 → content(iframe)가 flex:1로 자동 확장
+  if (isTrainingTab || isKnowledgeTab || isQcTab || isReportTab || isHubTab) {
     if (sb) sb.style.display = 'none';
     return;
   }

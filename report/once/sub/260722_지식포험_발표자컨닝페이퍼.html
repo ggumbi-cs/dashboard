@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>발표자 컨닝페이퍼 — AI 우수사례 발표</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#F5F6F8; --surface:#FFFFFF; --accent:#2563EB; --accent-dim:rgba(37,99,235,0.08);
+  --border:#E2E5EA; --text:#1A2233; --text2:#4B5670; --text3:#8892A6;
+  --green:#0D9E6E; --gold:#D97706; --red:#DC3545;
+  --font-kr:'Noto Sans KR',sans-serif; --font-mono:'JetBrains Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font-kr);line-height:1.7;padding:0 0 80px;}
+.wrap{max-width:880px;margin:0 auto;padding:50px 28px 0;}
+
+.header{margin-bottom:36px;}
+.header .eyebrow{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
+.header h1{font-size:26px;font-weight:900;letter-spacing:-.5px;margin-bottom:8px;}
+.header .meta{font-size:12.5px;color:var(--text3);display:flex;gap:16px;flex-wrap:wrap;}
+.header .meta b{color:var(--text2);font-weight:700;}
+
+.total-bar{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:40px;overflow:hidden;}
+.total-bar .seg{padding:12px 16px;border-right:1px solid var(--border);flex:1;text-align:center;}
+.total-bar .seg:last-child{border-right:none;}
+.total-bar .seg .t{font-family:var(--font-mono);font-size:15px;font-weight:700;color:var(--accent);}
+.total-bar .seg .l{font-size:10.5px;color:var(--text3);margin-top:2px;}
+
+/* 섹션 카드 */
+.block{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;overflow:hidden;}
+.block-hd{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#FAFBFC,#FFFFFF);}
+.block-num{font-family:var(--font-mono);font-size:11px;font-weight:700;color:#fff;background:var(--accent);border-radius:6px;padding:4px 9px;flex-shrink:0;}
+.block-title{font-size:15.5px;font-weight:700;flex:1;}
+.block-time{font-family:var(--font-mono);font-size:11.5px;color:var(--accent);font-weight:700;background:var(--accent-dim);padding:3px 10px;border-radius:20px;flex-shrink:0;}
+.block-body{padding:18px 20px 20px;}
+
+.say-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
+.say-box{background:#F8FAFF;border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:12px 16px;font-size:13.5px;color:var(--text);margin-bottom:14px;line-height:1.85;}
+.say-box .pause{display:inline-block;color:var(--text3);font-style:italic;font-size:12px;margin:0 3px;}
+
+.point-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:14px 0 6px;}
+.point-list{list-style:none;}
+.point-list li{position:relative;padding-left:16px;font-size:12.5px;color:var(--text2);margin-bottom:6px;}
+.point-list li::before{content:'';position:absolute;left:0;top:7px;width:5px;height:5px;border-radius:50%;background:var(--accent);}
+
+.demo-flag{display:flex;align-items:center;gap:8px;background:#FFF3F3;border:1px solid #FBC9CB;border-radius:8px;padding:9px 13px;font-size:12px;color:#B02A37;margin-top:12px;}
+.demo-flag b{font-weight:700;}
+
+.qa-box{margin-top:14px;background:#FFFBEB;border:1px solid #F5DFA0;border-radius:8px;padding:12px 15px;}
+.qa-box .q{font-size:12.5px;font-weight:700;color:#92650A;margin-bottom:4px;}
+.qa-box .a{font-size:12.5px;color:var(--text2);}
+
+.tag-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.tag{font-family:var(--font-mono);font-size:10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:3px 8px;color:var(--text3);}
+
+.checklist{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-top:30px;}
+.checklist h3{font-size:14px;margin-bottom:12px;}
+.checklist label{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--text2);margin-bottom:9px;cursor:pointer;}
+.checklist input{margin-top:3px;}
+
+.print-btn{position:fixed;bottom:24px;right:24px;background:var(--accent);color:#fff;border:none;border-radius:30px;padding:11px 20px;font-size:12.5px;font-weight:700;font-family:var(--font-kr);cursor:pointer;box-shadow:0 8px 20px rgba(37,99,235,0.3);}
+@media print{.print-btn{display:none;} .stopwatch{display:none !important;} body{padding:0;} .block{break-inside:avoid;}}
+
+/* ── 신호등 dot ── */
+.tl-light{width:10px;height:10px;border-radius:50%;background:#D7DBE2;flex-shrink:0;transition:background .3s, box-shadow .3s;}
+.tl-light.green{background:var(--green);box-shadow:0 0 0 4px rgba(13,158,110,0.18);}
+.tl-light.orange{background:var(--gold);box-shadow:0 0 0 4px rgba(217,119,6,0.18);animation:tlBlink 1s infinite;}
+.tl-light.red{background:var(--red);box-shadow:0 0 0 4px rgba(220,53,69,0.14);}
+@keyframes tlBlink{50%{opacity:.45;}}
+
+/* ── 스톱워치 위젯 (우측 고정, 스크롤에 항상 따라옴) ── */
+.stopwatch{
+  position:fixed; top:50%; right:22px; transform:translateY(-50%); z-index:900;
+  background:var(--surface); border:1px solid var(--border); border-radius:16px;
+  box-shadow:0 14px 34px rgba(20,30,50,0.14); padding:16px 16px 14px; width:132px;
+  text-align:center; font-family:var(--font-kr);
+}
+.stopwatch .sw-label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;}
+.stopwatch .sw-time{font-family:var(--font-mono);font-size:26px;font-weight:700;color:var(--text);letter-spacing:.02em;margin-bottom:2px;}
+.stopwatch .sw-target{font-family:var(--font-mono);font-size:10.5px;color:var(--text3);margin-bottom:12px;}
+.stopwatch .sw-target.over{color:var(--red);font-weight:700;}
+.stopwatch .sw-btns{display:flex;gap:6px;justify-content:center;}
+.stopwatch button{border:none;border-radius:8px;padding:7px 0;font-size:11px;font-weight:700;font-family:var(--font-kr);cursor:pointer;flex:1;}
+.stopwatch .sw-start{background:var(--accent);color:#fff;}
+.stopwatch .sw-start.running{background:var(--gold);}
+.stopwatch .sw-reset{background:var(--bg);color:var(--text2);border:1px solid var(--border) !important;}
+.stopwatch .sw-current{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:10px;color:var(--text3);line-height:1.5;}
+.stopwatch .sw-current b{display:block;font-size:11.5px;color:var(--text);font-weight:700;margin-top:2px;}
+@media(max-width:1180px){.stopwatch{position:static;transform:none;margin:0 auto 24px;width:100%;max-width:340px;}}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="eyebrow">발표자용 컨닝페이퍼 · Presenter Script</div>
+    <h1>AI로 만든 우리 팀의 업무 시스템</h1>
+    <div class="meta"><span><b>발표자</b> 심우승 SQ</span><span><b>대상</b> 전직원 · AI 우수사례 발표</span><span><b>분량</b> 약 20분</span></div>
+  </div>
+
+  <div class="total-bar">
+    <div class="seg"><div class="t">20분</div><div class="l">총 발표시간</div></div>
+    <div class="seg"><div class="t">8</div><div class="l">파트 구성</div></div>
+    <div class="seg"><div class="t">4</div><div class="l">라이브 데모 지점</div></div>
+  </div>
+
+  <!-- 0. 오프닝 -->
+  <div class="block" data-start="0" data-end="60"><div class="block-hd"><span class="tl-light" title="진행 신호등"></span><div class="block-num">00</div><div class="block-title">오프닝 (화면: Hero)</div><div class="block-time">0:00–1:00</div></div>
+    <div class="block-body">
+      <div class="say-label">말할 내용</div>
+      <div class="say-box">
+        안녕하세요, 엄마감동팀 심우승입니다. 오늘은 저희 팀이 CS와 품질관리 업무를 하면서 <b>AI를 활용해 직접 만든 업무 시스템</b>을 소개하려고 합니다.
+        <span class="pause">(잠시 멈춤)</span> 거창한 프로젝트로 시작한 게 아니라, 매일 반복되던 작업 하나를 자동화하다 보니 지금의 구조까지 오게 됐는데요, 그 과정을 순서대로 보여드리겠습니다.
+      </div>
+      <div class="point-label">포인트</div>
+      <ul class="point-list">
+        <li>"거창하게 시작한 게 아니다"를 강조 — 전직원 대상이므로 진입장벽을 낮추는 게 목적</li>
+        <li>발표자료 자체도 이 시스템과 같은 방식(HTML)으로 만들었다는 점은 마무리에서 다시 언급 예정</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 1. 문제의식 -->
+  <div class="block" data-start="60" data-end="180"><div class="block-hd"><span class="tl-light" title="진행 신호등"></span><div class="block-num">01</div><div class="block-title">문제의식 — Before/After</div><div class="block-time">1:00–3:00</div></div>
+    <div class="block-body">
+      <div class="say-label">말할 내용</div>
+      <div class="say-box">
+        예전에는 CS·품질 데이터가 여러 시트와 문서에 흩어져 있었고, 보고서도 매번 새로 정리해야 했습니다. 부품 원인 분석이나 견적 산출도 결국 경험 많은 사람의 감에 의존했었죠.
+        <span class="pause">(전환)</span> 지금은 하나의 대시보드에서 데이터가 통합되고, 보고서는 정해진 양식으로 자동 집계되고, 과거 데이터를 기반으로 원인을 자동 추천해주는 구조로 바뀌었습니다.
+      </div>
+      <div class="point-label">포인트</div>
+      <ul class="point-list">
+        <li>수치(몇 % 감소 등)는 절대 언급하지 않기 — 근거 없는 수치 금지 원칙</li>
+        <li>"감에서 데이터로" 이 한 문장이 핵심 메시지</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 2. 아키텍처 -->
+  <div class="block" data-start="180" data-end="420"><div class="block-hd"><span class="tl-light" title="진행 신호등"></span><div class="block-num">02</div><div class="block-title">시스템 구조 — 4단계 아키텍처</div><div class="block-time">3:00–7:00</div></div>
+    <div class="block-body">
+      <div class="say-label">말할 내용</div>
+      <div class="say-box">
+        구조는 크게 4단계입니다. 첫째, 데이터는 노션·채널톡처럼 API 연동이 되는 곳은 직접 연결하고, 안 되는 곳은 CSV로 내려받아 폴더에 넣습니다.
+        둘째, 이 데이터들은 전부 <b>구글 앱스 스크립트(GAS)</b>라는 창구를 거쳐 주고받는데요, 무거운 데이터는 매일 새벽에 미리 JSON으로 굳혀놔서 로딩이 빠릅니다.
+        셋째, 사용자는 역할에 따라 접근 권한이 다른 허브 화면 하나로 모든 걸 이용합니다. 넷째, 이 구조 자체를 설명하는 매뉴얼 페이지가 따로 있어서, 시스템이 스스로를 문서화합니다.
+      </div>
+      <div class="point-label">발표 팁</div>
+      <ul class="point-list">
+        <li>이 파트가 가장 "기술적으로 보일 위험"이 있는 구간 — 천천히, 비유 위주로 설명</li>
+        <li>"용어에 마우스를 올리면 설명이 뜬다"는 점을 화면 보여주며 짧게 시연 (질문 나올 걸 대비한 장치라고 언급하면 좋음)</li>
+      </ul>
+      <div class="qa-box">
+        <div class="q">Q. GAS가 뭔가요? / 서버 비용은요?</div>
+        <div class="a">A. 구글이 무료로 제공하는 스크립트 실행 환경입니다. 별도 서버 비용 없이 구글 계정 권한만으로 데이터를 주고받을 수 있어요.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 구축여정 -->
+  <div class="block" data-start="420" data-end="570"><div class="block-hd"><span class="tl-light" title="진행 신호등"></span><div class="block-num">03</div><div class="block-title">구축 여정 — 타임라인</div><div class="block-time">7:00–9:30</div></div>
+    <div class="block-body">
+      <div class="say-label">말할 내용</div>
+      <div class="say-box">
+        처음엔 주간·월간 보고서를 표준화하는 것부터 시작했습니다. 그다음 품질 지표를 세분화했고, 반복되는 실무 판단(부품 원인 추천, 견적 계산 등)을 자동화한 Tool을 12개까지 늘렸어요.
+        이후엔 팀원들이 직접 만들 수 있도록 13회차 교육을 진행했고, 지금은 저희 팀을 넘어 전사 지식공유 프로그램까지 이 방식으로 운영하고 있습니다.
+      </div>
+      <div class="point-label">포인트</div>
+      <ul class="point-list">
+        <li>"5단계"를 손가락으로 하나씩 짚듯이 리듬감 있게 — 이 파트가 스토리의 중심축</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 4. 라이브데모 -->
+  <div class="block" data-start="570" data-end="900"><div class="block-hd"><span class="tl-light" title="진행 신호등"></span><div class="block-num">04</div><div class="block-title">라이브 데모 — 실제 화면 전환</div><div class="block-time">9:30–15:00</div></div>
+    <div class="block-body">
+      <div class="say-label">말할 내용 (전환 멘트)</div>
+      <div class="say-box">
+        설명은 이 정도로 하고, 실제 화면으로 직접 보여드리겠습니다. <span class="pause">(카드 클릭 → 새 창으로 대시보드 오픈)</span>
+      </div>
+      <div class="point-label">클릭 순서 · 화면별 멘트</div>
+      <ul class="point-list">
+        <li><b style="color:var(--text)">① AS1→AS3 연동</b>: "모델이랑 증상만 고르면, 과거 수리 이력 기반으로 원인 부품이 랭킹으로 뜨고 — 이게 옆 화면에 실시간으로 넘어가서 관리방법까지 자동으로 추천돼요."</li>
+        <li><b style="color:var(--text)">② 자재발주 현황판</b>: "상태 하나만 바꿔도 바로 반영되고, 기안일 기준 경과일도 색상으로 자동 표시됩니다."</li>
+        <li><b style="color:var(--text)">③ 통합 마감전송 허브</b>: "9개 업무 항목을 한 화면에서 관리하고, 주간/월간 단위로 체크해서 한 번에 보고서 데이터로 넘깁니다."</li>
+        <li><b style="color:var(--text)">④ 지식DB</b>: "이게 팀 업무가 아니라 전사 지식공유 프로그램인데, 같은 방식으로 조편성부터 미제출자 현황까지 관리하고 있어요."</li>
+      </ul>
+      <div class="demo-flag"><b>⚠ 사전 체크</b>&nbsp;발표 PC 팝업 차단 해제 / 대시보드 로그인 세션 유지 / 인터넷 연결 상태 확인</div>
+    </div>
+  </div>
+
+  <!-- 5. 확산 -->
+  <div class="block" data-start="900" data-end="1020"><div class="block-hd"><span class="tl-light" title="진행 신호등"></span><div class="block-num">05</div><div class="block-title">팀 · 조직 확산</div><div class="block-time">15:00–17:00</div></div>
+    <div class="block-body">
+      <div class="say-label">말할 내용</div>
+      <div class="say-box">
+        이걸 저 혼자만 쓰면 의미가 크지 않다고 생각해서, 팀원들이 직접 자기 업무 Tool을 만들 수 있도록 13회차 교육을 진행했습니다.
+        "AI로 AI 활용하기"부터 시작해서 마지막엔 GAS로 자동 동기화까지 실습으로 다뤘고요. 지금은 그 경험이 팀을 넘어 전사 지식공유 프로그램에도 적용되고 있습니다.
+      </div>
+      <div class="point-label">포인트</div>
+      <ul class="point-list">
+        <li>"확산"이라는 단어를 명확히 강조 — 개인기가 아니라 조직 역량으로 이어졌다는 메시지</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 6. 변화 -->
+  <div class="block" data-start="1020" data-end="1110"><div class="block-hd"><span class="tl-light" title="진행 신호등"></span><div class="block-num">06</div><div class="block-title">이 시스템이 만든 변화</div><div class="block-time">17:00–18:30</div></div>
+    <div class="block-body">
+      <div class="say-label">말할 내용</div>
+      <div class="say-box">
+        숫자로 "몇 % 줄었다"는 말씀은 일부러 안 드립니다. 근거 없는 수치는 오히려 신뢰를 깎는다고 생각해서요. 대신 확실히 말씀드릴 수 있는 건, 보고서가 표준화됐고, 개인의 경험이 팀 전체가 쓸 수 있는 데이터 자산이 됐고, 팀원들이 이제 직접 도구를 만들 수 있게 됐다는 점입니다.
+      </div>
+      <div class="qa-box">
+        <div class="q">Q. 그래서 시간이 얼마나 줄었나요?</div>
+        <div class="a">A. 정확한 근거 없이 수치로 말씀드리긴 어렵고, 대신 반복 작업이 자동화되면서 판단과 대응에 쓰는 시간이 늘었다는 정성적 변화로 봐주시면 좋겠습니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. 향후계획 + 클로징 -->
+  <div class="block" data-start="1110" data-end="1200"><div class="block-hd"><span class="tl-light" title="진행 신호등"></span><div class="block-num">07</div><div class="block-title">향후 계획 &amp; 클로징</div><div class="block-time">18:30–20:00</div></div>
+    <div class="block-body">
+      <div class="say-label">말할 내용</div>
+      <div class="say-box">
+        앞으로는 노션 API를 직접 연동하고, 깃허브 액션으로 배포 자동화까지 붙일 계획입니다. 스마트스토어 연동 문제도 검증 중이고요.
+        <span class="pause">(마무리)</span> 오늘 보여드린 발표 자료 이 페이지 자체도, 저희 팀이 쓰는 방식 그대로 HTML로 만든 겁니다. 특별한 도구가 아니라, 필요한 걸 하나씩 만들다 보면 이렇게 된다는 말씀을 드리고 싶었습니다. 감사합니다.
+      </div>
+      <div class="point-label">포인트</div>
+      <ul class="point-list">
+        <li>마지막 문장은 "이 발표자료도 같은 방식으로 만들었다"는 메타 포인트로 임팩트 있게 마무리</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="checklist">
+    <h3>발표 전 최종 체크리스트</h3>
+    <label><input type="checkbox"> 발표 PC에서 대시보드 로그인 세션 미리 확인</label>
+    <label><input type="checkbox"> 팝업 차단 해제 (chrome 설정 → 사이트 → 팝업 허용)</label>
+    <label><input type="checkbox"> 사내망/인터넷 연결 상태 확인 (라이브 데모 전 재확인)</label>
+    <label><input type="checkbox"> 수치 관련 질문 대응 멘트 숙지 (근거 없는 수치는 언급하지 않기)</label>
+    <label><input type="checkbox"> 발표자료 파일과 컨닝페이퍼 둘 다 발표 PC에 저장</label>
+  </div>
+</div>
+
+<div class="stopwatch" id="stopwatch">
+  <div class="sw-label">발표 타이머</div>
+  <div class="sw-time" id="swTime">00:00</div>
+  <div class="sw-target" id="swTarget">목표 20:00</div>
+  <div class="sw-btns">
+    <button class="sw-start" id="swStart" onclick="swToggle()">시작</button>
+    <button class="sw-reset" onclick="swReset()">리셋</button>
+  </div>
+  <div class="sw-current" id="swCurrent">대기 중<b>—</b></div>
+</div>
+
+<button class="print-btn" onclick="window.print()">🖨 인쇄하기</button>
+<script>
+const TOTAL_TARGET = 1200; // 20분(초)
+let swElapsed = 0, swRunning = false, swInterval = null;
+const blocks = [...document.querySelectorAll('.block[data-start]')].map(b => ({
+  el: b,
+  title: b.querySelector('.block-title').textContent.trim(),
+  light: b.querySelector('.tl-light'),
+  start: parseInt(b.dataset.start, 10),
+  end: parseInt(b.dataset.end, 10)
+}));
+
+function fmt(sec){
+  const m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+function updateLights(){
+  let current = null;
+  blocks.forEach(b => {
+    b.light.classList.remove('green','orange','red');
+    if (swElapsed < b.start) {
+      // 아직 시작 전 — 기본 회색 유지
+    } else if (swElapsed >= b.end) {
+      b.light.classList.add('red');
+    } else if (swElapsed >= b.end - 10) {
+      b.light.classList.add('orange');
+      current = b;
+    } else {
+      b.light.classList.add('green');
+      current = b;
+    }
+  });
+  const curBox = document.getElementById('swCurrent');
+  if (current) {
+    curBox.innerHTML = `진행 구간<b>${current.title}</b>`;
+  } else if (swElapsed >= TOTAL_TARGET) {
+    curBox.innerHTML = `발표 종료<b>수고하셨습니다 🎉</b>`;
+  } else {
+    curBox.innerHTML = `대기 중<b>—</b>`;
+  }
+}
+
+function render(){
+  document.getElementById('swTime').textContent = fmt(swElapsed);
+  const targetEl = document.getElementById('swTarget');
+  if (swElapsed > TOTAL_TARGET) {
+    targetEl.textContent = '목표 초과 +' + fmt(swElapsed - TOTAL_TARGET);
+    targetEl.classList.add('over');
+  } else {
+    targetEl.textContent = '목표 20:00';
+    targetEl.classList.remove('over');
+  }
+  updateLights();
+}
+
+function swToggle(){
+  const btn = document.getElementById('swStart');
+  swRunning = !swRunning;
+  if (swRunning){
+    btn.textContent = '일시정지';
+    btn.classList.add('running');
+    swInterval = setInterval(() => { swElapsed++; render(); }, 1000);
+  } else {
+    btn.textContent = '시작';
+    btn.classList.remove('running');
+    clearInterval(swInterval);
+  }
+}
+
+function swReset(){
+  swRunning = false;
+  clearInterval(swInterval);
+  swElapsed = 0;
+  const btn = document.getElementById('swStart');
+  btn.textContent = '시작';
+  btn.classList.remove('running');
+  render();
+}
+
+render();
+</script>
+
+</body>
+</html>

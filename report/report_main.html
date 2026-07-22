@@ -247,6 +247,14 @@ table.result-table tbody tr:hover { background:var(--bg3); }
 }
 .al-file-icon:hover .al-tooltip { display:block; }
 
+.al-file-cell { display:flex; align-items:center; gap:8px; }
+.al-open-btn {
+  height:24px; padding:0 10px; font-size:10.5px; font-weight:600; font-family:var(--font-kr);
+  background:var(--cyan-dim); color:var(--cyan); border:1px solid var(--border2); border-radius:7px;
+  cursor:pointer; white-space:nowrap; transition:background 0.15s;
+}
+.al-open-btn:hover { background:rgba(0,200,255,0.2); }
+
 /* 열람권한 */
 .vis-role-select {
   font-size:11px; font-family:var(--font-kr); border-radius:8px; padding:4px 8px;
@@ -507,7 +515,7 @@ table.bulk-table tbody tr.dup { opacity:0.5; }
                   <th style="width:140px;">작성자</th>
                   <th style="width:160px;">제품명</th>
                   <th>주제</th>
-                  <th style="width:50px;">파일명</th>
+                  <th style="width:100px;">파일명</th>
                 </tr>
               </thead>
               <tbody id="allListBody"></tbody>
@@ -889,6 +897,14 @@ async function refreshAllList() {
 }
 function countSafe(n) { const el = document.getElementById('alCount'); if (el) el.textContent = n + '건'; }
 
+// 보고서를 새 탭이 아니라 팝업창으로 열기
+function openReportPopup(url) {
+  const w = 1200, h = 860;
+  const left = (screen.width - w) / 2;
+  const top  = (screen.height - h) / 2;
+  window.open(url, 'reportPopup_' + Date.now(), `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes,toolbar=no,menubar=no,location=yes,status=no`);
+}
+
 // 열람권한 최소치 옵션 (관리자만 변경 가능)
 const VIS_ROLE_OPTIONS = [
   { value:'admin',     label:'관리자만' },
@@ -924,7 +940,7 @@ function renderAllList() {
       const fileUrl  = f.htmlUrl || `${PAGES_BASE}/${f.fileKey}`;
 
       return `
-      <tr class="al-row" onclick="window.open('${fileUrl}','_blank')">
+      <tr class="al-row" onclick="openReportPopup('${fileUrl}')">
         <td>${visRoleCell(fileKey, f.visRole)}</td>
         <td><span class="rtag ${catCls}">${catLabel}</span></td>
         <td>${editableCell(fileKey,'regDate',f.regDate,'date')}</td>
@@ -932,9 +948,12 @@ function renderAllList() {
         <td>${editableCell(fileKey,'product',f.product,'text')}</td>
         <td>${editableCell(fileKey,'topic',f.topic,'text')}</td>
         <td>
-          <span class="al-file-icon">
-            📄<span class="al-tooltip">${f.name}</span>
-          </span>
+          <div class="al-file-cell">
+            <button class="al-open-btn" onclick="event.stopPropagation(); openReportPopup('${fileUrl}')">열기</button>
+            <span class="al-file-icon">
+              📄<span class="al-tooltip">${f.name}</span>
+            </span>
+          </div>
         </td>
       </tr>`;
     }).join('');

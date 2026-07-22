@@ -343,10 +343,28 @@ const MODULES = {
       const material = rows.filter(r => r.구분 === '자재출고').length;
       const repair   = rows.filter(r => r.구분 === '수리출고').length;
       const top5Products = topNByCount(rows, r => r.제품명, 5, k => k.startsWith('[집계]'));
-      const top10Faults = topNByCount(
-        rows.flatMap(r => faultsOf(r).map(f => ({ __f: f }))),
-        r => r.__f, 10
-      );
+
+      // 불량유형 Top10 - 각 유형 안에 제품별 건수/구성비까지 포함
+      // (전체수치 vs 특정제품 한정수치를 혼동하는 걸 방지하기 위해, 제품 구성이 항상 같이 보이도록)
+      const byFault = {};
+      rows.forEach(r => {
+        const product = stripTag(r.제품명) || '미지정';
+        faultsOf(r).forEach(f => {
+          if (!byFault[f]) byFault[f] = { total: 0, byProduct: {} };
+          byFault[f].total++;
+          byFault[f].byProduct[product] = (byFault[f].byProduct[product] || 0) + 1;
+        });
+      });
+      const top10Faults = Object.entries(byFault)
+        .sort((a,b) => b[1].total - a[1].total)
+        .slice(0, 10)
+        .map(([name, v]) => {
+          const byProduct = Object.entries(v.byProduct)
+            .sort((a,b) => b[1] - a[1])
+            .map(([pname, cnt]) => ({ name: pname, cnt, pct: Math.round(cnt / v.total * 1000) / 10 }));
+          return { name, cnt: v.total, byProduct };
+        });
+
       return { total, exchange, material, repair, top5Products, top10Faults };
     }
   },

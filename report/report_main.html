@@ -833,6 +833,7 @@ document.getElementById('searchInput').addEventListener('keydown', e => { if (e.
 const GH_OWNER  = 'ggumbi-cs';
 const GH_REPO   = 'dashboard';
 const GH_BRANCH = 'main';
+const PAGES_BASE = 'https://ggumbi-cs.github.io/dashboard'; // 실제 렌더링 페이지 도메인 (github.com 소스보기 아님)
 
 // ── 보고서 시스템 GAS 엔드포인트 ──
 const REPORT_GAS_URL = 'https://script.google.com/macros/s/AKfycbw_zRPrNid5yiXXfdYcoh_CmziBwFxMhAZxiS0eK33X8Gfe6fgI30_0CXz9g25U28mhbQ/exec';
@@ -920,7 +921,7 @@ function renderAllList() {
       const fileKey  = f.fileKey;
       const catLabel = f.category === 'once' ? '건별' : f.category === 'sub' ? 'Sub' : f.category === 'gw' ? '기안서' : 'Issue';
       const catCls   = f.category === 'once' ? 'once' : f.category === 'sub' ? 'sub' : f.category === 'gw' ? 'gw' : 'issue';
-      const fileUrl  = f.htmlUrl || `https://github.com/${GH_OWNER}/${GH_REPO}/blob/${GH_BRANCH}/${f.fileKey}`;
+      const fileUrl  = f.htmlUrl || `${PAGES_BASE}/${f.fileKey}`;
 
       return `
       <tr class="al-row" onclick="window.open('${fileUrl}','_blank')">

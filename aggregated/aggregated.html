@@ -1032,8 +1032,18 @@ function cmFormatData(obj, pad) {
       lines.push(`${pad}${k}:`);
       v.forEach((item, i) => {
         if (item && typeof item === 'object') {
-          const parts = Object.entries(item).map(([kk,vv]) => `${kk}=${vv}`).join(', ');
-          lines.push(`${pad}  ${i+1}. ${parts}`);
+          // 단순 필드(name=값)와 중첩 배열/객체 필드를 분리 - 중첩된 건 하위 목록으로 풀어서 출력
+          const simple = [];
+          const nested = [];
+          Object.entries(item).forEach(([kk, vv]) => {
+            if (vv === null || vv === undefined || vv === '') return;
+            if (Array.isArray(vv) || (typeof vv === 'object')) nested.push([kk, vv]);
+            else simple.push(`${kk}=${vv}`);
+          });
+          lines.push(`${pad}  ${i+1}. ${simple.join(', ')}`);
+          nested.forEach(([nk, nv]) => {
+            lines.push(...cmFormatData({ [nk]: nv }, pad + '     '));
+          });
         } else {
           lines.push(`${pad}  ${i+1}. ${item}`);
         }

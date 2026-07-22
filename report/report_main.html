@@ -216,15 +216,16 @@ table.result-table tbody tr:hover { background:var(--bg3); }
 #searchEmpty { padding:40px 20px; text-align:center; color:var(--text3); font-size:12px; }
 
 /* 전체 리스트 뷰 */
-.al-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap; }
+.al-page-col { width:100%; height:100%; display:flex; flex-direction:column; min-height:0; }
+.al-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap; flex-shrink:0; }
 .al-sub { font-size:11px; color:var(--text3); margin-top:2px; }
 .al-actions { display:flex; align-items:center; gap:10px; flex-shrink:0; }
 .al-badge { font-size:10.5px; padding:3px 9px; border-radius:8px; font-weight:600; white-space:nowrap; }
 .al-badge.local { background:rgba(255,144,64,0.12); color:var(--orange); border:1px solid rgba(255,144,64,0.2); }
 .al-badge.gas   { background:rgba(0,229,160,0.12); color:var(--green); border:1px solid rgba(0,229,160,0.2); }
 
-#allListWrap { background:var(--bg2); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
-.al-table-scroll { max-height:calc(100vh - 300px); overflow-y:auto; }
+#allListWrap { background:var(--bg2); border:1px solid var(--border); border-radius:14px; overflow:hidden; flex:1; display:flex; flex-direction:column; min-height:0; }
+.al-table-scroll { flex:1; overflow-y:auto; min-height:0; }
 #allListTable { width:100%; table-layout:fixed; border-collapse:separate; border-spacing:0; }
 #allListTable td { vertical-align:middle; }
 #allListTable thead th {
@@ -236,7 +237,7 @@ table.result-table tbody tr:hover { background:var(--bg3); }
 .al-th:hover { color:var(--cyan); }
 .al-sort-arrow { display:inline-block; width:12px; margin-left:2px; font-size:9px; color:var(--cyan); }
 
-.al-toolbar { margin-bottom:12px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.al-toolbar { margin-bottom:12px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; flex-shrink:0; }
 .al-search-wrap { position:relative; max-width:340px; flex-shrink:0; }
 .al-search-wrap .al-search-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:12px; color:var(--text3); }
 .al-search-wrap input {
@@ -509,8 +510,8 @@ table.bulk-table tbody tr.dup { opacity:0.5; }
       </div><!-- /homeView -->
 
       <!-- 전체 리스트 뷰 (건별보고 + Issue 통합) -->
-      <div id="allListView" style="display:none; flex:1; overflow-y:auto; padding:24px 32px 24px;">
-        <div style="width:100%;">
+      <div id="allListView" style="display:none; flex:1; overflow:hidden; padding:24px 32px 24px;">
+        <div class="al-page-col">
           <div class="al-header">
             <div>
               <div class="sec-title" style="margin-bottom:4px;">전체 리스트 <span class="sec-count" id="alCount"></span></div>
@@ -555,7 +556,7 @@ table.bulk-table tbody tr.dup { opacity:0.5; }
                 <tbody id="allListBody"></tbody>
               </table>
             </div>
-            <div id="allListEmpty" style="padding:40px 20px; text-align:center; color:var(--text3); font-size:12px;">불러오는 중...</div>
+            <div id="allListEmpty" style="flex:1; display:flex; align-items:center; justify-content:center; text-align:center; color:var(--text3); font-size:12px;">불러오는 중...</div>
           </div>
         </div>
       </div><!-- /allListView -->

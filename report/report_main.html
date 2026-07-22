@@ -228,6 +228,7 @@ table.result-table tbody tr:hover { background:var(--bg3); }
 #allListTable td { vertical-align:middle; }
 .rtag.once { background:var(--cyan-dim); color:var(--cyan); border-color:var(--border2); }
 .rtag.sub  { background:rgba(160,128,255,0.12); color:var(--purple); border-color:rgba(160,128,255,0.2); }
+.rtag.gw   { background:rgba(240,192,96,0.12); color:var(--gold); border-color:rgba(240,192,96,0.2); }
 .rtag.issue { background:rgba(255,90,110,0.12); color:var(--red); border-color:rgba(255,90,110,0.2); }
 
 .al-editable { display:flex; align-items:center; gap:6px; }
@@ -259,6 +260,60 @@ table.result-table tbody tr:hover { background:var(--bg3); }
 .vis-role-badge.role-ggumbi, .vis-role-select.role-ggumbi   { background:var(--cyan-dim); color:var(--cyan); border-color:var(--border2); }
 .vis-role-badge.role-affiliate, .vis-role-select.role-affiliate { background:rgba(0,229,160,0.12); color:var(--green); border-color:rgba(0,229,160,0.2); }
 table.result-table tbody tr.al-row { cursor:pointer; }
+
+/* 보고서 추가 모달 */
+.ar-modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200;
+  display:flex; align-items:center; justify-content:center;
+}
+.ar-modal {
+  width:420px; max-width:90vw; background:var(--bg2); border:1px solid var(--border2);
+  border-radius:16px; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,0.4);
+}
+.ar-modal-title { font-size:15px; font-weight:700; color:var(--text); margin-bottom:18px; }
+.ar-field { margin-bottom:16px; }
+.ar-field label { display:block; font-size:11.5px; font-weight:600; color:var(--text2); margin-bottom:6px; }
+.ar-field select, .ar-field input[type="text"] {
+  width:100%; height:38px; background:var(--bg3); border:1px solid var(--border); border-radius:10px;
+  padding:0 12px; font-size:12.5px; color:var(--text); font-family:var(--font-kr); outline:none;
+}
+.ar-field select:focus, .ar-field input:focus { border-color:var(--border2); }
+.ar-hint { font-size:10.5px; color:var(--text3); margin-top:6px; line-height:1.5; }
+.ar-error { font-size:11.5px; color:var(--red); background:rgba(255,90,110,0.1); border:1px solid rgba(255,90,110,0.25); border-radius:8px; padding:8px 12px; margin-bottom:14px; }
+.ar-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:4px; }
+.ar-btn { height:36px; padding:0 18px; border-radius:10px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:var(--font-kr); border:1px solid var(--border2); }
+.ar-btn.cancel { background:var(--bg3); color:var(--text2); }
+.ar-btn.confirm { background:var(--cyan-dim); color:var(--cyan); }
+.ar-btn.confirm:hover { background:rgba(0,200,255,0.2); }
+.ar-btn.cancel:hover { background:var(--bg4); }
+
+/* 간편 업로드 (드래그 인식) */
+.bulk-modal { width:560px; max-width:92vw; }
+.bulk-sub { font-size:10.5px; font-weight:400; color:var(--text3); margin-left:8px; }
+.bulk-dropzone {
+  border:2px dashed var(--border2); border-radius:14px; padding:32px 20px; text-align:center;
+  margin-bottom:16px; transition:all 0.15s; cursor:pointer;
+}
+.bulk-dropzone.dragover { border-color:var(--cyan); background:var(--cyan-dim); }
+.bulk-dz-icon { font-size:30px; margin-bottom:8px; }
+.bulk-dz-text { font-size:12.5px; color:var(--text2); font-weight:600; }
+.bulk-dz-sub { font-size:10.5px; color:var(--text3); margin-top:4px; }
+
+.bulk-list-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; font-size:11.5px; color:var(--text2); }
+.bulk-list-scroll { max-height:280px; overflow-y:auto; border:1px solid var(--border); border-radius:12px; margin-bottom:14px; }
+table.bulk-table { width:100%; border-collapse:collapse; font-size:11.5px; }
+table.bulk-table thead th { text-align:left; padding:8px 10px; background:var(--bg3); color:var(--text3); font-size:10px; text-transform:uppercase; letter-spacing:0.5px; position:sticky; top:0; }
+table.bulk-table tbody td { padding:7px 10px; border-top:1px solid var(--border); vertical-align:middle; }
+table.bulk-table tbody tr.dup { opacity:0.5; }
+.bulk-name { word-break:break-all; }
+.bulk-cat-select {
+  width:100%; height:28px; font-size:11px; background:var(--bg3); border:1px solid var(--border); border-radius:7px;
+  padding:0 6px; color:var(--text2); font-family:var(--font-kr);
+}
+.bulk-status { font-size:10px; font-weight:600; padding:2px 8px; border-radius:7px; white-space:nowrap; }
+.bulk-status.new { background:rgba(0,229,160,0.12); color:var(--green); }
+.bulk-status.dup { background:var(--bg4); color:var(--text3); }
+.bulk-result { font-size:11.5px; padding:10px 12px; border-radius:10px; margin-bottom:14px; background:var(--bg3); color:var(--text2); white-space:pre-line; }
 
 /* 공지 */
 #noticeSection { margin-bottom:10px; }
@@ -433,10 +488,12 @@ table.result-table tbody tr.al-row { cursor:pointer; }
           <div class="al-header">
             <div>
               <div class="sec-title" style="margin-bottom:4px;">전체 리스트 <span class="sec-count" id="alCount"></span></div>
-              <div class="al-sub">report/once, report/issue 폴더의 파일을 자동으로 불러옵니다 (파일명 패턴: yymmdd_제품명_주제.html)</div>
+              <div class="al-sub">"+ 추가"로 파일명과 구분을 입력하면 자동으로 목록에 등록됩니다 (파일명 패턴: yymmdd_제품명_주제.html)</div>
             </div>
             <div class="al-actions">
-              <span id="alSaveBadge" class="al-badge"></span>
+              <span id="alSaveBadge" class="al-badge gas">✅ GAS 시트 연동</span>
+              <button class="search-btn" onclick="openAddReportModal()">➕ 추가</button>
+              <button class="search-btn" onclick="openBulkModal()">📥 간편 업로드</button>
               <button class="search-btn" onclick="refreshAllList()">🔄 새로고침</button>
             </div>
           </div>
@@ -450,7 +507,6 @@ table.result-table tbody tr.al-row { cursor:pointer; }
                   <th style="width:140px;">작성자</th>
                   <th style="width:160px;">제품명</th>
                   <th>주제</th>
-                  <th style="width:150px;">최종수정일시</th>
                   <th style="width:50px;">파일명</th>
                 </tr>
               </thead>
@@ -460,6 +516,67 @@ table.result-table tbody tr.al-row { cursor:pointer; }
           </div>
         </div>
       </div><!-- /allListView -->
+
+      <!-- 보고서 수동 추가 모달 -->
+      <div id="addReportModal" class="ar-modal-overlay" style="display:none;" onclick="if(event.target===this) closeAddReportModal()">
+        <div class="ar-modal">
+          <div class="ar-modal-title">보고서 추가</div>
+          <div class="ar-field">
+            <label>구분</label>
+            <select id="arCategory">
+              <option value="once">건별보고 (report/once)</option>
+              <option value="sub">Sub (report/once/sub)</option>
+              <option value="gw">기안서 (report/once/gw)</option>
+              <option value="issue">Issue (report/issue)</option>
+            </select>
+          </div>
+          <div class="ar-field">
+            <label>파일명</label>
+            <input type="text" id="arFileName" placeholder="예: 250722_유모차A_바퀴소음.html" />
+            <div class="ar-hint">yymmdd_제품명_주제 패턴이면 등록일/제품명/주제가 자동 채워집니다. 확장자 생략 시 .html이 자동으로 붙습니다.</div>
+          </div>
+          <div id="arError" class="ar-error" style="display:none;"></div>
+          <div class="ar-actions">
+            <button class="ar-btn cancel" onclick="closeAddReportModal()">취소</button>
+            <button class="ar-btn confirm" onclick="submitAddReport()">추가</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 간편 업로드 (드래그로 파일명 인식) 모달 -->
+      <div id="bulkModal" class="ar-modal-overlay" style="display:none;" onclick="if(event.target===this) closeBulkModal()">
+        <div class="ar-modal bulk-modal">
+          <div class="ar-modal-title">간편 업로드 <span class="bulk-sub">파일을 실제로 올리지 않고, 파일명만 읽어옵니다</span></div>
+
+          <div id="bulkDropzone" class="bulk-dropzone">
+            <div class="bulk-dz-icon">📂</div>
+            <div class="bulk-dz-text">여기로 파일을 드래그하세요</div>
+            <div class="bulk-dz-sub">여러 개를 한 번에 끌어다 놓을 수 있습니다</div>
+          </div>
+
+          <div id="bulkListWrap" style="display:none;">
+            <div class="bulk-list-header">
+              <span id="bulkSummary"></span>
+              <button class="ar-btn cancel" style="height:28px; padding:0 12px; font-size:11px;" onclick="clearBulkList()">목록 비우기</button>
+            </div>
+            <div class="bulk-list-scroll">
+              <table class="bulk-table">
+                <thead>
+                  <tr><th style="width:34px;"></th><th>파일명</th><th style="width:130px;">구분</th><th style="width:100px;">상태</th></tr>
+                </thead>
+                <tbody id="bulkTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="bulkResult" class="bulk-result" style="display:none;"></div>
+
+          <div class="ar-actions">
+            <button class="ar-btn cancel" onclick="closeBulkModal()">닫기</button>
+            <button class="ar-btn confirm" id="bulkSubmitBtn" onclick="submitBulkAdd()">선택 항목 등록</button>
+          </div>
+        </div>
+      </div>
 
       <!-- 서브페이지 iframe -->
       <iframe id="subFrame" src="about:blank"></iframe>
@@ -705,90 +822,45 @@ function runSearch() {
 document.getElementById('searchInput').addEventListener('keydown', e => { if (e.key==='Enter') runSearch(); });
 
 // ═══════════════════════════════════════════
-//  전체 리스트 (건별보고 + Issue 자동 목록)
-//  report/once/, report/issue/ 폴더 목록은 GAS를 통해 받아옵니다.
-//  (GitHub PAT는 절대 이 파일에 두지 않고 GAS 쪽 Script Properties에만 보관)
-//  파일명 패턴(yymmdd_제품명_주제.html)은 1차적으로 GAS에서 파싱해서 내려주고,
-//  사용자가 수정한 값은 같은 GAS(시트)에 저장되어 모든 PC에서 동일하게 적용됩니다.
+//  전체 리스트 (건별보고 + Sub + Issue)
+//  이제 GitHub API를 전혀 호출하지 않습니다. GAS 시트가 목록의 원본입니다.
+//  "+ 추가" 버튼으로 파일명+구분을 입력하면 GAS가 폴더경로를 자동으로 붙여
+//  fileKey를 만들고, 파일명 패턴(yymmdd_제품명_주제.html)으로 1차 파싱해서
+//  시트에 한 줄 추가합니다. 이후 값 수정은 연필 아이콘으로.
 // ═══════════════════════════════════════════
 
-// ── 참고용 (직접 API 호출에는 사용하지 않음, 파일 링크 생성에만 사용) ──
+// 파일 링크 생성에만 사용 (API 호출 없음)
 const GH_OWNER  = 'ggumbi-cs';
 const GH_REPO   = 'dashboard';
 const GH_BRANCH = 'main';
 
 // ── 보고서 시스템 GAS 엔드포인트 ──
 const REPORT_GAS_URL = 'https://script.google.com/macros/s/AKfycbw_zRPrNid5yiXXfdYcoh_CmziBwFxMhAZxiS0eK33X8Gfe6fgI30_0CXz9g25U28mhbQ/exec';
-const DEFAULT_AUTHOR = '심우승 SQ';
 
 let _allListLoaded = false;
-let _allListRaw    = [];   // GAS에서 받아온 파일 목록 (파싱 포함)
-let _reportEdits   = {};   // { '경로/파일명.html': {regDate, author, product, topic} }
-
-function reportEditsStorageKey() { return 'report_edits_local'; }
-
-async function loadReportEdits() {
-  if (REPORT_GAS_URL) {
-    try {
-      const res = await fetch(`${REPORT_GAS_URL}?action=getReportEdits`);
-      const data = await res.json();
-      if (data.ok && data.edits) { _reportEdits = data.edits; return; }
-    } catch(e) { console.warn('[report_main] GAS 수정본 로드 실패:', e.message); }
-  }
-  // 폴백: 로컬 저장 (GAS 응답 실패 시에만, 이 브라우저 한정)
-  try { _reportEdits = JSON.parse(localStorage.getItem(reportEditsStorageKey()) || '{}'); }
-  catch(e) { _reportEdits = {}; }
-}
+let _allListRaw    = [];   // GAS(시트)에서 받아온 목록 원본 (이 배열 자체가 최신 상태)
 
 async function saveReportEdit(fileKey, patch) {
-  _reportEdits[fileKey] = { ..._reportEdits[fileKey], ...patch };
+  // 화면에 즉시 반영 (낙관적 업데이트)
+  const item = _allListRaw.find(f => f.fileKey === fileKey);
+  if (item) Object.assign(item, patch);
 
-  if (REPORT_GAS_URL) {
-    try {
-      await fetch(REPORT_GAS_URL, {
-        method:'POST',
-        body: JSON.stringify({ action:'setReportEdit', fileKey, patch })
-      });
-      updateSaveBadge('gas');
-      return;
-    } catch(e) { console.warn('[report_main] GAS 저장 실패, 로컬로 폴백:', e.message); }
+  try {
+    await fetch(REPORT_GAS_URL, {
+      method:'POST',
+      body: JSON.stringify({ action:'setReportEdit', fileKey, patch })
+    });
+  } catch(e) {
+    console.warn('[report_main] GAS 저장 실패:', e.message);
+    alert('저장에 실패했습니다. 네트워크 상태를 확인하고 다시 시도해주세요.');
   }
-  // 폴백 저장 (GAS 응답 실패 시에만 — 이 PC에만 적용, 다른 PC와 공유되지 않음)
-  try { localStorage.setItem(reportEditsStorageKey(), JSON.stringify(_reportEdits)); } catch(e) {}
-  updateSaveBadge('local');
 }
 
-function updateSaveBadge(mode) {
-  const el = document.getElementById('alSaveBadge');
-  if (!el) return;
-  if (mode === 'gas') { el.textContent = '✅ GAS 저장됨 (전체 공유)'; el.className = 'al-badge gas'; }
-  else { el.textContent = '⚠ 로컬 저장 (이 PC에만 적용, GAS 응답 확인 필요)'; el.className = 'al-badge local'; }
-}
-
-// ── 파일명 패턴 파싱: yymmdd_제품명_주제.html (GAS 응답에 파싱값이 없을 때 클라이언트 폴백용) ──
-function parseReportFilename(name) {
-  const base = name.replace(/\.html?$/i, '');
-  const m = base.match(/^(\d{2})(\d{2})(\d{2})_(.+?)_(.+)$/);
-  if (!m) return { regDate:'', product:'', topic: base };
-  const [, yy, mm, dd, product, topic] = m;
-  const regDate = `20${yy}-${mm}-${dd}`;
-  return { regDate, product, topic };
-}
-
-function fmtDateTime(iso) {
-  if (!iso) return '-';
-  const d = new Date(iso);
-  const pad = n => String(n).padStart(2,'0');
-  return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-// ── 파일 목록: GAS가 GitHub API(PAT 서버측 보관)를 대신 호출해서 내려줌 ──
 async function fetchReportFileList() {
   const res = await fetch(`${REPORT_GAS_URL}?action=listReports`);
   const data = await res.json();
   if (!data.ok || !Array.isArray(data.files)) throw new Error(data.error || 'GAS 응답 오류');
-  // 기대 형식: [{ path, name, category, htmlUrl, commitDate, regDate, product, topic }, ...]
-  return data.files;
+  return data.files; // [{ fileKey, name, category, regDate, author, product, topic, visRole, htmlUrl }, ...]
 }
 
 async function refreshAllList() {
@@ -798,26 +870,23 @@ async function refreshAllList() {
   empty.style.display = 'block';
   empty.textContent = '불러오는 중...';
 
-  await loadReportEdits();
-
-  let files = [];
   try {
-    files = await fetchReportFileList();
+    _allListRaw = await fetchReportFileList();
   } catch(e) {
     empty.textContent = 'GAS 목록 응답 실패: ' + e.message + ' (GAS listReports 액션 배포 상태를 확인해주세요)';
     return;
   }
 
-  if (!files.length) {
-    empty.textContent = '아직 등록된 보고서 파일이 없습니다.';
-    _allListLoaded = true;
+  _allListLoaded = true;
+
+  if (!_allListRaw.length) {
+    empty.textContent = '아직 등록된 보고서가 없습니다. 우측 상단 "➕ 추가"로 등록해주세요.';
+    countSafe(0);
     return;
   }
-
-  _allListRaw = files;
-  _allListLoaded = true;
   renderAllList();
 }
+function countSafe(n) { const el = document.getElementById('alCount'); if (el) el.textContent = n + '건'; }
 
 // 열람권한 최소치 옵션 (관리자만 변경 가능)
 const VIS_ROLE_OPTIONS = [
@@ -832,16 +901,10 @@ function renderAllList() {
   const body  = document.getElementById('allListBody');
   const table = document.getElementById('allListTable');
   const empty = document.getElementById('allListEmpty');
-  const countEl = document.getElementById('alCount');
 
-  // 열람권한 필터링: 관리자는 전체 열람, 그 외에는 canAccess로 필터
-  const visibleFiles = _allListRaw.filter(f => {
-    const edit = _reportEdits[f.path] || {};
-    const visRole = edit.visRole || f.visRole || 'affiliate';
-    return canAccess(visRole);
-  });
-
-  countEl.textContent = visibleFiles.length + '건';
+  // 열람권한 필터링
+  const visibleFiles = _allListRaw.filter(f => canAccess(f.visRole || 'affiliate'));
+  countSafe(visibleFiles.length);
 
   if (!visibleFiles.length) {
     table.style.display = 'none';
@@ -852,29 +915,21 @@ function renderAllList() {
 
   const rows = visibleFiles
     .slice()
-    .sort((a,b) => (b.commitDate||'').localeCompare(a.commitDate||''))
+    .sort((a,b) => (b.regDate||'').localeCompare(a.regDate||''))
     .map(f => {
-      const fileKey = f.path;
-      const parsed  = (f.regDate || f.product || f.topic) ? f : parseReportFilename(f.name);
-      const edit    = _reportEdits[fileKey] || {};
-      const regDate = edit.regDate  ?? parsed.regDate;
-      const author  = edit.author   ?? f.author ?? DEFAULT_AUTHOR;
-      const product = edit.product  ?? parsed.product;
-      const topic   = edit.topic    ?? parsed.topic;
-      const visRole = edit.visRole  ?? f.visRole ?? 'affiliate';
-      const catLabel = f.category === 'once' ? '건별' : f.category === 'sub' ? 'Sub' : 'Issue';
-      const catCls   = f.category === 'once' ? 'once' : f.category === 'sub' ? 'sub' : 'issue';
-      const fileUrl  = f.htmlUrl || f.html_url || `https://github.com/${GH_OWNER}/${GH_REPO}/blob/${GH_BRANCH}/${f.path}`;
+      const fileKey  = f.fileKey;
+      const catLabel = f.category === 'once' ? '건별' : f.category === 'sub' ? 'Sub' : f.category === 'gw' ? '기안서' : 'Issue';
+      const catCls   = f.category === 'once' ? 'once' : f.category === 'sub' ? 'sub' : f.category === 'gw' ? 'gw' : 'issue';
+      const fileUrl  = f.htmlUrl || `https://github.com/${GH_OWNER}/${GH_REPO}/blob/${GH_BRANCH}/${f.fileKey}`;
 
       return `
       <tr class="al-row" onclick="window.open('${fileUrl}','_blank')">
-        <td>${visRoleCell(fileKey, visRole)}</td>
+        <td>${visRoleCell(fileKey, f.visRole)}</td>
         <td><span class="rtag ${catCls}">${catLabel}</span></td>
-        <td>${editableCell(fileKey,'regDate',regDate,'date')}</td>
-        <td>${editableCell(fileKey,'author',author,'text')}</td>
-        <td>${editableCell(fileKey,'product',product,'text')}</td>
-        <td>${editableCell(fileKey,'topic',topic,'text')}</td>
-        <td style="color:var(--text3); font-size:11px;">${fmtDateTime(f.commitDate)}</td>
+        <td>${editableCell(fileKey,'regDate',f.regDate,'date')}</td>
+        <td>${editableCell(fileKey,'author',f.author,'text')}</td>
+        <td>${editableCell(fileKey,'product',f.product,'text')}</td>
+        <td>${editableCell(fileKey,'topic',f.topic,'text')}</td>
         <td>
           <span class="al-file-icon">
             📄<span class="al-tooltip">${f.name}</span>
@@ -930,10 +985,166 @@ function startEditCell(cellId, fileKey, field, currentVal, inputType) {
   input.addEventListener('keydown', e => { if (e.key === 'Enter') input.blur(); });
 }
 
+// ── 보고서 수동 추가 모달 ──
+function openAddReportModal() {
+  document.getElementById('arFileName').value = '';
+  document.getElementById('arError').style.display = 'none';
+  document.getElementById('addReportModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('arFileName').focus(), 50);
+}
+function closeAddReportModal() {
+  document.getElementById('addReportModal').style.display = 'none';
+}
+async function submitAddReport() {
+  const category = document.getElementById('arCategory').value;
+  const name = document.getElementById('arFileName').value.trim();
+  const errEl = document.getElementById('arError');
+  errEl.style.display = 'none';
+
+  if (!name) { errEl.textContent = '파일명을 입력해주세요.'; errEl.style.display = 'block'; return; }
+
+  try {
+    const res = await fetch(REPORT_GAS_URL, {
+      method:'POST',
+      body: JSON.stringify({ action:'addReport', name, category })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || '추가 실패');
+
+    _allListRaw.push(data.file);
+    _allListLoaded = true;
+    renderAllList();
+    closeAddReportModal();
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
+}
+
+// ── 간편 업로드 (드래그 → 파일명만 인식, 실제 업로드 없음) ──
+let _bulkFiles = []; // [{ name, category, status:'new'|'dup', checked }]
+
+async function openBulkModal() {
+  if (!_allListLoaded) { try { await refreshAllList(); } catch(e) {} }
+  document.getElementById('bulkResult').style.display = 'none';
+  document.getElementById('bulkModal').style.display = 'flex';
+}
+function closeBulkModal() {
+  document.getElementById('bulkModal').style.display = 'none';
+}
+function clearBulkList() {
+  _bulkFiles = [];
+  renderBulkList();
+}
+
+function isAlreadyRegistered_(name) {
+  const lower = name.toLowerCase();
+  return _allListRaw.some(f => (f.name || '').toLowerCase() === lower);
+}
+
+function handleDroppedFiles(fileList) {
+  const existingNamesInBulk = new Set(_bulkFiles.map(f => f.name.toLowerCase()));
+  Array.from(fileList).forEach(file => {
+    if (!/\.html?$/i.test(file.name)) return; // 보고서 html 파일만 인식
+    if (existingNamesInBulk.has(file.name.toLowerCase())) return; // 이미 드롭 목록에 있음
+    const dup = isAlreadyRegistered_(file.name);
+    _bulkFiles.push({ name: file.name, category: 'once', status: dup ? 'dup' : 'new', checked: !dup });
+    existingNamesInBulk.add(file.name.toLowerCase());
+  });
+  renderBulkList();
+}
+
+function renderBulkList() {
+  const wrap = document.getElementById('bulkListWrap');
+  const body = document.getElementById('bulkTableBody');
+  const summary = document.getElementById('bulkSummary');
+
+  if (!_bulkFiles.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+
+  const newCount = _bulkFiles.filter(f => f.status === 'new').length;
+  const dupCount = _bulkFiles.filter(f => f.status === 'dup').length;
+  summary.textContent = `총 ${_bulkFiles.length}개 · 등록 필요 ${newCount} · 이미 등록됨 ${dupCount}`;
+
+  body.innerHTML = _bulkFiles.map((f, i) => `
+    <tr class="${f.status}">
+      <td>${f.status === 'new' ? `<input type="checkbox" ${f.checked?'checked':''} onchange="_bulkFiles[${i}].checked=this.checked">` : ''}</td>
+      <td class="bulk-name">${f.name}</td>
+      <td>
+        ${f.status === 'new'
+          ? `<select class="bulk-cat-select" onchange="_bulkFiles[${i}].category=this.value">
+               <option value="once">건별보고</option>
+               <option value="sub">Sub</option>
+               <option value="gw">기안서</option>
+               <option value="issue">Issue</option>
+             </select>`
+          : `<span style="color:var(--text3); font-size:11px;">-</span>`}
+      </td>
+      <td><span class="bulk-status ${f.status}">${f.status === 'new' ? '등록 필요' : '이미 등록됨'}</span></td>
+    </tr>
+  `).join('');
+}
+
+async function submitBulkAdd() {
+  const targets = _bulkFiles.filter(f => f.status === 'new' && f.checked);
+  const resultEl = document.getElementById('bulkResult');
+  if (!targets.length) {
+    resultEl.style.display = 'block';
+    resultEl.textContent = '등록할 항목을 선택해주세요.';
+    return;
+  }
+
+  const btn = document.getElementById('bulkSubmitBtn');
+  btn.disabled = true; btn.textContent = '등록 중...';
+
+  try {
+    const res = await fetch(REPORT_GAS_URL, {
+      method:'POST',
+      body: JSON.stringify({ action:'addReportsBatch', items: targets.map(t => ({ name:t.name, category:t.category })) })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || '일괄 등록 실패');
+
+    let okCount = 0, failLines = [];
+    data.results.forEach(r => {
+      if (r.ok) { _allListRaw.push(r.file); okCount++; }
+      else failLines.push(`- ${r.name}: ${r.error}`);
+    });
+    _allListLoaded = true;
+    renderAllList();
+
+    resultEl.style.display = 'block';
+    resultEl.textContent = `✅ ${okCount}건 등록 완료` + (failLines.length ? `\n실패:\n${failLines.join('\n')}` : '');
+
+    // 성공한 항목은 드래그 목록에서 제거
+    const okNames = new Set(data.results.filter(r=>r.ok).map(r=>r.name.toLowerCase()));
+    _bulkFiles = _bulkFiles.filter(f => !okNames.has(f.name.toLowerCase()));
+    renderBulkList();
+  } catch(e) {
+    resultEl.style.display = 'block';
+    resultEl.textContent = '오류: ' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = '선택 항목 등록';
+  }
+}
+
+function setupBulkDropzone() {
+  const dz = document.getElementById('bulkDropzone');
+  if (!dz) return;
+  ['dragenter','dragover'].forEach(evt => dz.addEventListener(evt, e => {
+    e.preventDefault(); e.stopPropagation(); dz.classList.add('dragover');
+  }));
+  ['dragleave','drop'].forEach(evt => dz.addEventListener(evt, e => {
+    e.preventDefault(); e.stopPropagation(); dz.classList.remove('dragover');
+  }));
+  dz.addEventListener('drop', e => {
+    if (e.dataTransfer && e.dataTransfer.files) handleDroppedFiles(e.dataTransfer.files);
+  });
+}
+setupBulkDropzone();
 
 renderQuick();
 renderCards();
-updateSaveBadge(REPORT_GAS_URL ? 'gas' : 'local');
 
 // fallback — 인덱스로부터 SCRIPT_URL 메시지를 놓친 경우, 세션에 저장된 값으로 복원
 setTimeout(() => {

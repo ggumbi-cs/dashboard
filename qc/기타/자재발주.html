@@ -98,7 +98,8 @@ const STATUS_COLOR = {미입고:'var(--gold)',입고대기:'var(--green)',기안
 let _all=[],_curStatus='all',_query='';
 
 window.addEventListener('message',e=>{if(e.data&&e.data.type==='THEME')document.body.classList.toggle('light',e.data.mode==='light');});
-if(sessionStorage.getItem('_theme')==='light')document.body.classList.add('light');
+const _urlTheme=new URLSearchParams(location.search).get('theme');
+if((_urlTheme||sessionStorage.getItem('_theme')||'light')==='light')document.body.classList.add('light');
 
 function daysSince(dateStr) {
   if (!dateStr) return 0;

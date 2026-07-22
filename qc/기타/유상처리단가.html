@@ -165,7 +165,8 @@ let _all=[], _checkedProds=new Set(), _allProds=[], _query='';
 let _openGroups=new Set([DEFAULT_OPEN]); // 열린 그룹 관리
 
 window.addEventListener('message',e=>{if(e.data&&e.data.type==='THEME')document.body.classList.toggle('light',e.data.mode==='light');});
-if(sessionStorage.getItem('_theme')==='light')document.body.classList.add('light');
+const _urlTheme=new URLSearchParams(location.search).get('theme');
+if((_urlTheme||sessionStorage.getItem('_theme')||'light')==='light')document.body.classList.add('light');
 
 document.getElementById('nw제품명').innerHTML='<option value="">선택</option>'+PROD_OPTS.map(p=>`<option value="${p}">${p}</option>`).join('');
 

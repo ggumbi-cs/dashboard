@@ -307,7 +307,8 @@ let _static=[], _realtime=[], _curStatus='출력요청', _query='';
 let _users=[], _acIdx=-1, _models=[], _page=1;
 
 window.addEventListener('message',e=>{if(e.data&&e.data.type==='THEME')document.body.classList.toggle('light',e.data.mode==='light');});
-if(sessionStorage.getItem('_theme')==='light')document.body.classList.add('light');
+const _urlTheme=new URLSearchParams(location.search).get('theme');
+if((_urlTheme||sessionStorage.getItem('_theme')||'light')==='light')document.body.classList.add('light');
 
 // ── 모델명 목록 로드 (신규등록 콤보박스 자동완성) ──
 async function loadModels() {

@@ -309,7 +309,8 @@ window.addEventListener('message', e => {
     document.body.classList.toggle('light', e.data.mode === 'light');
   }
 });
-const savedTheme = sessionStorage.getItem('_theme') || 'dark';
+const urlTheme = new URLSearchParams(location.search).get('theme');
+const savedTheme = urlTheme || sessionStorage.getItem('_theme') || 'light';
 if (savedTheme === 'light') document.body.classList.add('light');
 
 // ─────────────────────────────────────────────

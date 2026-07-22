@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>보고서 시스템</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #080f1e; --bg2: #0d1830; --bg3: #111e35; --bg4: #162240;
+  --border:   rgba(0,200,255,0.10); --border2: rgba(0,200,255,0.20);
+  --cyan:     #00c8ff; --cyan-dim: rgba(0,200,255,0.08);
+  --gold:     #f0c060; --gold-dim: rgba(240,192,96,0.12);
+  --text:     #e8f0f8; --text2: #a8c8e0; --text3: #6a8faa;
+  --green:    #00e5a0; --red: #ff5a6e; --orange: #ff9040; --purple: #a080ff;
+  --font-kr:  'Noto Sans KR', sans-serif; --font-en: 'Inter', sans-serif;
+  --sidebar-w: 212px;
+}
+body.light {
+  --bg:       #f0f4fa; --bg2: #ffffff; --bg3: #e8f0fb; --bg4: #dce8f7;
+  --border:   rgba(26,78,180,0.12); --border2: rgba(26,78,180,0.25);
+  --cyan:     #1a6eb8; --cyan-dim: rgba(26,110,184,0.08);
+  --gold:     #b07800; --green: #007a50; --red: #c02020;
+  --orange:   #c05010; --purple: #5030b0;
+  --text:     #1a2e50; --text2: #2a4e7a; --text3: #3a6a9a;
+}
+
+html, body { width:100%; height:100vh; overflow:hidden; background:var(--bg); color:var(--text); font-family:var(--font-kr); }
+::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+
+/* ── 전체 레이아웃 ── */
+#rpWrap { display:flex; height:100vh; overflow:hidden; }
+
+/* ══════════════════════════════════════
+   사이드바
+══════════════════════════════════════ */
+#rpSidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.rps-brand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 18px 16px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.rps-brand-icon { font-size: 22px; flex-shrink:0; }
+.rps-brand-name { font-size: 12px; font-weight: 700; font-family: var(--font-en); color: var(--cyan); letter-spacing: 1.5px; text-transform: uppercase; }
+.rps-brand-sub  { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+.rps-nav { padding: 10px 0 20px; flex: 1; }
+
+.nav-home-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 16px; margin: 0 8px 8px; border-radius: 10px;
+  cursor: pointer; transition: all 0.15s;
+  font-size: 13px; font-weight: 500; color: var(--text2);
+}
+.nav-home-item:hover { background: var(--bg3); color: var(--text); }
+.nav-home-item.active { background: var(--cyan-dim); color: var(--cyan); border: 1px solid var(--border2); }
+.nav-home-icon { font-size: 16px; flex-shrink:0; }
+
+.nav-category {
+  font-size: 9.5px; font-weight: 700; font-family: var(--font-en);
+  color: var(--text3); text-transform: uppercase; letter-spacing: 1.5px;
+  padding: 14px 16px 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.nav-category::before { content:''; display:inline-block; width:12px; height:1px; background:var(--border2); flex-shrink:0; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 16px 8px 22px;
+  cursor: pointer; transition: all 0.15s;
+  font-size: 12px; color: var(--text2);
+  position: relative; border-left: 2px solid transparent;
+  margin-right: 8px; border-radius: 0 8px 8px 0;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); border-left-color: var(--border2); }
+.nav-item.active { background: var(--cyan-dim); color: var(--cyan); border-left-color: var(--cyan); font-weight: 500; }
+.nav-item-label { flex:1; line-height:1.3; }
+
+.rps-footer {
+  padding: 12px 16px; border-top: 1px solid var(--border);
+  font-size: 10px; color: var(--text3); flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════
+   메인 영역
+══════════════════════════════════════ */
+#rpMain { flex:1; display:flex; flex-direction:column; height:100vh; overflow:hidden; min-width:0; }
+
+#statusBar { flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:0 24px; height:36px; background:var(--bg2); border-bottom:1px solid var(--border); font-family:var(--font-en); }
+.sb-left { display:flex; align-items:center; gap:16px; }
+.sb-brand { font-size:11px; font-weight:600; color:var(--cyan); letter-spacing:2px; text-transform:uppercase; }
+.sb-dot { width:5px; height:5px; border-radius:50%; background:var(--green); animation:pulse-dot 2s infinite; }
+@keyframes pulse-dot { 0%,100%{opacity:1;}50%{opacity:0.3;} }
+.sb-system { font-size:10px; color:var(--text3); letter-spacing:0.5px; }
+.sb-right { display:flex; align-items:center; gap:20px; }
+.sb-time { font-size:12px; font-weight:500; color:var(--text2); font-variant-numeric:tabular-nums; }
+.sb-user { font-size:11px; color:var(--cyan); background:var(--cyan-dim); padding:3px 10px; border-radius:10px; border:1px solid var(--border2); }
+
+#contentWrap { flex:1; overflow:hidden; position:relative; display:flex; flex-direction:column; }
+#homeView    { flex:1; overflow-y:auto; overflow-x:hidden; }
+#subFrame    { flex:1; border:none; display:none; background:var(--bg); }
+
+#mainWrap { padding:28px 32px 60px; max-width:1800px; margin:0 auto; }
+.sec-title { display:flex; align-items:center; gap:10px; font-size:11px; font-weight:600; font-family:var(--font-en); color:#8ab0cc; text-transform:uppercase; letter-spacing:2px; margin-bottom:16px; }
+.sec-title::before { content:''; display:inline-block; width:3px; height:14px; background:var(--cyan); border-radius:2px; }
+.sec-title .sec-count { margin-left:auto; font-size:10px; color:#8ab0cc; }
+
+/* 웰컴 배너 */
+#welcomeBanner { position:relative; background:linear-gradient(135deg,var(--bg2) 0%,var(--bg3) 50%,var(--bg) 100%); border:1px solid var(--border); border-radius:16px; padding:32px 36px; margin-bottom:28px; overflow:hidden; }
+.wb-grid { position:absolute; inset:0; background-image:linear-gradient(rgba(0,200,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.03) 1px,transparent 1px); background-size:40px 40px; }
+.wb-glow  { position:absolute; top:-60px; right:-60px; width:300px; height:300px; background:radial-gradient(circle,rgba(0,200,255,0.06) 0%,transparent 70%); pointer-events:none; }
+.wb-glow2 { position:absolute; bottom:-80px; left:40%; width:400px; height:200px; background:radial-gradient(ellipse,rgba(160,128,255,0.04) 0%,transparent 70%); pointer-events:none; }
+.wb-content { position:relative; z-index:1; display:flex; align-items:center; gap:32px; }
+.wb-left { flex:1; }
+.wb-eyebrow { font-size:10px; font-weight:600; font-family:var(--font-en); color:var(--cyan); text-transform:uppercase; letter-spacing:3px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+.wb-eyebrow::before { content:''; width:20px; height:1px; background:var(--cyan); }
+.wb-title { font-size:28px; font-weight:700; color:var(--text); line-height:1.2; letter-spacing:-0.5px; margin-bottom:10px; }
+.wb-title .hl { color:var(--cyan); }
+.wb-sub { font-size:12px; color:var(--text2); font-weight:300; line-height:1.7; }
+.wb-right { display:flex; align-items:center; gap:12px; min-width:160px; }
+.wb-stat { text-align:right; }
+.wb-stat-val { font-size:26px; font-weight:700; font-family:var(--font-en); color:var(--text); line-height:1; }
+.wb-stat-val .unit { font-size:12px; font-weight:400; color:var(--text2); margin-left:3px; }
+.wb-stat-label { font-size:10px; color:var(--text3); margin-top:3px; letter-spacing:0.5px; }
+.wb-divider-v { width:1px; height:48px; background:var(--border); }
+
+/* 빠른 바로가기 */
+#quickSection { margin-bottom:32px; }
+#quickGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); gap:10px; }
+.q-item { position:relative; display:flex; flex-direction:column; align-items:center; padding:16px 8px 12px; background:var(--bg2); border:1px solid var(--border); border-radius:14px; cursor:pointer; transition:all 0.2s ease; gap:9px; }
+.q-item:hover { border-color:var(--border2); background:var(--bg3); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
+.q-item.locked { cursor:not-allowed; opacity:0.55; }
+.q-item.locked:hover { transform:none; box-shadow:none; }
+.q-icon { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:21px; flex-shrink:0; }
+.q-label { font-size:10px; font-weight:500; color:var(--text2); text-align:center; line-height:1.3; word-break:keep-all; }
+.q-item:hover .q-label { color:var(--text); }
+
+.qi-cyan   { background:rgba(0,200,255,0.12); }
+.qi-green  { background:rgba(0,229,160,0.12); }
+.qi-gold   { background:rgba(240,192,96,0.12); }
+.qi-purple { background:rgba(160,128,255,0.12); }
+.qi-red    { background:rgba(255,90,110,0.12); }
+.qi-orange { background:rgba(255,144,64,0.12); }
+.qi-blue   { background:rgba(64,144,255,0.12); }
+
+/* 카드형식 섹션 */
+#cardSection { margin-bottom:32px; }
+#cardGrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; }
+.s-card { background:var(--bg2); border:1px solid var(--border); border-radius:16px; overflow:hidden; cursor:pointer; transition:border-color 0.2s,box-shadow 0.2s; position:relative; }
+.s-card:hover { border-color:var(--border2); box-shadow:0 12px 40px rgba(0,0,0,0.4); }
+.s-card.locked { cursor:not-allowed; opacity:0.55; }
+.s-card.locked:hover { border-color:var(--border); box-shadow:none; }
+.s-card-header { padding:14px 16px 12px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); }
+.s-card-icon { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+.s-card-info { flex:1; min-width:0; }
+.s-card-title { font-size:12px; font-weight:600; color:var(--text); }
+.s-card-sub   { font-size:10px; color:#8ab0cc; margin-top:2px; }
+.s-card-badge { font-size:9px; font-weight:600; font-family:var(--font-en); padding:2px 7px; border-radius:8px; white-space:nowrap; background:rgba(0,229,160,0.12); color:var(--green); border:1px solid rgba(0,229,160,0.2); }
+.s-card-badge.info { background:var(--cyan-dim); color:var(--cyan); border-color:var(--border2); }
+.s-card-badge.warn { background:rgba(255,144,64,0.12); color:var(--orange); border-color:rgba(255,144,64,0.2); }
+.s-card-body { padding:14px 16px; }
+.mini-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.mini-stat-val { font-size:18px; font-weight:700; font-family:var(--font-en); color:var(--text); line-height:1; }
+.mini-stat-val.accent { color:var(--cyan); } .mini-stat-val.green { color:var(--green); } .mini-stat-val.gold { color:var(--gold); } .mini-stat-val.red { color:var(--red); }
+.mini-stat-lbl { font-size:10px; color:var(--text3); margin-top:3px; }
+
+/* 보고서 검색 시스템 */
+#searchSection { margin-bottom:32px; }
+.search-bar { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+.search-input-wrap { flex:1; min-width:220px; position:relative; }
+.search-input-wrap input {
+  width:100%; height:38px; background:var(--bg2); border:1px solid var(--border);
+  border-radius:10px; padding:0 14px 0 36px; font-size:12.5px; color:var(--text);
+  font-family:var(--font-kr); outline:none; transition:border-color 0.15s;
+}
+.search-input-wrap input:focus { border-color:var(--border2); }
+.search-input-wrap .si-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:13px; color:var(--text3); }
+.search-filter {
+  height:38px; background:var(--bg2); border:1px solid var(--border); border-radius:10px;
+  padding:0 12px; font-size:12px; color:var(--text2); font-family:var(--font-kr); cursor:pointer; outline:none;
+}
+.search-btn {
+  height:38px; padding:0 18px; background:var(--cyan-dim); border:1px solid var(--border2);
+  border-radius:10px; color:var(--cyan); font-size:12.5px; font-weight:600; cursor:pointer;
+  font-family:var(--font-kr); transition:all 0.15s; white-space:nowrap;
+}
+.search-btn:hover { background:rgba(0,200,255,0.2); }
+
+#searchResultWrap { background:var(--bg2); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+table.result-table { width:100%; border-collapse:collapse; font-size:12px; }
+table.result-table thead th {
+  text-align:left; padding:10px 14px; background:var(--bg3); color:var(--text3);
+  font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;
+  border-bottom:1px solid var(--border);
+}
+table.result-table tbody td { padding:10px 14px; border-bottom:1px solid var(--border); color:var(--text2); }
+table.result-table tbody tr:last-child td { border-bottom:none; }
+table.result-table tbody tr { cursor:pointer; transition:background 0.15s; }
+table.result-table tbody tr:hover { background:var(--bg3); }
+.rtag { font-size:10px; padding:2px 8px; border-radius:8px; background:var(--bg4); border:1px solid var(--border); color:var(--text2); white-space:nowrap; }
+.rtag.issue { background:rgba(255,90,110,0.12); color:var(--red); border-color:rgba(255,90,110,0.2); }
+.rtag.report { background:var(--cyan-dim); color:var(--cyan); border-color:var(--border2); }
+#searchEmpty { padding:40px 20px; text-align:center; color:var(--text3); font-size:12px; }
+
+/* 전체 리스트 뷰 */
+.al-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap; }
+.al-sub { font-size:11px; color:var(--text3); margin-top:2px; }
+.al-actions { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.al-badge { font-size:10.5px; padding:3px 9px; border-radius:8px; font-weight:600; white-space:nowrap; }
+.al-badge.local { background:rgba(255,144,64,0.12); color:var(--orange); border:1px solid rgba(255,144,64,0.2); }
+.al-badge.gas   { background:rgba(0,229,160,0.12); color:var(--green); border:1px solid rgba(0,229,160,0.2); }
+
+#allListWrap { background:var(--bg2); border:1px solid var(--border); border-radius:14px; overflow:visible; }
+#allListTable { width:100%; table-layout:fixed; }
+#allListTable td { vertical-align:middle; }
+.rtag.once { background:var(--cyan-dim); color:var(--cyan); border-color:var(--border2); }
+.rtag.sub  { background:rgba(160,128,255,0.12); color:var(--purple); border-color:rgba(160,128,255,0.2); }
+.rtag.issue { background:rgba(255,90,110,0.12); color:var(--red); border-color:rgba(255,90,110,0.2); }
+
+.al-editable { display:flex; align-items:center; gap:6px; }
+.al-edit-icon { cursor:pointer; font-size:10.5px; color:var(--text3); flex-shrink:0; opacity:0.6; transition:opacity 0.15s; }
+.al-edit-icon:hover { opacity:1; color:var(--cyan); }
+.al-editable input[type="text"], .al-editable input[type="date"] {
+  background:var(--bg3); border:1px solid var(--border2); border-radius:6px;
+  padding:3px 6px; font-size:11.5px; color:var(--text); font-family:var(--font-kr); outline:none; width:100%;
+}
+.al-file-icon { position:relative; cursor:pointer; font-size:15px; display:inline-block; }
+.al-file-icon .al-tooltip {
+  display:none; position:absolute; right:0; left:auto; transform:none; bottom:130%;
+  background:var(--bg4); border:1px solid var(--border2); color:var(--text);
+  padding:6px 10px; border-radius:8px; font-size:10.5px; white-space:nowrap; z-index:50;
+  box-shadow:0 8px 20px rgba(0,0,0,0.35); max-width:320px; overflow:hidden; text-overflow:ellipsis;
+}
+.al-file-icon:hover .al-tooltip { display:block; }
+
+/* 열람권한 */
+.vis-role-select {
+  font-size:11px; font-family:var(--font-kr); border-radius:8px; padding:4px 8px;
+  cursor:pointer; outline:none; border:1px solid var(--border2); background:var(--bg3); color:var(--text2);
+}
+.vis-role-badge {
+  font-size:10.5px; font-weight:600; padding:3px 9px; border-radius:8px; white-space:nowrap; display:inline-block;
+}
+.vis-role-badge.role-admin, .vis-role-select.role-admin     { background:rgba(255,90,110,0.12); color:var(--red); border-color:rgba(255,90,110,0.2); }
+.vis-role-badge.role-leader, .vis-role-select.role-leader   { background:rgba(255,144,64,0.12); color:var(--orange); border-color:rgba(255,144,64,0.2); }
+.vis-role-badge.role-ggumbi, .vis-role-select.role-ggumbi   { background:var(--cyan-dim); color:var(--cyan); border-color:var(--border2); }
+.vis-role-badge.role-affiliate, .vis-role-select.role-affiliate { background:rgba(0,229,160,0.12); color:var(--green); border-color:rgba(0,229,160,0.2); }
+table.result-table tbody tr.al-row { cursor:pointer; }
+
+/* 공지 */
+#noticeSection { margin-bottom:10px; }
+#noticeGrid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.notice-card { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:18px 20px; position:relative; }
+.notice-card-title { font-size:11px; font-weight:600; color:#8ab0cc; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.notice-item { display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
+.notice-item:last-child { border-bottom:none; padding-bottom:0; }
+.notice-dot-wrap { padding-top:4px; flex-shrink:0; }
+.notice-dot { width:5px; height:5px; border-radius:50%; background:var(--cyan); }
+.notice-text { font-size:12px; color:var(--text2); line-height:1.5; flex:1; }
+.notice-date { font-size:10px; color:var(--text3); font-family:var(--font-en); flex-shrink:0; }
+</style>
+</head>
+<body class="light">
+
+<div id="rpWrap">
+
+  <!-- ══ 사이드바 ══ -->
+  <div id="rpSidebar">
+    <div class="rps-brand">
+      <span class="rps-brand-icon">📑</span>
+      <div>
+        <div class="rps-brand-name">Report System</div>
+        <div class="rps-brand-sub">꿈비 보고서 시스템</div>
+      </div>
+    </div>
+
+    <nav class="rps-nav">
+      <div class="nav-home-item active" data-tab="home" onclick="goTab('home')">
+        <span class="nav-home-icon">🏠</span>
+        <span>보고서 홈</span>
+      </div>
+
+      <div class="nav-category">건별 보고</div>
+      <div class="nav-item" data-tab="all_list" onclick="goTab('all_list')">
+        <span style="font-size:15px;">📋</span>
+        <span class="nav-item-label">전체 리스트</span>
+      </div>
+      <div class="nav-item" data-tab="once/once_list.html" onclick="goTab('once/once_list.html')">
+        <span style="font-size:15px;">📝</span>
+        <span class="nav-item-label">건별보고</span>
+      </div>
+      <div class="nav-item" data-tab="issue/issue_list.html" onclick="goTab('issue/issue_list.html')">
+        <span style="font-size:15px;">🚨</span>
+        <span class="nav-item-label">Issue</span>
+      </div>
+
+      <div class="nav-category">보고서 검색</div>
+      <div class="nav-item" data-tab="search" onclick="goTab('search')">
+        <span style="font-size:15px;">🔎</span>
+        <span class="nav-item-label">통합 검색</span>
+      </div>
+    </nav>
+
+    <div class="rps-footer">v0.2 · report_main (전체 리스트 추가)</div>
+  </div><!-- /rpSidebar -->
+
+  <!-- ══ 메인 영역 ══ -->
+  <div id="rpMain">
+
+    <div id="statusBar">
+      <div class="sb-left">
+        <div class="sb-brand">REPORT SYSTEM</div>
+        <div class="sb-dot"></div>
+        <div class="sb-system">꿈비 보고서 시스템</div>
+      </div>
+      <div class="sb-right">
+        <div class="sb-time" id="sbTime">--:--:--</div>
+        <div class="sb-user" id="sbUser">-</div>
+      </div>
+    </div>
+
+    <div id="contentWrap">
+
+      <!-- 홈 뷰 -->
+      <div id="homeView">
+        <div id="mainWrap">
+
+          <!-- 웰컴 배너 -->
+          <div id="welcomeBanner">
+            <div class="wb-grid"></div><div class="wb-glow"></div><div class="wb-glow2"></div>
+            <div class="wb-content">
+              <div class="wb-left">
+                <div class="wb-eyebrow">Report Dashboard</div>
+                <div class="wb-title"><span>안녕하세요,</span><br><span class="hl" id="wbName">보고서 시스템</span><span> 입니다</span></div>
+                <div class="wb-sub" id="wbDate"></div>
+              </div>
+              <div class="wb-right">
+                <div class="wb-stat">
+                  <div class="wb-stat-val" id="wbDateNum">--<span class="unit">일</span></div>
+                  <div class="wb-stat-label">TODAY</div>
+                </div>
+                <div class="wb-divider-v"></div>
+                <div class="wb-stat">
+                  <div class="wb-stat-val" id="wbWeekDay">---</div>
+                  <div class="wb-stat-label">요일</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 빠른 바로가기 -->
+          <div id="quickSection">
+            <div class="sec-title">Quick Access <span class="sec-count" id="qCount"></span></div>
+            <div id="quickGrid"></div>
+          </div>
+
+          <!-- 카드형식 -->
+          <div id="cardSection">
+            <div class="sec-title">Report Categories</div>
+            <div id="cardGrid"></div>
+          </div>
+
+          <!-- 보고서 검색 시스템 -->
+          <div id="searchSection">
+            <div class="sec-title">Report Search</div>
+            <div class="search-bar">
+              <div class="search-input-wrap">
+                <span class="si-icon">🔎</span>
+                <input type="text" id="searchInput" placeholder="제목, 작성자, 키워드로 검색...">
+              </div>
+              <select class="search-filter" id="searchTypeFilter">
+                <option value="">전체 유형</option>
+                <option value="issue">Issue</option>
+                <option value="report">건별보고</option>
+              </select>
+              <select class="search-filter" id="searchPeriodFilter">
+                <option value="">전체 기간</option>
+                <option value="7">최근 7일</option>
+                <option value="30">최근 30일</option>
+                <option value="90">최근 90일</option>
+              </select>
+              <button class="search-btn" onclick="runSearch()">검색</button>
+            </div>
+            <div id="searchResultWrap">
+              <table class="result-table" id="searchResultTable" style="display:none;">
+                <thead>
+                  <tr><th>유형</th><th>제목</th><th>작성자</th><th>작성일</th></tr>
+                </thead>
+                <tbody id="searchResultBody"></tbody>
+              </table>
+              <div id="searchEmpty">검색어를 입력하거나 검색 버튼을 눌러 보고서를 찾아보세요.</div>
+            </div>
+          </div>
+
+          <!-- 공지 -->
+          <div id="noticeSection">
+            <div class="sec-title">System Notice</div>
+            <div id="noticeGrid">
+              <div class="notice-card">
+                <div class="notice-card-title"><span>📌</span> 업데이트 내역</div>
+                <div id="noticeUpdateList">
+                  <div class="notice-item"><div class="notice-dot-wrap"><div class="notice-dot"></div></div><div class="notice-text">report_main 기본 틀 생성</div><div class="notice-date">v0.1</div></div>
+                </div>
+              </div>
+              <div class="notice-card">
+                <div class="notice-card-title"><span>🔔</span> 운영 안내</div>
+                <div id="noticeOpsList">
+                  <div class="notice-item"><div class="notice-dot-wrap"><div class="notice-dot"></div></div><div class="notice-text">보고서 검색 시스템은 추후 실데이터와 연동될 예정입니다.</div><div class="notice-date">안내</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /mainWrap -->
+      </div><!-- /homeView -->
+
+      <!-- 전체 리스트 뷰 (건별보고 + Issue 통합) -->
+      <div id="allListView" style="display:none; flex:1; overflow-y:auto; padding:24px 32px 60px;">
+        <div style="width:100%;">
+          <div class="al-header">
+            <div>
+              <div class="sec-title" style="margin-bottom:4px;">전체 리스트 <span class="sec-count" id="alCount"></span></div>
+              <div class="al-sub">report/once, report/issue 폴더의 파일을 자동으로 불러옵니다 (파일명 패턴: yymmdd_제품명_주제.html)</div>
+            </div>
+            <div class="al-actions">
+              <span id="alSaveBadge" class="al-badge"></span>
+              <button class="search-btn" onclick="refreshAllList()">🔄 새로고침</button>
+            </div>
+          </div>
+          <div id="allListWrap">
+            <table class="result-table" id="allListTable" style="display:none;">
+              <thead>
+                <tr>
+                  <th style="width:150px;">열람권한</th>
+                  <th style="width:64px;">구분</th>
+                  <th style="width:130px;">등록일</th>
+                  <th style="width:140px;">작성자</th>
+                  <th style="width:160px;">제품명</th>
+                  <th>주제</th>
+                  <th style="width:150px;">최종수정일시</th>
+                  <th style="width:50px;">파일명</th>
+                </tr>
+              </thead>
+              <tbody id="allListBody"></tbody>
+            </table>
+            <div id="allListEmpty" style="padding:40px 20px; text-align:center; color:var(--text3); font-size:12px;">불러오는 중...</div>
+          </div>
+        </div>
+      </div><!-- /allListView -->
+
+      <!-- 서브페이지 iframe -->
+      <iframe id="subFrame" src="about:blank"></iframe>
+
+    </div><!-- /contentWrap -->
+  </div><!-- /rpMain -->
+
+</div><!-- /rpWrap -->
+
+<script>
+// ─────────────────────────────────────────────
+// 로그인 유형(권한) 체계 — 인덱스와 동일
+// ─────────────────────────────────────────────
+const ROLE_ORDER = { admin:0, leader:1, ggumbi:2, affiliate:3 };
+const ROLE_LABEL = { admin:'관리자', leader:'리더급', ggumbi:'꿈비', affiliate:'계열사' };
+let _userRole = '';
+
+// ─────────────────────────────────────────────
+// 기본 데이터 (추후 실데이터 연동 예정)
+// minRole: 이 값 이상 등급만 열람 가능 (예: 'leader' → 리더급 이상 공개)
+// ─────────────────────────────────────────────
+const DEFAULT_QUICK = [
+  { icon:'🚨', label:'Issue 등록',   tab:'issue/issue_list.html', color:'qi-red',    minRole:null },
+  { icon:'📝', label:'건별보고 작성', tab:'once/once_list.html',   color:'qi-cyan',   minRole:null },
+  { icon:'🔎', label:'통합 검색',     tab:'search',                color:'qi-purple', minRole:null },
+  { icon:'📊', label:'주간 리포트',   tab:'',                      color:'qi-green',  minRole:null },
+  { icon:'📅', label:'월간 리포트',   tab:'',                      color:'qi-gold',   minRole:null },
+  { icon:'📁', label:'보관함',        tab:'',                      color:'qi-blue',   minRole:null }
+];
+
+const DEFAULT_CARDS = [
+  {
+    icon:'🚨', iconCls:'qi-red', title:'Issue 보고서', sub:'건별 이슈 접수 · 처리 현황',
+    badge:'실시간', badgeCls:'', tab:'issue/issue_list.html', minRole:null,
+    stats:[ {val:'12', lbl:'미처리', cls:'red'}, {val:'48', lbl:'이번달', cls:'accent'} ]
+  },
+  {
+    icon:'📝', iconCls:'qi-cyan', title:'건별 보고서', sub:'개별 케이스 보고 · 기록',
+    badge:'전체', badgeCls:'info', tab:'once/once_list.html', minRole:null,
+    stats:[ {val:'96', lbl:'누적건수', cls:'accent'}, {val:'8', lbl:'금주', cls:'green'} ]
+  },
+  {
+    icon:'🔎', iconCls:'qi-purple', title:'보고서 검색', sub:'통합 검색 · 필터링',
+    badge:'신규', badgeCls:'info', tab:'search', minRole:null,
+    stats:[ {val:'-', lbl:'검색결과', cls:'gold'}, {val:'-', lbl:'최근검색', cls:'accent'} ]
+  }
+];
+
+// 검색 샘플 데이터 (추후 실제 소스로 교체)
+const SAMPLE_REPORTS = [
+  { type:'issue',  title:'배송 지연 관련 고객 이슈', author:'김민지', date:'2026-07-20' },
+  { type:'report', title:'7월 3주차 건별보고 정리',   author:'박서준', date:'2026-07-19' },
+  { type:'issue',  title:'제품 파손 접수 건',         author:'이하늘', date:'2026-07-15' },
+  { type:'report', title:'반품 사유 분석 보고',       author:'최유나', date:'2026-07-10' }
+];
+
+// ─────────────────────────────────────────────
+// postMessage 수신 (인덱스 → 테마 / 로그인 유형 수신)
+// ─────────────────────────────────────────────
+window.addEventListener('message', e => {
+  if (!e.data) return;
+  if (e.data.type === 'THEME') {
+    if (e.data.mode === 'light') document.body.classList.add('light');
+    else document.body.classList.remove('light');
+    sendThemeToSubFrame(e.data.mode);
+    return;
+  }
+  if (e.data.type === 'SCRIPT_URL') {
+    _userRole = e.data.userRole || '';
+    if (_userRole) sessionStorage.setItem('_userRole', _userRole);
+    applyUserInfo();
+    renderQuick();
+    renderCards();
+    if (_allListLoaded) renderAllList();
+    sendRoleToSubFrame();
+  }
+});
+
+// 로그인 유형(권한) 체크 — 하위 보고서 공개설정에 사용
+// 예: canAccess('leader') → 리더급 이상만 true
+function canAccess(minRole) {
+  if (!minRole) return true;
+  return (ROLE_ORDER[_userRole] ?? 99) <= (ROLE_ORDER[minRole] ?? 0);
+}
+
+function applyUserInfo() {
+  const label = ROLE_LABEL[_userRole] || _userRole || '방문자';
+  document.getElementById('sbUser').textContent = label;
+  document.getElementById('wbName').textContent = label;
+}
+
+// 하위 iframe(서브 보고서)에도 로그인 유형/테마를 그대로 전달
+function sendRoleToSubFrame() {
+  const frame = document.getElementById('subFrame');
+  if (!frame || !frame.contentWindow) return;
+  try { frame.contentWindow.postMessage({ type:'SCRIPT_URL', userRole:_userRole }, '*'); } catch(e) {}
+}
+function sendThemeToSubFrame(mode) {
+  const frame = document.getElementById('subFrame');
+  if (!frame || !frame.contentWindow) return;
+  try { frame.contentWindow.postMessage({ type:'THEME', mode }, '*'); } catch(e) {}
+}
+
+// ─────────────────────────────────────────────
+// 시계
+// ─────────────────────────────────────────────
+function tickTime() {
+  const now=new Date(), pad=n=>String(n).padStart(2,'0');
+  document.getElementById('sbTime').textContent=`${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+}
+setInterval(tickTime,1000); tickTime();
+
+function applyDateInfo() {
+  const now=new Date(), days=['일','월','화','수','목','금','토'], m=now.getMonth()+1, d=now.getDate();
+  document.getElementById('wbDate').textContent = `${now.getFullYear()}년 ${m}월 ${d}일 ${days[now.getDay()]}요일`;
+  document.getElementById('wbDateNum').innerHTML = `${d}<span class="unit">일</span>`;
+  document.getElementById('wbWeekDay').textContent = days[now.getDay()]+'요일';
+}
+applyDateInfo();
+
+// ─────────────────────────────────────────────
+// 네비게이션
+// ─────────────────────────────────────────────
+function goTab(tab) {
+  if (tab === 'home') { showHome(); return; }
+  if (tab === 'all_list') { showAllList(); return; }
+  if (tab === 'search') { showHome(); document.getElementById('searchSection').scrollIntoView({behavior:'smooth'}); setActiveNav('search'); return; }
+  if (!tab || tab === '#') { return; }
+  if (tab.endsWith('.html') || tab.startsWith('http')) { loadSubPage(tab); return; }
+}
+function showHome() {
+  document.getElementById('homeView').style.display = '';
+  document.getElementById('allListView').style.display = 'none';
+  document.getElementById('subFrame').style.display = 'none';
+  document.getElementById('subFrame').src = 'about:blank';
+  setActiveNav('home');
+}
+function showAllList() {
+  document.getElementById('homeView').style.display = 'none';
+  document.getElementById('subFrame').style.display = 'none';
+  document.getElementById('subFrame').src = 'about:blank';
+  document.getElementById('allListView').style.display = 'flex';
+  document.getElementById('allListView').style.flexDirection = 'column';
+  setActiveNav('all_list');
+  if (!_allListLoaded) refreshAllList();
+}
+function loadSubPage(url) {
+  document.getElementById('homeView').style.display = 'none';
+  document.getElementById('allListView').style.display = 'none';
+  const frame = document.getElementById('subFrame');
+  frame.onload = () => { sendRoleToSubFrame(); sendThemeToSubFrame(document.body.classList.contains('light') ? 'light' : 'dark'); };
+  frame.src = url;
+  frame.style.display = 'block';
+  setActiveNav(url);
+}
+function setActiveNav(tab) {
+  document.querySelectorAll('.nav-home-item, .nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.tab === tab);
+  });
+}
+
+// ─────────────────────────────────────────────
+// 렌더링: 퀵액세스 / 카드
+// ─────────────────────────────────────────────
+function renderQuick() {
+  const grid = document.getElementById('quickGrid');
+  document.getElementById('qCount').textContent = DEFAULT_QUICK.length+' items';
+  grid.innerHTML = DEFAULT_QUICK.map(it => {
+    const locked = !canAccess(it.minRole);
+    return `
+    <div class="q-item${locked?' locked':''}" onclick="${locked?'':`goTab('${it.tab}')`}">
+      <div class="q-icon ${it.color}">${it.icon}${locked?' 🔒':''}</div>
+      <div class="q-label">${it.label}</div>
+    </div>
+  `;
+  }).join('');
+}
+
+function renderCards() {
+  const grid = document.getElementById('cardGrid');
+  grid.innerHTML = DEFAULT_CARDS.map(c => {
+    const locked = !canAccess(c.minRole);
+    return `
+    <div class="s-card${locked?' locked':''}" onclick="${locked?'':`goTab('${c.tab}')`}">
+      <div class="s-card-header">
+        <div class="s-card-icon ${c.iconCls}">${c.icon}${locked?' 🔒':''}</div>
+        <div class="s-card-info">
+          <div class="s-card-title">${c.title}</div>
+          <div class="s-card-sub">${c.sub}</div>
+        </div>
+        <div class="s-card-badge ${c.badgeCls}">${c.badge}</div>
+      </div>
+      <div class="s-card-body">
+        <div class="mini-stats">
+          ${c.stats.map(s=>`<div><div class="mini-stat-val ${s.cls}">${s.val}</div><div class="mini-stat-lbl">${s.lbl}</div></div>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+// 보고서 검색 시스템 (기본 틀 — 샘플 데이터 기반)
+// ─────────────────────────────────────────────
+function runSearch() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const typeFilter = document.getElementById('searchTypeFilter').value;
+  const periodFilter = parseInt(document.getElementById('searchPeriodFilter').value || '0');
+
+  let results = SAMPLE_REPORTS.filter(r => {
+    if (typeFilter && r.type !== typeFilter) return false;
+    if (q && !(r.title.toLowerCase().includes(q) || r.author.toLowerCase().includes(q))) return false;
+    if (periodFilter) {
+      const diffDays = (Date.now() - new Date(r.date).getTime()) / 86400000;
+      if (diffDays > periodFilter) return false;
+    }
+    return true;
+  });
+
+  const table = document.getElementById('searchResultTable');
+  const body  = document.getElementById('searchResultBody');
+  const empty = document.getElementById('searchEmpty');
+
+  if (!results.length) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    empty.textContent = '검색 결과가 없습니다.';
+    return;
+  }
+
+  body.innerHTML = results.map(r => `
+    <tr onclick="alert('${r.title}')">
+      <td><span class="rtag ${r.type}">${r.type==='issue'?'Issue':'건별보고'}</span></td>
+      <td>${r.title}</td>
+      <td>${r.author}</td>
+      <td>${r.date}</td>
+    </tr>
+  `).join('');
+  table.style.display = '';
+  empty.style.display = 'none';
+}
+document.getElementById('searchInput').addEventListener('keydown', e => { if (e.key==='Enter') runSearch(); });
+
+// ═══════════════════════════════════════════
+//  전체 리스트 (건별보고 + Issue 자동 목록)
+//  report/once/, report/issue/ 폴더 목록은 GAS를 통해 받아옵니다.
+//  (GitHub PAT는 절대 이 파일에 두지 않고 GAS 쪽 Script Properties에만 보관)
+//  파일명 패턴(yymmdd_제품명_주제.html)은 1차적으로 GAS에서 파싱해서 내려주고,
+//  사용자가 수정한 값은 같은 GAS(시트)에 저장되어 모든 PC에서 동일하게 적용됩니다.
+// ═══════════════════════════════════════════
+
+// ── 참고용 (직접 API 호출에는 사용하지 않음, 파일 링크 생성에만 사용) ──
+const GH_OWNER  = 'ggumbi-cs';
+const GH_REPO   = 'dashboard';
+const GH_BRANCH = 'main';
+
+// ── 보고서 시스템 GAS 엔드포인트 ──
+const REPORT_GAS_URL = 'https://script.google.com/macros/s/AKfycbw_zRPrNid5yiXXfdYcoh_CmziBwFxMhAZxiS0eK33X8Gfe6fgI30_0CXz9g25U28mhbQ/exec';
+const DEFAULT_AUTHOR = '심우승 SQ';
+
+let _allListLoaded = false;
+let _allListRaw    = [];   // GAS에서 받아온 파일 목록 (파싱 포함)
+let _reportEdits   = {};   // { '경로/파일명.html': {regDate, author, product, topic} }
+
+function reportEditsStorageKey() { return 'report_edits_local'; }
+
+async function loadReportEdits() {
+  if (REPORT_GAS_URL) {
+    try {
+      const res = await fetch(`${REPORT_GAS_URL}?action=getReportEdits`);
+      const data = await res.json();
+      if (data.ok && data.edits) { _reportEdits = data.edits; return; }
+    } catch(e) { console.warn('[report_main] GAS 수정본 로드 실패:', e.message); }
+  }
+  // 폴백: 로컬 저장 (GAS 응답 실패 시에만, 이 브라우저 한정)
+  try { _reportEdits = JSON.parse(localStorage.getItem(reportEditsStorageKey()) || '{}'); }
+  catch(e) { _reportEdits = {}; }
+}
+
+async function saveReportEdit(fileKey, patch) {
+  _reportEdits[fileKey] = { ..._reportEdits[fileKey], ...patch };
+
+  if (REPORT_GAS_URL) {
+    try {
+      await fetch(REPORT_GAS_URL, {
+        method:'POST',
+        body: JSON.stringify({ action:'setReportEdit', fileKey, patch })
+      });
+      updateSaveBadge('gas');
+      return;
+    } catch(e) { console.warn('[report_main] GAS 저장 실패, 로컬로 폴백:', e.message); }
+  }
+  // 폴백 저장 (GAS 응답 실패 시에만 — 이 PC에만 적용, 다른 PC와 공유되지 않음)
+  try { localStorage.setItem(reportEditsStorageKey(), JSON.stringify(_reportEdits)); } catch(e) {}
+  updateSaveBadge('local');
+}
+
+function updateSaveBadge(mode) {
+  const el = document.getElementById('alSaveBadge');
+  if (!el) return;
+  if (mode === 'gas') { el.textContent = '✅ GAS 저장됨 (전체 공유)'; el.className = 'al-badge gas'; }
+  else { el.textContent = '⚠ 로컬 저장 (이 PC에만 적용, GAS 응답 확인 필요)'; el.className = 'al-badge local'; }
+}
+
+// ── 파일명 패턴 파싱: yymmdd_제품명_주제.html (GAS 응답에 파싱값이 없을 때 클라이언트 폴백용) ──
+function parseReportFilename(name) {
+  const base = name.replace(/\.html?$/i, '');
+  const m = base.match(/^(\d{2})(\d{2})(\d{2})_(.+?)_(.+)$/);
+  if (!m) return { regDate:'', product:'', topic: base };
+  const [, yy, mm, dd, product, topic] = m;
+  const regDate = `20${yy}-${mm}-${dd}`;
+  return { regDate, product, topic };
+}
+
+function fmtDateTime(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+// ── 파일 목록: GAS가 GitHub API(PAT 서버측 보관)를 대신 호출해서 내려줌 ──
+async function fetchReportFileList() {
+  const res = await fetch(`${REPORT_GAS_URL}?action=listReports`);
+  const data = await res.json();
+  if (!data.ok || !Array.isArray(data.files)) throw new Error(data.error || 'GAS 응답 오류');
+  // 기대 형식: [{ path, name, category, htmlUrl, commitDate, regDate, product, topic }, ...]
+  return data.files;
+}
+
+async function refreshAllList() {
+  const table = document.getElementById('allListTable');
+  const empty = document.getElementById('allListEmpty');
+  table.style.display = 'none';
+  empty.style.display = 'block';
+  empty.textContent = '불러오는 중...';
+
+  await loadReportEdits();
+
+  let files = [];
+  try {
+    files = await fetchReportFileList();
+  } catch(e) {
+    empty.textContent = 'GAS 목록 응답 실패: ' + e.message + ' (GAS listReports 액션 배포 상태를 확인해주세요)';
+    return;
+  }
+
+  if (!files.length) {
+    empty.textContent = '아직 등록된 보고서 파일이 없습니다.';
+    _allListLoaded = true;
+    return;
+  }
+
+  _allListRaw = files;
+  _allListLoaded = true;
+  renderAllList();
+}
+
+// 열람권한 최소치 옵션 (관리자만 변경 가능)
+const VIS_ROLE_OPTIONS = [
+  { value:'admin',     label:'관리자만' },
+  { value:'leader',    label:'리더급 이상' },
+  { value:'ggumbi',    label:'꿈비 이상' },
+  { value:'affiliate', label:'전체(계열사 이상)' }
+];
+const VIS_ROLE_LABEL = { admin:'관리자만', leader:'리더급 이상', ggumbi:'꿈비 이상', affiliate:'전체' };
+
+function renderAllList() {
+  const body  = document.getElementById('allListBody');
+  const table = document.getElementById('allListTable');
+  const empty = document.getElementById('allListEmpty');
+  const countEl = document.getElementById('alCount');
+
+  // 열람권한 필터링: 관리자는 전체 열람, 그 외에는 canAccess로 필터
+  const visibleFiles = _allListRaw.filter(f => {
+    const edit = _reportEdits[f.path] || {};
+    const visRole = edit.visRole || f.visRole || 'affiliate';
+    return canAccess(visRole);
+  });
+
+  countEl.textContent = visibleFiles.length + '건';
+
+  if (!visibleFiles.length) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    empty.textContent = '열람 가능한 보고서가 없습니다.';
+    return;
+  }
+
+  const rows = visibleFiles
+    .slice()
+    .sort((a,b) => (b.commitDate||'').localeCompare(a.commitDate||''))
+    .map(f => {
+      const fileKey = f.path;
+      const parsed  = (f.regDate || f.product || f.topic) ? f : parseReportFilename(f.name);
+      const edit    = _reportEdits[fileKey] || {};
+      const regDate = edit.regDate  ?? parsed.regDate;
+      const author  = edit.author   ?? f.author ?? DEFAULT_AUTHOR;
+      const product = edit.product  ?? parsed.product;
+      const topic   = edit.topic    ?? parsed.topic;
+      const visRole = edit.visRole  ?? f.visRole ?? 'affiliate';
+      const catLabel = f.category === 'once' ? '건별' : f.category === 'sub' ? 'Sub' : 'Issue';
+      const catCls   = f.category === 'once' ? 'once' : f.category === 'sub' ? 'sub' : 'issue';
+      const fileUrl  = f.htmlUrl || f.html_url || `https://github.com/${GH_OWNER}/${GH_REPO}/blob/${GH_BRANCH}/${f.path}`;
+
+      return `
+      <tr class="al-row" onclick="window.open('${fileUrl}','_blank')">
+        <td>${visRoleCell(fileKey, visRole)}</td>
+        <td><span class="rtag ${catCls}">${catLabel}</span></td>
+        <td>${editableCell(fileKey,'regDate',regDate,'date')}</td>
+        <td>${editableCell(fileKey,'author',author,'text')}</td>
+        <td>${editableCell(fileKey,'product',product,'text')}</td>
+        <td>${editableCell(fileKey,'topic',topic,'text')}</td>
+        <td style="color:var(--text3); font-size:11px;">${fmtDateTime(f.commitDate)}</td>
+        <td>
+          <span class="al-file-icon">
+            📄<span class="al-tooltip">${f.name}</span>
+          </span>
+        </td>
+      </tr>`;
+    }).join('');
+
+  body.innerHTML = rows;
+  table.style.display = '';
+  empty.style.display = 'none';
+}
+
+// ── 열람권한 셀: 관리자만 드롭다운으로 수정 가능, 그 외는 뱃지로만 표시 ──
+function visRoleCell(fileKey, visRole) {
+  const cur = visRole || 'affiliate';
+  if (_userRole === 'admin') {
+    const opts = VIS_ROLE_OPTIONS.map(o => `<option value="${o.value}"${o.value===cur?' selected':''}>${o.label}</option>`).join('');
+    return `<select class="vis-role-select role-${cur}" onclick="event.stopPropagation()" onchange="event.stopPropagation(); onVisRoleChange('${escapeAttr(fileKey)}', this.value)">${opts}</select>`;
+  }
+  return `<span class="vis-role-badge role-${cur}">${VIS_ROLE_LABEL[cur] || cur}</span>`;
+}
+
+function onVisRoleChange(fileKey, newRole) {
+  saveReportEdit(fileKey, { visRole: newRole });
+  renderAllList();
+}
+
+// ── 셀 단위 인라인 편집 (연필 아이콘) ──
+function editableCell(fileKey, field, value, inputType) {
+  const safeVal = (value ?? '').toString();
+  const cellId = `al_${field}_${btoa(unescape(encodeURIComponent(fileKey))).replace(/[^a-zA-Z0-9]/g,'')}`;
+  return `
+    <span class="al-editable" id="${cellId}" onclick="event.stopPropagation()">
+      <span class="al-view-text">${safeVal || '-'}</span>
+      <span class="al-edit-icon" title="수정" onclick="event.stopPropagation(); startEditCell('${cellId}','${escapeAttr(fileKey)}','${field}','${escapeAttr(safeVal)}','${inputType}')">✏️</span>
+    </span>`;
+}
+function escapeAttr(s) { return String(s).replace(/'/g, "\\'"); }
+
+function startEditCell(cellId, fileKey, field, currentVal, inputType) {
+  const el = document.getElementById(cellId);
+  if (!el || el.querySelector('input')) return;
+  el.innerHTML = `<input type="${inputType}" value="${currentVal}" onclick="event.stopPropagation()" />`;
+  const input = el.querySelector('input');
+  input.focus();
+  const commit = () => {
+    const newVal = input.value;
+    saveReportEdit(fileKey, { [field]: newVal });
+    el.innerHTML = `<span class="al-view-text">${newVal || '-'}</span><span class="al-edit-icon" title="수정" onclick="event.stopPropagation(); startEditCell('${cellId}','${escapeAttr(fileKey)}','${field}','${escapeAttr(newVal)}','${inputType}')">✏️</span>`;
+  };
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') input.blur(); });
+}
+
+
+renderQuick();
+renderCards();
+updateSaveBadge(REPORT_GAS_URL ? 'gas' : 'local');
+
+// fallback — 인덱스로부터 SCRIPT_URL 메시지를 놓친 경우, 세션에 저장된 값으로 복원
+setTimeout(() => {
+  if (!_userRole) {
+    _userRole = sessionStorage.getItem('_userRole') || '';
+    applyUserInfo();
+    renderQuick();
+    renderCards();
+    if (_allListLoaded) renderAllList();
+  }
+}, 400);
+</script>
+</body>
+</html>

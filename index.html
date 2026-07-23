@@ -447,7 +447,7 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
     </div>
 
     <div class="login-remember" onclick="toggleRemember()">
-      <div class="chk-box" id="rememberChk"><span id="chkMark">✓</span></div>
+      <div class="chk-box checked" id="rememberChk"><span id="chkMark">✓</span></div>
       <span>최근 로그인 정보 기억</span>
     </div>
 
@@ -822,7 +822,7 @@ function onIdChange() {
 }
 
 const REMEMBER_KEY = 'ggumbi_remember';
-let rememberChecked = false;
+let rememberChecked = true;
 
 function toggleRemember() {
   rememberChecked = !rememberChecked;
@@ -854,6 +854,8 @@ function tryLogin() {
   sessionStorage.setItem('loggedIn', '1');
   sessionStorage.setItem('userId', id);
   sessionStorage.setItem('userRole', account.role);
+  // 팝업/새 창에서 비밀번호 재확인 없이 같은 등급으로 바로 이어지도록 지속 저장
+  localStorage.setItem('ggumbi_session_persist', JSON.stringify({ id, role: account.role }));
   document.getElementById('loginOverlay').style.display = 'none';
   errEl.textContent = '';
 
@@ -868,6 +870,7 @@ function doLogout() {
   sessionStorage.removeItem('loggedIn');
   sessionStorage.removeItem('userId');
   sessionStorage.removeItem('userRole');
+  localStorage.removeItem('ggumbi_session_persist');
   document.getElementById('loginOverlay').style.display = 'flex';
   document.getElementById('loginPw').value = '';
   document.getElementById('loginError').textContent = '';
@@ -891,6 +894,25 @@ function doLogout() {
     }
     return;
   }
+
+  // 지속 세션 복원: 비밀번호 재확인 없이 마지막 로그인 등급으로 바로 진입 (팝업/새 창 대응)
+  try {
+    const persisted = localStorage.getItem('ggumbi_session_persist');
+    if (persisted) {
+      const { id, role } = JSON.parse(persisted);
+      if (id && role) {
+        sessionStorage.setItem('loggedIn', '1');
+        sessionStorage.setItem('userId', id);
+        sessionStorage.setItem('userRole', role);
+        document.getElementById('loginOverlay').style.display = 'none';
+        const btn = document.querySelector('.logout-btn');
+        if (btn) btn.textContent = `🔒 ${id} · 로그아웃`;
+        setTimeout(() => { applyRolePermissions(role); loadVisSettings(); }, 0);
+        return;
+      }
+    }
+  } catch(e) {}
+
   try {
     const saved = localStorage.getItem(REMEMBER_KEY);
     if (saved) {
@@ -902,6 +924,9 @@ function doLogout() {
       rememberChecked = true;
       const box = document.getElementById('rememberChk');
       if (box) box.classList.add('checked');
+      // 저장된 로그인 정보로 자동 로그인 (팝업/새 세션에서도 로그인 화면 없이 바로 진입)
+      if (typeof onIdChange === 'function') onIdChange();
+      tryLogin();
     }
   } catch(e) {}
 })();

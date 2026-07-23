@@ -1789,14 +1789,52 @@ function updateHeader() {
 
 function openTestServer() { window.open('https://ggumbi-cs.github.io/dashboard/','_blank'); }
 
+// ── 외부 딥링크: index.html#nav=경로.html&theme=light 형태로 특정 페이지 자동 오픈 ──
+function deepLinkFromHash() {
+  const h = location.hash.replace(/^#/, '');
+  if (!h) return false;
+  const params = new URLSearchParams(h);
+  const nav = params.get('nav');
+  if (!nav) return false;
+
+  hideNoPermission();
+  document.querySelectorAll('.nav-item.active').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-parent.has-active').forEach(el => el.classList.remove('has-active'));
+  ['dashSidebar','statusSidebar','newStatusSidebar','qcSidebar','toolSidebar','onceSidebar','smtSidebar','issueSidebar','devSidebar'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  const sb = document.getElementById('sidebar');
+  if (sb) sb.style.display = 'none';
+
+  const frame = document.getElementById('mainFrame');
+  const path = nav.replace(/^\/+/, '');
+  const themeParam = params.get('theme');
+
+  const handler = function() {
+    frame.removeEventListener('load', handler);
+    try {
+      const role = sessionStorage.getItem('userRole') || '';
+      frame.contentWindow.postMessage({ type:'SCRIPT_URL', url:SCRIPT_URL, userRole:role }, '*');
+      const t = themeParam || localStorage.getItem('ggumbi-theme') || 'dark';
+      frame.contentWindow.postMessage({ type:'THEME', mode:t }, '*');
+    } catch(e) {}
+  };
+  frame.addEventListener('load', handler);
+  navFrame(path);
+  return true;
+}
+
 // ── 초기화 ──
 function init() {
   renderMonthly(); renderWeekly();
   const now=new Date(); calYear=now.getFullYear(); calMonth=now.getMonth();
 
-  // 기본 탭: AI보고
-  const firstItem = document.querySelector('.nav-item[data-tab="AI보고"]');
-  if (firstItem) switchTab(firstItem);
+  // 해시로 특정 페이지 딥링크 요청이 있으면 그쪽으로, 없으면 기본 탭(AI보고)
+  if (!deepLinkFromHash()) {
+    const firstItem = document.querySelector('.nav-item[data-tab="AI보고"]');
+    if (firstItem) switchTab(firstItem);
+  }
 
   state.type='weekly';
   const fri=thisWeekFriday(); const friKey=toKey(fri); state.period=friKey;

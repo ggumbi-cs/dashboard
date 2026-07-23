@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>휴가 및 일정관리</title>
+<style>
+  :root{
+    --bg:#0f1f3d;
+    --bg-elev:#152a52;
+    --bg-elev2:#1b3363;
+    --border:rgba(255,255,255,.10);
+    --text:#ffffff;
+    --text-sub:rgba(255,255,255,.62);
+    --text-faint:rgba(255,255,255,.38);
+    --accent:#5b8def;
+    --accent-soft:rgba(91,141,239,.16);
+    --today:#ffb648;
+    --shadow: 0 8px 24px rgba(0,0,0,.28);
+  }
+  body.light{
+    --bg:#f5f7fa;
+    --bg-elev:#ffffff;
+    --bg-elev2:#eef1f6;
+    --border:rgba(20,30,60,.10);
+    --text:#1a2a4a;
+    --text-sub:rgba(26,42,74,.62);
+    --text-faint:rgba(26,42,74,.38);
+    --accent:#3465d4;
+    --accent-soft:rgba(52,101,212,.10);
+    --today:#e0851f;
+    --shadow: 0 8px 24px rgba(20,30,60,.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Segoe UI",Roboto,sans-serif;
+    min-height:100vh; padding:20px 20px 60px;
+    transition:background .2s ease,color .2s ease;
+  }
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  .headbar{
+    display:flex; align-items:flex-start; justify-content:space-between;
+    flex-wrap:wrap; gap:14px; margin-bottom:18px;
+  }
+  .headbar h1{
+    font-size:22px; font-weight:800; margin:0 0 4px; letter-spacing:-.02em;
+    display:flex; align-items:center; gap:8px;
+  }
+  .headbar .sub{ font-size:13px; color:var(--text-sub); }
+  .sync-row{display:flex; align-items:center; gap:10px; font-size:12px; color:var(--text-faint);}
+  .sync-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--bg-elev2); border:1px solid var(--border); color:var(--text);
+    padding:8px 14px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer;
+    transition:.15s;
+  }
+  .sync-btn:hover{border-color:var(--accent); color:var(--accent);}
+  .sync-btn[disabled]{opacity:.5; cursor:default;}
+  .spin{animation:spin 1s linear infinite; display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .toolbar{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    background:var(--bg-elev); border:1px solid var(--border); border-radius:14px;
+    padding:14px 16px; margin-bottom:18px; box-shadow:var(--shadow);
+  }
+  .toolbar select, .toolbar input[type="text"]{
+    background:var(--bg-elev2); border:1px solid var(--border); color:var(--text);
+    padding:8px 12px; border-radius:9px; font-size:13px; outline:none; min-width:120px;
+  }
+  .toolbar input[type="text"]{min-width:180px;}
+  .view-toggle{
+    display:flex; background:var(--bg-elev2); border:1px solid var(--border); border-radius:10px; padding:3px; margin-left:auto;
+  }
+  .view-toggle button{
+    border:none; background:transparent; color:var(--text-sub); padding:7px 16px;
+    border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; transition:.15s;
+  }
+  .view-toggle button.active{background:var(--accent); color:#fff;}
+  .count-pill{
+    font-size:12px; color:var(--text-faint); padding:4px 10px; background:var(--bg-elev2);
+    border-radius:20px; border:1px solid var(--border);
+  }
+
+  /* ── List view ── */
+  #listView table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  #listView{
+    background:var(--bg-elev); border:1px solid var(--border); border-radius:14px;
+    overflow:hidden; box-shadow:var(--shadow);
+  }
+  #listView thead th{
+    text-align:left; padding:12px 14px; font-size:11.5px; color:var(--text-faint);
+    text-transform:uppercase; letter-spacing:.04em; border-bottom:1px solid var(--border);
+    background:var(--bg-elev2); position:sticky; top:0;
+  }
+  #listView tbody td{padding:12px 14px; border-bottom:1px solid var(--border); vertical-align:middle;}
+  #listView tbody tr:last-child td{border-bottom:none;}
+  #listView tbody tr:hover{background:var(--accent-soft);}
+  .badge{
+    display:inline-block; padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:700;
+    white-space:nowrap;
+  }
+  .empty-row td{text-align:center; padding:48px 14px; color:var(--text-faint);}
+
+  /* ── Calendar view ── */
+  #calView{
+    background:var(--bg-elev); border:1px solid var(--border); border-radius:14px;
+    padding:16px; box-shadow:var(--shadow);
+  }
+  .cal-nav{display:flex; align-items:center; justify-content:center; gap:18px; margin-bottom:14px;}
+  .cal-nav button{
+    background:var(--bg-elev2); border:1px solid var(--border); color:var(--text);
+    width:32px; height:32px; border-radius:8px; cursor:pointer; font-size:15px;
+  }
+  .cal-nav .cal-title{font-size:16px; font-weight:800; min-width:120px; text-align:center;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+  .cal-dow{text-align:center; font-size:11.5px; color:var(--text-faint); padding-bottom:6px; font-weight:700;}
+  .cal-cell{
+    min-height:92px; border:1px solid var(--border); border-radius:10px; padding:6px;
+    background:var(--bg-elev2); display:flex; flex-direction:column; gap:3px; overflow:hidden;
+  }
+  .cal-cell.out{opacity:.32;}
+  .cal-cell .d-num{font-size:12px; font-weight:700; color:var(--text-sub);}
+  .cal-cell.today .d-num{
+    color:#fff; background:var(--today); width:20px; height:20px; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center; font-size:11px;
+  }
+  .cal-item{
+    font-size:10.5px; padding:2px 6px; border-radius:6px; white-space:nowrap; overflow:hidden;
+    text-overflow:ellipsis; cursor:pointer; font-weight:600;
+  }
+  .cal-more{font-size:10px; color:var(--text-faint); padding-left:4px;}
+
+  /* ── Day detail modal ── */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,.55); display:none;
+    align-items:center; justify-content:center; z-index:50;
+  }
+  .modal-backdrop.show{display:flex;}
+  .modal{
+    background:var(--bg-elev); border:1px solid var(--border); border-radius:16px;
+    padding:20px; width:min(420px,92vw); max-height:80vh; overflow:auto; box-shadow:var(--shadow);
+  }
+  .modal h3{margin:0 0 12px; font-size:16px;}
+  .modal-card{
+    border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:10px; background:var(--bg-elev2);
+  }
+  .modal-card .row{display:flex; justify-content:space-between; font-size:12.5px; color:var(--text-sub); margin-top:4px;}
+  .modal-close{
+    display:block; margin:14px auto 0; background:var(--bg-elev2); border:1px solid var(--border);
+    color:var(--text); padding:8px 20px; border-radius:9px; cursor:pointer; font-size:13px;
+  }
+
+  @media (max-width:720px){
+    .cal-cell{min-height:64px;}
+    #listView table{font-size:12px;}
+    #listView thead th, #listView tbody td{padding:9px 8px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="headbar">
+    <div>
+      <h1>🏖️ 휴가 및 일정관리</h1>
+      <div class="sub">전사 공용 휴가/일정 DB · 조회 전용 (신규 등록은 노션에서 진행)</div>
+    </div>
+    <div>
+      <div class="sync-row">
+        <button class="sync-btn" id="syncBtn" onclick="manualSync()">🔄 지금 동기화</button>
+        <span id="lastSync">최근 자동 동기화 확인 중…</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <select id="fTeam"><option value="">전체 팀</option></select>
+    <select id="fType"><option value="">전체 휴가유형</option></select>
+    <input type="text" id="fSearch" placeholder="이름·제목 검색">
+    <span class="count-pill" id="countPill">0건</span>
+    <div class="view-toggle">
+      <button id="btnList" class="active" onclick="setView('list')">📋 리스트</button>
+      <button id="btnCal" onclick="setView('cal')">📅 달력</button>
+    </div>
+  </div>
+
+  <div id="listView">
+    <table>
+      <thead>
+        <tr>
+          <th>제목</th><th>휴가유형</th><th>팀명</th><th>기간</th><th>일수</th><th>부서장</th><th>참조</th>
+        </tr>
+      </thead>
+      <tbody id="listBody"></tbody>
+    </table>
+  </div>
+
+  <div id="calView" style="display:none;">
+    <div class="cal-nav">
+      <button onclick="calShift(-1)">‹</button>
+      <div class="cal-title" id="calTitle"></div>
+      <button onclick="calShift(1)">›</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3 id="modalTitle">일정</h3>
+    <div id="modalBody"></div>
+    <button class="modal-close" onclick="closeModal()">닫기</button>
+  </div>
+</div>
+
+<script>
+// ── GAS 연동 ──
+const SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
+let SCRIPT_URL = SCRIPT_URL_DEFAULT;
+let userRole = null;
+
+// 인덱스 iframe 테마/설정 신호 수신
+window.addEventListener('message', function(e){
+  if(!e.data) return;
+  if(e.data.type === 'THEME'){
+    const mode = e.data.mode;
+    if(mode === 'light') document.body.classList.add('light');
+    else document.body.classList.remove('light');
+  }
+  if(e.data.type === 'SCRIPT_URL'){
+    if(e.data.url) SCRIPT_URL = e.data.url;
+    if(e.data.userRole) userRole = e.data.userRole;
+  }
+});
+
+// 팀명 색상 팔레트 (23개 팀 순환 배정)
+const TEAM_COLORS = [
+  '#e05656','#3465d4','#8a8a8a','#c9a227','#e0568f','#7a4fd4','#a04fd4',
+  '#d47a3e','#4fa0d4','#8a6b3e','#c94f4f','#3ea06e','#d4b23e','#4f6bd4',
+  '#7a3ea0','#d43e6b','#3ea0a0','#a0a03e','#e07a3e','#3e7ad4','#a03e7a',
+  '#6bd43e','#3ea0d4'
+];
+function teamColor(team, allTeams){
+  const idx = allTeams.indexOf(team);
+  return TEAM_COLORS[idx >= 0 ? idx % TEAM_COLORS.length : 0];
+}
+
+let RAW = [];
+let currentView = 'list';
+let calYear, calMonth; // 0-indexed month
+const today = new Date();
+
+function fmtDate(s){
+  if(!s) return '-';
+  return s.slice(0,10).replace(/-/g,'.');
+}
+
+function loadData(bust){
+  const url = '../qc_data.json' + (bust ? ('?t=' + Date.now()) : '');
+  return fetch(url).then(r=>r.json()).then(data=>{
+    RAW = (data.휴가일정 && data.휴가일정.records) || [];
+    if(data.lastSynced) document.getElementById('lastSync').textContent = '최근 동기화: ' + fmtDateTime(data.lastSynced);
+    buildFilters();
+    render();
+  }).catch(err=>{
+    document.getElementById('listBody').innerHTML =
+      '<tr class="empty-row"><td colspan="7">데이터를 불러오지 못했습니다. (' + err + ')</td></tr>';
+  });
+}
+
+function fmtDateTime(iso){
+  try{
+    const d = new Date(iso);
+    return d.toLocaleString('ko-KR', {timeZone:'Asia/Seoul', year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  }catch(e){ return iso; }
+}
+
+function buildFilters(){
+  const teams = [...new Set(RAW.map(r=>r.팀명).filter(Boolean))].sort();
+  const types = [...new Set(RAW.map(r=>r.휴가유형).filter(Boolean))].sort();
+  const fTeam = document.getElementById('fTeam');
+  const fType = document.getElementById('fType');
+  const curTeam = fTeam.value, curType = fType.value;
+  fTeam.innerHTML = '<option value="">전체 팀</option>' + teams.map(t=>`<option value="${t}">${t}</option>`).join('');
+  fType.innerHTML = '<option value="">전체 휴가유형</option>' + types.map(t=>`<option value="${t}">${t}</option>`).join('');
+  fTeam.value = curTeam; fType.value = curType;
+  window.__ALL_TEAMS = teams;
+}
+
+function filtered(){
+  const team = document.getElementById('fTeam').value;
+  const type = document.getElementById('fType').value;
+  const q = document.getElementById('fSearch').value.trim().toLowerCase();
+  return RAW.filter(r=>{
+    if(team && r.팀명 !== team) return false;
+    if(type && r.휴가유형 !== type) return false;
+    if(q){
+      const hay = ((r.제목||'') + ' ' + (r.휴가자||'') + ' ' + (r.팀참조||'')).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function render(){
+  const list = filtered();
+  document.getElementById('countPill').textContent = list.length + '건';
+  if(currentView === 'list') renderList(list);
+  else renderCalendar(list);
+}
+
+function renderList(list){
+  const sorted = [...list].sort((a,b)=> (b.시작일||'').localeCompare(a.시작일||''));
+  const tbody = document.getElementById('listBody');
+  if(sorted.length === 0){
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">조건에 맞는 휴가/일정이 없습니다.</td></tr>';
+    return;
+  }
+  const teams = window.__ALL_TEAMS || [];
+  tbody.innerHTML = sorted.map(r=>{
+    const period = r.종료일 && r.종료일 !== r.시작일
+      ? fmtDate(r.시작일) + ' ~ ' + fmtDate(r.종료일)
+      : fmtDate(r.시작일);
+    const color = teamColor(r.팀명, teams);
+    return `<tr>
+      <td>${r.제목 || '-'}</td>
+      <td><span class="badge" style="background:${color}22;color:${color};">${r.휴가유형 || '-'}</span></td>
+      <td>${r.팀명 ? `<span class="badge" style="background:${color}22;color:${color};">${r.팀명}</span>` : '-'}</td>
+      <td>${period}</td>
+      <td>${r.휴가일수 ?? '-'}</td>
+      <td>${(r.부서장||[]).join(', ') || '-'}</td>
+      <td>${(r.참조||[]).join(', ') || '-'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function setView(v){
+  currentView = v;
+  document.getElementById('btnList').classList.toggle('active', v==='list');
+  document.getElementById('btnCal').classList.toggle('active', v==='cal');
+  document.getElementById('listView').style.display = v==='list' ? 'block' : 'none';
+  document.getElementById('calView').style.display = v==='cal' ? 'block' : 'none';
+  if(v==='cal' && calYear===undefined){
+    calYear = today.getFullYear(); calMonth = today.getMonth();
+  }
+  render();
+}
+
+function calShift(delta){
+  calMonth += delta;
+  if(calMonth < 0){ calMonth = 11; calYear--; }
+  if(calMonth > 11){ calMonth = 0; calYear++; }
+  render();
+}
+
+// 날짜 문자열(YYYY-MM-DD) 유틸
+function toDateOnly(s){ return s ? s.slice(0,10) : null; }
+function dateInRange(dateStr, start, end){
+  const e = end || start;
+  return dateStr >= start && dateStr <= e;
+}
+
+function renderCalendar(list){
+  const teams = window.__ALL_TEAMS || [];
+  document.getElementById('calTitle').textContent = calYear + '년 ' + (calMonth+1) + '월';
+  const first = new Date(calYear, calMonth, 1);
+  const startWeekday = first.getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const daysInPrevMonth = new Date(calYear, calMonth, 0).getDate();
+
+  const grid = document.getElementById('calGrid');
+  let html = ['일','월','화','수','목','금','토'].map(d=>`<div class="cal-dow">${d}</div>`).join('');
+
+  const totalCells = Math.ceil((startWeekday + daysInMonth) / 7) * 7;
+  const todayStr = today.toISOString().slice(0,10);
+
+  for(let i=0;i<totalCells;i++){
+    let dayNum, monthOffset=0, isOut=false;
+    if(i < startWeekday){ dayNum = daysInPrevMonth - startWeekday + i + 1; monthOffset=-1; isOut=true; }
+    else if(i >= startWeekday + daysInMonth){ dayNum = i - startWeekday - daysInMonth + 1; monthOffset=1; isOut=true; }
+    else { dayNum = i - startWeekday + 1; }
+
+    const cellDate = new Date(calYear, calMonth+monthOffset, dayNum);
+    const cellStr = cellDate.toISOString().slice(0,10);
+    const isToday = cellStr === todayStr;
+
+    const items = list.filter(r=>{
+      const s = toDateOnly(r.시작일); if(!s) return false;
+      const e = toDateOnly(r.종료일) || s;
+      return cellStr >= s && cellStr <= e;
+    });
+
+    const maxShow = 3;
+    const shown = items.slice(0, maxShow).map(r=>{
+      const color = teamColor(r.팀명, teams);
+      return `<div class="cal-item" style="background:${color}26;color:${color};" onclick='openDay("${cellStr}")'>${r.휴가자 || r.제목 || '일정'}</div>`;
+    }).join('');
+    const more = items.length > maxShow ? `<div class="cal-more" onclick='openDay("${cellStr}")'>+${items.length - maxShow}건 더보기</div>` : '';
+
+    html += `<div class="cal-cell ${isOut?'out':''} ${isToday?'today':''}">
+      <div class="d-num">${dayNum}</div>
+      ${shown}${more}
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function openDay(dateStr){
+  const list = filtered().filter(r=>{
+    const s = toDateOnly(r.시작일); if(!s) return false;
+    const e = toDateOnly(r.종료일) || s;
+    return dateStr >= s && dateStr <= e;
+  });
+  document.getElementById('modalTitle').textContent = dateStr.replace(/-/g,'.') + ' 휴가/일정';
+  const teams = window.__ALL_TEAMS || [];
+  document.getElementById('modalBody').innerHTML = list.length ? list.map(r=>{
+    const color = teamColor(r.팀명, teams);
+    const period = r.종료일 && r.종료일 !== r.시작일 ? fmtDate(r.시작일)+' ~ '+fmtDate(r.종료일) : fmtDate(r.시작일);
+    return `<div class="modal-card">
+      <div style="font-weight:700;">${r.제목 || '-'}</div>
+      <div class="row"><span>휴가유형</span><span style="color:${color};font-weight:700;">${r.휴가유형||'-'}</span></div>
+      <div class="row"><span>팀명</span><span>${r.팀명||'-'}</span></div>
+      <div class="row"><span>기간</span><span>${period}</span></div>
+      <div class="row"><span>휴가일수</span><span>${r.휴가일수 ?? '-'}</span></div>
+      <div class="row"><span>부서장</span><span>${(r.부서장||[]).join(', ')||'-'}</span></div>
+      <div class="row"><span>참조</span><span>${(r.참조||[]).join(', ')||'-'}</span></div>
+    </div>`;
+  }).join('') : '<div style="color:var(--text-faint);text-align:center;padding:20px;">해당 일자에 등록된 일정이 없습니다.</div>';
+  document.getElementById('modalBackdrop').classList.add('show');
+}
+function closeModal(){ document.getElementById('modalBackdrop').classList.remove('show'); }
+
+function manualSync(){
+  const btn = document.getElementById('syncBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">🔄</span> 동기화 중…';
+  fetch(SCRIPT_URL + '?action=syncQcData')
+    .then(r=>r.json())
+    .then(res=>{
+      if(res.ok){
+        btn.innerHTML = '✅ 완료';
+        loadData(true).finally(()=>{
+          setTimeout(()=>{ btn.disabled=false; btn.innerHTML='🔄 지금 동기화'; }, 1200);
+        });
+      } else {
+        btn.innerHTML = '⚠️ 실패';
+        setTimeout(()=>{ btn.disabled=false; btn.innerHTML='🔄 지금 동기화'; }, 1500);
+      }
+    })
+    .catch(()=>{
+      btn.innerHTML = '⚠️ 실패';
+      setTimeout(()=>{ btn.disabled=false; btn.innerHTML='🔄 지금 동기화'; }, 1500);
+    });
+}
+
+document.getElementById('fTeam').addEventListener('change', render);
+document.getElementById('fType').addEventListener('change', render);
+document.getElementById('fSearch').addEventListener('input', render);
+
+loadData(false);
+</script>
+</body>
+</html>

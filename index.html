@@ -1994,6 +1994,11 @@ window.addEventListener('pageshow', function(e) {
 });
 
 init();
+
+// 같은 팝업 창을 재사용해 해시만 바뀌는 경우(전체 리로드 없이) 대응
+window.addEventListener('hashchange', function() {
+  deepLinkFromHash();
+});
 </script>
 </body>
 </html>

@@ -212,17 +212,36 @@ const SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb
 let SCRIPT_URL = SCRIPT_URL_DEFAULT;
 let userRole = null;
 
-// 인덱스 iframe 테마/설정 신호 수신
+// 인덱스 iframe 테마/설정 신호 수신 (직접 최상위로 로드된 경우 대비)
 window.addEventListener('message', function(e){
   if(!e.data) return;
   if(e.data.type === 'THEME'){
     const mode = e.data.mode;
     if(mode === 'light') document.body.classList.add('light');
     else document.body.classList.remove('light');
+    sessionStorage.setItem('_theme', mode === 'light' ? 'light' : 'dark');
   }
   if(e.data.type === 'SCRIPT_URL'){
     if(e.data.url) SCRIPT_URL = e.data.url;
     if(e.data.userRole) userRole = e.data.userRole;
+  }
+});
+
+// qc_main.html은 subFrame(이 페이지)으로 postMessage를 전달하지 않고
+// sessionStorage에 테마/권한을 저장해두는 방식이므로, 여기서 직접 읽어와 적용한다.
+(function applyStoredTheme(){
+  const t = sessionStorage.getItem('_theme');
+  if(t === 'light') document.body.classList.add('light');
+  else document.body.classList.remove('light');
+  const r = sessionStorage.getItem('_userRole');
+  if(r) userRole = r;
+})();
+
+// qc_main에서 사용자가 라이트/다크를 토글하면 같은 오리진의 이 프레임에도 storage 이벤트가 발생함
+window.addEventListener('storage', function(e){
+  if(e.key === '_theme'){
+    if(e.newValue === 'light') document.body.classList.add('light');
+    else document.body.classList.remove('light');
   }
 });
 

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>발표자 시나리오 — 고점이 아니라, 모두의 시작을</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --paper:#F5F6F8; --surface:#FFFFFF;
+  --ink:#14181F; --ink2:#46505F; --ink3:#8A94A3;
+  --blue:#2563EB; --blue-soft:#EAF0FE; --navy:#12224A;
+  --warm:#E8833A; --warm-soft:#FDF0E4;
+  --green:#0D9E6E; --red:#DC3545; --border:#E4E7EC;
+  --kr:'Noto Sans KR',sans-serif; --mono:'JetBrains Mono',monospace;
+}
+body{background:var(--paper);color:var(--ink);font-family:var(--kr);line-height:1.7;padding:0 0 90px;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:7px;} ::-webkit-scrollbar-thumb{background:#C7CDD8;border-radius:4px;}
+.wrap{max-width:900px;margin:0 auto;padding:52px 28px 0;}
+
+.head{margin-bottom:30px;}
+.head .eyebrow{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:12px;}
+.head h1{font-size:27px;font-weight:900;letter-spacing:-.03em;margin-bottom:10px;line-height:1.25;}
+.head .meta{font-size:12.5px;color:var(--ink3);display:flex;gap:16px;flex-wrap:wrap;}
+.head .meta b{color:var(--ink2);font-weight:700;}
+
+.overview{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px;}
+.overview .seg{flex:1;text-align:center;padding:13px 10px;border-right:1px solid var(--border);}
+.overview .seg:last-child{border-right:none;}
+.overview .t{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--blue);}
+.overview .l{font-size:10.5px;color:var(--ink3);margin-top:2px;}
+
+.legend{font-size:11.5px;color:var(--ink3);margin-bottom:34px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
+.legend .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+.legend .g{background:var(--green);} .legend .o{background:var(--warm);} .legend .r{background:var(--red);}
+
+/* block */
+.block{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:15px;overflow:hidden;}
+.block-hd{display:flex;align-items:center;gap:12px;padding:15px 20px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#FAFBFC,#FFF);}
+.tl-light{width:11px;height:11px;border-radius:50%;background:#D7DBE2;flex-shrink:0;transition:background .3s,box-shadow .3s;}
+.tl-light.green{background:var(--green);box-shadow:0 0 0 4px rgba(13,158,110,.18);}
+.tl-light.orange{background:var(--warm);box-shadow:0 0 0 4px rgba(232,131,58,.2);animation:bl 1s infinite;}
+.tl-light.red{background:var(--red);box-shadow:0 0 0 4px rgba(220,53,69,.14);}
+@keyframes bl{50%{opacity:.45;}}
+.block-num{font-family:var(--mono);font-size:11px;font-weight:700;color:#fff;background:var(--blue);border-radius:6px;padding:4px 9px;flex-shrink:0;}
+.block-num.warm{background:var(--warm);}
+.block-num.navy{background:var(--navy);}
+.block-title{font-size:15.5px;font-weight:900;letter-spacing:-.01em;flex:1;}
+.block-title .slidetag{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--ink3);letter-spacing:.04em;display:block;margin-top:2px;}
+.block-time{font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--blue);background:var(--blue-soft);padding:3px 10px;border-radius:20px;flex-shrink:0;}
+.block-body{padding:18px 20px 20px;}
+
+.say-label{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin-bottom:6px;}
+.say{background:#F8FAFF;border-left:3px solid var(--blue);border-radius:0 8px 8px 0;padding:13px 16px;font-size:14px;color:var(--ink);line-height:1.9;margin-bottom:14px;}
+.say.warm{background:var(--warm-soft);border-left-color:var(--warm);}
+.say.navy{background:#EEF1F8;border-left-color:var(--navy);}
+.say .p{color:var(--ink3);font-style:italic;font-size:12.5px;}
+.say b{font-weight:700;}
+
+.note-label{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin:12px 0 6px;}
+.notes{list-style:none;}
+.notes li{position:relative;padding-left:16px;font-size:12.5px;color:var(--ink2);margin-bottom:6px;}
+.notes li::before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%;background:var(--blue);}
+.notes li b{color:var(--ink);font-weight:700;}
+
+.demo-flag{display:flex;align-items:flex-start;gap:9px;background:#FFF3F3;border:1px solid #FBC9CB;border-radius:8px;padding:10px 13px;font-size:12.5px;color:#B02A37;margin-top:12px;line-height:1.6;}
+.demo-flag b{font-weight:700;}
+.qa{margin-top:12px;background:#FFFBEB;border:1px solid #F5DFA0;border-radius:8px;padding:11px 15px;}
+.qa .q{font-size:12.5px;font-weight:700;color:#92650A;margin-bottom:4px;}
+.qa .a{font-size:12.5px;color:var(--ink2);}
+
+/* checklist */
+.checklist{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;margin-top:28px;}
+.checklist h3{font-size:14px;margin-bottom:12px;}
+.checklist label{display:flex;align-items:flex-start;gap:9px;font-size:13px;color:var(--ink2);margin-bottom:9px;cursor:pointer;}
+.checklist input{margin-top:3px;}
+
+/* stopwatch */
+.sw{position:fixed;top:50%;right:22px;transform:translateY(-50%);z-index:900;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 14px 34px rgba(20,30,50,.14);padding:16px 16px 14px;width:138px;text-align:center;}
+.sw .swl{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:8px;}
+.sw .swt{font-family:var(--mono);font-size:27px;font-weight:700;color:var(--ink);letter-spacing:.02em;}
+.sw .swtar{font-family:var(--mono);font-size:10.5px;color:var(--ink3);margin-bottom:12px;}
+.sw .swtar.over{color:var(--red);font-weight:700;}
+.sw .swb{display:flex;gap:6px;}
+.sw button{border:none;border-radius:8px;padding:7px 0;font-size:11px;font-weight:700;font-family:var(--kr);cursor:pointer;flex:1;}
+.sw .go{background:var(--blue);color:#fff;} .sw .go.run{background:var(--warm);}
+.sw .rs{background:var(--paper);color:var(--ink2);border:1px solid var(--border)!important;}
+.sw .cur{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:10px;color:var(--ink3);line-height:1.5;}
+.sw .cur b{display:block;font-size:11.5px;color:var(--ink);font-weight:700;margin-top:2px;}
+@media(max-width:1200px){.sw{position:static;transform:none;margin:0 auto 24px;width:100%;max-width:340px;}}
+
+.print-btn{position:fixed;bottom:24px;right:24px;background:var(--blue);color:#fff;border:none;border-radius:30px;padding:11px 20px;font-size:12.5px;font-weight:700;font-family:var(--kr);cursor:pointer;box-shadow:0 8px 20px rgba(37,99,235,.3);}
+@media print{.print-btn,.sw{display:none!important;} body{padding:0;} .block{break-inside:avoid;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="eyebrow">발표자 시나리오 · Presenter Script</div>
+    <h1>고점을 세우기보다, 모두의 시작을 도왔습니다</h1>
+    <div class="meta"><span><b>발표자</b> 심우승 · 엄마감동팀</span><span><b>대상</b> 전직원 · AI 우수사례</span><span><b>분량</b> 약 20분</span></div>
+  </div>
+
+  <div class="overview">
+    <div class="seg"><div class="t">20분</div><div class="l">총 발표시간</div></div>
+    <div class="seg"><div class="t">12</div><div class="l">슬라이드</div></div>
+    <div class="seg"><div class="t">4</div><div class="l">라이브 데모</div></div>
+    <div class="seg"><div class="t">3</div><div class="l">핵심 방법</div></div>
+  </div>
+  <div class="legend">
+    타이머 신호등:
+    <span><span class="dot g"></span>진행 중</span>
+    <span><span class="dot o"></span>마무리 10초 전</span>
+    <span><span class="dot r"></span>시간 초과</span>
+    · 오른쪽 타이머 <b style="color:var(--ink2)">시작</b>을 누르면 흐릅니다.
+  </div>
+
+  <!-- 00 -->
+  <div class="block" data-start="0" data-end="30">
+    <div class="block-hd"><span class="tl-light"></span><span class="block-num">00</span><div class="block-title">오프닝<span class="slidetag">SLIDE · 표지</span></div><span class="block-time">0:00–0:30</span></div>
+    <div class="block-body">
+      <div class="say-label">이렇게 말합니다</div>
+      <div class="say">안녕하세요, 엄마감동팀 심우승입니다. <span class="p">(한 박자)</span> 오늘 제 이야기의 제목은 이겁니다 — "고점을 세우기보다, 모두의 시작을 도왔습니다." 다른 분들과는 조금 다른 방향의 이야기가 될 겁니다.</div>
+      <div class="note-label">Delivery</div>
+      <ul class="notes"><li>서두르지 말고 제목을 또박또박. "조금 다른 방향"에서 살짝 힘을 줘 호기심 유발</li></ul>
+    </div>
+  </div>
+
+  <!-- 01 -->
+  <div class="block" data-start="30" data-end="90">
+    <div class="block-hd"><span class="tl-light"></span><span class="block-num">01</span><div class="block-title">질문을 던진다<span class="slidetag">SLIDE · 질문</span></div><span class="block-time">0:30–1:30</span></div>
+    <div class="block-body">
+      <div class="say-label">이렇게 말합니다</div>
+      <div class="say">요즘 다들 AI 써야 한다고 하죠. 그런데 솔직히, <b>대부분은 시작조차 못 합니다.</b> <span class="p">(청중을 한 번 둘러보며)</span> 저는 그게 능력이 없어서라고 생각하지 않았어요. 이유는 훨씬 익숙한 곳에 있었습니다.</div>
+      <div class="note-label">Delivery</div>
+      <ul class="notes"><li>질문형으로 끝내고 <b>2초 침묵</b> — 다음 슬라이드(스마트폰)로 넘기는 긴장 만들기</li></ul>
+    </div>
+  </div>
+
+  <!-- 02 -->
+  <div class="block" data-start="90" data-end="210">
+    <div class="block-hd"><span class="tl-light"></span><span class="block-num warm">02</span><div class="block-title">스마트폰 이야기 — 감정의 심장<span class="slidetag">SLIDE · 스마트폰</span></div><span class="block-time">1:30–3:30</span></div>
+    <div class="block-body">
+      <div class="say-label">이렇게 말합니다</div>
+      <div class="say warm">한번 떠올려 보세요. 우리 부모님이 스마트폰을 손에서 내려놓으셨던 이유. <span class="p">(천천히)</span> 처음이 어려웠고 → 빠르게 바뀌는 걸 못 따라간다고 느끼셨고 → 결국 스스로 "난 안 돼"라며 포기하셨죠. <b>능력이 없어서가 아니라, 시작이 어려웠던 겁니다.</b> 그리고 지금, AI 앞에서 많은 사람들이 정확히 그 자리에 서 있습니다.</div>
+      <div class="note-label">Delivery</div>
+      <ul class="notes">
+        <li>이 슬라이드가 발표 전체의 <b>감정 앵커</b> — 가장 천천히, 가장 진심으로</li>
+        <li>"난 안 돼"는 부모님 말투를 살짝 흉내 내듯 — 공감 포인트</li>
+        <li>마지막 문장에서 다시 청중 쪽으로 시선 — "여러분 이야기일 수도 있다"</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 03 -->
+  <div class="block" data-start="210" data-end="360">
+    <div class="block-hd"><span class="tl-light"></span><span class="block-num">03</span><div class="block-title">두 갈래 길 — 시그니처<span class="slidetag">SLIDE · 두 갈래 길 (막대 차트)</span></div><span class="block-time">3:30–6:00</span></div>
+    <div class="block-body">
+      <div class="say-label">이렇게 말합니다</div>
+      <div class="say">AI를 쓰는 데는 두 방향이 있다고 봤습니다. <span class="p">(왼쪽 차트 가리키며)</span> 하나는 개인의 고점을 높이는 길 — 고도화, 전문화입니다. 한 사람이 깊이 파고들어 정점을 만드는 거죠. <b>뛰어난 분들이 이 길을 정말 멋지게 걷고 계십니다.</b> <span class="p">(오른쪽 차트로)</span> 다른 하나는 팀의 평균을 올리는 길입니다. 한 명의 정점이 아니라, 모두의 바닥을 함께 끌어올리는 거예요. <b>저는 두 번째 길을 택했습니다.</b></div>
+      <div class="note-label">Delivery</div>
+      <ul class="notes">
+        <li><b>경쟁자 존중이 핵심</b> — "멋지게 걷고 계십니다"를 진심으로. 절대 깎아내리지 않기 (그룹사 가족)</li>
+        <li>차트 애니메이션(막대 자람)이 끝난 뒤 말 시작 — 시각과 말의 싱크</li>
+        <li>"이건 실제 수치가 아니라 접근 방식의 개념도"라고 한 줄 덧붙이면 신뢰↑</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 04 -->
+  <div class="block" data-start="360" data-end="450">
+    <div class="block-hd"><span class="tl-light"></span><span class="block-num">04</span><div class="block-title">문턱을 낮췄습니다 — 3가지 방법<span class="slidetag">SLIDE · 문턱 낮추기</span></div><span class="block-time">6:00–7:30</span></div>
+    <div class="block-body">
+      <div class="say-label">이렇게 말합니다</div>
+      <div class="say">그래서 저는 문턱을 낮추는 데 집중했습니다. 원칙은 세 가지예요 — <b>어렵지 않게, 매일, 함께.</b> 지금부터 이 세 가지를 하나씩 보여드리겠습니다.</div>
+      <div class="note-label">Delivery</div>
+      <ul class="notes"><li>여기선 짧게. "어렵지 않게 / 매일 / 함께" 세 단어를 손가락으로 하나씩 짚기</li></ul>
+    </div>
+  </div>
+
+  <!-- 04-1 -->
+  <div class="block" data-start="450" data-end="540">
+    <div class="block-hd"><span class="tl-light"></span><span class="block-num warm">04-1</span><div class="block-title">매일 아침 3분<span class="slidetag">SLIDE · 아침 3분 (폰)</span></div><span class="block-time">7:30–9:00</span></div>
+    <div class="block-body">
+      <div class="say-label">이렇게 말합니다</div>
+      <div class="say warm">첫째, 매일 아침 3분입니다. <span class="p">(폰 화면 가리키며)</span> 스마트폰도 매일 만지다 보면 어느새 익숙해지잖아요. 똑같습니다. 거창한 강의 대신, 희망하는 팀원과 <b>매일 아침 딱 3분</b> 가볍게 시작하고, 바로 실습으로 이어갑니다. 부담이 없으니 포기할 일도 없어요.</div>
+      <div class="note-label">Delivery</div>
+      <ul class="notes"><li>"딱 3분"에 힘주기 — 진입장벽 낮음을 체감시키는 숫자</li><li>스마트폰 은유를 여기서 다시 연결 (앞 슬라이드와 콜백)</li></ul>
+    </div>
+  </div>
+
+  <!-- 04-2 -->
+  <div class="block" data-start="540" data-end="660">
+    <div class="block-hd"><span class="tl-light"></span><span class="block-num navy">04-2</span><div class="block-title">말로 하는 코딩 — 핵심 메시지<span class="slidetag">SLIDE · 바이브 코딩 인용 (다크)</span></div><span class="block-time">9:00–11:00</span></div>
+    <div class="block-body">
+      <div class="say-label">이렇게 말합니다</div>
+      <div class="say navy">둘째, 생각의 전환입니다. 저희 교육 2회차 자료에 이런 문장이 있어요. <span class="p">(화면 인용문 읽고 잠깐 멈춤)</span> "바이브 코딩은 코딩 공부가 아니라, <b>내 업무를 AI에게 잘 설명하는 능력</b>에서 시작된다." 코딩을 배우라는 게 아닙니다. <b>내가 뭐가 필요한지를 아는 것</b>, 그걸 말로 설명하는 것 — 그게 전부예요. 말로 설명하면, AI가 코드를 짜고, 팀이 바로 씁니다.</div>
+      <div class="note-label">Delivery</div>
+      <ul class="notes">
+        <li>인용문은 <b>화면을 같이 보며</b> 천천히 낭독 — 이 발표의 한 문장 테이크어웨이</li>
+        <li>"코딩을 배우라는 게 아닙니다"에서 청중 안심 — 진입장벽 해체의 정점</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 04-3 -->
+  <div class="block" data-start="660" data-end="750">
+    <div class="block-hd"><span class="tl-light"></span><span class="block-num">04-3</span><div class="block-title">함께 여는 게시판<span class="slidetag">SLIDE · 요청 게시판</span></div><span class="block-time">11:00–12:30</span></div>
+    <div class="block-body">
+      <div class="say-label">이렇게 말합니다</div>
+      <div class="say">셋째, 혼자가 아니라 모두가 참여하는 구조입니다. 노션에 <b>'업무 코딩 요청 게시판'</b>을 열었어요. 뭐가 필요한지, 어떻게 AI로 보완하면 좋을지 팀원 누구나 올리고 나눕니다. <span class="p">(게시판 화면 가리키며)</span> 다시 말하지만, 중요한 건 코드가 아니라 <b>'무엇이 필요한가'를 아는 것</b>이니까요.</div>
+      <div class="note-label">Delivery</div>
+      <ul class="notes"><li>04-2의 메시지를 게시판이라는 '실천'으로 착지시키는 슬라이드</li></ul>
+    </div>
+  </div>
+
+  <!-- 05 -->
+  <div class="block" data-start="750" data-end="870">
+    <div class="block-hd"><span class="tl-light"></span><span class="block-num">05</span><div class="block-title">그 결과 — 13회차 완주<span class="slidetag">SLIDE · 교육 13회차</span></div><span class="block-time">12:30–14:30</span></div>
+    <div class="block-body">
+      <div class="say-label">이렇게 말합니다</div>
+      <div class="say">이렇게 해서, <b>AI 교육 13회차를 팀과 함께 완주했습니다.</b> "AI로 AI 활용하기"라는 입문부터 시작해서, 마지막엔 매일 정해진 시간에 자동으로 도는 동기화까지. <span class="p">(리스트 훑으며)</span> 한 번에 어려운 걸 던진 게 아니라, 순서대로 한 계단씩 쌓아 올린 겁니다.</div>
+      <div class="note-label">Delivery</div>
+      <ul class="notes"><li>"13"이라는 숫자를 화면과 함께 강조 — 근거 있는 실제 성과</li><li>13개를 다 읽지 말고 1·2회차와 13회차만 짚어 "입문→자동화" 곡선 강조</li></ul>
+    </div>
+  </div>
+
+  <!-- 06 -->
+  <div class="block" data-start="870" data-end="960">
+    <div class="block-hd"><span class="tl-light"></span><span class="block-num navy">06</span><div class="block-title">팀이 만들기 시작했다 — 12종<span class="slidetag">SLIDE · 실무 도구 (다크)</span></div><span class="block-time">14:30–16:00</span></div>
+    <div class="block-body">
+      <div class="say-label">이렇게 말합니다</div>
+      <div class="say navy">그 결과, 팀이 함께 쓰는 실무 도구가 <b>12종</b>이 됐습니다. 진단, 견적, 분류, 변환… 중요한 건, <b>이제 제가 아니라 팀원이 직접 만들고 직접 쓴다</b>는 겁니다. 이게 제가 목표했던 "평균이 올라간다"의 실제 모습이에요.</div>
+      <div class="note-label">Delivery</div>
+      <ul class="notes"><li>"제가 아니라 팀원이"에 힘주기 — 대중화 컨셉의 증거</li></ul>
+    </div>
+  </div>
+
+  <!-- 07 -->
+  <div class="block" data-start="960" data-end="1140">
+    <div class="block-hd"><span class="tl-light"></span><span class="block-num">07</span><div class="block-title">라이브 데모<span class="slidetag">SLIDE · 라이브 데모 (카드 클릭)</span></div><span class="block-time">16:00–19:00</span></div>
+    <div class="block-body">
+      <div class="say-label">이렇게 말합니다 (전환)</div>
+      <div class="say">말로만 하면 와닿지 않으니, 실제 화면을 직접 보여드리겠습니다. <span class="p">(카드 클릭 → 대시보드 새 창)</span></div>
+      <div class="note-label">클릭 순서 · 화면별 한 마디</div>
+      <ul class="notes">
+        <li><b>① AS1→AS3</b>: "증상만 고르면 원인 부품이 랭킹으로 뜨고, 옆 화면이 관리방법까지 실시간 추천해요."</li>
+        <li><b>② 자재발주</b>: "상태 하나만 바꿔도 바로 반영, 경과일도 색으로 자동 표시."</li>
+        <li><b>③ 마감 허브</b>: "9개 업무를 한 화면에서, 주간·월간으로 한 번에 정리."</li>
+        <li><b>④ 지식DB</b>: "팀을 넘어 전사 지식공유 프로그램까지 같은 방식으로."</li>
+      </ul>
+      <div class="demo-flag"><b>⚠ 사전 체크</b>&nbsp;발표 PC 로그인 세션 유지 · 팝업 차단 해제 · 인터넷 연결 확인. 데모가 막히면 당황 말고 "구조는 이렇습니다"로 자연스럽게 다음 슬라이드로.</div>
+    </div>
+  </div>
+
+  <!-- 08 -->
+  <div class="block" data-start="1140" data-end="1200">
+    <div class="block-hd"><span class="tl-light"></span><span class="block-num warm">08</span><div class="block-title">마무리<span class="slidetag">SLIDE · 마무리</span></div><span class="block-time">19:00–20:00</span></div>
+    <div class="block-body">
+      <div class="say-label">이렇게 말합니다</div>
+      <div class="say warm">정리하겠습니다. 저는 한 사람의 정점을 세우는 대신, <b>모두의 출발선을 옮기는 쪽</b>을 택했습니다. <span class="p">(한 박자)</span> 누군가는 AI로 더 높이 갑니다. 저희는 AI로 <b>더 함께</b> 갑니다. 두 길 모두 회사를 앞으로 데려가는 길이라고 믿습니다. 감사합니다.</div>
+      <div class="note-label">Delivery</div>
+      <ul class="notes">
+        <li>"더 높이 / 더 함께" 대구를 또박또박 — 마지막 임팩트 문장</li>
+        <li>경쟁자를 다시 존중("두 길 모두")하며 품위 있게 마무리</li>
+      </ul>
+      <div class="qa"><div class="q">Q. 성과가 숫자로 얼마나 나왔나요?</div><div class="a">A. 근거 없는 수치는 말씀드리지 않는 게 저희 원칙입니다. 대신 확실한 건, 교육 13회차를 함께 완주했고, 팀이 직접 만든 도구가 12종이며, 이제 팀원들이 스스로 만든다는 점입니다.</div></div>
+      <div class="qa"><div class="q">Q. 다른 팀도 이렇게 할 수 있나요?</div><div class="a">A. 그게 정확히 이 방식의 목적입니다. 아침 3분·요청 게시판처럼 진입장벽만 낮추면, 누구나 시작할 수 있습니다. 필요하시면 저희 커리큘럼을 공유드리겠습니다.</div></div>
+    </div>
+  </div>
+
+  <div class="checklist">
+    <h3>발표 전 최종 체크리스트</h3>
+    <label><input type="checkbox"> 발표 PC에서 대시보드 로그인 세션 미리 확인</label>
+    <label><input type="checkbox"> 팝업 차단 해제 (사이트 → 팝업 허용)</label>
+    <label><input type="checkbox"> 인터넷 연결 상태 확인 (라이브 데모 직전 재확인)</label>
+    <label><input type="checkbox"> 청중용 덱(발표 화면)과 이 대본, 둘 다 발표 PC에 저장</label>
+    <label><input type="checkbox"> 경쟁 사례 존중 멘트 숙지 — 절대 깎아내리지 않기</label>
+    <label><input type="checkbox"> 수치 질문 대응 멘트 숙지 — 근거 없는 숫자 언급 금지</label>
+  </div>
+</div>
+
+<div class="sw" id="sw">
+  <div class="swl">발표 타이머</div>
+  <div class="swt" id="swT">00:00</div>
+  <div class="swtar" id="swTar">목표 20:00</div>
+  <div class="swb">
+    <button class="go" id="swGo" onclick="swToggle()">시작</button>
+    <button class="rs" onclick="swReset()">리셋</button>
+  </div>
+  <div class="cur" id="swCur">대기 중<b>—</b></div>
+</div>
+
+<button class="print-btn" onclick="window.print()">🖨 인쇄하기</button>
+<script>
+const TARGET=1200;
+let el=0,run=false,tick=null;
+const blocks=[...document.querySelectorAll('.block[data-start]')].map(b=>({
+  title:b.querySelector('.block-title').childNodes[0].textContent.trim(),
+  light:b.querySelector('.tl-light'),
+  start:+b.dataset.start, end:+b.dataset.end
+}));
+function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+function lights(){
+  let cur=null;
+  blocks.forEach(b=>{
+    b.light.classList.remove('green','orange','red');
+    if(el<b.start){}
+    else if(el>=b.end){b.light.classList.add('red');}
+    else if(el>=b.end-10){b.light.classList.add('orange');cur=b;}
+    else{b.light.classList.add('green');cur=b;}
+  });
+  const c=document.getElementById('swCur');
+  if(cur)c.innerHTML=`진행 구간<b>${cur.title}</b>`;
+  else if(el>=TARGET)c.innerHTML=`발표 종료<b>수고하셨습니다 🎉</b>`;
+  else c.innerHTML=`대기 중<b>—</b>`;
+}
+function render(){
+  document.getElementById('swT').textContent=fmt(el);
+  const t=document.getElementById('swTar');
+  if(el>TARGET){t.textContent='초과 +'+fmt(el-TARGET);t.classList.add('over');}
+  else{t.textContent='목표 20:00';t.classList.remove('over');}
+  lights();
+}
+function swToggle(){
+  const b=document.getElementById('swGo');run=!run;
+  if(run){b.textContent='일시정지';b.classList.add('run');tick=setInterval(()=>{el++;render();},1000);}
+  else{b.textContent='시작';b.classList.remove('run');clearInterval(tick);}
+}
+function swReset(){run=false;clearInterval(tick);el=0;const b=document.getElementById('swGo');b.textContent='시작';b.classList.remove('run');render();}
+render();
+</script>
+</body>
+</html>

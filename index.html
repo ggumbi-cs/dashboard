@@ -1825,7 +1825,7 @@ function deepLinkFromHash() {
   if (!nav) return false;
 
   window.__deepLinkActive = true;
-  setTimeout(() => { window.__deepLinkActive = false; }, 300); // 최초 진입 시 1회만 억제, 이후 뒤로가기 등 정상 동작 복원
+  setTimeout(() => { window.__deepLinkActive = false; }, 600); // 딥링크 이동(400ms) 이후까지 억제 유지
   hideNoPermission();
   document.querySelectorAll('.nav-item.active').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-parent.has-active').forEach(el => el.classList.remove('has-active'));
@@ -1850,7 +1850,10 @@ function deepLinkFromHash() {
     } catch(e) {}
   };
   frame.addEventListener('load', handler);
-  navFrame(path);
+
+  // 로그인/세션복원/홈 로딩 등 다른 초기화 흐름이 먼저 끝나도록 충분히 늦춘 뒤,
+  // 딥링크 이동을 "마지막"에 실행해 어떤 경쟁 상황에서도 항상 우리가 이기도록 함
+  setTimeout(() => { navFrame(path); }, 400);
   return true;
 }
 

@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTML 디자인 가이드 - 1. 필수 용어</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f7fb;color:#333;margin:0}
+header{background:#2563eb;color:#fff;padding:28px}
+main{max-width:1100px;margin:auto;padding:30px}
+.card{background:#fff;border-radius:12px;padding:22px;margin:18px 0;box-shadow:0 3px 12px rgba(0,0,0,.08)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top}
+th{background:#eef4ff}
+.code{background:#1e293b;color:#f8fafc;padding:14px;border-radius:8px;font-family:Consolas,monospace;white-space:pre-wrap}
+.tag{display:inline-block;background:#dbeafe;color:#1d4ed8;padding:3px 8px;border-radius:20px;font-size:12px}
+h2{margin-top:0}
+</style>
+</head>
+<body>
+<header>
+<h1>HTML 디자인/구조 가이드</h1>
+<p>1편 - 필수 용어와 공통 구조</p>
+</header>
+
+<main>
+
+<div class="card">
+<h2>왜 용어를 전부 외우지 않을까?</h2>
+<p>HTML 개발에는 수백 개의 용어가 있지만, 실제로 반복해서 사용하는 것은 많지 않습니다.
+먼저 아래 <b>15개 정도</b>만 이해하면 Claude, ChatGPT, Gemini와 협업할 때 대부분의 대화를 이해할 수 있습니다.</p>
+</div>
+
+<div class="card">
+<h2>필수 용어</h2>
+<table>
+<tr><th>용어</th><th>역할</th><th>쉽게 이해하기</th></tr>
+<tr><td><span class="tag">HTML</span></td><td>화면의 구조</td><td>건물의 뼈대</td></tr>
+<tr><td><span class="tag">CSS</span></td><td>색상·폰트·레이아웃 등 디자인</td><td>인테리어</td></tr>
+<tr><td><span class="tag">JavaScript</span></td><td>버튼, 팝업, 기능</td><td>전기 설비</td></tr>
+<tr><td><span class="tag">JSON</span></td><td>설정·데이터 저장</td><td>창고 목록</td></tr>
+<tr><td><span class="tag">API</span></td><td>다른 서비스와 통신</td><td>택배 기사</td></tr>
+<tr><td><span class="tag">fetch()</span></td><td>API 호출</td><td>전화 걸기</td></tr>
+<tr><td><span class="tag">GAS</span></td><td>구글 자동화 서버</td><td>회사 직원</td></tr>
+<tr><td><span class="tag">GitHub</span></td><td>프로젝트 보관</td><td>클라우드 창고</td></tr>
+<tr><td><span class="tag">Commit</span></td><td>변경사항 저장</td><td>게임 저장</td></tr>
+<tr><td><span class="tag">Deploy</span></td><td>웹사이트 공개</td><td>오픈</td></tr>
+<tr><td><span class="tag">Function</span></td><td>기능 묶음</td><td>기계 하나</td></tr>
+<tr><td><span class="tag">Variable</span></td><td>값 저장</td><td>상자</td></tr>
+<tr><td><span class="tag">Array</span></td><td>목록 저장</td><td>서랍</td></tr>
+<tr><td><span class="tag">Object</span></td><td>이름+값 저장</td><td>사원 카드</td></tr>
+<tr><td><span class="tag">Cache</span></td><td>임시 저장</td><td>책상 위 메모</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>여러 HTML을 만들 때의 정석 구조</h2>
+<div class="code">project/
+├── html/
+├── css/
+│   ├── common.css
+│   ├── dashboard.css
+│   └── theme.css
+├── js/
+│   ├── common.js
+│   ├── api.js
+│   └── utils.js
+├── json/
+│   ├── config.json
+│   └── data.json
+└── assets/</div>
+</div>
+
+<div class="card">
+<h2>공통 파일의 역할</h2>
+<table>
+<tr><th>파일</th><th>담아둘 내용</th></tr>
+<tr><td>common.css</td><td>버튼, 카드, 폰트, 테이블, 입력창, 색상 등 모든 페이지 공통 디자인</td></tr>
+<tr><td>common.js</td><td>Toast, Loading, Modal, 날짜 포맷, 복사 기능 등 공통 기능</td></tr>
+<tr><td>api.js</td><td>GAS, Notion API, GitHub API 통신</td></tr>
+<tr><td>config.json</td><td>API URL, 버전, 회사명 등 설정값</td></tr>
+<tr><td>data.json</td><td>실시간이 아닌 대용량 데이터</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>현재 프로젝트에 가장 적합한 운영 방식</h2>
+<ul>
+<li>실시간 데이터 → GAS + API</li>
+<li>대용량 데이터 → JSON</li>
+<li>공통 디자인 → common.css</li>
+<li>공통 기능 → common.js</li>
+<li>설정값 → config.json</li>
+<li>GitHub에서 전체 프로젝트 관리</li>
+</ul>
+<p><b>핵심:</b> HTML마다 디자인를 따로 만들지 말고, 공통 CSS와 공통 JS를 사용하면 유지보수가 훨씬 쉬워진다.</p>
+</div>
+
+</main>
+</body>
+</html>

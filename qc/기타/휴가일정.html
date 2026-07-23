@@ -50,17 +50,6 @@
   }
   .headbar .sub{ font-size:13px; color:var(--text-sub); }
   .sync-row{display:flex; align-items:center; gap:10px; font-size:12px; color:var(--text-faint);}
-  .sync-btn{
-    display:inline-flex; align-items:center; gap:6px;
-    background:var(--bg-elev2); border:1px solid var(--border); color:var(--text);
-    padding:8px 14px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer;
-    transition:.15s;
-  }
-  .sync-btn:hover{border-color:var(--accent); color:var(--accent);}
-  .sync-btn[disabled]{opacity:.5; cursor:default;}
-  .spin{animation:spin 1s linear infinite; display:inline-block;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-
   .toolbar{
     display:flex; align-items:center; gap:10px; flex-wrap:wrap;
     background:var(--bg-elev); border:1px solid var(--border); border-radius:14px;
@@ -170,8 +159,8 @@
     </div>
     <div>
       <div class="sync-row">
-        <button class="sync-btn" id="syncBtn" onclick="manualSync()">🔄 지금 동기화</button>
-        <span id="lastSync">최근 자동 동기화 확인 중…</span>
+        <span id="lastSync">최근 동기화 확인 중…</span>
+        <span style="color:var(--text-faint);">· 동기화는 사이드바 「⚙️ 동기화 설정」에서 진행</span>
       </div>
     </div>
   </div>
@@ -433,29 +422,6 @@ function openDay(dateStr){
   document.getElementById('modalBackdrop').classList.add('show');
 }
 function closeModal(){ document.getElementById('modalBackdrop').classList.remove('show'); }
-
-function manualSync(){
-  const btn = document.getElementById('syncBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin">🔄</span> 동기화 중…';
-  fetch(SCRIPT_URL + '?action=syncQcData')
-    .then(r=>r.json())
-    .then(res=>{
-      if(res.ok){
-        btn.innerHTML = '✅ 완료';
-        loadData(true).finally(()=>{
-          setTimeout(()=>{ btn.disabled=false; btn.innerHTML='🔄 지금 동기화'; }, 1200);
-        });
-      } else {
-        btn.innerHTML = '⚠️ 실패';
-        setTimeout(()=>{ btn.disabled=false; btn.innerHTML='🔄 지금 동기화'; }, 1500);
-      }
-    })
-    .catch(()=>{
-      btn.innerHTML = '⚠️ 실패';
-      setTimeout(()=>{ btn.disabled=false; btn.innerHTML='🔄 지금 동기화'; }, 1500);
-    });
-}
 
 document.getElementById('fTeam').addEventListener('change', render);
 document.getElementById('fType').addEventListener('change', render);

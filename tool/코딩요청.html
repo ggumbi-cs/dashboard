@@ -435,8 +435,15 @@ function hashColor(name){
   for (const ch of String(name || '?')) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return 'hsl(' + (h % 360) + ' 55% 55%)';
 }
+function avatarInitial(fullName){
+  const tokens = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+  const nameToken = tokens.length >= 2 ? tokens[1] : (tokens[0] || '?'); // "엄마감동팀 홍길동 SQ" → "홍길동"
+  const s = nameToken || '?';
+  const idx = Math.floor((s.length - 1) / 2);
+  return s.charAt(idx) || '?';
+}
 function avatarHtml(person){
-  const initial = (person.name || '?').trim().charAt(0) || '?';
+  const initial = avatarInitial(person.name);
   return '<span class="avatar" style="background:' + hashColor(person.name) + '" title="' + escapeHtml(person.name) + '">' + escapeHtml(initial) + '</span>';
 }
 function relTime(str){

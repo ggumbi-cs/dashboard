@@ -46,6 +46,19 @@
 
   .page{ max-width:1180px; margin:0 auto; padding:28px 20px 80px; }
 
+  /* ── 상단 고정 영역 ── */
+  .sticky-head{
+    position:sticky; top:0; z-index:40;
+    background:var(--bg);
+    padding-bottom:14px; margin-bottom:4px;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .stat-line{
+    font-size:11.5px; color:var(--muted); margin-top:7px;
+    font-family:'IBM Plex Mono',monospace; letter-spacing:.01em;
+  }
+  .stat-line b{ color:var(--accent); font-weight:700; }
+
   /* ── 상단바 ───────────────────────────────────────── */
   .topbar{
     display:flex; align-items:flex-end; justify-content:space-between;
@@ -247,12 +260,13 @@
   }
   .comment-text{ margin:0 0 4px; font-size:13px; white-space:pre-wrap; word-break:break-word; }
   .comment-time{ font-size:10.5px; color:var(--muted-2); }
-  .comment-input-row{ display:flex; gap:6px; flex-wrap:wrap; }
+  .comment-input-row{ display:flex; gap:6px; flex-wrap:wrap; align-items:flex-start; }
   .comment-input-row input[type=text]{
     background:var(--panel-2); border:1px solid var(--border); color:var(--text);
-    padding:8px 10px; border-radius:8px; font-size:12.5px;
+    padding:8px 10px; border-radius:8px; font-size:12.5px; width:100%;
   }
-  .comment-input-row .cn{ width:100px; flex-shrink:0; }
+  .comment-input-row .cn{ width:130px; flex-shrink:0; position:relative; }
+  .comment-input-row .cn .ac-dropdown{ font-size:12.5px; }
   .comment-input-row .ct{ flex:1; min-width:120px; }
   .comment-input-row button{
     background:var(--accent); color:#081022; border:none; font-weight:700; font-size:12.5px;
@@ -285,19 +299,22 @@
 <noscript>이 페이지는 JavaScript가 필요합니다.</noscript>
 
 <div class="page">
-  <header class="topbar">
-    <div>
-      <span class="eyebrow mono">AUTOMATION IDEAS</span>
-      <h1>🛠 코딩요청</h1>
-      <div class="sub">엄마감동팀 자동화 아이디어 게시판 · Notion 연동</div>
-    </div>
-    <button id="refreshBtn" class="icon-btn mono" title="새로고침">↻</button>
-  </header>
+  <div class="sticky-head">
+    <header class="topbar">
+      <div>
+        <span class="eyebrow mono">AUTOMATION IDEAS</span>
+        <h1>🛠 코딩요청</h1>
+        <div class="sub">엄마감동팀 자동화 아이디어 게시판 · Notion 연동</div>
+        <div class="stat-line" id="statLine"></div>
+      </div>
+      <button id="refreshBtn" class="icon-btn mono" title="새로고침">↻</button>
+    </header>
 
-  <div class="toolbar">
-    <button id="btnNew" class="btn-primary">+ 새 코딩요청</button>
-    <div id="filterChips" class="filter-chips"></div>
-    <div class="search-wrap"><input type="text" id="searchInput" placeholder="주제·비고 검색"></div>
+    <div class="toolbar">
+      <button id="btnNew" class="btn-primary">+ 새 코딩요청</button>
+      <div id="filterChips" class="filter-chips"></div>
+      <div class="search-wrap"><input type="text" id="searchInput" placeholder="주제·비고 검색"></div>
+    </div>
   </div>
 
   <div id="emptyState" class="empty-state hidden">
@@ -364,8 +381,10 @@
         <h3>댓글</h3>
         <div id="commentList" class="comment-list"></div>
         <div class="comment-input-row">
-          <input type="text" id="commentNameInput" class="cn" list="commentNameList" placeholder="이름">
-          <datalist id="commentNameList"></datalist>
+          <div class="cn person-field">
+            <input type="text" id="commentNameInput" class="ac-input" placeholder="이름">
+            <div id="commentNameDropdown" class="ac-dropdown hidden"></div>
+          </div>
           <input type="text" id="commentTextInput" class="ct" placeholder="댓글을 입력하세요">
           <button type="button" id="commentSubmitBtn">등록</button>
         </div>
@@ -384,7 +403,7 @@
 <div id="toastContainer" class="toast-container"></div>
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec';
+const WORKER_URL = 'https://coding-request.wssim231.workers.dev';
 
 const STATUS_LIST = ['착수전','초안배포','진행중','적용중','보류'];
 const WORK_OPTIONS = ['개별실행','Web','제미나이API','구글시트','거래처등록','현금환불','전표처리','수리내역','마감업무','노션내보내기'];
@@ -449,7 +468,7 @@ function toast(msg, type){
 
 async function gasGet(action, params){
   params = params || {};
-  const url = new URL(GAS_URL);
+  const url = new URL(WORKER_URL);
   url.searchParams.set('action', action);
   Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
   const res = await fetch(url.toString());
@@ -457,9 +476,9 @@ async function gasGet(action, params){
 }
 async function gasPost(action, payload){
   payload = payload || {};
-  const res = await fetch(GAS_URL, {
+  const res = await fetch(WORKER_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(Object.assign({ action: action }, payload)),
   });
   return res.json();
@@ -469,8 +488,6 @@ async function loadUsers(){
   try {
     const r = await gasGet('crUsers');
     if (r.ok) USERS = r.users || [];
-    const dl = document.getElementById('commentNameList');
-    dl.innerHTML = USERS.map(u => '<option value="' + escapeHtml(u.name) + '">').join('');
     if (USERS.length === 0) {
       document.getElementById('proposerInput').placeholder = '등록된 팀원 없음 (노션 연동 확인 필요)';
       document.getElementById('assigneeInput').placeholder = '등록된 팀원 없음 (노션 연동 확인 필요)';
@@ -539,6 +556,20 @@ function updateFilterCounts(){
   });
 }
 
+function renderStatLine(){
+  const el = document.getElementById('statLine');
+  if (!el) return;
+  if (!REQUESTS.length) { el.innerHTML = ''; return; }
+  const total = REQUESTS.length;
+  const applied = REQUESTS.filter(r => r.현황 === '적용중').length;
+  const people = new Set();
+  REQUESTS.forEach(r => {
+    (r.제안자 || []).forEach(p => people.add(p.id));
+    (r.진행자 || []).forEach(p => people.add(p.id));
+  });
+  el.innerHTML = '🔥 지금까지 <b>' + total + '</b>건의 아이디어 · <b>' + applied + '</b>건 실제 적용 · <b>' + people.size + '</b>명 참여 중';
+}
+
 function render(){
   const list = getFiltered();
   const grid = document.getElementById('cardGrid');
@@ -554,6 +585,7 @@ function render(){
     });
   }
   updateFilterCounts();
+  renderStatLine();
 }
 
 function initFilters(){
@@ -663,11 +695,11 @@ function renderAssigneeChips(){
   });
 }
 
-function setupAutocomplete(inputId, dropdownId, multi){
+function setupAutocomplete(inputId, dropdownId, mode){
   const input = document.getElementById(inputId);
   const dropdown = document.getElementById(dropdownId);
   function excludedIds(){
-    return multi ? selectedAssignees.map(p => p.id) : (selectedProposer ? [selectedProposer.id] : []);
+    return mode === 'assignee' ? selectedAssignees.map(p => p.id) : (mode === 'proposer' && selectedProposer ? [selectedProposer.id] : []);
   }
   function show(matches){
     if (matches.length === 0) { dropdown.classList.add('hidden'); return; }
@@ -678,9 +710,10 @@ function setupAutocomplete(inputId, dropdownId, multi){
         e.preventDefault();
         const u = USERS.find(x => x.id === elx.dataset.id);
         if (!u) return;
-        if (multi) { selectedAssignees.push(u); renderAssigneeChips(); }
-        else { selectedProposer = u; renderProposerChip(); }
-        input.value = ''; dropdown.classList.add('hidden');
+        if (mode === 'assignee') { selectedAssignees.push(u); renderAssigneeChips(); input.value = ''; }
+        else if (mode === 'proposer') { selectedProposer = u; renderProposerChip(); input.value = ''; }
+        else { input.value = u.name; }
+        dropdown.classList.add('hidden');
       });
     });
   }
@@ -846,8 +879,9 @@ document.getElementById('commentTextInput').addEventListener('keydown', e => { i
 
 (async function init(){
   initFilters();
-  setupAutocomplete('proposerInput', 'proposerDropdown', false);
-  setupAutocomplete('assigneeInput', 'assigneeDropdown', true);
+  setupAutocomplete('proposerInput', 'proposerDropdown', 'proposer');
+  setupAutocomplete('assigneeInput', 'assigneeDropdown', 'assignee');
+  setupAutocomplete('commentNameInput', 'commentNameDropdown', 'text');
   await Promise.all([loadUsers(), loadList()]);
   render();
 })();

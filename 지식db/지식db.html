@@ -321,7 +321,8 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
     <div class="nav-item" data-tab="awards"><div class="nav-icon">06</div><div class="nav-label">수상작 관리</div></div>
     <div class="nav-item" data-tab="nonwriters"><div class="nav-icon">07</div><div class="nav-label">미제출자 현황</div></div>
     <div class="nav-item" data-tab="unmatched"><div class="nav-icon">08</div><div class="nav-label">관리대상 건</div></div>
-    <div class="nav-item" data-tab="sync" style="margin:auto 4px 4px;"><div class="nav-icon">99</div><div class="nav-label">동기화 설정</div></div>
+    <div class="nav-item" data-tab="snack" style="margin:auto 4px 0;"><div class="nav-icon">88</div><div class="nav-label">간식라벨 인쇄</div></div>
+    <div class="nav-item" data-tab="sync" style="margin:0 4px 4px;"><div class="nav-icon">99</div><div class="nav-label">동기화 설정</div></div>
     <div id="sidebar-foot" style="margin-top:0;">노션 원본 속성은 동기화 시<br>절대 덮어쓰지 않습니다.</div>
   </div>
 
@@ -669,6 +670,14 @@ body.light-mode button.btn.secondary{ color:var(--text2); }
         <button class="award-board-nav left" id="awardPrevBtn" onclick="scrollAwardBoard(-1)" style="display:none;">‹</button>
         <div class="award-board" id="awardGrid"></div>
         <button class="award-board-nav right" id="awardNextBtn" onclick="scrollAwardBoard(1)" style="display:none;">›</button>
+      </div>
+    </div>
+
+    <!-- 88 간식라벨 인쇄 -->
+    <div class="page" id="page-snack">
+      <div class="sec-title">간식라벨 인쇄</div>
+      <div class="panel" style="padding:0; overflow:hidden;">
+        <iframe src="지식포럼간식.html" title="간식라벨 인쇄" style="width:100%; height:calc(100vh - 140px); border:none; display:block;"></iframe>
       </div>
     </div>
 

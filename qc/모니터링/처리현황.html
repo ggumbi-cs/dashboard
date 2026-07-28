@@ -320,14 +320,19 @@ function todayPeriod(tab) {
   const now = new Date();
   if (tab === 'monthly') return { year: now.getFullYear(), month: now.getMonth()+1 };
   if (tab === 'yearly')  return { year: now.getFullYear() };
+  // 주간: 토요일 시작 ~ 금요일 마감 (예: 07/18(토)~07/24(금) → 마감일 260724)
   const d = new Date(now);
-  d.setDate(d.getDate() - d.getDay() + 1);
+  d.setDate(d.getDate() - ((d.getDay() + 1) % 7)); // 이번 주 토요일로 이동
   return { year: d.getFullYear(), month: d.getMonth()+1, date: d.getDate() };
 }
 function periodLabel(tab, p) {
   if (tab === 'monthly') return `${p.year}년 ${p.month}월`;
   if (tab === 'yearly')  return `${p.year}년`;
-  return `${p.year}.${String(p.month).padStart(2,'0')}.${String(p.date).padStart(2,'0')} 주`;
+  const sat = new Date(p.year, p.month-1, p.date);
+  const fri = new Date(sat); fri.setDate(sat.getDate()+6);
+  const f2 = n => String(n).padStart(2,'0');
+  const 마감코드 = `${String(fri.getFullYear()).slice(2)}${f2(fri.getMonth()+1)}${f2(fri.getDate())}`;
+  return `${f2(sat.getMonth()+1)}.${f2(sat.getDate())}~${f2(fri.getMonth()+1)}.${f2(fri.getDate())} (마감 ${마감코드})`;
 }
 function periodRange(tab, p) {
   if (tab === 'monthly') {
@@ -336,9 +341,10 @@ function periodRange(tab, p) {
     return { start: toISO(s), end: toISO(e) };
   }
   if (tab === 'yearly') return { start:`${p.year}-01-01`, end:`${p.year}-12-31` };
-  const mon = new Date(p.year, p.month-1, p.date);
-  const sun = new Date(mon); sun.setDate(mon.getDate()+6);
-  return { start: toISO(mon), end: toISO(sun) };
+  // 주간: p는 토요일(주 시작) 기준 — 토요일~금요일(+6일) 범위
+  const sat = new Date(p.year, p.month-1, p.date);
+  const fri = new Date(sat); fri.setDate(sat.getDate()+6);
+  return { start: toISO(sat), end: toISO(fri) };
 }
 function prevPeriod(tab, p) {
   if (tab === 'monthly') { let m=p.month-1,y=p.year; if(m<1){m=12;y--;} return {year:y,month:m}; }

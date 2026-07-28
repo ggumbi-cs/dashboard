@@ -312,18 +312,28 @@ if (savedTheme === 'light') document.body.classList.add('light');
 // ─────────────────────────────────────────────
 // 기간 유틸
 // ─────────────────────────────────────────────
+// 주 마감 기준: 토요일 시작 ~ 금요일 마감. 마감회차 값은 그 주의 "금요일" 날짜(yyMMdd).
+function fridayOf(d) {
+  // getDay(): 일0 월1 화2 수3 목4 금5 토6 → 토요일 기준 경과일수로 환산
+  const daysSinceSat = (d.getDay() + 1) % 7; // 토=0, 일=1, 월=2, ... 금=6
+  const fri = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  fri.setDate(fri.getDate() + (6 - daysSinceSat));
+  return fri;
+}
 function todayPeriod(tab) {
   const now = new Date();
   if (tab === 'monthly') return { year: now.getFullYear(), month: now.getMonth()+1 };
   if (tab === 'yearly')  return { year: now.getFullYear() };
-  const d = new Date(now);
-  d.setDate(d.getDate() - d.getDay() + 1);
-  return { year: d.getFullYear(), month: d.getMonth()+1, date: d.getDate() };
+  const fri = fridayOf(now);
+  return { year: fri.getFullYear(), month: fri.getMonth()+1, date: fri.getDate() };
 }
 function periodLabel(tab, p) {
   if (tab === 'monthly') return `${p.year}년 ${p.month}월`;
   if (tab === 'yearly')  return `${p.year}년`;
-  return `${p.year}.${String(p.month).padStart(2,'0')}.${String(p.date).padStart(2,'0')} 주`;
+  const {start, end} = periodRange('weekly', p);
+  const s = start.slice(2).replace(/-/g,'.');
+  const en = end.slice(2).replace(/-/g,'.');
+  return `${s}~${en} 마감`;
 }
 function prevPeriod(tab, p) {
   if (tab === 'monthly') { let m=p.month-1,y=p.year; if(m<1){m=12;y--;} return {year:y,month:m}; }
@@ -364,9 +374,10 @@ function periodRange(tab, p) {
     return { start: toISO(s), end: toISO(e) };
   }
   if (tab === 'yearly') return { start:`${p.year}-01-01`, end:`${p.year}-12-31` };
-  const mon = new Date(p.year, p.month-1, p.date);
-  const sun = new Date(mon); sun.setDate(mon.getDate()+6);
-  return { start: toISO(mon), end: toISO(sun) };
+  // weekly: p는 마감일(금요일) 기준. 시작일 = 마감일 - 6일(토요일)
+  const fri = new Date(p.year, p.month-1, p.date);
+  const sat = new Date(fri); sat.setDate(fri.getDate()-6);
+  return { start: toISO(sat), end: toISO(fri) };
 }
 function filterByDate(records, dateField, tab, p) {
   const {start, end} = periodRange(tab, p);

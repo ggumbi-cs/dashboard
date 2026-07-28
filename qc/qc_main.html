@@ -695,6 +695,21 @@ body.is-admin .notice-admin-gear { display:flex; }
             </div>
           </div>
 
+          <!-- CSV 개별 수동 동기화 -->
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:22px 28px;margin-bottom:16px;">
+            <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">CSV 개별 수동 동기화</div>
+            <p style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.7;">
+              노션에서 내보낸 zip(이중압축 포함, 여러 개 동시 가능)을 드래그하면 자동으로 압축을 풀고
+              <strong style="color:var(--cyan);">_all.csv</strong> 위주로 찾아 항목별 개별 동기화를 진행합니다.
+              (노션 API 미사용 · GitHub qc_data.json 해당 섹션만 교체)
+            </p>
+            <div id="csvDropZone" style="border:2px dashed var(--border);border-radius:12px;padding:26px;text-align:center;font-size:12px;color:var(--text3);cursor:pointer;transition:border-color .15s;">
+              📂 zip 파일을 여기로 드래그 (여러 개 가능) · 클릭해서 선택도 가능
+              <input type="file" id="csvFileInput" accept=".zip" multiple style="display:none;">
+            </div>
+            <div id="csvFileList" style="margin-top:14px;display:flex;flex-direction:column;gap:10px;"></div>
+          </div>
+
           <!-- 주의사항 -->
           <div style="background:rgba(240,192,96,0.06);border:1px solid rgba(240,192,96,0.2);border-left:3px solid var(--gold);border-radius:0 12px 12px 0;padding:16px 20px;">
             <div style="font-size:11px;font-weight:600;color:var(--gold);margin-bottom:8px;">⚠ 동기화 주의사항</div>
@@ -1550,6 +1565,215 @@ setTimeout(()=>{
   }
   loadSyncStatus();
 },400);
+// ─────────────────────────────────────────────
+// CSV(zip) 개별 수동 동기화
+// ─────────────────────────────────────────────
+const CSV_SECTION_OPTIONS = [
+  { key:'가전',     label:'불량현황 (가전)' },
+  { key:'가전외AS', label:'처리현황 (가전외AS)' },
+  { key:'반품마감', label:'반품현황 - 반품마감' },
+  { key:'반품율',   label:'반품현황 - 반품율' },
+  { key:'반품검사', label:'반품현황 - 반품검사' },
+  { key:'반품처리', label:'반품입고 비용현황' },
+  { key:'휴가일정', label:'휴가일정' },
+  { key:'택배출고', label:'택배출고' }
+];
+
+let _csvSyncTimes = {}; // { sectionKey: isoTime }
+
+function guessCsvSection(koreanLabel) {
+  const t = koreanLabel;
+  if (/반품/.test(t) && /마감/.test(t)) return '반품마감';
+  if (/반품/.test(t) && /율/.test(t))   return '반품율';
+  if (/반품/.test(t) && /검사/.test(t)) return '반품검사';
+  if (/반품|교환/.test(t) && /처리|비용|입고/.test(t)) return '반품처리';
+  if (/불량/.test(t))   return '가전';
+  if (/AS|as/.test(t))  return '가전외AS';
+  if (/휴가/.test(t))   return '휴가일정';
+  if (/택배|출고/.test(t)) return '택배출고';
+  return CSV_SECTION_OPTIONS[0].key;
+}
+
+// 파일명에서 마지막 한글 문자 기준으로 왼쪽 전체를 한글 라벨로 추출
+// 예: "꿈비 소브 반품,교환 월마감 3038bca2d21980d8a918ee2a4c8adf7e_all.csv" → "꿈비 소브 반품,교환 월마감"
+function extractKoreanLabel(filename) {
+  const base = filename.replace(/_all\.csv$/i, '').replace(/\.csv$/i, '');
+  let lastKorIdx = -1;
+  for (let i = 0; i < base.length; i++) {
+    if (/[가-힣]/.test(base[i])) lastKorIdx = i;
+  }
+  if (lastKorIdx < 0) return base.trim();
+  return base.slice(0, lastKorIdx + 1).trim();
+}
+
+function splitCsvLine(line) {
+  const result = []; let cur = ''; let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') {
+      if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (c === ',' && !inQuotes) { result.push(cur); cur = ''; }
+    else cur += c;
+  }
+  result.push(cur);
+  return result;
+}
+
+// 헤더명 기준 매칭 (순서 바뀌어도 무관)
+function parseCsvToRecords(text) {
+  text = text.replace(/^\uFEFF/, '');
+  const lines = text.split(/\r\n|\n/).filter(l => l.length > 0);
+  if (!lines.length) return [];
+  const headers = splitCsvLine(lines[0]).map(h => h.trim());
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = splitCsvLine(lines[i]);
+    if (cols.length === 1 && cols[0].trim() === '') continue;
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h] = (cols[idx] !== undefined ? cols[idx] : '').trim(); });
+    rows.push(obj);
+  }
+  return rows;
+}
+
+// zip(이중압축 포함) → 내부 csv 전부 추출, _all.csv 우선
+async function extractCsvFilesFromZip(file) {
+  const results = [];
+  async function walk(zipObj) {
+    const entries = Object.keys(zipObj.files);
+    for (const relPath of entries) {
+      const entry = zipObj.files[relPath];
+      if (entry.dir) continue;
+      const name = relPath.split('/').pop();
+      if (/\.zip$/i.test(name)) {
+        const buf = await entry.async('arraybuffer');
+        const nested = await JSZip.loadAsync(buf);
+        await walk(nested);
+      } else if (/\.csv$/i.test(name)) {
+        const text = await entry.async('string');
+        results.push({ name, text });
+      }
+    }
+  }
+  const zip = await JSZip.loadAsync(file);
+  await walk(zip);
+  const allOnly = results.filter(r => /_all\.csv$/i.test(r.name));
+  return allOnly.length ? allOnly : results;
+}
+
+function csvSectionSelectHtml(rowId, defaultKey) {
+  const opts = CSV_SECTION_OPTIONS.map(o =>
+    `<option value="${o.key}" ${o.key === defaultKey ? 'selected' : ''}>${o.label}</option>`
+  ).join('');
+  return `<select id="csvSel_${rowId}" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 10px;font-size:12px;">${opts}</select>`;
+}
+
+function renderCsvSyncTime(sectionKey) {
+  const t = _csvSyncTimes[sectionKey];
+  return t ? `최근 동기화: ${new Date(t).toLocaleString('ko-KR')}` : '아직 동기화 이력 없음';
+}
+
+let _csvRowSeq = 0;
+
+async function handleCsvZipFiles(fileList) {
+  const listEl = document.getElementById('csvFileList');
+  for (const file of fileList) {
+    if (!/\.zip$/i.test(file.name)) continue;
+    const outerRowId = 'outer_' + (_csvRowSeq++);
+    const outerRow = document.createElement('div');
+    outerRow.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;';
+    outerRow.innerHTML = `<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">📦 ${file.name}</div><div id="csvInner_${outerRowId}" style="display:flex;flex-direction:column;gap:8px;"></div>`;
+    listEl.appendChild(outerRow);
+
+    let csvFiles;
+    try {
+      csvFiles = await extractCsvFilesFromZip(file);
+    } catch (e) {
+      document.getElementById(`csvInner_${outerRowId}`).innerHTML = `<div style="color:var(--danger,#ff5c5c);font-size:12px;">⚠ 압축 해제 실패: ${e.message}</div>`;
+      continue;
+    }
+    if (!csvFiles.length) {
+      document.getElementById(`csvInner_${outerRowId}`).innerHTML = `<div style="font-size:12px;color:var(--text3);">CSV를 찾지 못했습니다.</div>`;
+      continue;
+    }
+
+    const innerWrap = document.getElementById(`csvInner_${outerRowId}`);
+    csvFiles.forEach(cf => {
+      const rowId = 'row_' + (_csvRowSeq++);
+      const koreanLabel = extractKoreanLabel(cf.name);
+      const guessKey = guessCsvSection(koreanLabel);
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;';
+      row.innerHTML = `
+        <div style="flex:1;min-width:180px;">
+          <div style="font-size:12px;font-weight:600;color:var(--text);">${koreanLabel}</div>
+          <div style="font-size:10px;color:var(--text3);font-family:monospace;">${cf.name}</div>
+        </div>
+        ${csvSectionSelectHtml(rowId, guessKey)}
+        <button id="csvBtn_${rowId}" style="padding:6px 14px;background:var(--green);color:#000;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">동기화</button>
+        <div id="csvStatus_${rowId}" style="font-size:11px;color:var(--text3);min-width:160px;">${renderCsvSyncTime(guessKey)}</div>
+      `;
+      innerWrap.appendChild(row);
+
+      const sel = row.querySelector(`#csvSel_${rowId}`);
+      const statusEl = row.querySelector(`#csvStatus_${rowId}`);
+      sel.addEventListener('change', () => { statusEl.textContent = renderCsvSyncTime(sel.value); });
+
+      row.querySelector(`#csvBtn_${rowId}`).addEventListener('click', async () => {
+        if (!_scriptUrl) { showToast('⚠ GAS URL 없음'); return; }
+        const btn = row.querySelector(`#csvBtn_${rowId}`);
+        const sectionKey = sel.value;
+        btn.disabled = true; btn.textContent = '⏳ 진행중';
+        statusEl.textContent = '동기화 중...';
+        try {
+          const records = parseCsvToRecords(cf.text);
+          const payload = encodeURIComponent(JSON.stringify({ sectionKey, records }));
+          const res = await fetch(`${_scriptUrl}?action=csvManualSync&data=${payload}`, { redirect:'follow' });
+          const data = await res.json();
+          if (data.ok) {
+            _csvSyncTimes[sectionKey] = data.time;
+            statusEl.textContent = `✅ ${data.count}건 동기화 · ${new Date(data.time).toLocaleString('ko-KR')}`;
+            showToast(`✅ ${sectionKey} 동기화 완료 (${data.count}건)`);
+          } else {
+            statusEl.textContent = `⚠ 실패: ${data.msg || '오류'}`;
+            showToast('⚠ CSV 동기화 실패');
+          }
+        } catch (e) {
+          statusEl.textContent = `⚠ 오류: ${e.message}`;
+          showToast('⚠ CSV 동기화 오류');
+        }
+        btn.disabled = false; btn.textContent = '동기화';
+      });
+    });
+  }
+}
+
+function initCsvDropZone() {
+  const zone = document.getElementById('csvDropZone');
+  const input = document.getElementById('csvFileInput');
+  if (!zone || !input) return;
+
+  zone.addEventListener('click', () => input.click());
+  input.addEventListener('change', (e) => { handleCsvZipFiles(e.target.files); input.value = ''; });
+
+  zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.style.borderColor = 'var(--cyan)'; });
+  zone.addEventListener('dragleave', () => { zone.style.borderColor = 'var(--border)'; });
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.style.borderColor = 'var(--border)';
+    handleCsvZipFiles(e.dataTransfer.files);
+  });
+
+  if (_scriptUrl) {
+    fetch(`${_scriptUrl}?action=getCsvSyncTimes`, { redirect:'follow' })
+      .then(r => r.json())
+      .then(d => { if (d.ok) _csvSyncTimes = d.times || {}; })
+      .catch(() => {});
+  }
+}
+document.addEventListener('DOMContentLoaded', initCsvDropZone);
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </body>
 </html>

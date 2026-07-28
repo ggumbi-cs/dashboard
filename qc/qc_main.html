@@ -1728,8 +1728,16 @@ async function handleCsvZipFiles(fileList) {
         statusEl.textContent = '동기화 중...';
         try {
           const records = parseCsvToRecords(cf.text);
-          const payload = encodeURIComponent(JSON.stringify({ sectionKey, records }));
-          const res = await fetch(`${_scriptUrl}?action=csvManualSync&data=${payload}`, { redirect:'follow' });
+          // POST 사용 이유: 레코드가 많은 CSV는 GET 쿼리스트링에 실으면
+          // URL 길이 한계를 넘어 "Failed to fetch"가 발생할 수 있음.
+          // Content-Type을 text/plain으로 둬야 CORS preflight(OPTIONS)를
+          // 피할 수 있음 (GAS 웹앱은 OPTIONS를 처리하지 못함).
+          const res = await fetch(_scriptUrl, {
+            method:  'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body:    JSON.stringify({ action:'csvManualSync', sectionKey, records }),
+            redirect:'follow'
+          });
           const data = await res.json();
           if (data.ok) {
             _csvSyncTimes[sectionKey] = data.time;

@@ -119,6 +119,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 .surge-arrow{font-size:10px;}
 .surge-curr{font-size:12px;font-weight:700;font-family:var(--font-en);color:var(--red);}
 .surge-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;background:rgba(255,90,110,0.12);color:var(--red);}
+.surge-faults{font-size:11px;font-weight:700;color:var(--text);flex-shrink:0;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%;}
 
 /* ── 개선진행여부 테이블 ── */
 #improveSection{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px 16px;margin-bottom:20px;}
@@ -626,6 +627,21 @@ function renderSurge(cur, prev) {
     .sort((a,b) => b.diff - a.diff)
     .slice(0, 6);
 
+  // 제품별(현재 기간) 접수불량 Top3 비율 계산
+  surge.forEach(s => {
+    const productRecords = cur.filter(r => r.제품명 && shortName(r.제품명) === s.name);
+    const faultCnt = {};
+    productRecords.forEach(r => {
+      faultsOf(r).forEach(f => { if(f&&f!=='특이사항없음'&&f!=='미확인') faultCnt[f]=(faultCnt[f]||0)+1; });
+    });
+    const base = productRecords.length || 1;
+    s.faultText = Object.entries(faultCnt)
+      .sort((a,b)=>b[1]-a[1])
+      .slice(0,3)
+      .map(([f,c]) => `${f} ${(c/base*100).toFixed(0)}%`)
+      .join(', ');
+  });
+
   document.getElementById('surgeList').innerHTML = surge.length === 0
     ? '<div style="color:var(--text3);font-size:12px;">급증 제품 없음 (전 기간 대비 안정)</div>'
     : surge.map(s => `
@@ -637,6 +653,7 @@ function renderSurge(cur, prev) {
         <div class="surge-curr">${s.curr}건</div>
         <div class="surge-badge">+${s.diff}</div>
       </div>
+      <div class="surge-faults" title="${s.faultText||''}">${s.faultText || '-'}</div>
     </div>`).join('');
 }
 

@@ -331,9 +331,10 @@ function periodLabel(tab, p) {
   if (tab === 'monthly') return `${p.year}년 ${p.month}월`;
   if (tab === 'yearly')  return `${p.year}년`;
   const {start, end} = periodRange('weekly', p);
-  const s = start.slice(2).replace(/-/g,'.');
-  const en = end.slice(2).replace(/-/g,'.');
-  return `${s}~${en} 마감`;
+  const s = start.slice(5).replace('-','.');   // MM.DD
+  const en = end.slice(5).replace('-','.');     // MM.DD
+  const code = weekCode(p.year, p.month, p.date);
+  return `${s}~${en} (마감 ${code})`;
 }
 function prevPeriod(tab, p) {
   if (tab === 'monthly') { let m=p.month-1,y=p.year; if(m<1){m=12;y--;} return {year:y,month:m}; }

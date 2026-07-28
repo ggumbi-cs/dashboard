@@ -342,9 +342,9 @@ function todayPeriod(tab) {
   const now = new Date();
   if (tab === 'monthly') return { year: now.getFullYear(), month: now.getMonth()+1 };
   if (tab === 'yearly')  return { year: now.getFullYear() };
-  // weekly: 이번 주 월~일
+  // weekly: 이번 주 토~금
   const d = new Date(now);
-  d.setDate(d.getDate() - d.getDay() + 1); // 월요일
+  d.setDate(d.getDate() - ((d.getDay() + 1) % 7)); // 토요일
   return { year: d.getFullYear(), month: d.getMonth()+1, date: d.getDate() };
 }
 
@@ -370,7 +370,7 @@ function periodRange(tab, p) {
   if (tab === 'yearly') {
     return { start:`${p.year}-01-01`, end:`${p.year}-12-31` };
   }
-  // weekly: 월~일
+  // weekly: 토~금
   const mon = new Date(p.year, p.month-1, p.date);
   const sun = new Date(mon); sun.setDate(mon.getDate()+6);
   return { start: toISO(mon), end: toISO(sun) };

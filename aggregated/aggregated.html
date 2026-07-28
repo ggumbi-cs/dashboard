@@ -334,15 +334,19 @@ const MODULES = {
     project: '불량현황',
     async loadData() {
       const records = await loadQcData('가전', 'getQcDefectData');
-      return records.map(r => ({ ...r, dateObj: parseYmd(r.접수일) }));
+      const rows = records.map(r => ({ ...r, dateObj: parseYmd(r.접수일) }));
+      rows._raw = true; // computeSummary가 ctx 기반으로 처리하도록 표시 (전기간 비교가 필요해서)
+      return rows;
     },
-    buildSummary(rows) {
+    buildSummary(allRows, ctx) {
+      const rows = allRows.filter(r => r.dateObj && ctx.inRange(r.dateObj));
       const total = rows.length;
       if (total === 0) return null;
       const exchange = rows.filter(r => r.구분 === '교환/환불').length;
       const material = rows.filter(r => r.구분 === '자재출고').length;
       const repair   = rows.filter(r => r.구분 === '수리출고').length;
       const top5Products = topNByCount(rows, r => r.제품명, 5, k => k.startsWith('[집계]'));
+      const top5Names = new Set(top5Products.map(p => stripTag(p.name)));
 
       // 불량유형 Top10 - 각 유형 안에 제품별 건수/구성비까지 포함
       // (전체수치 vs 특정제품 한정수치를 혼동하는 걸 방지하기 위해, 제품 구성이 항상 같이 보이도록)
@@ -365,7 +369,30 @@ const MODULES = {
           return { name, cnt: v.total, byProduct };
         });
 
-      return { total, exchange, material, repair, top5Products, top10Faults };
+      // 급증하는 불량제품 (전 기간 대비) — 원본 불량현황.html의 renderSurge() 로직 그대로 이식
+      // diff>0 && curr>=2 인 것만, diff 큰 순 최대 6개. 각 제품의 현재기간 불량유형 Top3 비율도 같이 기록
+      // (top5에 없는 제품이 급증했을 때, 무슨 불량 때문인지 바로 보이게 하기 위함)
+      const prevRows = allRows.filter(r => r.dateObj && ctx.prevInRange(r.dateObj));
+      const curCnt = {}, prevCnt = {};
+      rows.forEach(r => { if (!r.제품명 || r.제품명.startsWith('[집계]')) return; const n = stripTag(r.제품명); curCnt[n] = (curCnt[n]||0)+1; });
+      prevRows.forEach(r => { if (!r.제품명 || r.제품명.startsWith('[집계]')) return; const n = stripTag(r.제품명); prevCnt[n] = (prevCnt[n]||0)+1; });
+
+      const surgeProducts = Object.entries(curCnt)
+        .map(([name, cnt]) => ({ name, curr: cnt, prev: prevCnt[name] || 0, diff: cnt - (prevCnt[name] || 0) }))
+        .filter(x => x.diff > 0 && x.curr >= 2)
+        .sort((a,b) => b.diff - a.diff)
+        .slice(0, 6)
+        .map(s => {
+          const productRows = rows.filter(r => r.제품명 && stripTag(r.제품명) === s.name);
+          const faultCnt = {};
+          productRows.forEach(r => faultsOf(r).forEach(f => { faultCnt[f] = (faultCnt[f]||0)+1; }));
+          const base = productRows.length || 1;
+          const topFaults = Object.entries(faultCnt).sort((a,b)=>b[1]-a[1]).slice(0,3)
+            .map(([f,c]) => ({ name: f, cnt: c, pct: Math.round(c/base*1000)/10 }));
+          return { name: s.name, prev: s.prev, curr: s.curr, diff: s.diff, inTop5: top5Names.has(s.name), topFaults };
+        });
+
+      return { total, exchange, material, repair, top5Products, top10Faults, surgeProducts };
     }
   },
 
@@ -861,16 +888,22 @@ function filterRowsByPeriod(rows, periodType, p) {
 // 여러 원본 소스를 조합해야 하는 모듈(예: 반품현황)을 위한 기간 컨텍스트
 function buildCtx(periodType, p) {
   if (periodType === 'monthly') {
+    let prevMonth = p.month - 1, prevYear = p.year;
+    if (prevMonth < 1) { prevMonth = 12; prevYear--; }
     return {
-      periodType, period: p.period, year: p.year, month: p.month,
+      periodType, period: p.period, year: p.year, month: p.month, raw: p,
       inRange: d => d && d.getFullYear() === p.year && d.getMonth()+1 === p.month,
+      prevInRange: d => d && d.getFullYear() === prevYear && d.getMonth()+1 === prevMonth,
     };
   }
   const start = new Date(p.sat.getFullYear(), p.sat.getMonth(), p.sat.getDate(), 0,0,0);
   const end   = new Date(p.fri.getFullYear(), p.fri.getMonth(), p.fri.getDate(), 23,59,59,999);
+  const prevSat = new Date(p.sat.getFullYear(), p.sat.getMonth(), p.sat.getDate()-7, 0,0,0);
+  const prevFri = new Date(p.fri.getFullYear(), p.fri.getMonth(), p.fri.getDate()-7, 23,59,59,999);
   return {
-    periodType, period: p.period,
+    periodType, period: p.period, raw: p,
     inRange: d => d && d >= start && d <= end,
+    prevInRange: d => d && d >= prevSat && d <= prevFri,
   };
 }
 

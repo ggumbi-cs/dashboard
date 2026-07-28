@@ -42,7 +42,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 #periodNav{display:flex;align-items:center;gap:8px;margin-left:auto;}
 .pnav-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
 .pnav-btn:hover{border-color:var(--border2);color:var(--cyan);}
-#periodLabel{font-size:12px;font-weight:600;color:var(--text2);min-width:80px;text-align:center;}
+#periodLabel{font-size:12px;font-weight:600;color:var(--text2);min-width:80px;text-align:center;white-space:nowrap;}
 
 /* ── 메인 콘텐츠 ── */
 #mainContent{padding:16px 24px 40px;}
@@ -351,7 +351,14 @@ function todayPeriod(tab) {
 function periodLabel(tab, p) {
   if (tab === 'monthly') return `${p.year}년 ${p.month}월`;
   if (tab === 'yearly')  return `${p.year}년`;
-  return `${p.year}.${String(p.month).padStart(2,'0')}.${String(p.date).padStart(2,'0')} 주`;
+  const mon = new Date(p.year, p.month-1, p.date);
+  const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+  const mm  = String(mon.getMonth()+1).padStart(2,'0');
+  const dd  = String(mon.getDate()).padStart(2,'0');
+  const mm2 = String(sun.getMonth()+1).padStart(2,'0');
+  const dd2 = String(sun.getDate()).padStart(2,'0');
+  const yy2 = String(sun.getFullYear()).slice(-2);
+  return `${mm}.${dd}~${mm2}.${dd2} (마감 ${yy2}${mm2}${dd2})`;
 }
 
 function periodRange(tab, p) {

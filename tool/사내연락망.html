@@ -202,6 +202,16 @@ tr.inactive{opacity:.4;}
       <button class="btn" data-orient="landscape">가로 (Landscape)</button>
     </div>
 
+    <div class="section-title">글씨 크기 <span id="fontScaleLabel" style="color:var(--sub);font-weight:400;"></span></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:11px;color:var(--sub);">작게</span>
+      <input type="range" id="fontScaleSlider" min="0.7" max="1.8" step="0.1" style="flex:1;">
+      <span style="font-size:15px;color:var(--sub);">크게</span>
+    </div>
+    <div style="font-size:11.5px;color:var(--sub);margin-top:6px;">
+      기본값은 한 페이지에 맞춰 자동으로 줄인 크기입니다. 더 키우면 페이지가 2장 이상으로 늘어날 수 있어요 (가독성 우선).
+    </div>
+
     <div class="section-title">디자인 미리보기</div>
     <iframe id="designPreviewFrame"></iframe>
 
@@ -237,7 +247,7 @@ const LS_PREFS = 'staffDirectory.prefs';
 let state = {
   employees: [],      // {id,dept,position,name,ext,mobile,active,extEdited,mobileEdited}
   teamEmails: {},      // {dept: email}
-  prefs: { concept:'card', theme:'sakura', orient:'portrait', font:'gothic' }
+  prefs: { concept:'card', theme:'sakura', orient:'portrait', font:'gothic', fontScale:1 }
 };
 
 function loadState(){
@@ -619,6 +629,11 @@ function renderStep3(){
   document.querySelectorAll('.orient-toggle .btn').forEach(btn=>{
     btn.classList.toggle('active', btn.dataset.orient===state.prefs.orient);
   });
+  const slider = document.getElementById('fontScaleSlider');
+  if(slider){
+    slider.value = state.prefs.fontScale;
+    document.getElementById('fontScaleLabel').textContent = Math.round(state.prefs.fontScale*100) + '%';
+  }
   const dpf = document.getElementById('designPreviewFrame');
   if(dpf){ applyFrameAspect(dpf, state.prefs.orient, 560); dpf.srcdoc = buildPrintHTML(); }
 }
@@ -628,6 +643,13 @@ document.querySelectorAll('.orient-toggle .btn').forEach(btn=>{
     savePrefs();
     renderStep3();
   });
+});
+document.getElementById('fontScaleSlider').addEventListener('input', e=>{
+  state.prefs.fontScale = parseFloat(e.target.value);
+  document.getElementById('fontScaleLabel').textContent = Math.round(state.prefs.fontScale*100) + '%';
+  savePrefs();
+  const dpf = document.getElementById('designPreviewFrame');
+  if(dpf) dpf.srcdoc = buildPrintHTML();
 });
 
 /* =========================================================
@@ -682,6 +704,23 @@ const THEME_DECOR = {
   </svg>`
 };
 
+const RANK_NAMED = ['회장','부회장','대표','고문','전무','상무','이사','부장','팀장','파트장'];
+const RANK_LETTERS = ['P','S','J','A'];
+function rankOf(pos){
+  const p = String(pos||'').trim();
+  if(!p) return 999;
+  for(let i=0;i<RANK_NAMED.length;i++){
+    if(p.includes(RANK_NAMED[i])) return i;
+  }
+  const m = p.match(/^[A-Za-z]/);
+  if(m){
+    const li = RANK_LETTERS.indexOf(m[0].toUpperCase());
+    if(li>=0) return RANK_NAMED.length + li;
+  }
+  if(p.includes('인턴')) return RANK_NAMED.length + RANK_LETTERS.length;
+  if(p.includes('스텝')) return RANK_NAMED.length + RANK_LETTERS.length + 1;
+  return 900;
+}
 function groupByDept(list){
   const g = {};
   list.forEach(e=>{
@@ -689,11 +728,15 @@ function groupByDept(list){
     if(!g[key]) g[key]=[];
     g[key].push(e);
   });
+  Object.values(g).forEach(members=>{
+    members.sort((a,b)=> rankOf(a.position) - rankOf(b.position));
+  });
   return g;
 }
 
 function buildPrintHTML(){
-  const activeEmps = state.employees.filter(e=>e.active && e.name);
+  const activeEmps = state.employees.filter(e=>e.active && e.name)
+    .slice().sort((a,b)=> (a.dept||'').localeCompare(b.dept||'') || (rankOf(a.position)-rankOf(b.position)));
   const grouped = groupByDept(activeEmps);
   const orient = state.prefs.orient;
   const themeVars = THEME_CSS[state.prefs.theme];
@@ -770,7 +813,12 @@ function buildPrintHTML(){
     .title-bar .decor{margin:0 1rem;}
     .title-bar .date{font-size:1rem;color:var(--pg-sub);white-space:nowrap;}
 
-    .print-columns{column-count:${cols};column-gap:1.2rem;}
+    .print-columns{column-count:${cols};column-gap:1.2rem;column-fill:auto;height:${targetHpx - 60}px;}
+    @media print{
+      .print-columns{column-fill:auto;}
+      #scaleWrap{break-before:avoid;page-break-before:avoid;}
+      .title-bar{break-after:avoid;page-break-after:avoid;}
+    }
 
     /* card concept */
     .dept-card{background:var(--pg-card);border:1px solid var(--pg-line);border-radius:0.8rem;
@@ -822,19 +870,26 @@ function buildPrintHTML(){
   </div>
   <script>
   (function(){
-    var target = ${targetHpx} * 0.96;
     var html = document.documentElement;
-    function contentHeight(){ return document.getElementById('scaleWrap').scrollHeight; }
+    var userScale = ${state.prefs.fontScale || 1};
+    function overflowing(){
+      var el = document.querySelector('.print-columns');
+      if(!el) return false;
+      return el.scrollWidth > el.clientWidth + 1;
+    }
     function fit(){
-      var lo = 5.5, hi = 10, best = lo;
+      var lo = 5, hi = 10, best = lo;
       html.style.fontSize = hi + 'px';
-      if(contentHeight() <= target){ return; } // fits at full size already
-      for(var i=0;i<9;i++){
-        var mid = (lo+hi)/2;
-        html.style.fontSize = mid + 'px';
-        if(contentHeight() <= target){ best = mid; lo = mid; } else { hi = mid; }
+      if(overflowing()){
+        for(var i=0;i<10;i++){
+          var mid = (lo+hi)/2;
+          html.style.fontSize = mid + 'px';
+          if(overflowing()){ hi = mid; } else { best = mid; lo = mid; }
+        }
+      } else {
+        best = hi;
       }
-      html.style.fontSize = best + 'px';
+      html.style.fontSize = (best * userScale) + 'px';
     }
     if(document.readyState==='complete'){ fit(); }
     else { window.addEventListener('load', fit); }

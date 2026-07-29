@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IMG → PDF 변환기</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -137,12 +138,13 @@
   .ctrl-divider { border:none; border-top:1px solid var(--border); }
 
   /* Mode Tabs */
-  .mode-tabs { display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px; }
+  .mode-tabs { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:4px; }
   .mode-tab { padding:7px 4px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface2); color:#b0b0c8; font-size:10px; font-weight:500; text-align:center; cursor:pointer; transition:all 0.15s; font-family:'Noto Sans KR',sans-serif; line-height:1.3; }
   .mode-tab:hover { border-color:var(--border-hover); color:var(--text); }
   .mode-tab.active-merge { border-color:var(--accent); background:var(--accent-dim); color:var(--accent); }
   .mode-tab.active-group { border-color:var(--purple); background:var(--purple-dim); color:var(--purple); }
   .mode-tab.active-individual { border-color:var(--success); background:var(--success-dim); color:var(--success); }
+  .mode-tab.active-split { border-color:var(--warn); background:var(--warn-dim); color:var(--warn); }
 
   /* Mode description */
   .mode-desc { font-size:10px; color:#b0b0c4; line-height:1.5; padding:8px 10px; border-radius:var(--radius-sm); background:var(--surface2); border:1px solid var(--border); }
@@ -308,7 +310,7 @@
   <div class="logo">
     <div class="logo-icon">📄</div>
     <h1>IMG → PDF 변환기</h1>
-    <span class="tagline">이미지 파일을 PDF로 일괄 변환</span>
+    <span class="tagline">이미지·PDF를 PDF로 일괄 변환·분할·병합</span>
   </div>
   <div class="header-right">
     <span class="badge badge-blue" id="countBadge">0 / 20</span>
@@ -359,10 +361,10 @@
 
       <!-- Drop Zone -->
       <div class="drop-zone" id="dropZone">
-        <input type="file" id="fileInput" accept="image/*" multiple />
+        <input type="file" id="fileInput" accept="image/*,application/pdf" multiple />
         <div class="dz-icon">📥</div>
-        <div class="dz-title">이미지를 드래그하거나<br>클릭하여 선택</div>
-        <div class="dz-sub">JPG · PNG · WEBP · BMP · GIF<br>최대 20개</div>
+        <div class="dz-title">이미지 · PDF를 드래그하거나<br>클릭하여 선택</div>
+        <div class="dz-sub">JPG · PNG · WEBP · BMP · GIF · PDF<br>최대 20개 (PDF는 페이지 단위로 계산)</div>
       </div>
 
       <hr class="ctrl-divider">
@@ -374,6 +376,7 @@
           <button class="mode-tab active-merge" id="tab-merge" onclick="setMode('merge')">🔗 통합<br><span style="font-size:9px;opacity:0.7;">1개 PDF</span></button>
           <button class="mode-tab" id="tab-group" onclick="setMode('group')">📦 그룹<br><span style="font-size:9px;opacity:0.7;">묶음 PDF</span></button>
           <button class="mode-tab" id="tab-individual" onclick="setMode('individual')">🗂 개별<br><span style="font-size:9px;opacity:0.7;">각각 PDF</span></button>
+          <button class="mode-tab" id="tab-split" onclick="setMode('split')">✂️ 분할<br><span style="font-size:9px;opacity:0.7;">N개 PDF</span></button>
         </div>
         <div class="mode-desc" id="modeDesc" style="margin-top:6px;">
           모든 이미지를 하나의 PDF 파일로 통합합니다.
@@ -491,6 +494,14 @@
         <input type="text" id="pdfName" placeholder="파일명을 입력하세요" value="변환된_이미지" />
         <span class="pdf-ext">.pdf</span>
       </div>
+      <div class="pdf-name-input-row" id="splitNameRow" style="display:none;">
+        <input type="text" id="splitBaseName" placeholder="기준 파일명" value="분할_이미지" />
+        <span class="pdf-ext" style="padding:7px 6px;">_1~N.pdf</span>
+      </div>
+      <div class="opt-row" id="splitCountRow" style="display:none;">
+        <label>분할 개수 (1~10)</label>
+        <input type="text" id="splitCount" value="2" inputmode="numeric" style="width:56px; text-align:center;" oninput="onSplitCountChange()" />
+      </div>
       <div class="footer-hint" id="footerHint"></div>
     </div>
   </div>
@@ -501,6 +512,9 @@
 
 <script>
 const { jsPDF } = window.jspdf;
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
 
 // ── State ────────────────────────────────────────────────────────────
 let files = [];       // { file, url, name, size, pdfName, groupId }
@@ -518,40 +532,73 @@ let nextColor = 0;
 const modeDescs = {
   merge:      '모든 이미지를 하나의 PDF 파일로 통합합니다. (1개 출력)',
   group:      '파일을 그룹으로 묶어 각 그룹별로 PDF를 출력합니다. 그룹 수만큼 PDF가 생성됩니다.',
-  individual: '각 이미지를 개별 PDF로 저장합니다. 파일명을 직접 지정할 수 있어요.'
+  individual: '각 이미지를 개별 PDF로 저장합니다. 파일명을 직접 지정할 수 있어요.',
+  split:      '전체 페이지를 지정한 개수(1~10)만큼 균등하게 나눠 여러 개의 PDF로 출력합니다.'
 };
 
 function setMode(m) {
   mode = m;
-  ['merge','group','individual'].forEach(x => {
+  ['merge','group','individual','split'].forEach(x => {
     const tab = document.getElementById('tab-'+x);
     tab.className = 'mode-tab' + (x===m ? ` active-${x}` : '');
   });
   document.getElementById('modeDesc').textContent = modeDescs[m];
-  document.getElementById('modeBadge').textContent = m==='merge'?'통합 모드':m==='group'?'그룹 모드':'개별 모드';
+  document.getElementById('modeBadge').textContent =
+    m==='merge'?'통합 모드': m==='group'?'그룹 모드': m==='individual'?'개별 모드':'분할 모드';
 
   // footer
   const mergeRow = document.getElementById('mergeNameRow');
+  const splitRow = document.getElementById('splitNameRow');
+  const splitCountRow = document.getElementById('splitCountRow');
   const footerHint = document.getElementById('footerHint');
   const footerLabel = document.getElementById('footerLabel');
+
+  mergeRow.style.display = 'none';
+  splitRow.style.display = 'none';
+  splitCountRow.style.display = 'none';
 
   if (m === 'merge') {
     mergeRow.style.display = 'flex';
     footerLabel.textContent = 'PDF 파일명';
     footerHint.textContent = '';
   } else if (m === 'group') {
-    mergeRow.style.display = 'none';
     footerLabel.textContent = '그룹별 파일명 설정';
     footerHint.textContent = '오른쪽 목록에서 그룹 이름을 직접 수정하세요.';
-  } else {
-    mergeRow.style.display = 'none';
+  } else if (m === 'individual') {
     footerLabel.textContent = '개별 PDF 파일명 설정';
     footerHint.textContent = '각 항목의 이름 칸을 클릭하여 직접 수정하세요.';
+  } else {
+    // split
+    splitRow.style.display = 'flex';
+    splitCountRow.style.display = 'flex';
+    footerLabel.textContent = '분할 PDF 설정';
+    footerHint.textContent = '';
+    onSplitCountChange();
   }
 
   renderList();
   const bulkBtn = document.getElementById('bulkRotBtns');
   if (bulkBtn) bulkBtn.style.display = files.length > 0 && m !== 'group' ? 'flex' : 'none';
+}
+
+function onSplitCountChange() {
+  const el = document.getElementById('splitCount');
+  let n = parseInt(el.value, 10);
+  if (isNaN(n)) n = 2;
+  n = Math.max(1, Math.min(10, n));
+  el.value = n;
+  const hint = document.getElementById('footerHint');
+  if (mode === 'split') {
+    const total = files.length;
+    const parts = Math.min(n, Math.max(1, total));
+    if (total > 0) {
+      const base = Math.floor(total / parts), extra = total % parts;
+      const sizes = Array.from({length:parts}, (_,i)=> base + (i < extra ? 1 : 0));
+      hint.textContent = `총 ${total}페이지 → ${parts}개 PDF (${sizes.join(', ')}페이지씩)`;
+    } else {
+      hint.textContent = '이미지를 추가하면 분할 미리보기가 표시됩니다.';
+    }
+  }
 }
 
 // ── File Input ────────────────────────────────────────────────────────
@@ -563,38 +610,91 @@ dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-ove
 dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); addFiles(e.dataTransfer.files); });
 
 function addFiles(rawFiles) {
-  const arr = Array.from(rawFiles).filter(f => f.type.startsWith('image/'));
-  const remaining = 20 - files.length;
-  if (remaining <= 0) { showToast('최대 20개까지만 추가할 수 있어요', 'error'); return; }
-  const toAdd = arr.slice(0, remaining);
-  if (arr.length > remaining) showToast(`${arr.length - remaining}개는 한도 초과로 제외됐어요`, 'warn');
+  const allArr = Array.from(rawFiles).filter(f => f.type.startsWith('image/') || f.type === 'application/pdf');
+  if (!allArr.length) { fileInput.value=''; return; }
 
   // default group for group mode
   const defaultGroupId = (mode === 'group' && groups.length > 0) ? groups[groups.length-1].id : null;
 
-  const promises = toAdd.map(f => new Promise(resolve => {
+  showToast('파일 처리 중…', '');
+
+  // 이미지/PDF 각각 페이지(엔트리) 배열로 변환한 뒤, 20개 한도를 최종 적용
+  const perFilePromises = allArr.map(f => {
+    if (f.type === 'application/pdf') return pdfToEntries(f);
+    return imageToEntry(f);
+  });
+
+  Promise.all(perFilePromises).then(entryGroups => {
+    const flatEntries = entryGroups.flat();
+    const remaining = 20 - files.length;
+    if (remaining <= 0) { showToast('최대 20개까지만 추가할 수 있어요', 'error'); fileInput.value=''; return; }
+    const toAdd = flatEntries.slice(0, remaining);
+    if (flatEntries.length > remaining) showToast(`${flatEntries.length - remaining}개는 한도 초과로 제외됐어요`, 'warn');
+
+    toAdd.forEach(entry => {
+      entry.groupId = defaultGroupId;
+      files.push(entry);
+    });
+
+    fileInput.value = '';
+    if (mode === 'group' && groups.length === 0 && files.length) addGroup();
+    renderList(); updateStats();
+    if (activeIdx === -1 && files.length > 0) selectFile(0);
+    showToast(`${toAdd.length}개 페이지 추가됨`, 'success');
+  }).catch(err => {
+    console.error(err);
+    fileInput.value = '';
+    showToast('❌ 파일 처리 중 오류가 발생했어요 (PDF 손상 여부 확인)', 'error');
+  });
+}
+
+// 이미지 파일 1개 → 파일 엔트리 1개
+function imageToEntry(f) {
+  return new Promise(resolve => {
     const reader = new FileReader();
     reader.onload = e => {
       const baseName = f.name.replace(/\.[^.]+$/, '');
       const dataUrl = e.target.result;
-      // EXIF orientation 자동 보정 적용
       correctOrientation(dataUrl, f.type).then(correctedUrl => {
-        files.push({ file:f, url:correctedUrl, originalUrl:correctedUrl, name:f.name, size:f.size,
-                     pdfName: baseName, groupId: defaultGroupId, rotation:0 });
-        resolve();
+        resolve({ file:f, url:correctedUrl, originalUrl:correctedUrl, name:f.name, size:f.size,
+                  pdfName: baseName, rotation:0 });
       });
     };
     reader.readAsDataURL(f);
-  }));
-
-  Promise.all(promises).then(() => {
-    fileInput.value = '';
-    // auto-create first group if group mode and no groups
-    if (mode === 'group' && groups.length === 0) addGroup();
-    renderList(); updateStats();
-    if (activeIdx === -1 && files.length > 0) selectFile(0);
-    showToast(`${toAdd.length}개 이미지 추가됨`, 'success');
   });
+}
+
+// PDF 파일 1개 → 각 페이지를 이미지로 렌더링한 엔트리 배열
+async function pdfToEntries(f) {
+  if (!window.pdfjsLib) throw new Error('pdf.js not loaded');
+  const baseName = f.name.replace(/\.[^.]+$/, '');
+  const buf = await f.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  const entries = [];
+  const RENDER_SCALE = 2; // 화질 확보용 렌더 배율
+
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const viewport = page.getViewport({ scale: RENDER_SCALE });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(viewport.width);
+    canvas.height = Math.round(viewport.height);
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    // 대략적인 바이트 사이즈 추정 (base64 길이 기반)
+    const approxSize = Math.round(dataUrl.length * 0.75);
+    entries.push({
+      file: f,
+      url: dataUrl,
+      originalUrl: dataUrl,
+      name: `${f.name} (p${p})`,
+      size: approxSize,
+      pdfName: `${baseName}_p${p}`,
+      rotation: 0
+    });
+  }
+  return entries;
 }
 
 // ── Groups ────────────────────────────────────────────────────────────
@@ -685,9 +785,38 @@ function renderList() {
     agb.onclick = addGroup;
     body.appendChild(agb);
 
+  } else if (mode === 'split') {
+    const groupsArr = getSplitGroups();
+    let idx = 0;
+    groupsArr.forEach((count, gi) => {
+      const gh = document.createElement('div');
+      gh.className = 'group-header';
+      gh.innerHTML = `<div class="group-dot" style="background:var(--warn)"></div><span class="group-label" style="color:var(--warn)">분할 ${gi+1} (${count}페이지)</span>`;
+      body.appendChild(gh);
+      for (let k=0; k<count; k++, idx++) {
+        if (!files[idx]) break;
+        const el = makeFileItem(files[idx], idx);
+        el.classList.add('in-group');
+        el.style.borderLeftColor = 'var(--warn)';
+        body.appendChild(el);
+      }
+    });
   } else { // individual
     files.forEach((f,i) => body.appendChild(makeFileItem(f,i)));
   }
+}
+
+// 분할 모드: 지정 개수(1~10)에 따라 전체 파일을 균등하게 나눈 페이지 수 배열 반환
+function getSplitGroups() {
+  const el = document.getElementById('splitCount');
+  let n = parseInt(el ? el.value : 2, 10);
+  if (isNaN(n)) n = 2;
+  n = Math.max(1, Math.min(10, n));
+  const total = files.length;
+  const parts = Math.min(n, Math.max(1, total));
+  if (total === 0) return [];
+  const base = Math.floor(total / parts), extra = total % parts;
+  return Array.from({length:parts}, (_,i)=> base + (i < extra ? 1 : 0));
 }
 
 function makeFileItem(f, i) {
@@ -1095,6 +1224,7 @@ function updateStats() {
   document.getElementById('statSize').textContent = formatSize(total);
   document.getElementById('countBadge').textContent = `${files.length} / 20`;
   document.getElementById('sizeBadge').textContent = formatSize(total);
+  if (mode === 'split') onSplitCountChange();
 }
 function formatSize(b) { if(b<1024)return b+'B'; if(b<1024*1024)return (b/1024).toFixed(0)+'KB'; return (b/1024/1024).toFixed(1)+'MB'; }
 
@@ -1234,6 +1364,25 @@ async function convertToPDF() {
         await saveFile(blob, '미분류.pdf');
       }
       showToast(`✅ ${groups.length}개 그룹 PDF 저장 완료!`, 'success');
+
+    } else if (mode === 'split') {
+      // ── 분할 ──
+      const baseName = (document.getElementById('splitBaseName').value.trim() || '분할_이미지');
+      const sizes = getSplitGroups();
+      let idx = 0;
+      for (let gi=0; gi<sizes.length; gi++) {
+        const count = sizes[gi];
+        const part = files.slice(idx, idx+count);
+        idx += count;
+        if (!part.length) continue;
+        const pct = Math.round((gi/sizes.length)*85)+5;
+        setProgress(pct, `분할 ${gi+1}/${sizes.length} 처리 중… (${part.length}페이지)`);
+        const pdf = await buildPDF(part);
+        const blob = pdf.output('blob');
+        await saveFile(blob, `${baseName}_${gi+1}.pdf`);
+        await delay(30);
+      }
+      showToast(`✅ ${sizes.length}개 분할 PDF 저장 완료!`, 'success');
 
     } else {
       // ── 개별 ──

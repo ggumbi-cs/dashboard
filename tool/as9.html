@@ -128,5 +128,13 @@
   window.addEventListener('keydown',e=>{if(!files.length||['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return; if(e.key==='ArrowLeft')moveFile(-1); if(e.key==='ArrowRight')moveFile(1); if(e.key==='ArrowUp'){e.preventDefault();changePage(-1)} if(e.key==='ArrowDown'){e.preventDefault();changePage(1)} if(e.key===' '){e.preventDefault();moveFile(e.shiftKey?-1:1)} if(e.key==='+'||e.key==='=')changeZoom(.1); if(e.key==='-')changeZoom(-.1); if(e.key==='0'){visibleFiles().forEach(f=>{f.zoom=1;f.fit='free'});renderStage()} if(e.key.toLowerCase()==='w')setFocusedFit('width'); if(e.key.toLowerCase()==='f')setFocusedFit('page'); if(e.key.toLowerCase()==='r')rotateFocused();});
   window.addEventListener('resize',()=>files.length&&renderStage()); window.addEventListener('beforeunload',()=>files.forEach(f=>URL.revokeObjectURL(f.url)));
 </script>
+
+<script>
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
+</script>
 </body>
 </html>

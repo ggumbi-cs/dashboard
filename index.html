@@ -7,31 +7,8 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── 테마 변수 (다크 기본) ── */
+/* ── 테마 변수 (라이트 기본) ── */
 :root {
-  --bg-base:    #1a2e50;
-  --bg-deep:    #0d1825;
-  --bg-panel:   #111e35;
-  --bg-item:    #1a2e4a;
-  --bg-hover:   #1a2e4a;
-  --bg-active:  #162640;
-  --border-1:   #243d6a;
-  --border-2:   #2a4060;
-  --text-head:  #ffffff;
-  --text-main:  #c8ddf0;
-  --text-sub:   #a8c4df;
-  --text-muted: #7a9ec0;
-  --text-faint: #5a7a9a;
-  --text-dim:   #3a5a7a;
-  --accent:     #4a9fd4;
-  --accent-hi:  #5bb8f5;
-  --theme-btn-bg:     rgba(255,255,255,0.08);
-  --theme-btn-border: rgba(255,255,255,0.15);
-  --theme-btn-color:  #a8c4df;
-}
-
-/* ── 라이트 모드 오버라이드 ── */
-body.light-mode {
   --bg-base:    #f0f4fa;
   --bg-deep:    #e4ecf7;
   --bg-panel:   #ffffff;
@@ -51,6 +28,31 @@ body.light-mode {
   --theme-btn-bg:     rgba(26,46,80,0.08);
   --theme-btn-border: rgba(26,46,80,0.2);
   --theme-btn-color:  #1a3a60;
+  --danger:     #c0392b;
+}
+
+/* ── 다크 모드 오버라이드 ── */
+body.dark-mode {
+  --bg-base:    #1a2e50;
+  --bg-deep:    #0d1825;
+  --bg-panel:   #111e35;
+  --bg-item:    #1a2e4a;
+  --bg-hover:   #1a2e4a;
+  --bg-active:  #162640;
+  --border-1:   #243d6a;
+  --border-2:   #2a4060;
+  --text-head:  #ffffff;
+  --text-main:  #c8ddf0;
+  --text-sub:   #a8c4df;
+  --text-muted: #7a9ec0;
+  --text-faint: #5a7a9a;
+  --text-dim:   #3a5a7a;
+  --accent:     #4a9fd4;
+  --accent-hi:  #5bb8f5;
+  --theme-btn-bg:     rgba(255,255,255,0.08);
+  --theme-btn-border: rgba(255,255,255,0.15);
+  --theme-btn-color:  #a8c4df;
+  --danger:     #e87a7a;
 }
 body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; font-size: 13px; color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
@@ -214,40 +216,41 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
 }
 .vis-cancel-btn:hover { background: #223650; color: #e0eefc; }
 
-/* ── 로그인 오버레이 ── */
+/* ── 로그인 오버레이 (다크/라이트 변수 사용, 기본은 라이트) ── */
 #loginOverlay {
   position: fixed; inset: 0; z-index: 9999;
-  background: #0d1825;
+  background: var(--bg-deep);
   display: flex; align-items: center; justify-content: center;
 }
 .login-box {
-  background: #1a2e50; border-radius: 16px;
+  background: var(--bg-panel); border-radius: 16px;
   padding: 44px 40px; width: 360px;
-  border: 0.5px solid #2a4060;
+  border: 1px solid var(--border-2);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.12);
 }
 .login-logo { text-align: center; margin-bottom: 32px; }
 .login-logo .logo-icon {
   width: 56px; height: 56px; border-radius: 50%;
-  background: #2356a8; margin: 0 auto 14px;
+  background: var(--accent); margin: 0 auto 14px;
   display: flex; align-items: center; justify-content: center;
 }
 .login-logo .logo-icon span { font-size: 26px; color: #fff; }
-.login-logo .logo-title { font-size: 20px; font-weight: 500; color: #e0eefc; letter-spacing: 1px; }
-.login-logo .logo-sub   { font-size: 12px; color: #5a7a9a; margin-top: 5px; letter-spacing: 0.5px; }
+.login-logo .logo-title { font-size: 20px; font-weight: 500; color: var(--text-head); letter-spacing: 1px; }
+.login-logo .logo-sub   { font-size: 12px; color: var(--text-faint); margin-top: 5px; letter-spacing: 0.5px; }
 .login-field { margin-bottom: 16px; }
-.login-field label { font-size: 11px; color: #7a9ec0; display: block; margin-bottom: 6px; letter-spacing: 0.8px; }
+.login-field label { font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 6px; letter-spacing: 0.8px; }
 .login-input-wrap { position: relative; }
 .login-input {
-  width: 100%; background: #111e35; border: 1px solid #2a4060;
-  color: #c8ddf0; padding: 9px 12px 9px 34px; font-size: 13px;
+  width: 100%; background: var(--bg-item); border: 1px solid var(--border-2);
+  color: var(--text-main); padding: 9px 12px 9px 34px; font-size: 13px;
   border-radius: 8px; outline: none; font-family: inherit; box-sizing: border-box;
   appearance: none; -webkit-appearance: none;
 }
-.login-input:focus { border-color: #4a9fd4; }
+.login-input:focus { border-color: var(--accent); }
 .login-select-wrap { position: relative; }
 .login-select-wrap .sel-chevron {
   position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-  font-size: 11px; color: #a8c4df; pointer-events: none;
+  font-size: 11px; color: var(--text-sub); pointer-events: none;
   font-style: normal; line-height: 1;
 }
 .login-select-wrap select.login-input {
@@ -256,9 +259,9 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
 }
 /* 계열사 PW 안내 */
 .pw-hint {
-  font-size: 11px; color: #4fc3f7; margin-top: 5px;
-  padding: 5px 10px; background: #0e2040; border-radius: 5px;
-  border-left: 3px solid #4fc3f7; display: none;
+  font-size: 11px; color: var(--accent); margin-top: 5px;
+  padding: 5px 10px; background: var(--bg-item); border-radius: 5px;
+  border-left: 3px solid var(--accent); display: none;
 }
 .login-remember {
   display: flex; align-items: center; gap: 8px;
@@ -266,22 +269,22 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
 }
 .login-remember .chk-box {
   width: 17px; height: 17px; border-radius: 4px;
-  background: #111e35; border: 1px solid #2a4060;
+  background: var(--bg-item); border: 1px solid var(--border-2);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; transition: background 0.15s, border-color 0.15s;
 }
-.login-remember .chk-box.checked { background: #2356a8; border-color: #4a9fd4; }
+.login-remember .chk-box.checked { background: var(--accent); border-color: var(--accent-hi); }
 .login-remember .chk-box span { font-size: 12px; color: #fff; display: none; }
 .login-remember .chk-box.checked span { display: block; }
-.login-remember span { font-size: 12px; color: #7a9ec0; }
+.login-remember span { font-size: 12px; color: var(--text-muted); }
 .login-btn {
-  width: 100%; background: #2356a8; border: none; color: #fff;
+  width: 100%; background: var(--accent); border: none; color: #fff;
   padding: 11px; font-size: 14px; font-weight: 500; letter-spacing: 0.5px;
   border-radius: 8px; cursor: pointer; font-family: inherit; transition: background 0.15s;
 }
-.login-btn:hover { background: #1a3a7a; }
-.login-error { color: #e87a7a; font-size: 11.5px; text-align: center; margin-top: 10px; min-height: 18px; }
-.login-footer { text-align: center; font-size: 11px; color: #3a5a7a; margin-top: 20px; }
+.login-btn:hover { background: var(--accent-hi); }
+.login-error { color: var(--danger); font-size: 11.5px; text-align: center; margin-top: 10px; min-height: 18px; }
+.login-footer { text-align: center; font-size: 11px; color: var(--text-dim); margin-top: 20px; }
 
 /* ── 사이드바 ── */
 .sidebar {
@@ -597,8 +600,8 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
   </div>
 
   <div class="nav-right">
-    <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="라이트/다크 모드 전환">
-      <span id="themeIcon">☀️</span><span id="themeLabel">라이트모드</span>
+    <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="다크 모드로 전환">
+      <span id="themeIcon">🌙</span><span id="themeLabel">다크모드</span>
     </button>
     <button class="test-server-btn" onclick="openTestServer()">
       <span style="font-size:14px;">🖥</span> 테스트서버
@@ -1182,8 +1185,8 @@ function loadHome() {
       const role = sessionStorage.getItem('userRole') || '';
       const uName = sessionStorage.getItem('userName') || '';
       frame.contentWindow.postMessage({ type:'SCRIPT_URL', url:SCRIPT_URL, userRole:role, userName:uName }, '*');
-      const curTheme = localStorage.getItem('ggumbi-theme') || 'dark';
-      if (curTheme === 'light') frame.contentWindow.postMessage({ type:'THEME', mode:'light' }, '*');
+      const curTheme = localStorage.getItem('ggumbi-theme') || 'light';
+      frame.contentWindow.postMessage({ type:'THEME', mode:curTheme }, '*');
     } catch(e) {}
   };
   frame.addEventListener('load', handler);
@@ -1244,7 +1247,7 @@ window.addEventListener('message', e => {
     const _tHandler = function() {
       frame.removeEventListener('load', _tHandler);
       try {
-        const t = localStorage.getItem('ggumbi-theme') || 'dark';
+        const t = localStorage.getItem('ggumbi-theme') || 'light';
         frame.contentWindow.postMessage({ type:'THEME', mode: t }, '*');
         // training_main에서 넘어온 nextExists 정보를 교육파일에 전달
         frame.contentWindow.postMessage({ type:'NAV_INFO', nextExists }, '*');
@@ -1466,7 +1469,7 @@ function _applyTab(tabName, role) {
     frame.onload = () => {
       try {
         const t = localStorage.getItem('ggumbi-theme');
-        frame.contentWindow.postMessage({ type:'THEME', mode: t || 'dark' }, '*');
+        frame.contentWindow.postMessage({ type:'THEME', mode: t || 'light' }, '*');
       } catch(e) {}
     };
     navFrame('training/training_main.html?' + Date.now());
@@ -1478,7 +1481,7 @@ function _applyTab(tabName, role) {
         const uName = sessionStorage.getItem('userName') || '';
         frame.contentWindow.postMessage({ type:'SCRIPT_URL', url:KNOWLEDGE_SCRIPT_URL, userRole:role, userName:uName }, '*');
         const t = localStorage.getItem('ggumbi-theme');
-        frame.contentWindow.postMessage({ type:'THEME', mode: t || 'dark' }, '*');
+        frame.contentWindow.postMessage({ type:'THEME', mode: t || 'light' }, '*');
       } catch(e) {}
     };
     navFrame((TAB_MAP['지식DB'] || '지식db/지식db.html') + '?' + Date.now());
@@ -1913,7 +1916,7 @@ function updateFrame() {
   const periodParam=toPeriodParam(state.type,state.period);
   const url=`${base}?type=${encodeURIComponent(state.type)}&period=${encodeURIComponent(periodParam)}`;
   const frame=document.getElementById('mainFrame');
-  frame.onload=()=>{ try{const role=sessionStorage.getItem('userRole')||'';const uName=sessionStorage.getItem('userName')||'';frame.contentWindow.postMessage({type:'SCRIPT_URL',url:SCRIPT_URL,userRole:role,userName:uName},'*'); const t=localStorage.getItem('ggumbi-theme');if(t==='light')frame.contentWindow.postMessage({type:'THEME',mode:'light'},'*');}catch(e){} if(typeof pushCSVToFrame==='function')pushCSVToFrame(); };
+  frame.onload=()=>{ try{const role=sessionStorage.getItem('userRole')||'';const uName=sessionStorage.getItem('userName')||'';frame.contentWindow.postMessage({type:'SCRIPT_URL',url:SCRIPT_URL,userRole:role,userName:uName},'*'); const t=localStorage.getItem('ggumbi-theme')||'light';frame.contentWindow.postMessage({type:'THEME',mode:t},'*');}catch(e){} if(typeof pushCSVToFrame==='function')pushCSVToFrame(); };
   navFrame(url);
 }
 function updateHeader() {
@@ -1958,7 +1961,7 @@ function deepLinkFromHash() {
       const role = sessionStorage.getItem('userRole') || '';
       const uName = sessionStorage.getItem('userName') || '';
       frame.contentWindow.postMessage({ type:'SCRIPT_URL', url:SCRIPT_URL, userRole:role, userName:uName }, '*');
-      const t = themeParam || localStorage.getItem('ggumbi-theme') || 'dark';
+      const t = themeParam || localStorage.getItem('ggumbi-theme') || 'light';
       frame.contentWindow.postMessage({ type:'THEME', mode:t }, '*');
     } catch(e) {}
   };
@@ -2051,24 +2054,24 @@ document.getElementById('mainFrame').addEventListener('load', function() {
 
 // ── 테마 재전달 헬퍼 ──
 function sendThemeToFrame() {
-  const t = localStorage.getItem('ggumbi-theme') || 'dark';
+  const t = localStorage.getItem('ggumbi-theme') || 'light';
   const frame = document.getElementById('mainFrame');
   try { frame.contentWindow.postMessage({ type:'THEME', mode: t }, '*'); } catch(e) {}
 }
 
 
-// ── 테마 토글 ──
+// ── 테마 토글 (기본값: 라이트) ──
 function applyTheme(mode) {
-  if (mode === 'light') {
-    document.body.classList.add('light-mode');
-    document.getElementById('themeIcon').textContent = '🌙';
-    document.getElementById('themeLabel').textContent = '다크모드';
-    document.getElementById('themeToggleBtn').title = '다크 모드로 전환';
-  } else {
-    document.body.classList.remove('light-mode');
+  if (mode === 'dark') {
+    document.body.classList.add('dark-mode');
     document.getElementById('themeIcon').textContent = '☀️';
     document.getElementById('themeLabel').textContent = '라이트모드';
     document.getElementById('themeToggleBtn').title = '라이트 모드로 전환';
+  } else {
+    document.body.classList.remove('dark-mode');
+    document.getElementById('themeIcon').textContent = '🌙';
+    document.getElementById('themeLabel').textContent = '다크모드';
+    document.getElementById('themeToggleBtn').title = '다크 모드로 전환';
   }
   // iframe에 테마 신호 전송
   const frame = document.getElementById('mainFrame');
@@ -2077,14 +2080,14 @@ function applyTheme(mode) {
 }
 
 function toggleTheme() {
-  const isLight = document.body.classList.contains('light-mode');
-  applyTheme(isLight ? 'dark' : 'light');
+  const isDark = document.body.classList.contains('dark-mode');
+  applyTheme(isDark ? 'light' : 'dark');
 }
 
-// 저장된 테마 복원
+// 저장된 테마 복원 (저장된 게 없으면 기본 라이트 유지)
 (function() {
   const saved = localStorage.getItem('ggumbi-theme');
-  if (saved === 'light') applyTheme('light');
+  if (saved === 'dark') applyTheme('dark');
 })();
 
 

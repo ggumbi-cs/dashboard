@@ -740,5 +740,12 @@ function applyStyle() {
 // 초기화: 강조필터를 GAS에서 먼저 불러온 뒤 렌더 (샘플 데이터 없이 안내만 표시)
 loadHighlightFilter().then(renderAllPages);
 </script>
+<script>
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
+</script>
 </body>
 </html>

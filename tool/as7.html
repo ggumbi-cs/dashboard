@@ -10,12 +10,19 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
 :root{
+  --bg:#f5f6fb;--bg2:#ffffff;--bg3:#eef0f7;--bg4:#e3e6f0;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.16);
+  --accent:#3d74e0;--accent2:#6a45e6;--accent-glow:rgba(61,116,224,0.15);
+  --success:#1f9d68;--warn:#b8790b;--danger:#dc3545;
+  --text:#1c2536;--text2:#565c74;--text3:#9198ac;
+  --radius:10px;
+}
+body.dark-mode{
   --bg:#0f1117;--bg2:#161820;--bg3:#1e2030;--bg4:#252840;
   --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
   --accent:#4f8eff;--accent2:#7b5cff;--accent-glow:rgba(79,142,255,0.15);
   --success:#3dd68c;--warn:#f5a623;--danger:#ff5c5c;
   --text:#e2e4f0;--text2:#8b8fa8;--text3:#5a5e7a;
-  --radius:10px;
 }
 
 body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
@@ -1027,6 +1034,14 @@ document.addEventListener('dragover',  e => { if (fileListEl.classList.contains(
 document.addEventListener('drop',      e => { if (fileListEl.classList.contains('visible')) { e.preventDefault(); addFiles(e.dataTransfer.files); } });
 fileInput.addEventListener('change',   e => { addFiles(e.target.files); fileInput.value=''; });
 addMoreBtn.addEventListener('click',   () => fileInput.click());
+</script>
+
+<script>
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
 </script>
 </body>
 </html>

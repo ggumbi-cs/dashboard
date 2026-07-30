@@ -268,7 +268,7 @@ body.is-admin .banner-admin-gear { display:flex; }
 .s-card:nth-child(1){animation-delay:0.1s} .s-card:nth-child(2){animation-delay:0.18s} .s-card:nth-child(3){animation-delay:0.26s}
 </style>
 </head>
-<body>
+<body class="light-mode">
 
 <div id="statusBar">
   <div class="sb-left">
@@ -1115,8 +1115,8 @@ setTimeout(() => {
     _userName  = sessionStorage.getItem('_userName') || '';
     _isAdmin   = (_userRole === 'admin');
     if (_isAdmin) document.body.classList.add('is-admin');
-    const t = sessionStorage.getItem('_theme') || localStorage.getItem('ggumbi-theme') || 'dark';
-    if (t === 'light') document.body.classList.add('light-mode');
+    const t = sessionStorage.getItem('_theme') || localStorage.getItem('ggumbi-theme') || 'light';
+    if (t === 'dark') document.body.classList.remove('light-mode');
     applyUserInfo();
     loadSettings();
   }

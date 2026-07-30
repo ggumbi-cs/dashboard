@@ -509,7 +509,7 @@ let DEFAULT_NOTICES_OPS = [
 // ─────────────────────────────────────────────
 // 상태
 // ─────────────────────────────────────────────
-let _scriptUrl = '', _userRole = '', _isAdmin = false;
+let _scriptUrl = '', _userRole = '', _userName = '', _isAdmin = false;
 let _quickItems = [], _cardItems = [];
 let _bannerCfg = { eyebrow:'Dashboard', greetPrefix:'안녕하세요,', greetSuffix:'님 엄마감동팀 소통채널 입니다', tagline:'오늘도 고객의 마음을 움직이는 하루를 만들어가세요.' };
 let _sliderIdx = 0, _sliderPer = 3;
@@ -530,9 +530,11 @@ window.addEventListener('message', e => {
   if (e.data.type !== 'SCRIPT_URL') return;
   _scriptUrl = e.data.url || '';
   _userRole  = e.data.userRole || '';
+  _userName  = e.data.userName || '';
   // 캐싱
   if (_scriptUrl) sessionStorage.setItem('_gasUrl', _scriptUrl);
   if (_userRole)  sessionStorage.setItem('_userRole', _userRole);
+  sessionStorage.setItem('_userName', _userName);
   _isAdmin   = (_userRole === 'admin');
   if (_isAdmin) document.body.classList.add('is-admin');
   applyUserInfo();
@@ -553,7 +555,7 @@ setInterval(tickTime,1000); tickTime();
 // ─────────────────────────────────────────────
 function applyUserInfo() {
   const nameMap={admin:'관리자',leader:'리더급',ggumbi:'꿈비',affiliate:'계열사'};
-  const displayName=nameMap[_userRole]||_userRole||'방문자';
+  const displayName=_userName||nameMap[_userRole]||_userRole||'방문자';
   document.getElementById('sbUser').textContent=displayName;
   document.getElementById('wbName').textContent=displayName;
   document.getElementById('wbEyebrow').textContent=_bannerCfg.eyebrow;
@@ -1110,6 +1112,7 @@ setTimeout(() => {
   if (!_scriptUrl) {
     _scriptUrl = sessionStorage.getItem('_gasUrl') || '';
     _userRole  = sessionStorage.getItem('_userRole') || '';
+    _userName  = sessionStorage.getItem('_userName') || '';
     _isAdmin   = (_userRole === 'admin');
     if (_isAdmin) document.body.classList.add('is-admin');
     const t = sessionStorage.getItem('_theme') || localStorage.getItem('ggumbi-theme') || 'dark';

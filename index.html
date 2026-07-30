@@ -532,30 +532,7 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
     </div>
   </div>
 
-  <!-- 대분류2: 현황관리 -->
-  <div class="nav-group" id="ng-status">
-    <div class="nav-parent">
-      (구)현황관리 <span class="nav-arrow">▾</span>
-    </div>
-    <div class="nav-dropdown">
-      <div class="nav-item" data-tab="주요kpi" onclick="switchTab(this)">
-        <span class="nav-item-label">주요KPI</span>
-        <button class="vis-btn" data-tab="주요kpi" onclick="openVisModal(event,'주요kpi')">⚙</button>
-      </div>
-      <div class="nav-item" data-tab="반품현황" onclick="switchTab(this)">
-        <span class="nav-item-label">반품현황</span>
-        <button class="vis-btn" data-tab="반품현황" onclick="openVisModal(event,'반품현황')">⚙</button>
-      </div>
-      <div class="nav-item" data-tab="처리현황" onclick="switchTab(this)">
-        <span class="nav-item-label">처리현황</span>
-        <button class="vis-btn" data-tab="처리현황" onclick="openVisModal(event,'처리현황')">⚙</button>
-      </div>
-      <div class="nav-item" data-tab="품질관리" onclick="switchTab(this)">
-        <span class="nav-item-label">품질관리</span>
-        <button class="vis-btn" data-tab="품질관리" onclick="openVisModal(event,'품질관리')">⚙</button>
-      </div>
-    </div>
-  </div>
+  <!-- 대분류2: 현황관리 → 개발자 탭 사이드바 '미사용 메뉴'로 이동 (2026.07.30) -->
 
   <!-- 대분류3: 보고서 (신규, qc_main과 동일하게 독자적으로 동작) -->
   <div class="nav-group" id="ng-report">
@@ -674,6 +651,17 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
       <div class="sb-label">메뉴설정</div>
       <div class="sb-item" onclick="devNav('developer/webinfo.html', this)">웹구성정보</div>
       <div class="sb-item" onclick="devNav('developer/menuconfig.html', this)">메뉴구성</div>
+      <div class="sb-divider"></div>
+      <div class="sb-label">미사용 메뉴</div>
+      <div class="sb-item" style="display:flex;align-items:center;justify-content:space-between;" onclick="toggleDevGroup(this)">
+        <span>(구)현황관리</span><span class="dev-group-arrow" style="font-size:9px;color:var(--text-faint);transition:transform 0.2s;">▶</span>
+      </div>
+      <div class="dev-group-children" style="display:none;">
+        <div class="sb-item" style="padding-left:24px;" onclick="switchTabDirect('주요kpi')">주요KPI</div>
+        <div class="sb-item" style="padding-left:24px;" onclick="switchTabDirect('반품현황')">반품현황</div>
+        <div class="sb-item" style="padding-left:24px;" onclick="switchTabDirect('처리현황')">처리현황</div>
+        <div class="sb-item" style="padding-left:24px;" onclick="switchTabDirect('품질관리')">품질관리</div>
+      </div>
     </div>
 
     <div id="issueSidebar" style="display:none;">
@@ -1597,6 +1585,15 @@ function onceNavWithPerm(path, el, allowedRoles) {
   }
   onceNav(path, el);
 }
+function toggleDevGroup(el) {
+  const children = el.nextElementSibling;
+  const arrow = el.querySelector('.dev-group-arrow');
+  if (!children) return;
+  const isOpen = children.style.display === 'block';
+  children.style.display = isOpen ? 'none' : 'block';
+  if (arrow) arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+}
+
 function switchTabByName(tabName, sidebarEl) {
   // 모든 관련 사이드바 active 초기화
   document.querySelectorAll('#statusSidebar .sb-item, #newStatusSidebar .sb-item, #qcSidebar .sb-item').forEach(i => i.classList.remove('active'));
@@ -1952,3 +1949,4 @@ window.addEventListener('hashchange', function() {
 </script>
 </body>
 </html>
+<!-- 최종수정버젼 : 2026.07.30(목) 09:58:58 -->

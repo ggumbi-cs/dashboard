@@ -487,6 +487,23 @@ function normalizeBizNoForMatch(s){
   return (s||'').toString().replace(/[^0-9]/g,'');
 }
 
+// 헤더 텍스트로 컬럼 인덱스를 찾음 — 원본 엑셀의 컬럼 순서가 바뀌어도 이름으로 안전하게 매칭
+// names: 허용할 헤더 텍스트 후보들(정확일치 우선, 그 다음 포함매칭), fallbackIndex: 못 찾았을 때 쓸 기존 고정 인덱스
+function findColIndexByHeader(headerRow, names, fallbackIndex, warnLabel){
+  const norm = s => (s||'').toString().replace(/\s/g,'');
+  const normNames = names.map(norm);
+
+  for(let i=0;i<headerRow.length;i++){
+    if(normNames.includes(norm(headerRow[i]))) return {index:i, matched:true};
+  }
+  for(let i=0;i<headerRow.length;i++){
+    const h = norm(headerRow[i]);
+    if(h && normNames.some(n=> h.includes(n) || n.includes(h))) return {index:i, matched:true};
+  }
+  console.warn(`[거래처조회.xlsx] "${warnLabel}" 헤더를 찾지 못해 기존 위치(index ${fallbackIndex})로 대체합니다. 실제 헤더행:`, headerRow);
+  return {index:fallbackIndex, matched:false};
+}
+
 async function loadRegisteredVendors(){
   if(typeof XLSX === 'undefined'){
     document.getElementById('dataVersionStat').textContent = `데이터 버전: 엑셀 라이브러리 로딩 실패 (네트워크/CDN 차단 확인 필요)`;
@@ -524,14 +541,21 @@ async function loadRegisteredVendors(){
     const buf = await fileRes.arrayBuffer();
     const wb = XLSX.read(buf, {type:'array'});
     const sheet = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet, {header:1, range:2}); // 2행이 헤더 → 3행부터 데이터 (0-indexed range:2)
+    const allRows = XLSX.utils.sheet_to_json(sheet, {header:1}); // 전체 행(0행부터), 값 그대로
+    const headerRow = allRows[1] || []; // 2행(0-indexed 1)이 헤더
+    const rows = allRows.slice(2); // 3행부터 데이터 (기존과 동일한 범위)
+
+    // 헤더 순서가 바뀌어도 이름으로 컬럼을 찾음. 못 찾을 때만 기존 고정 위치(C/H/I)로 폴백
+    const col상호 = findColIndexByHeader(headerRow, ["상호"], 2, "상호");
+    const col사업자번호 = findColIndexByHeader(headerRow, ["사업자번호","사업자등록번호"], 7, "사업자번호");
+    const col대표자성명 = findColIndexByHeader(headerRow, ["대표자성명","대표자명","대표자"], 8, "대표자성명");
+    const headerFallbackUsed = !col상호.matched || !col사업자번호.matched || !col대표자성명.matched;
 
     registeredMap = new Map();
     rows.forEach(row=>{
-      // A:거래처 B:거래처번호 C:상호 D:관리자 E:관리부서 F:거래처상태 G:신용등급 H:사업자번호 I:대표자성명
-      const sangho = row[2];
-      const bizNoRaw = row[7];
-      const ceo = row[8];
+      const sangho = row[col상호.index];
+      const bizNoRaw = row[col사업자번호.index];
+      const ceo = row[col대표자성명.index];
       const norm = normalizeBizNoForMatch(bizNoRaw);
       if(norm){
         registeredMap.set(norm, {
@@ -541,6 +565,11 @@ async function loadRegisteredVendors(){
         });
       }
     });
+
+    if(headerFallbackUsed){
+      const stat = document.getElementById('dataVersionStat');
+      stat.textContent = stat.textContent + ' ⚠ 헤더 매칭 실패(콘솔 확인)';
+    }
   }catch(e){
     console.error("거래처조회 로딩 실패:", e);
     const stat = document.getElementById('dataVersionStat');

@@ -841,6 +841,7 @@ body.is-admin .q-item .item-gear, body.is-admin .stat-card .item-gear { display:
 const ROLE_ORDER = { admin:0, leader:1, ggumbi:2, affiliate:3 };
 const ROLE_LABEL = { admin:'관리자', leader:'리더급', ggumbi:'꿈비', affiliate:'계열사' };
 let _userRole = '';
+let _userName = '';
 
 // ─────────────────────────────────────────────
 // Quick Access — 클릭하면 전체 리스트로 이동 + 해당 구분 필터 적용
@@ -902,7 +903,9 @@ window.addEventListener('message', e => {
   }
   if (e.data.type === 'SCRIPT_URL') {
     _userRole = e.data.userRole || '';
+    _userName = e.data.userName || '';
     if (_userRole) sessionStorage.setItem('_userRole', _userRole);
+    sessionStorage.setItem('_userName', _userName);
     applyUserInfo();
     renderQuick();
     renderStats();
@@ -920,7 +923,7 @@ function canAccess(minRole) {
 
 function applyUserInfo() {
   const rn = (_bannerCfg && _bannerCfg.roleNames) || DEFAULT_BANNER.roleNames;
-  const label = rn[_userRole] || ROLE_LABEL[_userRole] || _userRole || rn.visitor || '방문자';
+  const label = _userName || rn[_userRole] || ROLE_LABEL[_userRole] || _userRole || rn.visitor || '방문자';
   document.getElementById('sbUser').textContent = label;
   document.getElementById('wbName').textContent = label;
   // 관리자일 때만 ⚙ 설정 버튼들이 보이도록
@@ -931,7 +934,7 @@ function applyUserInfo() {
 function sendRoleToSubFrame() {
   const frame = document.getElementById('subFrame');
   if (!frame || !frame.contentWindow) return;
-  try { frame.contentWindow.postMessage({ type:'SCRIPT_URL', userRole:_userRole }, '*'); } catch(e) {}
+  try { frame.contentWindow.postMessage({ type:'SCRIPT_URL', userRole:_userRole, userName:_userName }, '*'); } catch(e) {}
 }
 function sendThemeToSubFrame(mode) {
   const frame = document.getElementById('subFrame');
@@ -1850,6 +1853,7 @@ refreshAllList().catch(()=>{});
 setTimeout(() => {
   if (!_userRole) {
     _userRole = sessionStorage.getItem('_userRole') || '';
+    _userName = sessionStorage.getItem('_userName') || '';
     applyUserInfo();
     renderQuick();
     renderStats();

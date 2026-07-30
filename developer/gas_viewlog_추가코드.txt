@@ -1,0 +1,85 @@
+// ================================================================
+// ★ 접속로그 (log.html - 관리자 전용 열람현황 분석)
+//   기존 action.gs 파일 아무 곳에나 (파일 맨 끝 권장) 통째로 붙여넣고,
+//   아래 "doGet / doPost 라우팅 추가" 부분만 기존 doGet/doPost 함수 안에 한 줄씩 추가하세요.
+// ================================================================
+
+const VIEWLOG_SHEET_NAME = '접속로그';
+const VIEWLOG_HEADERS    = ['시각', '로그인유형', '팀명', '사용자명', 'IP', '페이지'];
+const VIEWLOG_MAX_ROWS   = 5000; // getViewLogs가 반환하는 최근 로그 상한 (시트 자체는 계속 누적됨)
+
+function ensureViewLogSheet() {
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  let   sheet = ss.getSheetByName(VIEWLOG_SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(VIEWLOG_SHEET_NAME);
+    sheet.getRange(1, 1, 1, VIEWLOG_HEADERS.length).setValues([VIEWLOG_HEADERS]);
+    sheet.getRange(1, 1, 1, VIEWLOG_HEADERS.length).setBackground('#0f1f3d').setFontColor('#ffffff').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+    const widths = [140, 90, 100, 100, 120, 260];
+    widths.forEach((w, i) => sheet.setColumnWidth(i + 1, w));
+  }
+  return sheet;
+}
+
+function logPageView(body) {
+  try {
+    const sheet = ensureViewLogSheet();
+    const now   = Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm:ss');
+    sheet.appendRow([
+      now,
+      String(body.loginType || ''),
+      String(body.team || ''),
+      String(body.userName || ''),
+      String(body.ip || ''),
+      String(body.page || '')
+    ]);
+    return respond({ ok: true });
+  } catch(err) { return respond({ ok: false, msg: err.toString() }); }
+}
+
+function getViewLogs() {
+  try {
+    const sheet   = ensureViewLogSheet();
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) return respond({ ok: true, rows: [] });
+    const startRow = Math.max(2, lastRow - VIEWLOG_MAX_ROWS + 1);
+    const numRows  = lastRow - startRow + 1;
+    const data = sheet.getRange(startRow, 1, numRows, VIEWLOG_HEADERS.length).getValues();
+    const rows = data.map(r => ({
+      time:      r[0] instanceof Date ? Utilities.formatDate(r[0], 'Asia/Seoul', 'yyyy-MM-dd HH:mm:ss') : String(r[0] || ''),
+      loginType: String(r[1] || ''),
+      team:      String(r[2] || ''),
+      userName:  String(r[3] || ''),
+      ip:        String(r[4] || ''),
+      page:      String(r[5] || '')
+    }));
+    return respond({ ok: true, rows });
+  } catch(err) { return respond({ ok: false, msg: err.toString() }); }
+}
+
+// ================================================================
+// doGet / doPost 라우팅 추가
+// ================================================================
+//
+// 기존 doGet(e) 함수 안, 다른 "if (action === ...)" 줄들 사이에 아래 한 줄을 추가하세요:
+//
+//   if (action === 'getViewLogs') return getViewLogs();
+//
+// 기존 doPost(e) 함수 안, 다른 "if (body.action === ...)" 줄들 사이에 아래 한 줄을 추가하세요:
+//
+//   if (body.action === 'logView') return logPageView(body);
+//
+// ================================================================
+// 배포 방법 (URL을 그대로 유지하려면 반드시 "새 배포"가 아니라 "배포 관리"에서 수정)
+// ================================================================
+// 1. script.google.com 에서 SCRIPT_URL 소유 Apps Script 프로젝트를 엽니다.
+// 2. action.gs 파일 맨 끝에 위 코드(라우팅 두 줄 제외한 나머지 전체)를 붙여넣습니다.
+// 3. doGet(e) 함수 안에 `if (action === 'getViewLogs') return getViewLogs();` 한 줄 추가.
+// 4. doPost(e) 함수 안에 `if (body.action === 'logView') return logPageView(body);` 한 줄 추가.
+// 5. 저장(Ctrl+S).
+// 6. 우측 상단 "배포" → "배포 관리" 클릭.
+// 7. 기존 배포 항목 옆 연필(✏) 아이콘 클릭 → "새 버전" 선택 → "배포" 클릭.
+//    (※ "새 배포"를 누르면 URL이 바뀌어 index.html의 SCRIPT_URL을 다시 바꿔야 하니,
+//       반드시 "배포 관리 → 기존 배포 수정 → 새 버전"으로 진행하세요.)
+// 8. 배포가 끝나면 별도 URL 변경 없이 대시보드에서 바로 접속로그가 쌓이기 시작합니다.

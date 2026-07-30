@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>접속로그 — 엄마감동팀</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #0d1117;
+  --surface:  #161b22;
+  --surface2: #1c2128;
+  --border:   #30363d;
+  --border2:  #21262d;
+  --text:     #e6edf3;
+  --text2:    #8b949e;
+  --text3:    #6e7681;
+  --blue:     #388bfd;
+  --blue-dim: #1f3a5f;
+  --green:    #3fb950;
+  --green-dim:#1a3a22;
+  --yellow:   #d29922;
+  --yellow-dim:#2d2208;
+  --red:      #f85149;
+  --red-dim:  #3d1c1a;
+  --purple:   #bc8cff;
+  --purple-dim:#2a1f42;
+  --mono:     'JetBrains Mono', monospace;
+  --sans:     'Noto Sans KR', sans-serif;
+}
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 13px; line-height: 1.6; min-height: 100vh; }
+
+/* ── 차단 화면 ── */
+#blockScreen {
+  display: none; min-height: 100vh; flex-direction: column;
+  align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 40px;
+}
+#blockScreen .icon { font-size: 44px; }
+#blockScreen .title { font-size: 16px; font-weight: 700; color: var(--text); }
+#blockScreen .desc { font-size: 12.5px; color: var(--text2); }
+
+/* ── 본문 ── */
+#appRoot { display: none; padding: 28px 32px 60px; max-width: 1280px; margin: 0 auto; }
+.page-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 22px; flex-wrap: wrap; gap: 10px; }
+.page-title { font-size: 19px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.page-title .badge { font-family: var(--mono); font-size: 10px; background: var(--red-dim); color: var(--red); padding: 2px 8px; border-radius: 10px; }
+.page-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+.refresh-btn {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+  padding: 7px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; gap: 6px; transition: background .15s;
+}
+.refresh-btn:hover { background: var(--border2); }
+.refresh-btn:disabled { opacity: .5; cursor: default; }
+
+.summary-note {
+  background: var(--blue-dim); border: 1px solid #244a7a; color: #a9cdfa;
+  border-radius: 8px; padding: 10px 14px; font-size: 12px; margin-bottom: 20px; line-height: 1.7;
+}
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+@media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+.panel-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.panel-title .cnt { font-family: var(--mono); font-size: 10.5px; color: var(--text3); font-weight: 400; }
+
+.user-row {
+  display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border2);
+}
+.user-row:last-child { border-bottom: none; }
+.user-row .rank { width: 18px; text-align: center; font-family: var(--mono); font-size: 11px; color: var(--text3); flex-shrink: 0; }
+.user-row .who { flex: 1; min-width: 0; }
+.user-row .who .nm { font-weight: 600; font-size: 12.5px; }
+.user-row .who .nm.exec { color: var(--yellow); }
+.user-row .who .top-page { font-size: 11px; color: var(--text2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-row .cnt-badge { font-family: var(--mono); font-size: 11px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 2px 9px; flex-shrink: 0; }
+
+.page-row {
+  display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border2);
+}
+.page-row:last-child { border-bottom: none; }
+.page-row .bar-wrap { flex: 1; background: var(--surface2); border-radius: 4px; height: 18px; position: relative; overflow: hidden; }
+.page-row .bar { position: absolute; inset: 0; background: var(--blue-dim); border-right: 2px solid var(--blue); }
+.page-row .bar-label { position: absolute; inset: 0; display: flex; align-items: center; padding: 0 8px; font-size: 11px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.page-row .cnt-badge { font-family: var(--mono); font-size: 11px; color: var(--text2); flex-shrink: 0; width: 32px; text-align: right; }
+
+.filter-bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.filter-bar input, .filter-bar select {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+  padding: 7px 10px; border-radius: 6px; font-size: 12px; font-family: inherit; outline: none;
+}
+.filter-bar input:focus, .filter-bar select:focus { border-color: var(--blue); }
+.filter-bar input[type="text"] { flex: 1; min-width: 160px; }
+
+.table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th {
+  text-align: left; padding: 9px 12px; background: var(--surface2); color: var(--text2);
+  font-weight: 600; font-size: 11px; letter-spacing: .3px; border-bottom: 1px solid var(--border);
+  position: sticky; top: 0;
+}
+tbody td { padding: 8px 12px; border-bottom: 1px solid var(--border2); color: var(--text); white-space: nowrap; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--surface2); }
+td.page-cell { max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
+.tbl-scroll { max-height: 520px; overflow: auto; }
+.role-chip { font-family: var(--mono); font-size: 10px; padding: 1px 7px; border-radius: 8px; }
+.role-chip.admin { background: var(--red-dim); color: var(--red); }
+.role-chip.leader { background: var(--yellow-dim); color: var(--yellow); }
+.role-chip.ggumbi { background: var(--purple-dim); color: var(--purple); }
+.role-chip.affiliate { background: var(--surface2); color: var(--text2); }
+
+.empty-state { padding: 40px; text-align: center; color: var(--text3); font-size: 12.5px; }
+.load-more-btn {
+  width: 100%; padding: 10px; background: var(--surface2); border: none; border-top: 1px solid var(--border);
+  color: var(--text2); font-size: 12px; cursor: pointer; font-family: inherit;
+}
+.load-more-btn:hover { background: var(--border2); color: var(--text); }
+</style>
+</head>
+<body>
+
+<div id="blockScreen">
+  <div class="icon">🔒</div>
+  <div class="title">관리자 전용 페이지입니다</div>
+  <div class="desc">접속로그는 관리자모드 로그인 시에만 열람할 수 있습니다.</div>
+</div>
+
+<div id="appRoot">
+  <div class="page-header">
+    <div>
+      <div class="page-title">📊 접속로그 <span class="badge">ADMIN ONLY</span></div>
+      <div class="page-sub">사용자별 · 페이지별 열람 현황 — 누가 무엇을 많이 보는지 파악해 우선순위를 정합니다.</div>
+    </div>
+    <button class="refresh-btn" id="refreshBtn" onclick="loadLogs()"><span>🔄</span><span>새로고침</span></button>
+  </div>
+
+  <div class="summary-note">
+    ℹ️ IP는 브라우저가 스스로 조회해 전송한 <b>자기신고 공인 IP</b>이며, 서버가 별도로 검증한 값은 아닙니다. 팀 내부 참고용 통계로만 활용해주세요.
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title">👤 사용자별 열람 순위 <span class="cnt" id="userCount"></span></div>
+      <div id="userRankList"><div class="empty-state">불러오는 중...</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">📄 페이지별 열람 순위 <span class="cnt" id="pageCount"></span></div>
+      <div id="pageRankList"><div class="empty-state">불러오는 중...</div></div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <input type="text" id="fSearch" placeholder="사용자명 / 팀명 / 페이지 검색..." oninput="renderTable()">
+    <select id="fRole" onchange="renderTable()">
+      <option value="">전체 로그인유형</option>
+      <option value="관리자모드">관리자모드</option>
+      <option value="리더급">리더급</option>
+      <option value="꿈비">꿈비</option>
+      <option value="계열사">계열사</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:150px;">시각</th>
+            <th style="width:90px;">로그인유형</th>
+            <th style="width:100px;">팀명</th>
+            <th style="width:100px;">사용자명</th>
+            <th style="width:120px;">IP</th>
+            <th>페이지</th>
+          </tr>
+        </thead>
+        <tbody id="logTbody">
+          <tr><td colspan="6" class="empty-state">불러오는 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <button class="load-more-btn" id="loadMoreBtn" style="display:none;" onclick="showMore()">더 보기</button>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec';
+const ROLE_LABEL_CLASS = { '관리자모드':'admin', '리더급':'leader', '꿈비':'ggumbi', '계열사':'affiliate' };
+const EXEC_TEAM = '임원'; // login_id.xlsx 상 임원 팀명 — 강조 표시용
+
+let ALL_ROWS = [];
+let filteredRows = [];
+let renderLimit = 100;
+
+function checkAdmin() {
+  const role = sessionStorage.getItem('userRole') || '';
+  if (role !== 'admin') {
+    document.getElementById('blockScreen').style.display = 'flex';
+    return false;
+  }
+  document.getElementById('appRoot').style.display = 'block';
+  return true;
+}
+
+function identityOf(row) {
+  if (row.userName) return { label: (row.team ? row.team + ' · ' : '') + row.userName, isExec: row.team === EXEC_TEAM, key: row.loginType + '|' + row.team + '|' + row.userName };
+  return { label: row.loginType || '알수없음', isExec: false, key: row.loginType || '' };
+}
+
+async function loadLogs() {
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true;
+  try {
+    const res  = await fetch(SCRIPT_URL + '?action=getViewLogs', { redirect: 'follow' });
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.msg || '조회 실패');
+    ALL_ROWS = (json.rows || []).slice().reverse(); // 최신순
+    renderSummary();
+    renderLimit = 100;
+    renderTable();
+  } catch(e) {
+    document.getElementById('logTbody').innerHTML = `<tr><td colspan="6" class="empty-state">불러오기 실패: ${e.message}<br><span style="font-size:11px;">GAS에 getViewLogs 액션이 배포되었는지 확인해주세요.</span></td></tr>`;
+    document.getElementById('userRankList').innerHTML = '<div class="empty-state">데이터 없음</div>';
+    document.getElementById('pageRankList').innerHTML = '<div class="empty-state">데이터 없음</div>';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderSummary() {
+  // 사용자별 집계
+  const byUser = {};
+  const byPage = {};
+  ALL_ROWS.forEach(r => {
+    const id = identityOf(r);
+    if (!byUser[id.key]) byUser[id.key] = { label: id.label, isExec: id.isExec, count: 0, pages: {} };
+    byUser[id.key].count++;
+    byUser[id.key].pages[r.page] = (byUser[id.key].pages[r.page] || 0) + 1;
+
+    byPage[r.page] = (byPage[r.page] || 0) + 1;
+  });
+
+  const userList = Object.values(byUser).sort((a,b) => b.count - a.count);
+  document.getElementById('userCount').textContent = `${userList.length}명`;
+  const userHtml = userList.slice(0, 15).map((u, i) => {
+    const topPage = Object.entries(u.pages).sort((a,b) => b[1]-a[1])[0];
+    return `
+    <div class="user-row">
+      <div class="rank">${i+1}</div>
+      <div class="who">
+        <div class="nm${u.isExec ? ' exec':''}">${u.isExec ? '⭐ ' : ''}${escapeHtml(u.label)}</div>
+        <div class="top-page">주로 봄: ${topPage ? escapeHtml(topPage[0]) : '-'}</div>
+      </div>
+      <div class="cnt-badge">${u.count}회</div>
+    </div>`;
+  }).join('') || '<div class="empty-state">데이터 없음</div>';
+  document.getElementById('userRankList').innerHTML = userHtml;
+
+  const pageList = Object.entries(byPage).sort((a,b) => b[1]-a[1]);
+  document.getElementById('pageCount').textContent = `${pageList.length}개`;
+  const maxCnt = pageList.length ? pageList[0][1] : 1;
+  const pageHtml = pageList.slice(0, 15).map(([page, cnt]) => {
+    const pct = Math.max(6, Math.round(cnt / maxCnt * 100));
+    return `
+    <div class="page-row">
+      <div class="bar-wrap">
+        <div class="bar" style="width:${pct}%;"></div>
+        <div class="bar-label">${escapeHtml(page)}</div>
+      </div>
+      <div class="cnt-badge">${cnt}</div>
+    </div>`;
+  }).join('') || '<div class="empty-state">데이터 없음</div>';
+  document.getElementById('pageRankList').innerHTML = pageHtml;
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderTable() {
+  const kw   = (document.getElementById('fSearch').value || '').trim().toLowerCase();
+  const role = document.getElementById('fRole').value;
+
+  filteredRows = ALL_ROWS.filter(r => {
+    if (role && r.loginType !== role) return false;
+    if (!kw) return true;
+    return [r.userName, r.team, r.page, r.loginType].some(v => String(v||'').toLowerCase().includes(kw));
+  });
+
+  const slice = filteredRows.slice(0, renderLimit);
+  document.getElementById('logTbody').innerHTML = slice.length ? slice.map(r => `
+    <tr>
+      <td>${escapeHtml(r.time)}</td>
+      <td><span class="role-chip ${ROLE_LABEL_CLASS[r.loginType]||''}">${escapeHtml(r.loginType)}</span></td>
+      <td>${escapeHtml(r.team)}</td>
+      <td>${escapeHtml(r.userName)}</td>
+      <td style="font-family:var(--mono);font-size:11px;">${escapeHtml(r.ip)}</td>
+      <td class="page-cell">${escapeHtml(r.page)}</td>
+    </tr>`).join('') : '<tr><td colspan="6" class="empty-state">조건에 맞는 로그가 없습니다</td></tr>';
+
+  document.getElementById('loadMoreBtn').style.display = filteredRows.length > renderLimit ? 'block' : 'none';
+}
+
+function showMore() {
+  renderLimit += 200;
+  renderTable();
+}
+
+if (checkAdmin()) loadLogs();
+</script>
+</body>
+</html>

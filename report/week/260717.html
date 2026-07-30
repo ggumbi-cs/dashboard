@@ -548,5 +548,12 @@ table.dt tr:last-child td{border-bottom:none;}
 
 <div class="footer">엄마감동팀 주간보고 · 260717 마감 · 혁신관리본부 보고용</div>
 
+<script>
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
+</script>
 </body>
 </html>

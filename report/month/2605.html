@@ -1051,5 +1051,13 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
   2026년 5월 월간 보고 · 엄마감동팀 &nbsp;·&nbsp; 작성: 2026.06.24 &nbsp;·&nbsp; 채널톡 직접 집계 기준
 </div>
 
+<script>
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
+</script>
+
 </body>
 </html>

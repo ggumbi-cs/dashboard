@@ -331,5 +331,12 @@ function swToggle(){
 function swReset(){run=false;clearInterval(tick);el=0;const b=document.getElementById('swGo');b.textContent='시작';b.classList.remove('run');render();}
 render();
 </script>
+<script>
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
+</script>
 </body>
 </html>

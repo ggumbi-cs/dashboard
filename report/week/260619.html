@@ -648,5 +648,12 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 
 <div class="footer">엄마감동팀 AI 주간회의자료 · 260619 마감 · 혁신상품본부 발표용 · 7분</div>
 
+<script>
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
+</script>
 </body>
 </html>

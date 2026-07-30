@@ -615,6 +615,12 @@ async function saveSummaryToSheet() {
 
 // ── 실행 ─────────────────────────────────────────────────
 loadData(false);
+
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
 </script>
 </body>
 </html>

@@ -538,6 +538,12 @@ function onScroll(){
   document.getElementById('bar').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';
 }
 window.addEventListener('scroll',onScroll,{passive:true}); onScroll();
+
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
 </script>
 </body>
 </html>

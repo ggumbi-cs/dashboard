@@ -266,5 +266,12 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 
 <div class="footer">엄마감동팀 AI 주간회의자료 · 260626 마감 · 이번 회의 7/2 월간피드백미팅으로 대체</div>
 
+<script>
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
+</script>
 </body>
 </html>

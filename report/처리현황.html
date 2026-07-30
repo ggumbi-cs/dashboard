@@ -820,6 +820,12 @@ readUrlParams();
 scaleRoot();
 window.addEventListener('resize', () => { scaleRoot(); equalizeGeCards(); });
 loadXlsx(false);
+
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
 </script>
 </body>
 </html>

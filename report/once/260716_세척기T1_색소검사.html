@@ -437,5 +437,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--t1);
 </footer>
 
 </div>
+<script>
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
+</script>
 </body>
 </html>

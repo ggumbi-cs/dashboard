@@ -423,6 +423,12 @@ onScroll();
 
 // data-nav가 있는 요소에 id 부여 (hero 포함)
 sections.forEach((s,i) => { if(!s.id) s.id = 'sec-'+i; });
+
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
 </script>
 </body>
 </html>

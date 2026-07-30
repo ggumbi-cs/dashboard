@@ -967,5 +967,12 @@ function setLang(lang) {
   footerDivs[1].textContent = t.footer_req + ' : 심우승 SQ  |  ' + t.footer_date + ' : ' + t.meta_date_v;
 }
 </script>
+<script>
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
+</script>
 </body>
 </html>

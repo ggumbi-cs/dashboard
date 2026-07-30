@@ -3586,6 +3586,12 @@ if (document.getElementById('sec-aireport')?.classList.contains('active')) {
 // loadAllData()는 SCRIPT_URL postMessage 수신 후 자동 실행
 // index.html 없이 단독 실행 시를 위한 fallback (1.5초 후)
 setTimeout(() => { if (!_dataLoaded) { _dataLoaded = true; loadAllData(); } }, 3000);
+
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
 </script>
 </body>
 </html>

@@ -375,6 +375,102 @@ table.bulk-table tbody tr.dup { opacity:0.5; }
 .bulk-status.dup { background:var(--bg4); color:var(--text3); }
 .bulk-result { font-size:11.5px; padding:10px 12px; border-radius:10px; margin-bottom:14px; background:var(--bg3); color:var(--text2); white-space:pre-line; }
 
+/* ══ 관리자 설정 (⚙) ══ */
+.sec-gear {
+  display:none; margin-left:8px; width:20px; height:20px; border-radius:6px;
+  background:rgba(240,192,96,0.15); border:1px solid rgba(240,192,96,0.3); color:var(--gold);
+  align-items:center; justify-content:center; font-size:11px; cursor:pointer; transition:all 0.15s;
+}
+.sec-gear:hover { background:rgba(240,192,96,0.3); }
+body.is-admin .sec-gear { display:inline-flex; }
+
+#bannerAdminGear {
+  display:none; position:absolute; top:14px; right:16px; z-index:3;
+  padding:5px 12px; border-radius:8px; font-size:10.5px; font-weight:600; font-family:var(--font-kr);
+  background:rgba(240,192,96,0.15); border:1px solid rgba(240,192,96,0.3); color:var(--gold);
+  cursor:pointer; align-items:center; transition:all 0.15s;
+}
+#bannerAdminGear:hover { background:rgba(240,192,96,0.3); }
+body.is-admin #bannerAdminGear { display:flex; }
+
+.notice-admin-gear {
+  display:none; position:absolute; top:14px; right:14px; width:24px; height:24px;
+  background:rgba(240,192,96,0.15); border:1px solid rgba(240,192,96,0.3); border-radius:6px;
+  cursor:pointer; align-items:center; justify-content:center; font-size:13px; color:var(--gold);
+  transition:all 0.15s; z-index:10;
+}
+.notice-admin-gear:hover { background:rgba(240,192,96,0.3); }
+body.is-admin .notice-admin-gear { display:flex; }
+
+.q-item .item-gear, .stat-card .item-gear {
+  display:none; position:absolute; top:6px; right:6px; width:20px; height:20px;
+  background:rgba(240,192,96,0.18); border:1px solid rgba(240,192,96,0.35); border-radius:5px;
+  align-items:center; justify-content:center; font-size:10px; color:var(--gold); cursor:pointer; z-index:10;
+}
+.q-item .item-gear:hover, .stat-card .item-gear:hover { background:rgba(240,192,96,0.35); }
+body.is-admin .q-item .item-gear, body.is-admin .stat-card .item-gear { display:flex; }
+
+/* 설정 모달 */
+.cfg-modal { width:640px; max-width:94vw; max-height:88vh; overflow-y:auto; }
+.cfg-section { margin-bottom:20px; }
+.cfg-section-title { font-size:11px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:10px; }
+.cfg-add-btn {
+  margin-top:8px; padding:7px 14px; background:var(--bg4); border:1px solid var(--border);
+  color:var(--cyan); border-radius:8px; cursor:pointer; font-size:11.5px; font-family:var(--font-kr);
+}
+.cfg-add-btn:hover { background:var(--bg3); }
+.cfg-item { background:var(--bg3); border:1px solid var(--border); border-radius:12px; padding:12px; margin-bottom:8px; }
+.cfg-item-top { display:flex; align-items:center; gap:10px; }
+.cfg-icon-preview {
+  width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+  font-size:18px; cursor:pointer; flex-shrink:0; border:1px solid var(--border2);
+}
+.cfg-fields { flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+.cfg-input {
+  width:100%; height:30px; background:var(--bg2); border:1px solid var(--border); border-radius:7px;
+  padding:0 9px; font-size:11.5px; color:var(--text); font-family:var(--font-kr); outline:none;
+}
+.cfg-input:focus { border-color:var(--border2); }
+.cfg-row2 { display:flex; gap:6px; }
+.cfg-select {
+  height:30px; background:var(--bg2); border:1px solid var(--border); border-radius:7px;
+  padding:0 8px; font-size:11px; color:var(--text2); font-family:var(--font-kr); outline:none; flex:1;
+}
+.cfg-del { width:26px; height:26px; background:rgba(255,90,110,0.12); border:1px solid rgba(255,90,110,0.25); color:var(--red); border-radius:7px; cursor:pointer; font-size:11px; flex-shrink:0; }
+.cfg-del:hover { background:rgba(255,90,110,0.25); }
+.cfg-move { display:flex; flex-direction:column; gap:3px; flex-shrink:0; }
+.cfg-move button { width:22px; height:14px; background:var(--bg4); border:1px solid var(--border); color:var(--text3); border-radius:4px; cursor:pointer; font-size:8px; line-height:1; padding:0; }
+.cfg-move button:hover { color:var(--cyan); border-color:var(--border2); }
+.cfg-item-bottom { display:flex; align-items:center; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
+.cfg-perm-label { font-size:10px; color:var(--text3); flex-shrink:0; }
+.cfg-perm-btns { display:flex; gap:4px; flex-wrap:wrap; }
+.perm-btn {
+  padding:3px 9px; font-size:10px; border-radius:6px; cursor:pointer; font-family:var(--font-kr);
+  background:var(--bg2); border:1px solid var(--border); color:var(--text3);
+}
+.perm-btn.active-perm { background:var(--cyan-dim); border-color:var(--border2); color:var(--cyan); font-weight:600; }
+
+/* 아이콘 선택 팝업 */
+#iconPicker {
+  display:none; position:fixed; z-index:300; background:var(--bg2); border:1px solid var(--border2);
+  border-radius:14px; padding:14px; box-shadow:0 20px 60px rgba(0,0,0,0.5); width:290px;
+}
+#iconPicker.open { display:block; }
+.icon-picker-title { font-size:10px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+.icon-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:4px; max-height:170px; overflow-y:auto; }
+.icon-grid span {
+  width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-size:16px;
+  border-radius:7px; cursor:pointer; background:var(--bg3); transition:background 0.12s;
+}
+.icon-grid span:hover { background:var(--bg4); }
+.color-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
+.color-grid span { width:28px; height:28px; border-radius:7px; cursor:pointer; border:1px solid var(--border2); }
+
+/* 공지 편집 행 */
+.notice-edit-row { display:flex; gap:6px; margin-bottom:6px; align-items:center; }
+.notice-edit-row input.ne-text { flex:1; }
+.notice-edit-row input.ne-date { width:80px; }
+
 /* 공지 */
 #noticeSection { margin-bottom:10px; }
 #noticeGrid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
@@ -442,10 +538,11 @@ table.bulk-table tbody tr.dup { opacity:0.5; }
           <!-- 웰컴 배너 -->
           <div id="welcomeBanner">
             <div class="wb-grid"></div><div class="wb-glow"></div><div class="wb-glow2"></div>
+            <button id="bannerAdminGear" onclick="openBannerEdit()" title="배너 편집">⚙ 배너 편집</button>
             <div class="wb-content">
               <div class="wb-left">
-                <div class="wb-eyebrow">Report Dashboard</div>
-                <div class="wb-title"><span>안녕하세요,</span><br><span class="hl" id="wbName">보고서 시스템</span><span> 입니다</span></div>
+                <div class="wb-eyebrow" id="wbEyebrow">Report Dashboard</div>
+                <div class="wb-title"><span id="wbGreeting">안녕하세요,</span><br><span class="hl" id="wbName">보고서 시스템</span><span id="wbSuffix"> 입니다</span></div>
                 <div class="wb-sub" id="wbDate"></div>
               </div>
               <div class="wb-right">
@@ -464,13 +561,17 @@ table.bulk-table tbody tr.dup { opacity:0.5; }
 
           <!-- 빠른 바로가기 -->
           <div id="quickSection">
-            <div class="sec-title">Quick Access <span class="sec-count" id="qCount"></span></div>
+            <div class="sec-title">Quick Access <span class="sec-count" id="qCount"></span>
+              <span class="sec-gear" onclick="openSettingModal('quick')" title="퀵액세스 편집">⚙</span>
+            </div>
             <div id="quickGrid"></div>
           </div>
 
           <!-- 집계 -->
           <div id="statsSection">
-            <div class="sec-title">Report Statistics <span class="sec-count" id="statTotal"></span></div>
+            <div class="sec-title">Report Statistics <span class="sec-count" id="statTotal"></span>
+              <span class="sec-gear" onclick="openSettingModal('stat')" title="집계카드 편집">⚙</span>
+            </div>
             <div id="statsGrid"></div>
           </div>
 
@@ -514,16 +615,14 @@ table.bulk-table tbody tr.dup { opacity:0.5; }
             <div class="sec-title">System Notice</div>
             <div id="noticeGrid">
               <div class="notice-card">
+                <div class="notice-admin-gear" onclick="openNoticeEdit('update')" title="업데이트 내역 편집">⚙</div>
                 <div class="notice-card-title"><span>📌</span> 업데이트 내역</div>
-                <div id="noticeUpdateList">
-                  <div class="notice-item"><div class="notice-dot-wrap"><div class="notice-dot"></div></div><div class="notice-text">report_main 기본 틀 생성</div><div class="notice-date">v0.1</div></div>
-                </div>
+                <div id="noticeUpdateList"></div>
               </div>
               <div class="notice-card">
+                <div class="notice-admin-gear" onclick="openNoticeEdit('ops')" title="운영 안내 편집">⚙</div>
                 <div class="notice-card-title"><span>🔔</span> 운영 안내</div>
-                <div id="noticeOpsList">
-                  <div class="notice-item"><div class="notice-dot-wrap"><div class="notice-dot"></div></div><div class="notice-text">보고서 검색 시스템은 추후 실데이터와 연동될 예정입니다.</div><div class="notice-date">안내</div></div>
-                </div>
+                <div id="noticeOpsList"></div>
               </div>
             </div>
           </div>
@@ -647,6 +746,70 @@ table.bulk-table tbody tr.dup { opacity:0.5; }
         </div>
       </div>
 
+      <!-- ⚙ 홈 화면 설정 모달 (관리자) -->
+      <div id="settingModal" class="ar-modal-overlay" style="display:none;" onclick="if(event.target===this) closeSettingModal()">
+        <div class="ar-modal cfg-modal">
+          <div class="ar-modal-title">⚙ 홈 화면 설정 <span class="bulk-sub">아이콘 · 라벨 · 대상 · 열람권한을 설정합니다</span></div>
+
+          <div class="cfg-section">
+            <div class="cfg-section-title">Quick Access</div>
+            <div id="cfgQuickList"></div>
+            <button class="cfg-add-btn" onclick="addCfgItem('quick')">+ 항목 추가</button>
+          </div>
+
+          <div class="cfg-section">
+            <div class="cfg-section-title">집계 카드 (Report Statistics)</div>
+            <div id="cfgStatList"></div>
+            <button class="cfg-add-btn" onclick="addCfgItem('stat')">+ 항목 추가</button>
+          </div>
+
+          <div id="cfgResult" class="bulk-result" style="display:none;"></div>
+          <div class="ar-actions">
+            <button class="ar-btn cancel" onclick="closeSettingModal()">취소</button>
+            <button class="ar-btn confirm" id="cfgSaveBtn" onclick="saveHomeSettings()">💾 저장</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 배너 편집 모달 (관리자) -->
+      <div id="bannerEditModal" class="ar-modal-overlay" style="display:none;" onclick="if(event.target===this) closeBannerEdit()">
+        <div class="ar-modal">
+          <div class="ar-modal-title">🎨 배너 편집</div>
+          <div class="ar-field"><label>상단 라벨 (eyebrow)</label><input type="text" id="beEyebrow" placeholder="Report Dashboard"></div>
+          <div class="ar-field"><label>인사말</label><input type="text" id="beGreeting" placeholder="안녕하세요,"></div>
+          <div class="ar-field"><label>뒷말</label><input type="text" id="beSuffix" placeholder="입니다"></div>
+          <div id="beResult" class="bulk-result" style="display:none;"></div>
+          <div class="ar-actions">
+            <button class="ar-btn cancel" onclick="closeBannerEdit()">취소</button>
+            <button class="ar-btn confirm" onclick="saveBannerEdit()">💾 저장</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 공지 편집 모달 (관리자) -->
+      <div id="noticeEditModal" class="ar-modal-overlay" style="display:none;" onclick="if(event.target===this) closeNoticeEdit()">
+        <div class="ar-modal">
+          <div class="ar-modal-title" id="noticeEditTitle">📌 업데이트 내역 편집</div>
+          <div class="cfg-section">
+            <div id="noticeEditRows"></div>
+            <button class="cfg-add-btn" onclick="addNoticeRow()">+ 항목 추가</button>
+          </div>
+          <div id="neResult" class="bulk-result" style="display:none;"></div>
+          <div class="ar-actions">
+            <button class="ar-btn cancel" onclick="closeNoticeEdit()">취소</button>
+            <button class="ar-btn confirm" onclick="saveNoticeEdit()">💾 저장</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 아이콘/색상 선택 팝업 -->
+      <div id="iconPicker">
+        <div class="icon-picker-title">아이콘 선택</div>
+        <div class="icon-grid" id="iconGrid"></div>
+        <div class="icon-picker-title" style="margin-top:10px;">색상 선택</div>
+        <div class="color-grid" id="colorGrid"></div>
+      </div>
+
       <!-- 서브페이지 iframe -->
       <iframe id="subFrame" src="about:blank"></iframe>
 
@@ -665,6 +828,7 @@ let _userRole = '';
 
 // ─────────────────────────────────────────────
 // Quick Access — 클릭하면 전체 리스트로 이동 + 해당 구분 필터 적용
+// (관리자는 ⚙로 수정/추가 가능, 설정은 GAS에 저장됨)
 // ─────────────────────────────────────────────
 const DEFAULT_QUICK = [
   { icon:'📅', label:'정기',   cat:'regular', color:'qi-green',  minRole:null },
@@ -672,6 +836,37 @@ const DEFAULT_QUICK = [
   { icon:'📎', label:'Sub',    cat:'sub',     color:'qi-purple', minRole:null },
   { icon:'🚨', label:'Issue',  cat:'issue',   color:'qi-red',    minRole:null },
   { icon:'📄', label:'기안서', cat:'gw',      color:'qi-gold',   minRole:null }
+];
+
+const DEFAULT_STATS = [
+  { cat:'regular', label:'정기',   sub:'월간 · 주간 마감',      icon:'📅', cls:'st-green',  minRole:null },
+  { cat:'once',    label:'건별',   sub:'개별 케이스 보고',      icon:'📝', cls:'st-cyan',   minRole:null },
+  { cat:'sub',     label:'Sub',    sub:'건별 하위 · 부속 자료', icon:'📎', cls:'st-purple', minRole:null },
+  { cat:'issue',   label:'Issue',  sub:'이슈 접수 · 처리',      icon:'🚨', cls:'st-red',    minRole:null },
+  { cat:'gw',      label:'기안서', sub:'전자결재 첨부',         icon:'📄', cls:'st-gold',   minRole:null }
+];
+
+const DEFAULT_BANNER = { eyebrow:'Report Dashboard', greeting:'안녕하세요,', suffix:' 입니다' };
+const DEFAULT_NOTICE_UPDATE = [{ text:'report_main 홈 화면 설정 기능 추가', date:'v0.4' }];
+const DEFAULT_NOTICE_OPS    = [{ text:'보고서 등록은 전체 리스트의 "추가" 또는 "간편 업로드"를 이용해주세요.', date:'안내' }];
+
+// 실제 사용 중인 상태 (GAS 설정으로 덮어써짐)
+let _quickItems   = JSON.parse(JSON.stringify(DEFAULT_QUICK));
+let _statItems    = JSON.parse(JSON.stringify(DEFAULT_STATS));
+let _bannerCfg    = JSON.parse(JSON.stringify(DEFAULT_BANNER));
+let _noticeUpdate = JSON.parse(JSON.stringify(DEFAULT_NOTICE_UPDATE));
+let _noticeOps    = JSON.parse(JSON.stringify(DEFAULT_NOTICE_OPS));
+
+// 아이콘 / 색상 후보
+const ICON_OPTIONS = ['📅','📝','📎','🚨','📄','📊','📈','📉','📋','📑','🗂️','📁','📦','🔎','🔔','⚠️','✅','🧾','💡','🛠️','⚙️','🔑','🏷️','⭐','🎯','🚀','💬','🖥️','📌','🗓️','🧭','🔥'];
+const COLOR_OPTIONS = [
+  { cls:'qi-cyan',   stat:'st-cyan',   hex:'rgba(0,200,255,0.18)' },
+  { cls:'qi-green',  stat:'st-green',  hex:'rgba(0,229,160,0.18)' },
+  { cls:'qi-purple', stat:'st-purple', hex:'rgba(160,128,255,0.18)' },
+  { cls:'qi-red',    stat:'st-red',    hex:'rgba(255,90,110,0.18)' },
+  { cls:'qi-gold',   stat:'st-gold',   hex:'rgba(240,192,96,0.18)' },
+  { cls:'qi-orange', stat:'st-gold',   hex:'rgba(255,144,64,0.18)' },
+  { cls:'qi-blue',   stat:'st-cyan',   hex:'rgba(64,144,255,0.18)' }
 ];
 
 // ─────────────────────────────────────────────
@@ -707,6 +902,8 @@ function applyUserInfo() {
   const label = ROLE_LABEL[_userRole] || _userRole || '방문자';
   document.getElementById('sbUser').textContent = label;
   document.getElementById('wbName').textContent = label;
+  // 관리자일 때만 ⚙ 설정 버튼들이 보이도록
+  document.body.classList.toggle('is-admin', _userRole === 'admin');
 }
 
 // 하위 iframe(서브 보고서)에도 로그인 유형/테마를 그대로 전달
@@ -784,11 +981,12 @@ function setActiveNav(tab) {
 // ─────────────────────────────────────────────
 function renderQuick() {
   const grid = document.getElementById('quickGrid');
-  document.getElementById('qCount').textContent = DEFAULT_QUICK.length+' items';
-  grid.innerHTML = DEFAULT_QUICK.map(it => {
+  document.getElementById('qCount').textContent = _quickItems.length+' items';
+  grid.innerHTML = _quickItems.map((it, i) => {
     const locked = !canAccess(it.minRole);
     return `
     <div class="q-item${locked?' locked':''}" onclick="${locked?'':`goListWithFilter('${it.cat}')`}">
+      <div class="item-gear" onclick="event.stopPropagation(); openSettingModal('quick')">⚙</div>
       <div class="q-icon ${it.color}">${it.icon}${locked?' 🔒':''}</div>
       <div class="q-label">${it.label}</div>
     </div>
@@ -806,14 +1004,6 @@ async function goListWithFilter(cat) {
 // ─────────────────────────────────────────────
 // 집계 (구분별 보고서 건수)
 // ─────────────────────────────────────────────
-const STAT_DEFS = [
-  { cat:'regular', label:'정기',   sub:'월간 · 주간 마감',      icon:'📅', cls:'st-green'  },
-  { cat:'once',    label:'건별',   sub:'개별 케이스 보고',      icon:'📝', cls:'st-cyan'   },
-  { cat:'sub',     label:'Sub',    sub:'건별 하위 · 부속 자료', icon:'📎', cls:'st-purple' },
-  { cat:'issue',   label:'Issue',  sub:'이슈 접수 · 처리',      icon:'🚨', cls:'st-red'    },
-  { cat:'gw',      label:'기안서', sub:'전자결재 첨부',         icon:'📄', cls:'st-gold'   }
-];
-
 function renderStats() {
   const grid = document.getElementById('statsGrid');
   if (!grid) return;
@@ -823,20 +1013,21 @@ function renderStats() {
   const total = visible.length;
   document.getElementById('statTotal').textContent = total ? `total ${total}` : '';
 
-  grid.innerHTML = STAT_DEFS.map(d => {
+  grid.innerHTML = _statItems.map((d, i) => {
+    const locked = !canAccess(d.minRole);
     const allowed = CAT_TAB_GROUP[d.cat] || [d.cat];
     const items = visible.filter(f => allowed.includes(f.category));
     const n = items.length;
     const pct = total ? Math.round(n / total * 100) : 0;
-    // 최근 등록일
     const latest = items.map(f => f.regDate || '').filter(Boolean).sort().pop() || '-';
     return `
-    <div class="stat-card ${d.cls}" onclick="goListWithFilter('${d.cat}')">
+    <div class="stat-card ${d.cls}${locked?' locked':''}" onclick="${locked?'':`goListWithFilter('${d.cat}')`}">
+      <div class="item-gear" onclick="event.stopPropagation(); openSettingModal('stat')">⚙</div>
       <div class="stat-top">
-        <span class="stat-icon">${d.icon}</span>
+        <span class="stat-icon">${d.icon}${locked?' 🔒':''}</span>
         <div class="stat-names">
           <div class="stat-label">${d.label}</div>
-          <div class="stat-sub">${d.sub}</div>
+          <div class="stat-sub">${d.sub||''}</div>
         </div>
       </div>
       <div class="stat-num">${n}<span class="stat-unit">건</span></div>
@@ -847,6 +1038,32 @@ function renderStats() {
       </div>
     </div>`;
   }).join('');
+}
+
+// ─────────────────────────────────────────────
+// 배너 / 공지 렌더링
+// ─────────────────────────────────────────────
+function renderBanner() {
+  const b = _bannerCfg || DEFAULT_BANNER;
+  const eyebrow = document.getElementById('wbEyebrow');
+  const greet   = document.getElementById('wbGreeting');
+  const suffix  = document.getElementById('wbSuffix');
+  if (eyebrow) eyebrow.textContent = b.eyebrow || DEFAULT_BANNER.eyebrow;
+  if (greet)   greet.textContent   = b.greeting || DEFAULT_BANNER.greeting;
+  if (suffix)  suffix.textContent  = b.suffix || DEFAULT_BANNER.suffix;
+}
+
+function renderNotices() {
+  const mk = arr => (arr||[]).map(n => `
+    <div class="notice-item">
+      <div class="notice-dot-wrap"><div class="notice-dot"></div></div>
+      <div class="notice-text">${n.text||''}</div>
+      <div class="notice-date">${n.date||''}</div>
+    </div>`).join('') || `<div style="font-size:11px;color:var(--text3);padding:8px 0;">등록된 항목이 없습니다.</div>`;
+  const u = document.getElementById('noticeUpdateList');
+  const o = document.getElementById('noticeOpsList');
+  if (u) u.innerHTML = mk(_noticeUpdate);
+  if (o) o.innerHTML = mk(_noticeOps);
 }
 
 // ─────────────────────────────────────────────
@@ -1364,10 +1581,233 @@ function setupBulkDropzone() {
 }
 setupBulkDropzone();
 
+// ═══════════════════════════════════════════
+//  홈 화면 설정 (관리자 전용) — GAS 저장
+// ═══════════════════════════════════════════
+async function loadHomeSettings() {
+  try {
+    const res = await fetch(`${REPORT_GAS_URL}?action=getReportSettings`);
+    const data = await res.json();
+    if (data.ok && data.settings) {
+      const s = data.settings;
+      if (Array.isArray(s.quick)  && s.quick.length)  _quickItems   = s.quick;
+      if (Array.isArray(s.stats)  && s.stats.length)  _statItems    = s.stats;
+      if (s.banner && typeof s.banner === 'object')   _bannerCfg    = s.banner;
+      if (Array.isArray(s.noticeUpdate))              _noticeUpdate = s.noticeUpdate;
+      if (Array.isArray(s.noticeOps))                 _noticeOps    = s.noticeOps;
+    }
+  } catch(e) { console.warn('[report_main] 홈 설정 로드 실패, 기본값 사용:', e.message); }
+  renderBanner();
+  renderNotices();
+  renderQuick();
+  renderStats();
+}
+
+async function pushSettingsToGas(partial, resultElId) {
+  const el = resultElId ? document.getElementById(resultElId) : null;
+  try {
+    const res = await fetch(REPORT_GAS_URL, {
+      method:'POST',
+      body: JSON.stringify({ action:'setReportSettings', settings: partial })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || '저장 실패');
+    if (el) { el.style.display='block'; el.textContent = '✅ 저장되었습니다 (모든 PC에 적용)'; }
+    return true;
+  } catch(e) {
+    if (el) { el.style.display='block'; el.textContent = '오류: ' + e.message; }
+    else alert('설정 저장 실패: ' + e.message);
+    return false;
+  }
+}
+
+// ── 설정 모달 ──
+function openSettingModal(focus) {
+  if (_userRole !== 'admin') return;
+  renderCfgList('quick');
+  renderCfgList('stat');
+  document.getElementById('cfgResult').style.display = 'none';
+  document.getElementById('settingModal').style.display = 'flex';
+}
+function closeSettingModal() {
+  document.getElementById('settingModal').style.display = 'none';
+  closeIconPicker();
+}
+
+const CAT_OPTIONS = [
+  { value:'regular', label:'정기' },
+  { value:'once',    label:'건별' },
+  { value:'sub',     label:'Sub' },
+  { value:'issue',   label:'Issue' },
+  { value:'gw',      label:'기안서' },
+  { value:'all',     label:'전체' }
+];
+const PERM_ROLES = [
+  { value:'',          label:'전체' },
+  { value:'ggumbi',    label:'꿈비↑' },
+  { value:'leader',    label:'리더↑' },
+  { value:'admin',     label:'관리자' }
+];
+
+function cfgArr(type) { return type === 'quick' ? _quickItems : _statItems; }
+
+function renderCfgList(type) {
+  const container = document.getElementById(type === 'quick' ? 'cfgQuickList' : 'cfgStatList');
+  const items = cfgArr(type);
+  container.innerHTML = items.map((it, i) => {
+    const colorCls = type === 'quick' ? (it.color||'qi-cyan') : (it.cls||'st-cyan');
+    const found = COLOR_OPTIONS.find(c => c.cls === colorCls || c.stat === colorCls);
+    const colorBg = found ? found.hex : 'rgba(0,200,255,0.18)';
+    const minRole = it.minRole || '';
+    const permBtns = PERM_ROLES.map(r =>
+      `<button class="perm-btn${minRole===r.value?' active-perm':''}" onclick="setCfgMinRole('${type}',${i},'${r.value}')">${r.label}</button>`
+    ).join('');
+    const catOpts = CAT_OPTIONS.map(c => `<option value="${c.value}"${it.cat===c.value?' selected':''}>${c.label}</option>`).join('');
+    return `
+    <div class="cfg-item">
+      <div class="cfg-item-top">
+        <div class="cfg-move">
+          <button onclick="moveCfgItem('${type}',${i},-1)" title="위로">▲</button>
+          <button onclick="moveCfgItem('${type}',${i},1)" title="아래로">▼</button>
+        </div>
+        <div class="cfg-icon-preview ${colorCls}" style="background:${colorBg}" onclick="openIconPicker('${type}',${i},this)">${it.icon||'📄'}</div>
+        <div class="cfg-fields">
+          <input class="cfg-input" value="${(it.label||'').replace(/"/g,'&quot;')}" placeholder="라벨" oninput="updateCfgItem('${type}',${i},'label',this.value)">
+          <div class="cfg-row2">
+            ${type==='stat' ? `<input class="cfg-input" value="${(it.sub||'').replace(/"/g,'&quot;')}" placeholder="설명" oninput="updateCfgItem('stat',${i},'sub',this.value)">` : ''}
+            <select class="cfg-select" onchange="updateCfgItem('${type}',${i},'cat',this.value)">${catOpts}</select>
+          </div>
+        </div>
+        <button class="cfg-del" onclick="removeCfgItem('${type}',${i})">✕</button>
+      </div>
+      <div class="cfg-item-bottom">
+        <span class="cfg-perm-label">🔑 최소권한</span>
+        <div class="cfg-perm-btns">${permBtns}</div>
+      </div>
+    </div>`;
+  }).join('') || `<div style="font-size:11px;color:var(--text3);">항목이 없습니다. 아래 버튼으로 추가하세요.</div>`;
+}
+
+function updateCfgItem(type, i, key, val) { cfgArr(type)[i][key] = val; }
+function setCfgMinRole(type, i, role) { cfgArr(type)[i].minRole = role || null; renderCfgList(type); }
+function removeCfgItem(type, i) { cfgArr(type).splice(i,1); renderCfgList(type); }
+function moveCfgItem(type, i, dir) {
+  const arr = cfgArr(type);
+  const j = i + dir;
+  if (j < 0 || j >= arr.length) return;
+  [arr[i], arr[j]] = [arr[j], arr[i]];
+  renderCfgList(type);
+}
+function addCfgItem(type) {
+  if (type === 'quick') _quickItems.push({ icon:'📄', label:'새 항목', cat:'all', color:'qi-cyan', minRole:null });
+  else _statItems.push({ icon:'📄', label:'새 항목', sub:'', cat:'all', cls:'st-cyan', minRole:null });
+  renderCfgList(type);
+}
+
+async function saveHomeSettings() {
+  const btn = document.getElementById('cfgSaveBtn');
+  btn.disabled = true; btn.textContent = '저장 중...';
+  const ok = await pushSettingsToGas({ quick:_quickItems, stats:_statItems }, 'cfgResult');
+  btn.disabled = false; btn.textContent = '💾 저장';
+  if (ok) { renderQuick(); renderStats(); }
+}
+
+// ── 아이콘 / 색상 선택 ──
+let _iconTarget = null;
+function openIconPicker(type, i, anchorEl) {
+  _iconTarget = { type, i };
+  const picker = document.getElementById('iconPicker');
+  document.getElementById('iconGrid').innerHTML = ICON_OPTIONS.map(ic => `<span onclick="pickIcon('${ic}')">${ic}</span>`).join('');
+  document.getElementById('colorGrid').innerHTML = COLOR_OPTIONS.map(c =>
+    `<span style="background:${c.hex}" onclick="pickColor('${c.cls}','${c.stat}')"></span>`
+  ).join('');
+  const r = anchorEl.getBoundingClientRect();
+  picker.classList.add('open');
+  const pw = 290, ph = picker.offsetHeight || 260;
+  let left = r.left, top = r.bottom + 8;
+  if (left + pw > window.innerWidth - 10) left = window.innerWidth - pw - 10;
+  if (top + ph > window.innerHeight - 10) top = Math.max(10, r.top - ph - 8);
+  picker.style.left = left + 'px';
+  picker.style.top  = top + 'px';
+}
+function closeIconPicker() { document.getElementById('iconPicker').classList.remove('open'); _iconTarget = null; }
+function pickIcon(ic) {
+  if (!_iconTarget) return;
+  cfgArr(_iconTarget.type)[_iconTarget.i].icon = ic;
+  renderCfgList(_iconTarget.type);
+  closeIconPicker();
+}
+function pickColor(quickCls, statCls) {
+  if (!_iconTarget) return;
+  const { type, i } = _iconTarget;
+  if (type === 'quick') cfgArr(type)[i].color = quickCls;
+  else cfgArr(type)[i].cls = statCls;
+  renderCfgList(type);
+  closeIconPicker();
+}
+document.addEventListener('click', e => {
+  const picker = document.getElementById('iconPicker');
+  if (picker.classList.contains('open') && !picker.contains(e.target) && !e.target.closest('.cfg-icon-preview')) closeIconPicker();
+});
+
+// ── 배너 편집 ──
+function openBannerEdit() {
+  if (_userRole !== 'admin') return;
+  const b = _bannerCfg || DEFAULT_BANNER;
+  document.getElementById('beEyebrow').value  = b.eyebrow  || DEFAULT_BANNER.eyebrow;
+  document.getElementById('beGreeting').value = b.greeting || DEFAULT_BANNER.greeting;
+  document.getElementById('beSuffix').value   = b.suffix   || DEFAULT_BANNER.suffix;
+  document.getElementById('beResult').style.display = 'none';
+  document.getElementById('bannerEditModal').style.display = 'flex';
+}
+function closeBannerEdit() { document.getElementById('bannerEditModal').style.display = 'none'; }
+async function saveBannerEdit() {
+  _bannerCfg = {
+    eyebrow:  document.getElementById('beEyebrow').value.trim()  || DEFAULT_BANNER.eyebrow,
+    greeting: document.getElementById('beGreeting').value.trim() || DEFAULT_BANNER.greeting,
+    suffix:   document.getElementById('beSuffix').value || DEFAULT_BANNER.suffix
+  };
+  const ok = await pushSettingsToGas({ banner:_bannerCfg }, 'beResult');
+  if (ok) renderBanner();
+}
+
+// ── 공지 편집 ──
+let _noticeEditType = 'update';
+function noticeArr(type) { return type === 'update' ? _noticeUpdate : _noticeOps; }
+function openNoticeEdit(type) {
+  if (_userRole !== 'admin') return;
+  _noticeEditType = type;
+  document.getElementById('noticeEditTitle').textContent = type === 'update' ? '📌 업데이트 내역 편집' : '🔔 운영 안내 편집';
+  document.getElementById('neResult').style.display = 'none';
+  renderNoticeEditRows();
+  document.getElementById('noticeEditModal').style.display = 'flex';
+}
+function closeNoticeEdit() { document.getElementById('noticeEditModal').style.display = 'none'; }
+function renderNoticeEditRows() {
+  const arr = noticeArr(_noticeEditType);
+  document.getElementById('noticeEditRows').innerHTML = arr.map((n, i) => `
+    <div class="notice-edit-row">
+      <input class="cfg-input ne-text" value="${(n.text||'').replace(/"/g,'&quot;')}" placeholder="내용" oninput="updateNoticeRow(${i},'text',this.value)">
+      <input class="cfg-input ne-date" value="${(n.date||'').replace(/"/g,'&quot;')}" placeholder="라벨" oninput="updateNoticeRow(${i},'date',this.value)">
+      <button class="cfg-del" onclick="removeNoticeRow(${i})">✕</button>
+    </div>`).join('') || `<div style="font-size:11px;color:var(--text3);">항목이 없습니다.</div>`;
+}
+function updateNoticeRow(i, key, val) { noticeArr(_noticeEditType)[i][key] = val; }
+function removeNoticeRow(i) { noticeArr(_noticeEditType).splice(i,1); renderNoticeEditRows(); }
+function addNoticeRow() { noticeArr(_noticeEditType).push({ text:'', date:'' }); renderNoticeEditRows(); }
+async function saveNoticeEdit() {
+  const partial = _noticeEditType === 'update' ? { noticeUpdate:_noticeUpdate } : { noticeOps:_noticeOps };
+  const ok = await pushSettingsToGas(partial, 'neResult');
+  if (ok) renderNotices();
+}
+
+renderBanner();
+renderNotices();
 renderQuick();
 renderStats();
 
-// 홈의 집계·검색이 바로 동작하도록 시작 시 목록을 미리 불러옴
+// 홈의 집계·검색이 바로 동작하도록 시작 시 목록/설정을 미리 불러옴
+loadHomeSettings().catch(()=>{});
 refreshAllList().catch(()=>{});
 
 // fallback — 인덱스로부터 SCRIPT_URL 메시지를 놓친 경우, 세션에 저장된 값으로 복원

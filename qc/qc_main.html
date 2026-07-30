@@ -907,6 +907,7 @@ const QC_GAS_URL = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0E
 
 let _scriptUrl      = QC_GAS_URL;
 let _userRole       = '';
+let _userName       = '';
 let _isAdmin        = false;
 let _quickItems     = [];
 let _cardItems      = [];
@@ -932,7 +933,9 @@ window.addEventListener('message', e => {
   }
   if (e.data.type !== 'SCRIPT_URL') return;
   _userRole = e.data.userRole || '';
+  _userName = e.data.userName || '';
   if (_userRole) sessionStorage.setItem('_userRole', _userRole);
+  sessionStorage.setItem('_userName', _userName);
   _isAdmin = (_userRole === 'admin');
   if (_isAdmin) document.body.classList.add('is-admin');
   applyUserInfo();
@@ -954,7 +957,7 @@ setInterval(tickTime,1000); tickTime();
 function applyUserInfo() {
   const b  = _bannerSettings || DEFAULT_BANNER;
   const rn = b.roleNames || DEFAULT_BANNER.roleNames;
-  const displayName = rn[_userRole] || _userRole || rn.visitor || '방문자';
+  const displayName = _userName || rn[_userRole] || _userRole || rn.visitor || '방문자';
   document.getElementById('sbUser').textContent     = displayName;
   document.getElementById('wbName').textContent     = displayName;
   document.getElementById('wbGreeting').textContent = b.greeting || DEFAULT_BANNER.greeting;
@@ -1555,6 +1558,7 @@ function showToast(msg) {
 setTimeout(()=>{
   if(!_userRole){
     _userRole=sessionStorage.getItem('_userRole')||'';
+    _userName=sessionStorage.getItem('_userName')||'';
     _isAdmin=(_userRole==='admin');
     if(_isAdmin) document.body.classList.add('is-admin');
     const t=sessionStorage.getItem('_theme')||'dark';

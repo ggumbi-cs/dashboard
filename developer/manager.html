@@ -10,6 +10,30 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
+  --bg:       #f4f6fb;
+  --surface:  #ffffff;
+  --surface2: #eef1f8;
+  --border:   #dbe1ee;
+  --border2:  #e6eaf3;
+  --text:     #1c2536;
+  --text2:    #4a5568;
+  --text3:    #8a94a6;
+  --blue:     #1a6fe0;
+  --blue-dim: #e8f0fe;
+  --green:    #1a9c46;
+  --green-dim:#e6f7ea;
+  --yellow:   #b7791f;
+  --yellow-dim:#fdf3dc;
+  --red:      #dc3545;
+  --red-dim:  #fde8e7;
+  --purple:   #7c5cdb;
+  --purple-dim:#f1ebfc;
+  --mono:     'JetBrains Mono', monospace;
+  --sans:     'Noto Sans KR', sans-serif;
+}
+
+/* ── 다크모드 (opt-in) — 원래 다크 팔레트 ── */
+body.dark-mode {
   --bg:       #0d1117;
   --surface:  #161b22;
   --surface2: #1c2128;
@@ -28,8 +52,6 @@
   --red-dim:  #3d1c1a;
   --purple:   #bc8cff;
   --purple-dim:#2a1f42;
-  --mono:     'JetBrains Mono', monospace;
-  --sans:     'Noto Sans KR', sans-serif;
 }
 
 html { scroll-behavior: smooth; }
@@ -1266,6 +1288,12 @@ const observer = new IntersectionObserver(entries => {
   });
 }, { rootMargin: '-20% 0px -60% 0px' });
 sections.forEach(s => observer.observe(s));
+
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
 </script>
 </body>
 </html>

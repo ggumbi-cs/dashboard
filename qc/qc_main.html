@@ -1561,8 +1561,8 @@ setTimeout(()=>{
     _userName=sessionStorage.getItem('_userName')||'';
     _isAdmin=(_userRole==='admin');
     if(_isAdmin) document.body.classList.add('is-admin');
-    const t=sessionStorage.getItem('_theme')||'dark';
-    if(t==='light') document.body.classList.add('light');
+    const t=sessionStorage.getItem('_theme')||'light';
+    if(t==='dark') document.body.classList.remove('light');
     _bannerSettings=_bannerSettings||JSON.parse(JSON.stringify(DEFAULT_BANNER));
     applyUserInfo();
     loadSettings();

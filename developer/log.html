@@ -8,6 +8,28 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
+  --bg:       #f4f6fb;
+  --surface:  #ffffff;
+  --surface2: #eef1f8;
+  --border:   #dbe1ee;
+  --border2:  #c9d2e3;
+  --text:     #1c2536;
+  --text2:    #5b6472;
+  --text3:    #8590a1;
+  --blue:     #1a6eb8;
+  --blue-dim: #dceaf9;
+  --green:    #1a7a44;
+  --green-dim:#dcf3e4;
+  --yellow:   #96690a;
+  --yellow-dim:#faf0d8;
+  --red:      #c0392b;
+  --red-dim:  #fbe1de;
+  --purple:   #7047c9;
+  --purple-dim:#ece3fa;
+  --mono:     'JetBrains Mono', monospace;
+  --sans:     'Noto Sans KR', sans-serif;
+}
+body.dark-mode {
   --bg:       #0d1117;
   --surface:  #161b22;
   --surface2: #1c2128;
@@ -26,8 +48,6 @@
   --red-dim:  #3d1c1a;
   --purple:   #bc8cff;
   --purple-dim:#2a1f42;
-  --mono:     'JetBrains Mono', monospace;
-  --sans:     'Noto Sans KR', sans-serif;
 }
 html { scroll-behavior: smooth; }
 body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 13px; line-height: 1.6; min-height: 100vh; }
@@ -217,7 +237,13 @@ async function loadLogs() {
     const res  = await fetch(SCRIPT_URL + '?action=getViewLogs', { redirect: 'follow' });
     const json = await res.json();
     if (!json.ok) throw new Error(json.msg || '조회 실패');
-    ALL_ROWS = (json.rows || []).slice().reverse(); // 최신순
+    const rows = json.rows || [];
+    // getViewLogs 액션이 아직 GAS에 배포되지 않으면 doGet()이 알 수 없는 action을
+    // 무시하고 다른 시트(액션현황판 등)를 기본 반환하므로, 모양이 다르면 오배포로 간주한다.
+    if (rows.length > 0 && !('page' in rows[0] && 'loginType' in rows[0])) {
+      throw new Error('GAS에 getViewLogs 액션이 아직 배포되지 않은 것 같습니다 (다른 시트 데이터가 반환됨)');
+    }
+    ALL_ROWS = rows.slice().reverse(); // 최신순
     renderSummary();
     renderLimit = 100;
     renderTable();
@@ -308,6 +334,17 @@ function showMore() {
   renderLimit += 200;
   renderTable();
 }
+
+// index.html이 주는 라이트/다크 신호를 받아 표시 (기본값: 라이트)
+window.addEventListener('message', e => {
+  if (!e || !e.data || e.data.type !== 'THEME') return;
+  document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+});
+try {
+  if ((sessionStorage.getItem('_theme') || localStorage.getItem('ggumbi-theme') || 'light') === 'dark') {
+    document.body.classList.add('dark-mode');
+  }
+} catch(e) {}
 
 if (checkAdmin()) loadLogs();
 </script>

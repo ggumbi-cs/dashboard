@@ -156,26 +156,44 @@ html, body { width:100%; height:100vh; overflow:hidden; background:var(--bg); co
 .qi-orange { background:rgba(255,144,64,0.12); }
 .qi-blue   { background:rgba(64,144,255,0.12); }
 
-/* 카드형식 섹션 */
-#cardSection { margin-bottom:32px; }
-#cardGrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; }
-.s-card { background:var(--bg2); border:1px solid var(--border); border-radius:16px; overflow:hidden; cursor:pointer; transition:border-color 0.2s,box-shadow 0.2s; position:relative; }
-.s-card:hover { border-color:var(--border2); box-shadow:0 12px 40px rgba(0,0,0,0.4); }
-.s-card.locked { cursor:not-allowed; opacity:0.55; }
-.s-card.locked:hover { border-color:var(--border); box-shadow:none; }
-.s-card-header { padding:14px 16px 12px; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--border); }
-.s-card-icon { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
-.s-card-info { flex:1; min-width:0; }
-.s-card-title { font-size:12px; font-weight:600; color:var(--text); }
-.s-card-sub   { font-size:10px; color:#8ab0cc; margin-top:2px; }
-.s-card-badge { font-size:9px; font-weight:600; font-family:var(--font-en); padding:2px 7px; border-radius:8px; white-space:nowrap; background:rgba(0,229,160,0.12); color:var(--green); border:1px solid rgba(0,229,160,0.2); }
-.s-card-badge.info { background:var(--cyan-dim); color:var(--cyan); border-color:var(--border2); }
-.s-card-badge.warn { background:rgba(255,144,64,0.12); color:var(--orange); border-color:rgba(255,144,64,0.2); }
-.s-card-body { padding:14px 16px; }
-.mini-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.mini-stat-val { font-size:18px; font-weight:700; font-family:var(--font-en); color:var(--text); line-height:1; }
-.mini-stat-val.accent { color:var(--cyan); } .mini-stat-val.green { color:var(--green); } .mini-stat-val.gold { color:var(--gold); } .mini-stat-val.red { color:var(--red); }
-.mini-stat-lbl { font-size:10px; color:var(--text3); margin-top:3px; }
+/* 집계 섹션 */
+#statsSection { margin-bottom:32px; }
+#statsGrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; }
+.stat-card {
+  position:relative; background:var(--bg2); border:1px solid var(--border); border-radius:16px;
+  padding:18px 18px 16px; cursor:pointer; overflow:hidden;
+  transition:transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.stat-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:var(--st-color); opacity:0.9;
+}
+.stat-card::after {
+  content:''; position:absolute; top:-30px; right:-30px; width:120px; height:120px; border-radius:50%;
+  background:radial-gradient(circle, var(--st-glow) 0%, transparent 70%); pointer-events:none;
+}
+.stat-card:hover { transform:translateY(-3px); border-color:var(--border2); box-shadow:0 14px 40px rgba(0,0,0,0.35); }
+
+.stat-card.st-green  { --st-color:var(--green);  --st-glow:rgba(0,229,160,0.10); }
+.stat-card.st-cyan   { --st-color:var(--cyan);   --st-glow:rgba(0,200,255,0.10); }
+.stat-card.st-purple { --st-color:var(--purple); --st-glow:rgba(160,128,255,0.10); }
+.stat-card.st-red    { --st-color:var(--red);    --st-glow:rgba(255,90,110,0.10); }
+.stat-card.st-gold   { --st-color:var(--gold);   --st-glow:rgba(240,192,96,0.10); }
+
+.stat-top { display:flex; align-items:center; gap:10px; margin-bottom:12px; position:relative; z-index:1; }
+.stat-icon { font-size:20px; flex-shrink:0; }
+.stat-names { min-width:0; }
+.stat-label { font-size:12.5px; font-weight:700; color:var(--text); line-height:1.2; }
+.stat-sub   { font-size:10px; color:var(--text3); margin-top:2px; }
+.stat-num {
+  font-size:34px; font-weight:700; font-family:var(--font-en); color:var(--st-color);
+  line-height:1; letter-spacing:-1px; position:relative; z-index:1;
+}
+.stat-unit { font-size:12px; font-weight:500; color:var(--text3); margin-left:3px; letter-spacing:0; }
+.stat-bar { height:4px; border-radius:2px; background:var(--bg4); margin:12px 0 8px; overflow:hidden; position:relative; z-index:1; }
+.stat-bar-fill { height:100%; border-radius:2px; background:var(--st-color); transition:width 0.4s ease; }
+.stat-foot { display:flex; align-items:center; justify-content:space-between; font-size:10px; color:var(--text3); position:relative; z-index:1; }
+.stat-latest { font-family:var(--font-en); }
 
 /* 보고서 검색 시스템 */
 #searchSection { margin-bottom:32px; }
@@ -256,6 +274,7 @@ table.result-table tbody tr:hover { background:var(--bg3); }
 .rtag.once { background:var(--cyan-dim); color:var(--cyan); border-color:var(--border2); }
 .rtag.sub  { background:rgba(160,128,255,0.12); color:var(--purple); border-color:rgba(160,128,255,0.2); }
 .rtag.gw   { background:rgba(240,192,96,0.12); color:var(--gold); border-color:rgba(240,192,96,0.2); }
+.rtag.regular { background:rgba(0,229,160,0.12); color:var(--green); border-color:rgba(0,229,160,0.2); }
 .rtag.issue { background:rgba(255,90,110,0.12); color:var(--red); border-color:rgba(255,90,110,0.2); }
 
 .al-editable { display:flex; align-items:center; justify-content:center; gap:6px; }
@@ -449,10 +468,10 @@ table.bulk-table tbody tr.dup { opacity:0.5; }
             <div id="quickGrid"></div>
           </div>
 
-          <!-- 카드형식 -->
-          <div id="cardSection">
-            <div class="sec-title">Report Categories</div>
-            <div id="cardGrid"></div>
+          <!-- 집계 -->
+          <div id="statsSection">
+            <div class="sec-title">Report Statistics <span class="sec-count" id="statTotal"></span></div>
+            <div id="statsGrid"></div>
           </div>
 
           <!-- 보고서 검색 시스템 -->
@@ -461,29 +480,32 @@ table.bulk-table tbody tr.dup { opacity:0.5; }
             <div class="search-bar">
               <div class="search-input-wrap">
                 <span class="si-icon">🔎</span>
-                <input type="text" id="searchInput" placeholder="제목, 작성자, 키워드로 검색...">
+                <input type="text" id="searchInput" placeholder="제품명·주제·작성자·파일명으로 검색..." oninput="runSearch()">
               </div>
-              <select class="search-filter" id="searchTypeFilter">
-                <option value="">전체 유형</option>
+              <select class="search-filter" id="searchTypeFilter" onchange="runSearch()">
+                <option value="">전체 구분</option>
+                <option value="regular">정기</option>
+                <option value="once">건별</option>
+                <option value="sub">Sub</option>
                 <option value="issue">Issue</option>
-                <option value="report">건별보고</option>
+                <option value="gw">기안서</option>
               </select>
-              <select class="search-filter" id="searchPeriodFilter">
+              <select class="search-filter" id="searchPeriodFilter" onchange="runSearch()">
                 <option value="">전체 기간</option>
                 <option value="7">최근 7일</option>
                 <option value="30">최근 30일</option>
                 <option value="90">최근 90일</option>
+                <option value="365">최근 1년</option>
               </select>
-              <button class="search-btn" onclick="runSearch()">검색</button>
             </div>
             <div id="searchResultWrap">
               <table class="result-table" id="searchResultTable" style="display:none;">
                 <thead>
-                  <tr><th>유형</th><th>제목</th><th>작성자</th><th>작성일</th></tr>
+                  <tr><th style="width:80px;">구분</th><th style="width:120px;">등록일</th><th style="width:140px;">작성자</th><th style="width:180px;">제품명</th><th>주제</th><th style="width:80px;">열기</th></tr>
                 </thead>
                 <tbody id="searchResultBody"></tbody>
               </table>
-              <div id="searchEmpty">검색어를 입력하거나 검색 버튼을 눌러 보고서를 찾아보세요.</div>
+              <div id="searchEmpty">검색어를 입력하거나 구분·기간을 선택해 보고서를 찾아보세요.</div>
             </div>
           </div>
 
@@ -532,6 +554,7 @@ table.bulk-table tbody tr.dup { opacity:0.5; }
             </div>
             <div class="al-cat-tabs" id="alCatTabs">
               <button class="al-cat-tab active" data-cat="all" onclick="onCatTabClick('all')">전체</button>
+              <button class="al-cat-tab" data-cat="regular" onclick="onCatTabClick('regular')">정기</button>
               <button class="al-cat-tab" data-cat="once" onclick="onCatTabClick('once')">건별</button>
               <button class="al-cat-tab" data-cat="sub" onclick="onCatTabClick('sub')">Sub</button>
               <button class="al-cat-tab" data-cat="issue" onclick="onCatTabClick('issue')">Issue</button>
@@ -572,12 +595,14 @@ table.bulk-table tbody tr.dup { opacity:0.5; }
               <option value="sub">Sub (report/once/sub)</option>
               <option value="gw">기안서 (report/once/gw)</option>
               <option value="issue">Issue (report/issue)</option>
+              <option value="month">정기 · 월간 (report/month)</option>
+              <option value="week">정기 · 주간 (report/week)</option>
             </select>
           </div>
           <div class="ar-field">
             <label>파일명</label>
             <input type="text" id="arFileName" placeholder="예: 250722_유모차A_바퀴소음.html" />
-            <div class="ar-hint">yymmdd_제품명_주제 패턴이면 등록일/제품명/주제가 자동 채워집니다. 확장자 생략 시 .html이 자동으로 붙습니다.</div>
+            <div class="ar-hint">일반: <b>yymmdd_제품명_주제</b> · 정기·월간: <b>2605</b> (26년 05월 마감) · 정기·주간: <b>260724</b> (26년 7월 24일 마감)<br>패턴이 맞으면 등록일/제품명/주제가 자동 채워집니다. 확장자 생략 시 .html이 자동으로 붙습니다.</div>
           </div>
           <div id="arError" class="ar-error" style="display:none;"></div>
           <div class="ar-actions">
@@ -639,42 +664,14 @@ const ROLE_LABEL = { admin:'관리자', leader:'리더급', ggumbi:'꿈비', aff
 let _userRole = '';
 
 // ─────────────────────────────────────────────
-// 기본 데이터 (추후 실데이터 연동 예정)
-// minRole: 이 값 이상 등급만 열람 가능 (예: 'leader' → 리더급 이상 공개)
+// Quick Access — 클릭하면 전체 리스트로 이동 + 해당 구분 필터 적용
 // ─────────────────────────────────────────────
 const DEFAULT_QUICK = [
-  { icon:'🚨', label:'Issue 등록',   tab:'issue/issue_list.html', color:'qi-red',    minRole:null },
-  { icon:'📝', label:'건별보고 작성', tab:'once/once_list.html',   color:'qi-cyan',   minRole:null },
-  { icon:'🔎', label:'통합 검색',     tab:'search',                color:'qi-purple', minRole:null },
-  { icon:'📊', label:'주간 리포트',   tab:'',                      color:'qi-green',  minRole:null },
-  { icon:'📅', label:'월간 리포트',   tab:'',                      color:'qi-gold',   minRole:null },
-  { icon:'📁', label:'보관함',        tab:'',                      color:'qi-blue',   minRole:null }
-];
-
-const DEFAULT_CARDS = [
-  {
-    icon:'🚨', iconCls:'qi-red', title:'Issue 보고서', sub:'건별 이슈 접수 · 처리 현황',
-    badge:'실시간', badgeCls:'', tab:'issue/issue_list.html', minRole:null,
-    stats:[ {val:'12', lbl:'미처리', cls:'red'}, {val:'48', lbl:'이번달', cls:'accent'} ]
-  },
-  {
-    icon:'📝', iconCls:'qi-cyan', title:'건별 보고서', sub:'개별 케이스 보고 · 기록',
-    badge:'전체', badgeCls:'info', tab:'once/once_list.html', minRole:null,
-    stats:[ {val:'96', lbl:'누적건수', cls:'accent'}, {val:'8', lbl:'금주', cls:'green'} ]
-  },
-  {
-    icon:'🔎', iconCls:'qi-purple', title:'보고서 검색', sub:'통합 검색 · 필터링',
-    badge:'신규', badgeCls:'info', tab:'search', minRole:null,
-    stats:[ {val:'-', lbl:'검색결과', cls:'gold'}, {val:'-', lbl:'최근검색', cls:'accent'} ]
-  }
-];
-
-// 검색 샘플 데이터 (추후 실제 소스로 교체)
-const SAMPLE_REPORTS = [
-  { type:'issue',  title:'배송 지연 관련 고객 이슈', author:'김민지', date:'2026-07-20' },
-  { type:'report', title:'7월 3주차 건별보고 정리',   author:'박서준', date:'2026-07-19' },
-  { type:'issue',  title:'제품 파손 접수 건',         author:'이하늘', date:'2026-07-15' },
-  { type:'report', title:'반품 사유 분석 보고',       author:'최유나', date:'2026-07-10' }
+  { icon:'📅', label:'정기',   cat:'regular', color:'qi-green',  minRole:null },
+  { icon:'📝', label:'건별',   cat:'once',    color:'qi-cyan',   minRole:null },
+  { icon:'📎', label:'Sub',    cat:'sub',     color:'qi-purple', minRole:null },
+  { icon:'🚨', label:'Issue',  cat:'issue',   color:'qi-red',    minRole:null },
+  { icon:'📄', label:'기안서', cat:'gw',      color:'qi-gold',   minRole:null }
 ];
 
 // ─────────────────────────────────────────────
@@ -693,7 +690,7 @@ window.addEventListener('message', e => {
     if (_userRole) sessionStorage.setItem('_userRole', _userRole);
     applyUserInfo();
     renderQuick();
-    renderCards();
+    renderStats();
     if (_allListLoaded) renderAllList();
     sendRoleToSubFrame();
   }
@@ -783,7 +780,7 @@ function setActiveNav(tab) {
 }
 
 // ─────────────────────────────────────────────
-// 렌더링: 퀵액세스 / 카드
+// 렌더링: 퀵액세스 (클릭 시 전체 리스트 + 구분 필터)
 // ─────────────────────────────────────────────
 function renderQuick() {
   const grid = document.getElementById('quickGrid');
@@ -791,7 +788,7 @@ function renderQuick() {
   grid.innerHTML = DEFAULT_QUICK.map(it => {
     const locked = !canAccess(it.minRole);
     return `
-    <div class="q-item${locked?' locked':''}" onclick="${locked?'':`goTab('${it.tab}')`}">
+    <div class="q-item${locked?' locked':''}" onclick="${locked?'':`goListWithFilter('${it.cat}')`}">
       <div class="q-icon ${it.color}">${it.icon}${locked?' 🔒':''}</div>
       <div class="q-label">${it.label}</div>
     </div>
@@ -799,51 +796,111 @@ function renderQuick() {
   }).join('');
 }
 
-function renderCards() {
-  const grid = document.getElementById('cardGrid');
-  grid.innerHTML = DEFAULT_CARDS.map(c => {
-    const locked = !canAccess(c.minRole);
+// 전체 리스트로 이동하면서 해당 구분 필터를 적용
+async function goListWithFilter(cat) {
+  showAllList();
+  if (!_allListLoaded) { await refreshAllList(); }
+  onCatTabClick(cat);
+}
+
+// ─────────────────────────────────────────────
+// 집계 (구분별 보고서 건수)
+// ─────────────────────────────────────────────
+const STAT_DEFS = [
+  { cat:'regular', label:'정기',   sub:'월간 · 주간 마감',      icon:'📅', cls:'st-green'  },
+  { cat:'once',    label:'건별',   sub:'개별 케이스 보고',      icon:'📝', cls:'st-cyan'   },
+  { cat:'sub',     label:'Sub',    sub:'건별 하위 · 부속 자료', icon:'📎', cls:'st-purple' },
+  { cat:'issue',   label:'Issue',  sub:'이슈 접수 · 처리',      icon:'🚨', cls:'st-red'    },
+  { cat:'gw',      label:'기안서', sub:'전자결재 첨부',         icon:'📄', cls:'st-gold'   }
+];
+
+function renderStats() {
+  const grid = document.getElementById('statsGrid');
+  if (!grid) return;
+
+  // 열람권한이 있는 항목만 집계
+  const visible = _allListRaw.filter(f => canAccess(f.visRole || 'affiliate'));
+  const total = visible.length;
+  document.getElementById('statTotal').textContent = total ? `total ${total}` : '';
+
+  grid.innerHTML = STAT_DEFS.map(d => {
+    const allowed = CAT_TAB_GROUP[d.cat] || [d.cat];
+    const items = visible.filter(f => allowed.includes(f.category));
+    const n = items.length;
+    const pct = total ? Math.round(n / total * 100) : 0;
+    // 최근 등록일
+    const latest = items.map(f => f.regDate || '').filter(Boolean).sort().pop() || '-';
     return `
-    <div class="s-card${locked?' locked':''}" onclick="${locked?'':`goTab('${c.tab}')`}">
-      <div class="s-card-header">
-        <div class="s-card-icon ${c.iconCls}">${c.icon}${locked?' 🔒':''}</div>
-        <div class="s-card-info">
-          <div class="s-card-title">${c.title}</div>
-          <div class="s-card-sub">${c.sub}</div>
-        </div>
-        <div class="s-card-badge ${c.badgeCls}">${c.badge}</div>
-      </div>
-      <div class="s-card-body">
-        <div class="mini-stats">
-          ${c.stats.map(s=>`<div><div class="mini-stat-val ${s.cls}">${s.val}</div><div class="mini-stat-lbl">${s.lbl}</div></div>`).join('')}
+    <div class="stat-card ${d.cls}" onclick="goListWithFilter('${d.cat}')">
+      <div class="stat-top">
+        <span class="stat-icon">${d.icon}</span>
+        <div class="stat-names">
+          <div class="stat-label">${d.label}</div>
+          <div class="stat-sub">${d.sub}</div>
         </div>
       </div>
-    </div>
-  `;
+      <div class="stat-num">${n}<span class="stat-unit">건</span></div>
+      <div class="stat-bar"><div class="stat-bar-fill" style="width:${pct}%"></div></div>
+      <div class="stat-foot">
+        <span>전체의 ${pct}%</span>
+        <span class="stat-latest">최근 ${latest}</span>
+      </div>
+    </div>`;
   }).join('');
 }
 
 // ─────────────────────────────────────────────
-// 보고서 검색 시스템 (기본 틀 — 샘플 데이터 기반)
+// 보고서 검색 시스템 (전체 리스트와 동일한 실데이터 기반)
 // ─────────────────────────────────────────────
+async function ensureListLoadedForSearch() {
+  if (!_allListLoaded) {
+    try { await refreshAllList(); } catch(e) {}
+  }
+}
+
 function runSearch() {
-  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
   const typeFilter = document.getElementById('searchTypeFilter').value;
   const periodFilter = parseInt(document.getElementById('searchPeriodFilter').value || '0');
-
-  let results = SAMPLE_REPORTS.filter(r => {
-    if (typeFilter && r.type !== typeFilter) return false;
-    if (q && !(r.title.toLowerCase().includes(q) || r.author.toLowerCase().includes(q))) return false;
-    if (periodFilter) {
-      const diffDays = (Date.now() - new Date(r.date).getTime()) / 86400000;
-      if (diffDays > periodFilter) return false;
-    }
-    return true;
-  });
 
   const table = document.getElementById('searchResultTable');
   const body  = document.getElementById('searchResultBody');
   const empty = document.getElementById('searchEmpty');
+
+  if (!_allListLoaded) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    empty.textContent = '목록을 불러오는 중입니다...';
+    ensureListLoadedForSearch().then(() => runSearch());
+    return;
+  }
+
+  // 열람권한 필터 → 구분 → 기간 → 검색어
+  let results = _allListRaw.filter(f => canAccess(f.visRole || 'affiliate'));
+
+  if (typeFilter) {
+    const allowed = CAT_TAB_GROUP[typeFilter] || [typeFilter];
+    results = results.filter(f => allowed.includes(f.category));
+  }
+
+  if (periodFilter) {
+    results = results.filter(f => {
+      if (!f.regDate) return false;
+      const diffDays = (Date.now() - new Date(f.regDate).getTime()) / 86400000;
+      return diffDays <= periodFilter;
+    });
+  }
+
+  if (q) {
+    results = results.filter(f =>
+      (f.product||'').toLowerCase().includes(q) ||
+      (f.topic||'').toLowerCase().includes(q) ||
+      (f.author||'').toLowerCase().includes(q) ||
+      (f.name||'').toLowerCase().includes(q)
+    );
+  }
+
+  results.sort((a,b) => (b.regDate||'').localeCompare(a.regDate||''));
 
   if (!results.length) {
     table.style.display = 'none';
@@ -852,14 +909,20 @@ function runSearch() {
     return;
   }
 
-  body.innerHTML = results.map(r => `
-    <tr onclick="alert('${r.title}')">
-      <td><span class="rtag ${r.type}">${r.type==='issue'?'Issue':'건별보고'}</span></td>
-      <td>${r.title}</td>
-      <td>${r.author}</td>
-      <td>${r.date}</td>
-    </tr>
-  `).join('');
+  body.innerHTML = results.map(f => {
+    const catLabel = CAT_LABEL_MAP[f.category] || f.category;
+    const catCls   = CAT_CLASS_MAP[f.category] || 'issue';
+    const fileUrl  = f.htmlUrl || `${PAGES_BASE}/${f.fileKey}`;
+    return `
+    <tr onclick="openReportPopup('${fileUrl}')">
+      <td><span class="rtag ${catCls}">${catLabel}</span></td>
+      <td>${f.regDate || '-'}</td>
+      <td>${f.author || '-'}</td>
+      <td>${f.product || '-'}</td>
+      <td>${f.topic || '-'}</td>
+      <td><button class="al-open-btn" onclick="event.stopPropagation(); openReportPopup('${fileUrl}')">열기</button></td>
+    </tr>`;
+  }).join('');
   table.style.display = '';
   empty.style.display = 'none';
 }
@@ -924,6 +987,7 @@ async function refreshAllList() {
   }
 
   _allListLoaded = true;
+  renderStats(); // 집계 갱신
 
   if (!_allListRaw.length) {
     empty.textContent = '아직 등록된 보고서가 없습니다. 우측 상단 "➕ 추가"로 등록해주세요.';
@@ -1007,7 +1071,16 @@ function updateSortArrows() {
   });
 }
 
-const CAT_LABEL_MAP = { once:'건별', sub:'Sub', gw:'기안서', issue:'Issue' };
+const CAT_LABEL_MAP = { once:'건별', sub:'Sub', gw:'기안서', issue:'Issue', month:'정기', week:'정기' };
+const CAT_CLASS_MAP = { once:'once', sub:'sub', gw:'gw', issue:'issue', month:'regular', week:'regular' };
+// 탭값 → 실제 category 목록 ('정기' 탭은 월간+주간을 함께 포함)
+const CAT_TAB_GROUP = {
+  regular: ['month','week'],
+  once:    ['once'],
+  sub:     ['sub'],
+  issue:   ['issue'],
+  gw:      ['gw']
+};
 
 function renderAllList() {
   const body  = document.getElementById('allListBody');
@@ -1019,7 +1092,8 @@ function renderAllList() {
 
   // 2) 구분 탭 필터링
   if (_alCategoryFilter !== 'all') {
-    visibleFiles = visibleFiles.filter(f => f.category === _alCategoryFilter);
+    const allowed = CAT_TAB_GROUP[_alCategoryFilter] || [_alCategoryFilter];
+    visibleFiles = visibleFiles.filter(f => allowed.includes(f.category));
   }
 
   // 3) 검색 필터링 (제품명·주제·작성자)
@@ -1060,7 +1134,7 @@ function renderAllList() {
     .map(f => {
       const fileKey  = f.fileKey;
       const catLabel = CAT_LABEL_MAP[f.category] || f.category;
-      const catCls   = f.category === 'once' ? 'once' : f.category === 'sub' ? 'sub' : f.category === 'gw' ? 'gw' : 'issue';
+      const catCls   = CAT_CLASS_MAP[f.category] || 'issue';
       const fileUrl  = f.htmlUrl || `${PAGES_BASE}/${f.fileKey}`;
 
       return `
@@ -1222,6 +1296,8 @@ function renderBulkList() {
                <option value="sub">Sub</option>
                <option value="gw">기안서</option>
                <option value="issue">Issue</option>
+               <option value="month">정기·월간</option>
+               <option value="week">정기·주간</option>
              </select>`
           : `<span style="color:var(--text3); font-size:11px;">-</span>`}
       </td>
@@ -1289,7 +1365,10 @@ function setupBulkDropzone() {
 setupBulkDropzone();
 
 renderQuick();
-renderCards();
+renderStats();
+
+// 홈의 집계·검색이 바로 동작하도록 시작 시 목록을 미리 불러옴
+refreshAllList().catch(()=>{});
 
 // fallback — 인덱스로부터 SCRIPT_URL 메시지를 놓친 경우, 세션에 저장된 값으로 복원
 setTimeout(() => {
@@ -1297,7 +1376,7 @@ setTimeout(() => {
     _userRole = sessionStorage.getItem('_userRole') || '';
     applyUserInfo();
     renderQuick();
-    renderCards();
+    renderStats();
     if (_allListLoaded) renderAllList();
   }
 }, 400);

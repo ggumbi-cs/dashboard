@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ' *)",
+      "Bash(python -c \"import sys; print\\(sys.version\\)\")",
+      "Bash(python -m http.server 8080)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8080/index.html)",
+      "Bash(grep -no \"#[0-9a-fA-F]\\\\{3,8\\\\}\" \"C:\\\\Users\\\\DESKTOP\\\\Desktop\\\\대시보드_리뉴얼\\\\대시보드\\\\report\\\\smtstore_review.html\")",
+      "Bash(grep -v \"^[0-9]*:#4470e8$\\\\|^[0-9]*:#7c5cdb$\\\\|^[0-9]*:#0d9e6e$\\\\|^[0-9]*:#d97706$\\\\|^[0-9]*:#dc3545$\")",
+      "Bash(grep -n \"^.\\\\{0,40\\\\}#fff[^0-9a-fA-F]\" \"C:\\\\Users\\\\DESKTOP\\\\Desktop\\\\대시보드_리뉴얼\\\\대시보드\\\\report\\\\smtstore_review.html\")",
+      "Bash(awk 'NR==8,NR==183' \"C:\\\\Users\\\\DESKTOP\\\\Desktop\\\\대시보드_리뉴얼\\\\대시보드\\\\aggregated\\\\aggregated.html\")",
+      "Bash(grep -no \"#[0-9a-fA-F]\\\\{3,8\\\\}\")",
+      "Bash(cd \"C:/Users/DESKTOP/Desktop/대시보드_리뉴얼/대시보드\" && ls -la login_id.xlsx \"~\\\\$login_id.xlsx\" 2>&1)",
+      "Bash(curl -s http://localhost:8080/index.html)",
+      "Bash(curl -s -o /dev/null -w \"서버 상태: %{http_code}\\\\n\" http://localhost:8080/index.html)"
+    ]
+  }
+}

@@ -7,44 +7,62 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #f0f2f5; font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; font-size: 13px; color: #222; padding: 16px; }
+:root {
+  --bg: #f0f2f5;
+  --surface: #fff;
+  --border: #eee;
+  --text: #222;
+  --text2: #888;
+  --text3: #555;
+  --accent: #1a3a6e;
+}
+body.dark-mode {
+  --bg: #0d1825;
+  --surface: #111e35;
+  --border: #243d6a;
+  --text: #c8ddf0;
+  --text2: #a8c4df;
+  --text3: #7a9ec0;
+  --accent: #6ea8e0;
+}
+body { background: var(--bg); font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; font-size: 13px; color: var(--text); padding: 16px; }
 
 .section-header { padding: 7px 14px; color: #fff; font-size: 13px; font-weight: 600; border-radius: 4px; margin-bottom: 10px; }
 .sec-dark  { background: #1a2e50; }
 .sec-green { background: #2a7a6f; }
 .section-wrap { margin-bottom: 16px; }
 
-.card { background: #fff; border-radius: 6px; padding: 12px 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-.card-title { font-size: 11px; color: #888; margin-bottom: 8px; }
+.card { background: var(--surface); border-radius: 6px; padding: 12px 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.card-title { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
 
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
 
 /* 환불 바차트 */
 .bar-chart-wrap { position: relative; }
-.bar-sum { font-size: 22px; font-weight: 700; color: #1a3a6e; position: absolute; top: -6px; right: 0; }
-.bar-wrap { display: flex; align-items: flex-end; justify-content: center; gap: 32px; padding: 4px 0 0; border-bottom: 1px solid #eee; height: 150px; }
+.bar-sum { font-size: 22px; font-weight: 700; color: var(--accent); position: absolute; top: -6px; right: 0; }
+.bar-wrap { display: flex; align-items: flex-end; justify-content: center; gap: 32px; padding: 4px 0 0; border-bottom: 1px solid var(--border); height: 150px; }
 .bar-group { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 9.8%; }
 .bar-val { font-size: 8px; color: #e8834a; font-weight: 600; white-space: nowrap; }
 .bar { border-radius: 3px 3px 0 0; width: 100%; }
 .bar-labels-row { display: flex; justify-content: center; gap: 32px; margin-top: 4px; }
-.bar-label { font-size: 8px; color: #888; text-align: center; word-break: keep-all; line-height: 1.2; width: 9.8%; }
+.bar-label { font-size: 8px; color: var(--text2); text-align: center; word-break: keep-all; line-height: 1.2; width: 9.8%; }
 
 /* 도넛 — 좌우 레이아웃 */
 .donut-side-wrap { display: flex; align-items: center; gap: 10px; }
 .donut-rel { position: relative; flex-shrink: 0; }
 .dcenter { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 11px; font-weight: 700; text-align: center; line-height: 1.3; }
-.dlegend-side { font-size: 10px; color: #555; line-height: 1.9; flex: 1; min-width: 0; }
+.dlegend-side { font-size: 10px; color: var(--text3); line-height: 1.9; flex: 1; min-width: 0; }
 .ldot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 3px; vertical-align: middle; }
 .dval { font-weight: 600; }
 
 /* 회수현황 라인 */
-.x-labels { display: flex; justify-content: space-around; font-size: 9px; color: #888; margin-top: 2px; }
+.x-labels { display: flex; justify-content: space-around; font-size: 9px; color: var(--text2); margin-top: 2px; }
 
 .issue-table { width: 100%; border-collapse: collapse; font-size: 11px; }
 .issue-table th { background: #1a2e50; color: #fff; padding: 6px 8px; text-align: left; font-weight: 500; }
-.issue-table td { padding: 6px 8px; border-bottom: 1px solid #eee; color: #444; }
+.issue-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); color: var(--text3); }
 
-#loading { text-align: center; padding: 40px; color: #888; font-size: 14px; }
+#loading { text-align: center; padding: 40px; color: var(--text2); font-size: 14px; }
 #error   { text-align: center; padding: 40px; color: #c0392b; font-size: 13px; display: none; }
 </style>
 </head>
@@ -256,16 +274,16 @@ function render(d) {
   const polyPts = wPts+` ${(pL+iW).toFixed(1)},${(pT+iH).toFixed(1)} ${pL},${(pT+iH).toFixed(1)}`;
   const ySteps = [0,0.5,1].map(p=>({ val:Math.round(maxW*p), y:(pT+(1-p)*iH).toFixed(1) }));
   const yGrid  = ySteps.map(s=>
-    `<line x1="${pL}" y1="${s.y}" x2="${svgW-pR}" y2="${s.y}" stroke="#eee" stroke-width="1"/>
-     <text x="${pL-3}" y="${parseFloat(s.y)+3}" text-anchor="end" font-size="7" fill="#aaa">${s.val}</text>`
+    `<line x1="${pL}" y1="${s.y}" x2="${svgW-pR}" y2="${s.y}" style="stroke:var(--border)" stroke-width="1"/>
+     <text x="${pL-3}" y="${parseFloat(s.y)+3}" text-anchor="end" font-size="7" style="fill:var(--text2)">${s.val}</text>`
   ).join('');
   const maxIdx = wVals.indexOf(Math.max(...wVals));
   const wDots  = weekly.map((w,i)=>{
     const x = pL+(nW===1?iW/2:i/(nW-1)*iW);
     const y = pT+(1-w.건수/maxW)*iH;
-    if (i!==maxIdx) return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" fill="#1a3a6e"/>`;
-    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="#1a3a6e"/>
-            <text x="${x.toFixed(1)}" y="${(y-6).toFixed(1)}" text-anchor="middle" font-size="8" fill="#1a3a6e" font-weight="600">${w.건수}</text>`;
+    if (i!==maxIdx) return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" style="fill:var(--accent)"/>`;
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" style="fill:var(--accent)"/>
+            <text x="${x.toFixed(1)}" y="${(y-6).toFixed(1)}" text-anchor="middle" font-size="8" style="fill:var(--accent)" font-weight="600">${w.건수}</text>`;
   }).join('');
   const xLabels = weekly.map(w=>`<span style="font-size:8px;">${w.label}</span>`).join('');
 
@@ -285,7 +303,7 @@ function render(d) {
       <td>${r.제품구분}</td><td>${r.건명}</td>
       <td>${r.기안일}</td><td>${r.기안승인||'-'}</td>
       <td>${r.예상일정}</td>
-      <td style="font-size:10px;color:#666;">${r.문서제목}</td>
+      <td style="font-size:10px;color:var(--text3);">${r.문서제목}</td>
     </tr>`
   ).join('');
 
@@ -305,8 +323,8 @@ function render(d) {
         <div class="card-title">환불비율</div>
         <div class="donut-side-wrap">
           <div class="donut-rel" style="width:110px;height:110px;">
-            <svg viewBox="0 0 90 90" style="width:110px;height:110px;">${donut1}<circle cx="45" cy="45" r="27" fill="#fff"/></svg>
-            <div class="dcenter">${totalCnt.toLocaleString()}<br><span style="font-size:8px;color:#888;font-weight:400;">건</span></div>
+            <svg viewBox="0 0 90 90" style="width:110px;height:110px;">${donut1}<circle cx="45" cy="45" r="27" style="fill:var(--surface)"/></svg>
+            <div class="dcenter">${totalCnt.toLocaleString()}<br><span style="font-size:8px;color:var(--text2);font-weight:400;">건</span></div>
           </div>
           <div class="dlegend-side">${legend1}</div>
         </div>
@@ -316,7 +334,7 @@ function render(d) {
         <svg viewBox="0 0 ${svgW} ${svgH}" style="width:100%;height:${svgH}px;">
           ${yGrid}
           <polygon points="${polyPts}" fill="#b8c8e8" opacity="0.4"/>
-          <polyline points="${wPts}" fill="none" stroke="#1a3a6e" stroke-width="1.5"/>
+          <polyline points="${wPts}" fill="none" style="stroke:var(--accent)" stroke-width="1.5"/>
           ${wDots}
         </svg>
         <div class="x-labels">${xLabels}</div>
@@ -325,8 +343,8 @@ function render(d) {
         <div class="card-title">네이버폼현황</div>
         <div class="donut-side-wrap">
           <div class="donut-rel" style="width:110px;height:110px;">
-            <svg viewBox="0 0 90 90" style="width:110px;height:110px;">${donut2}<circle cx="45" cy="45" r="27" fill="#fff"/></svg>
-            <div class="dcenter">${totalNav.toLocaleString()}<br><span style="font-size:8px;color:#888;font-weight:400;">건</span></div>
+            <svg viewBox="0 0 90 90" style="width:110px;height:110px;">${donut2}<circle cx="45" cy="45" r="27" style="fill:var(--surface)"/></svg>
+            <div class="dcenter">${totalNav.toLocaleString()}<br><span style="font-size:8px;color:var(--text2);font-weight:400;">건</span></div>
           </div>
           <div class="dlegend-side">${legend2}</div>
         </div>

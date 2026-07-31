@@ -27,6 +27,33 @@
     --radius: 10px;
     --font: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
     --mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --tint-green: #edfaf5;
+    --tint-yellow: #fef9ed;
+    --tint-red: #fef2f2;
+    --tint-blue: #eef2fd;
+  }
+  body.dark-mode {
+    --bg: #0d1825;
+    --surface: #111e35;
+    --surface2: #16294a;
+    --border: #243d6a;
+    --accent: #5b93e8;
+    --accent2: #9b7ff0;
+    --accent-low: #5b93e825;
+    --green: #22c58d;
+    --green-low: #22c58d25;
+    --yellow: #f0a830;
+    --yellow-low: #f0a83025;
+    --red: #ff6b6b;
+    --red-low: #ff6b6b25;
+    --text: #c8ddf0;
+    --text2: #a8c4df;
+    --text3: #7a9ec0;
+    --star: #f5c451;
+    --tint-green: #12301f;
+    --tint-yellow: #33260c;
+    --tint-red: #331416;
+    --tint-blue: #16294a;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { font-size: 14px; }
@@ -89,13 +116,13 @@
   .summary-card .label { font-size: 11px; color: var(--text3); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .6px; }
   .summary-card .value { font-size: 28px; font-weight: 700; font-family: var(--mono); color: var(--text); line-height: 1; }
   .summary-card .sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
-  .summary-card.accent-green { border-color: #0d9e6e; background: linear-gradient(135deg, #ffffff, #edfaf5); }
+  .summary-card.accent-green { border-color: var(--green); background: linear-gradient(135deg, var(--surface), var(--tint-green)); }
   .summary-card.accent-green .value { color: var(--green); }
-  .summary-card.accent-yellow { border-color: #d97706; background: linear-gradient(135deg, #ffffff, #fef9ed); }
+  .summary-card.accent-yellow { border-color: var(--yellow); background: linear-gradient(135deg, var(--surface), var(--tint-yellow)); }
   .summary-card.accent-yellow .value { color: var(--yellow); }
-  .summary-card.accent-red { border-color: #dc3545; background: linear-gradient(135deg, #ffffff, #fef2f2); }
+  .summary-card.accent-red { border-color: var(--red); background: linear-gradient(135deg, var(--surface), var(--tint-red)); }
   .summary-card.accent-red .value { color: var(--red); }
-  .summary-card.accent-blue { border-color: #4470e8; background: linear-gradient(135deg, #ffffff, #eef2fd); }
+  .summary-card.accent-blue { border-color: var(--accent); background: linear-gradient(135deg, var(--surface), var(--tint-blue)); }
   .summary-card.accent-blue .value { color: var(--accent); }
 
   /* ── 필터 바 ── */
@@ -471,11 +498,11 @@
       </div>
       <div style="display:flex; flex-direction:column; gap:16px;">
         <div class="chart-card">
-          <div class="chart-title" style="color:#0a7d57;">👍 긍정 TOP 3</div>
+          <div class="chart-title" style="color:var(--green);">👍 긍정 TOP 3</div>
           <div id="spotlightPos"></div>
         </div>
         <div class="chart-card">
-          <div class="chart-title" style="color:#dc3545;">👎 부정 TOP 3</div>
+          <div class="chart-title" style="color:var(--red);">👎 부정 TOP 3</div>
           <div id="spotlightNeg"></div>
         </div>
       </div>
@@ -962,7 +989,7 @@ function renderDashboard() {
   const ratingDist = {1:0,2:0,3:0,4:0,5:0};
   allReviews.forEach(r => { if(ratingDist[r.rating]!==undefined) ratingDist[r.rating]++; });
   const maxR = Math.max(...Object.values(ratingDist));
-  const colors = {5:'#0d9e6e',4:'#38a169',3:'#d97706',2:'#e05a1a',1:'#dc3545'};
+  const colors = {5:'var(--green)',4:'#38a169',3:'var(--yellow)',2:'#e05a1a',1:'var(--red)'};
   document.getElementById('ratingBars').innerHTML = [5,4,3,2,1].map(n => `
     <div class="rating-bar-row">
       <div class="rating-bar-label" style="color:${colors[n]}">★ ${n}</div>
@@ -1049,10 +1076,10 @@ function renderDashboard() {
     }
 
     svg.innerHTML = `
-      <path d="${d}" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linejoin="round" opacity="0.85"/>
+      <path d="${d}" fill="none" style="stroke:var(--star)" stroke-width="2" stroke-linejoin="round" opacity="0.85"/>
       ${points.map(p => `
-        <circle cx="${p.cx}" cy="${p.cy}" r="3.5" fill="#f59e0b" stroke="white" stroke-width="1.5"/>
-        <text x="${p.cx}" y="${p.cy - 9}" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e" font-family="JetBrains Mono, monospace">${p.avg.toFixed(2)}</text>
+        <circle cx="${p.cx}" cy="${p.cy}" r="3.5" style="fill:var(--star);stroke:var(--surface)" stroke-width="1.5"/>
+        <text x="${p.cx}" y="${p.cy - 9}" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--text)" font-family="JetBrains Mono, monospace">${p.avg.toFixed(2)}</text>
       `).join('')}
     `;
   });
@@ -1090,7 +1117,7 @@ function renderDashboard() {
       ? '저평점 ' + p.low + '건 · ' + Math.round(p.lowRate*100) + '%'
       : '평균 ' + p.avg.toFixed(2) + '★ · ' + p.total + '건';
     const color = isNeg ? 'var(--red)' : 'var(--green)';
-    const bg    = isNeg ? '#fef2f2' : '#edfaf5';
+    const bg    = isNeg ? 'var(--tint-red)' : 'var(--tint-green)';
     return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;' + (i<2?'border-bottom:1px solid var(--border);':'') + '">'
       + '<div style="width:24px;height:24px;border-radius:50%;background:' + bg + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:' + color + ';flex-shrink:0;">' + (i+1) + '</div>'
       + '<div style="flex:1;min-width:0;">'
@@ -1134,13 +1161,13 @@ function drawDonut(counts, labels, colors) {
   ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--surface').trim() || '#ffffff';
   ctx.fill();
   // 중앙 텍스트
-  ctx.fillStyle = '#1a1f2e';
+  ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text').trim() || '#1a1f2e';
   ctx.font = 'bold 18px JetBrains Mono, monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(total.toLocaleString(), cx, cy-8);
   ctx.font = '11px sans-serif';
-  ctx.fillStyle = '#4a5568';
+  ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text2').trim() || '#4a5568';
   ctx.fillText('total', cx, cy+12);
 }
 
@@ -1321,7 +1348,7 @@ function selectProduct(name) {
   const ratingDist = {1:0,2:0,3:0,4:0,5:0};
   p.reviews.forEach(r => { if(ratingDist[r.rating]!==undefined) ratingDist[r.rating]++; });
   const maxR = Math.max(...Object.values(ratingDist));
-  const colors = {5:'#0d9e6e',4:'#38a169',3:'#d97706',2:'#e05a1a',1:'#dc3545'};
+  const colors = {5:'var(--green)',4:'#38a169',3:'var(--yellow)',2:'#e05a1a',1:'var(--red)'};
   
   panel.innerHTML = `
     <div class="product-detail-header">
@@ -1630,6 +1657,8 @@ loadData();
 window.addEventListener('message', function(e){
   if (e && e.data && e.data.type === 'THEME') {
     document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+    // 캔버스/SVG는 그릴 때 색을 고정하므로 테마 전환 시 다시 그려줌
+    if (typeof allReviews !== 'undefined' && allReviews.length) renderDashboard();
   }
 });
 </script>

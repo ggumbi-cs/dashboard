@@ -791,11 +791,11 @@ const TAB_MAP = {
 
 // ── 계정 정보 ──
 // 계열사: PW 없이 로그인 (pw: null)
-// 리더급의 pw는 미사용(비밀번호=본인 사용자명으로 tryLogin()에서 별도 검증)
+// 리더급/꿈비의 pw는 미사용(비밀번호=본인 이름을 영문 자판으로 친 값, tryLogin()에서 별도 검증)
 const ACCOUNTS = {
   '관리자모드': { pw: 'tladntmd',  role: 'admin'  },
   '리더급':     { pw: null,        role: 'leader' },
-  '꿈비':       { pw: 'hihi00',    role: 'ggumbi' },
+  '꿈비':       { pw: null,        role: 'ggumbi' },
   '계열사':     { pw: null,        role: 'affiliate' },
 };
 
@@ -853,7 +853,7 @@ function loadLoginIdData() {
   if (loginIdLoadPromise) return loginIdLoadPromise;
   loginIdLoadPromise = (async () => {
     try {
-      const res = await fetch('login_id.xlsx');
+      const res = await fetch('login_id.xlsx?t=' + Date.now(), { cache: 'no-store' });
       const buf = await res.arrayBuffer();
       const wb  = XLSX.read(buf, { type: 'array' });
       const ws  = wb.Sheets[wb.SheetNames[0]];
@@ -900,7 +900,7 @@ function onIdChange() {
     pwInp.value = '';
     pwInp.placeholder = '로그인 버튼을 눌러주세요';
     pwInp.disabled = true;
-  } else if (id === '리더급') {
+  } else if (id === '리더급' || id === '꿈비') {
     hint.textContent = '비밀번호는 본인 이름을 한/영 전환 없이 영문 자판 그대로 입력 (예: 김상준→rlatkdwns)';
     hint.style.display = 'block';
     pwInp.placeholder = '이름을 영문 자판으로 입력';
@@ -959,8 +959,8 @@ function tryLogin() {
     }
   }
 
-  // 리더급: 비밀번호 = 본인 이름을 영문 자판으로 친 값 / 계열사: PW 불필요 / 그 외: 고정 PW
-  if (id === '리더급') {
+  // 리더급/꿈비: 비밀번호 = 본인 이름을 영문 자판으로 친 값 / 계열사: PW 불필요 / 그 외: 고정 PW
+  if (id === '리더급' || id === '꿈비') {
     if (pw !== hangulToKeyboard(name)) {
       errEl.textContent = '아이디 또는 비밀번호가 올바르지 않습니다.';
       document.getElementById('loginPw').value = '';

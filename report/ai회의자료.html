@@ -16,6 +16,12 @@
   --border:#e2e8f0;--bg:#f1f5f9;--card:#fff;--card2:#f8fafc;
   --text:#1e293b;--textD:#64748b;--textL:#94a3b8;
   --ai-from:#4f46e5;--ai-to:#0d9488;
+  --fill-weak:rgba(0,0,0,0.04);--fill-mid:rgba(0,0,0,0.07);
+}
+body.dark-mode{
+  --border:#243d6a;--bg:#0d1825;--card:#111e35;--card2:#16294a;
+  --text:#c8ddf0;--textD:#a8c4df;--textL:#7a9ecc;
+  --fill-weak:rgba(255,255,255,0.06);--fill-mid:rgba(255,255,255,0.08);
 }
 html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto Sans KR',sans-serif;color:var(--text);font-size:13px;}
 
@@ -41,8 +47,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .ai-banner{padding:14px 28px;background:linear-gradient(90deg,rgba(79,70,229,0.06) 0%,rgba(13,148,136,0.04) 100%);border-bottom:1px solid rgba(79,70,229,0.12);display:flex;align-items:flex-start;gap:14px;}
 .ai-icon{flex-shrink:0;width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--ai-from),var(--ai-to));display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 4px 12px rgba(79,70,229,0.3);margin-top:2px;}
 .ai-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;background:linear-gradient(90deg,#4f46e5,#0d9488);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;}
-.ai-text{font-size:12.5px;color:#334155;line-height:1.65;}
-.ai-text strong{color:#1e293b;font-weight:600;}
+.ai-text{font-size:12.5px;color:var(--text);line-height:1.65;}
+.ai-text strong{color:var(--text);font-weight:600;}
 .ai-text .y{color:#b45309;font-weight:700;}
 .ai-text .r{color:#b91c1c;font-weight:600;}
 .ai-text .g{color:#15803d;font-weight:600;}
@@ -51,10 +57,10 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .body{padding:18px 22px;display:grid;gap:14px;}
 .sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
 .sec-line{width:4px;height:18px;border-radius:2px;}
-.sec-title{font-size:13px;font-weight:700;color:#1e293b;}
-.sec-period{font-size:10px;color:var(--textD);margin-left:auto;background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.08);padding:2px 8px;border-radius:3px;}
+.sec-title{font-size:13px;font-weight:700;color:var(--text);}
+.sec-period{font-size:10px;color:var(--textD);margin-left:auto;background:var(--fill-weak);border:1px solid var(--fill-mid);padding:2px 8px;border-radius:3px;}
 .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
-.card-title{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.card-title{font-size:10px;font-weight:700;color:var(--textD);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
 .grid-52{display:grid;grid-template-columns:3fr 2fr;gap:12px;}
@@ -62,25 +68,25 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 
 /* ── 빠른 수치 ── */
 .quick-bar{display:flex;overflow:hidden;border-radius:8px;border:1px solid var(--border);}
-.quick-item{flex:1;padding:12px 8px;text-align:center;border-right:1px solid var(--border);background:#fff;}
+.quick-item{flex:1;padding:12px 8px;text-align:center;border-right:1px solid var(--border);background:var(--card);}
 .quick-item:last-child{border-right:none;}
-.quick-num{font-size:20px;font-weight:900;font-family:'Inter',sans-serif;color:#1e293b;line-height:1;}
-.quick-lbl{font-size:9px;color:#64748b;margin-top:3px;letter-spacing:0.5px;}
+.quick-num{font-size:20px;font-weight:900;font-family:'Inter',sans-serif;color:var(--text);line-height:1;}
+.quick-lbl{font-size:9px;color:var(--textD);margin-top:3px;letter-spacing:0.5px;}
 .quick-diff{font-size:10px;font-weight:600;margin-top:2px;}
-.diff-up{color:#15803d;} .diff-dn{color:#b91c1c;} .diff-eq{color:#64748b;}
+.diff-up{color:#15803d;} .diff-dn{color:#b91c1c;} .diff-eq{color:var(--textD);}
 
 /* ── 미니 막대 ── */
 .mini-bar-wrap{margin-top:8px;}
 .mini-bar-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
-.mini-bar-lbl{font-size:10px;color:#64748b;width:90px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.mini-bar-track{flex:1;height:7px;background:rgba(0,0,0,0.07);border-radius:4px;overflow:hidden;}
+.mini-bar-lbl{font-size:10px;color:var(--textD);width:90px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mini-bar-track{flex:1;height:7px;background:var(--fill-mid);border-radius:4px;overflow:hidden;}
 .mini-bar-fill{height:100%;border-radius:4px;}
-.mini-bar-val{font-size:10px;font-weight:600;color:#1e293b;width:30px;text-align:right;flex-shrink:0;}
+.mini-bar-val{font-size:10px;font-weight:600;color:var(--text);width:30px;text-align:right;flex-shrink:0;}
 
 /* ── 테이블 ── */
 .mini-table{width:100%;border-collapse:collapse;}
-.mini-table th{font-size:9px;color:#94a3b8;font-weight:600;text-align:left;padding:4px 6px;border-bottom:1px solid #e2e8f0;}
-.mini-table td{font-size:11px;color:#1e293b;padding:5px 6px;border-bottom:1px solid rgba(0,0,0,0.04);}
+.mini-table th{font-size:9px;color:var(--textL);font-weight:600;text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);}
+.mini-table td{font-size:11px;color:var(--text);padding:5px 6px;border-bottom:1px solid var(--fill-weak);}
 .mini-table tr:last-child td{border-bottom:none;}
 .mini-table .num{text-align:right;font-family:'Inter',sans-serif;font-weight:600;}
 .badge{display:inline-flex;align-items:center;font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;}
@@ -96,37 +102,37 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
 .ai-point{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;}
 .ai-point:last-child{margin-bottom:0;}
 .ai-num{flex-shrink:0;width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,var(--ai-from),var(--ai-to));display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;margin-top:1px;}
-.ai-point-text{font-size:12px;color:#334155;line-height:1.6;}
-.ai-point-text b{color:#1e293b;}
+.ai-point-text{font-size:12px;color:var(--text);line-height:1.6;}
+.ai-point-text b{color:var(--text);}
 .ai-point-text .y{color:#b45309;}
 .ai-point-text .r{color:#b91c1c;}
 .ai-point-text .g{color:#15803d;}
 
 /* ── 이슈 ── */
-.issue-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.05);}
+.issue-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--fill-weak);}
 .issue-row:last-child{border-bottom:none;}
 .issue-body{}
-.issue-title{font-size:12px;font-weight:600;color:#1e293b;line-height:1.4;}
-.issue-desc{font-size:10.5px;color:#64748b;margin-top:2px;line-height:1.5;}
+.issue-title{font-size:12px;font-weight:600;color:var(--text);line-height:1.4;}
+.issue-desc{font-size:10.5px;color:var(--textD);margin-top:2px;line-height:1.5;}
 
 /* ── 판매현황 ── */
-.sale-row{display:flex;align-items:center;gap:0;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.05);}
+.sale-row{display:flex;align-items:center;gap:0;padding:8px 0;border-bottom:1px solid var(--fill-weak);}
 .sale-row:last-child{border-bottom:none;}
-.sale-name{flex:2;font-size:11.5px;color:#1e293b;}
+.sale-name{flex:2;font-size:11.5px;color:var(--text);}
 .sale-nums{display:flex;flex:3;justify-content:space-around;}
 .sale-num{text-align:center;}
-.sale-num .n{font-size:13px;font-weight:700;font-family:'Inter',sans-serif;color:#1e293b;}
-.sale-num .l{font-size:9px;color:#94a3b8;display:block;}
+.sale-num .n{font-size:13px;font-weight:700;font-family:'Inter',sans-serif;color:var(--text);}
+.sale-num .l{font-size:9px;color:var(--textL);display:block;}
 
 /* ── 진행률 ── */
 .progress-row{margin-bottom:8px;}
 .progress-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;}
-.progress-lbl{font-size:11px;color:#334155;}
-.progress-pct{font-size:11px;font-weight:700;font-family:'Inter',sans-serif;color:#1e293b;}
-.progress-track{height:8px;background:rgba(0,0,0,0.07);border-radius:4px;overflow:hidden;}
+.progress-lbl{font-size:11px;color:var(--text);}
+.progress-pct{font-size:11px;font-weight:700;font-family:'Inter',sans-serif;color:var(--text);}
+.progress-track{height:8px;background:var(--fill-mid);border-radius:4px;overflow:hidden;}
 .progress-fill{height:100%;border-radius:4px;}
 
-.footer{text-align:center;padding:18px;font-size:10px;color:#94a3b8;border-top:1px solid var(--border);margin-top:8px;background:#f8fafc;}
+.footer{text-align:center;padding:18px;font-size:10px;color:var(--textL);border-top:1px solid var(--border);margin-top:8px;background:var(--card2);}
 @media(max-width:900px){.grid2,.grid3,.grid-52,.grid-23{grid-template-columns:1fr;}}
 </style>
 </head>
@@ -218,10 +224,10 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         <div class="card-title">채널별 인입건수 · 주간 추이 (04/03~05/29)</div>
         <svg id="channel-chart" width="100%" height="160" style="display:block;"></svg>
         <div style="display:flex;gap:14px;margin-top:6px;justify-content:center;flex-wrap:wrap;">
-          <span style="font-size:9px;color:#64748b;display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#3b82f6;"></span>채널톡</span>
-          <span style="font-size:9px;color:#64748b;display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#0d9488;"></span>전화</span>
-          <span style="font-size:9px;color:#64748b;display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#7c3aed;"></span>네이버</span>
-          <span style="font-size:9px;color:#64748b;display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#d97706;"></span>카카오</span>
+          <span style="font-size:9px;color:var(--textD);display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#3b82f6;"></span>채널톡</span>
+          <span style="font-size:9px;color:var(--textD);display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#0d9488;"></span>전화</span>
+          <span style="font-size:9px;color:var(--textD);display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#7c3aed;"></span>네이버</span>
+          <span style="font-size:9px;color:var(--textD);display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#d97706;"></span>카카오</span>
         </div>
       </div>
       <div class="card">
@@ -240,15 +246,15 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
             <tr><td>전화</td><td class="num">352</td><td class="num">327</td><td class="num diff-up">▼25</td></tr>
             <tr><td>네이버</td><td class="num">339</td><td class="num">309</td><td class="num diff-up">▼30</td></tr>
             <tr><td>카카오</td><td class="num">319</td><td class="num">306</td><td class="num diff-up">▼13</td></tr>
-            <tr style="border-top:1px solid #e2e8f0;"><td><b>합계</b></td><td class="num"><b>1,786</b></td><td class="num"><b>1,679</b></td><td class="num diff-up"><b>▼107</b></td></tr>
+            <tr style="border-top:1px solid var(--border);"><td><b>합계</b></td><td class="num"><b>1,786</b></td><td class="num"><b>1,679</b></td><td class="num diff-up"><b>▼107</b></td></tr>
           </tbody>
         </table>
       </div>
       <div class="card">
         <div class="card-title">콜 응답 현황</div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-          <span style="font-size:11px;color:#64748b;">총유입 Call</span>
-          <span style="font-size:20px;font-weight:900;font-family:'Inter',sans-serif;color:#1e293b;">219건</span>
+          <span style="font-size:11px;color:var(--textD);">총유입 Call</span>
+          <span style="font-size:20px;font-weight:900;font-family:'Inter',sans-serif;color:var(--text);">219건</span>
         </div>
         <div class="mini-bar-wrap">
           <div class="mini-bar-row">
@@ -264,7 +270,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         </div>
         <div style="margin-top:10px;text-align:center;">
           <div style="font-size:28px;font-weight:900;color:#b45309;font-family:'Inter',sans-serif;">78.5%</div>
-          <div style="font-size:10px;color:#64748b;">수신응답률 (전주 86.0% → <span style="color:#b91c1c;">▼7.5%p↓</span>)</div>
+          <div style="font-size:10px;color:var(--textD);">수신응답률 (전주 86.0% → <span style="color:#b91c1c;">▼7.5%p↓</span>)</div>
         </div>
       </div>
       <div class="card">
@@ -295,8 +301,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
         <div class="card-title">반품/교환율 추이 (꿈비 vs 소브)</div>
         <svg id="return-chart" width="100%" height="125" style="display:block;"></svg>
         <div style="display:flex;gap:14px;margin-top:6px;justify-content:center;">
-          <span style="font-size:9px;color:#64748b;display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:12px;height:2px;background:#3b82f6;border-radius:2px;"></span>꿈비</span>
-          <span style="font-size:9px;color:#64748b;display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:12px;height:0;border-top:2px dashed #ef4444;"></span>소브</span>
+          <span style="font-size:9px;color:var(--textD);display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:12px;height:2px;background:#3b82f6;border-radius:2px;"></span>꿈비</span>
+          <span style="font-size:9px;color:var(--textD);display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:12px;height:0;border-top:2px dashed #ef4444;"></span>소브</span>
         </div>
         <table class="mini-table" style="margin-top:10px;">
           <thead><tr><th>브랜드</th><th class="num">01월</th><th class="num">02월</th><th class="num">03월</th><th class="num">04월</th></tr></thead>
@@ -358,7 +364,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
               <span style="background:#dc2626;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:0.5px;">🚨 중대 안전이슈</span>
               <span style="font-size:10px;color:#b91c1c;font-weight:600;">즉각 대응 필요</span>
-              <span style="margin-left:auto;font-size:10px;color:#94a3b8;">5/29 접수</span>
+              <span style="margin-left:auto;font-size:10px;color:var(--textL);">5/29 접수</span>
             </div>
             <div style="font-size:13px;font-weight:700;color:#b91c1c;margin-bottom:6px;">퀵폴딩 샤워가드 — 사용 중 파손으로 인한 넘어짐 <span style="font-size:13px;font-weight:500;color:#b91c1c;">(2026년 수리접수 2건, 미접수 1건)</span></div>
             <div style="font-size:11px;color:#7f1d1d;line-height:1.6;margin-bottom:10px;">
@@ -506,7 +512,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#4f46e5,#0d9488);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🤖</div>
       <div>
         <div class="ai-insight-lbl" style="font-size:11px;">✦ AI 종합 권고사항 · 다음 주 액션플랜</div>
-        <div style="font-size:10px;color:#64748b;">260529 마감 데이터 기반</div>
+        <div style="font-size:10px;color:var(--textD);">260529 마감 데이터 기반</div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;">
@@ -559,8 +565,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
     let html = '';
     [0,200,400,600,800,1000].forEach(v=>{
       const y = padT + (1-v/maxV)*plotH;
-      html += `<line x1="${padL}" x2="${W-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>`;
-      if(v>0) html += `<text x="${padL-3}" y="${(y+3).toFixed(1)}" text-anchor="end" font-size="9" fill="#94a3b8">${v}</text>`;
+      html += `<line x1="${padL}" x2="${W-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--fill-mid)" stroke-width="0.5"/>`;
+      if(v>0) html += `<text x="${padL-3}" y="${(y+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--textL)">${v}</text>`;
     });
     wlbl.forEach((lbl,wi)=>{
       const groupX = padL + wi*cW + (cW-groupW)/2;
@@ -578,9 +584,9 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       const totY = padT + plotH - topH - 4;
       const totX = groupX + groupW/2;
       const isCurrent = wi === wlbl.length-1;
-      html += `<text x="${totX.toFixed(1)}" y="${totY.toFixed(1)}" text-anchor="middle" font-size="${isCurrent?'8.5':'7.5'}" fill="${isCurrent?'#1e293b':'#94a3b8'}" font-weight="${isCurrent?'700':'500'}">${tot}</text>`;
+      html += `<text x="${totX.toFixed(1)}" y="${totY.toFixed(1)}" text-anchor="middle" font-size="${isCurrent?'8.5':'7.5'}" fill="${isCurrent?'var(--text)':'var(--textL)'}" font-weight="${isCurrent?'700':'500'}">${tot}</text>`;
       const lblX = padL + wi*cW + cW/2;
-      html += `<text x="${lblX.toFixed(1)}" y="${(H-3).toFixed(1)}" text-anchor="middle" font-size="9" fill="${isCurrent?'#334155':'#94a3b8'}">${lbl}</text>`;
+      html += `<text x="${lblX.toFixed(1)}" y="${(H-3).toFixed(1)}" text-anchor="middle" font-size="9" fill="${isCurrent?'var(--text)':'var(--textL)'}">${lbl}</text>`;
     });
     svg.innerHTML = html;
   }
@@ -629,8 +635,8 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
     let html = '';
     [0,2,4,6].forEach(v=>{
       const y = padT+(1-v/maxV)*plotRH;
-      html += `<line x1="${padL}" x2="${RW-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(0,0,0,0.08)" stroke-width="0.5"/>`;
-      html += `<text x="${padL-3}" y="${(y+3).toFixed(1)}" text-anchor="end" font-size="9" fill="#94a3b8">${v}%</text>`;
+      html += `<line x1="${padL}" x2="${RW-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--fill-mid)" stroke-width="0.5"/>`;
+      html += `<text x="${padL-3}" y="${(y+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--textL)">${v}%</text>`;
     });
     function pts(arr){return arr.map((v,i)=>`${(xStart+i*cW).toFixed(1)},${(padT+(1-v/maxV)*plotRH).toFixed(1)}`).join(' ');}
     html += `<polyline points="${pts(ggumbi)}" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>`;
@@ -646,7 +652,7 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto San
       html += `<text x="${x.toFixed(1)}" y="${(y+13).toFixed(1)}" text-anchor="middle" font-size="9" fill="#b91c1c" font-weight="600">${v}%</text>`;
     });
     months.forEach((m,i)=>{
-      html += `<text x="${(xStart+i*cW).toFixed(1)}" y="${(RH-2).toFixed(1)}" text-anchor="middle" font-size="9" fill="#94a3b8">${m}</text>`;
+      html += `<text x="${(xStart+i*cW).toFixed(1)}" y="${(RH-2).toFixed(1)}" text-anchor="middle" font-size="9" fill="var(--textL)">${m}</text>`;
     });
     retSvg.innerHTML = html;
   }

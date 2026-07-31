@@ -8,10 +8,57 @@
     box-sizing: border-box;
 }
 
+:root {
+    --bg: #abc1d1;
+    --surface: #b2c7da;
+    --card: #ffffff;
+    --border: rgba(0,0,0,0.08);
+    --border2: #d6d6d6;
+    --text: #1f1f1f;
+    --text2: #3e3e3e;
+    --link: #1a6fdb;
+    --reply-bg: #f5f7fb;
+    --text3: #aaaaaa;
+    --alarm-bg: rgba(255,255,255,0.95);
+    --float-bg: rgba(255,255,255,0.85);
+    --reply-green-text: #1a3a22;
+    --reply-blue-text: #1a2a45;
+    --reply-input-bg: rgba(255,255,255,0.7);
+    --filter-bg: #a0b8cc;
+}
+
+body.dark-mode {
+    --bg: #0d1825;
+    --surface: #111e35;
+    --card: #1a2e50;
+    --border: #243d6a;
+    --border2: #243d6a;
+    --text: #c8ddf0;
+    --text2: #a8c4df;
+    --link: #6fa8ea;
+    --reply-bg: #16294a;
+    --text3: #6f8fb5;
+    --alarm-bg: rgba(255,255,255,0.14);
+    --float-bg: rgba(255,255,255,0.12);
+    --reply-green-text: #bfe8cc;
+    --reply-blue-text: #cfe0ff;
+    --reply-input-bg: rgba(255,255,255,0.08);
+    --filter-bg: #16294a;
+}
+
+/* ── 다크모드 보완 규칙 (뱃지/토스트류 색상 대비 보정) ── */
+body.dark-mode .filter-active-count { color: #8fb8ff; }
+body.dark-mode #version { color: rgba(255,255,255,0.45); }
+body.dark-mode .check-users { border-color: var(--border2); }
+body.dark-mode .rb-status.신청 { background: #1d3a66; color: #9cc2ff; }
+body.dark-mode .rb-status.완료 { background: #1a3d2c; color: #7fe0a6; }
+body.dark-mode .rb-status.보류 { background: #4a3d10; color: #f0d878; }
+body.dark-mode .rb-status.불가 { background: #4a1c1c; color: #ff9c9c; }
+
 body {
     margin: 0;
     font-family: Arial, sans-serif;
-    background: #abc1d1;
+    background: var(--bg);
 }
 
 /* ===== 좌우 배치 전용: 기존 CS 채팅 기능/구조 유지 ===== */
@@ -38,7 +85,7 @@ body {
     max-width: 520px;
     height: calc(100vh - 20px);
     margin: 10px 0;
-    background: #b2c7da;
+    background: var(--surface);
     border-radius: 14px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.18);
     border: 2px solid rgba(254,229,0,0.6);
@@ -48,13 +95,13 @@ body {
 }
 
 .rb-topbar {
-    background: #abc1d1;
+    background: var(--bg);
     padding: 10px 14px 8px;
-    border-bottom: 1px solid rgba(0,0,0,0.08);
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
 }
-.rb-title { font-size: 18px; font-weight: bold; color: #1f1f1f; margin-bottom: 4px; }
-.rb-sub   { font-size: 11px; color: #3e3e3e; }
+.rb-title { font-size: 18px; font-weight: bold; color: var(--text); margin-bottom: 4px; }
+.rb-sub   { font-size: 11px; color: var(--text2); }
 
 .rb-list {
     flex: 1;
@@ -67,11 +114,12 @@ body {
 
 /* 게시판 카드 */
 .rb-card {
-    background: #fff;
+    background: var(--card);
     border-radius: 10px;
     padding: 10px 12px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     font-size: 13px;
+    color: var(--text);
 }
 .rb-card-header {
     display: flex;
@@ -90,20 +138,21 @@ body {
 .rb-status.완료  { background: #dcfce7; color: #166534; }
 .rb-status.보류  { background: #fef9c3; color: #854d0e; }
 .rb-status.불가  { background: #fee2e2; color: #991b1b; }
-.rb-requester { font-size: 12px; color: #555; font-weight: 600; }
-.rb-time      { font-size: 10px; color: #aaa; margin-left: auto; }
-.rb-content   { color: #222; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+.rb-requester { font-size: 12px; color: var(--text2); font-weight: 600; }
+.rb-time      { font-size: 10px; color: var(--text3); margin-left: auto; }
+.rb-content   { color: var(--text); line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
 
 /* 답글 */
-.rb-replies { margin-top: 8px; border-top: 1px solid #f0f0f0; padding-top: 6px; display: flex; flex-direction: column; gap: 4px; }
-.rb-reply   { background: #f5f7fb; border-radius: 6px; padding: 5px 8px; font-size: 12px; color: #333; }
-.rb-reply-meta { font-size: 10px; color: #aaa; margin-bottom: 2px; }
+.rb-replies { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+.rb-reply   { background: var(--reply-bg); border-radius: 6px; padding: 5px 8px; font-size: 12px; color: var(--text2); }
+.rb-reply-meta { font-size: 10px; color: var(--text3); margin-bottom: 2px; }
 .rb-reply-input {
     display: flex; gap: 4px; margin-top: 6px;
 }
 .rb-reply-input input {
-    flex: 1; border: 1px solid #ddd; border-radius: 6px;
+    flex: 1; border: 1px solid var(--border2); border-radius: 6px;
     padding: 4px 8px; font-size: 12px; font-family: inherit;
+    background: var(--card); color: var(--text);
 }
 .rb-reply-input button {
     background: #3b82f6; color: #fff; border: none;
@@ -115,8 +164,8 @@ body {
 /* 신청 입력창 */
 .rb-input-area {
     padding: 8px 10px;
-    background: #abc1d1;
-    border-top: 1px solid rgba(0,0,0,0.08);
+    background: var(--bg);
+    border-top: 1px solid var(--border);
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
@@ -130,12 +179,13 @@ body {
 .rb-input-row input[type=text],
 .rb-input-row textarea {
     flex: 1;
-    border: 1.5px solid #c5d5e0;
+    border: 1.5px solid var(--border2);
     border-radius: 8px;
     padding: 6px 10px;
     font-size: 13px;
     font-family: inherit;
-    background: #fff;
+    background: var(--card);
+    color: var(--text);
     resize: none;
 }
 .rb-input-row textarea { height: 50px; }
@@ -178,7 +228,7 @@ body {
     max-width: calc(100vw - 20px);
     height: calc(100vh - 20px);
     margin: 10px auto;
-    background: #b2c7da;
+    background: var(--surface);
     display: flex;
     flex-direction: column;
     border-radius: 14px;
@@ -188,9 +238,9 @@ body {
 }
 
 .top-bar {
-    background: #abc1d1;
+    background: var(--bg);
     padding: 10px 14px 8px;
-    border-bottom: 1px solid rgba(0,0,0,0.08);
+    border-bottom: 1px solid var(--border);
     position: relative;
     min-height: 96px;
 }
@@ -199,7 +249,7 @@ body {
     font-size: 20px;
     font-weight: bold;
     margin-bottom: 8px;
-    color: #1f1f1f;
+    color: var(--text);
 }
 
 .user-row {
@@ -212,7 +262,7 @@ body {
 
 .user-row label {
     font-size: 12px;
-    color: #2b2b2b;
+    color: var(--text2);
 }
 
 .user-row select,
@@ -220,9 +270,10 @@ body {
     height: 30px;
     padding: 4px 8px;
     font-size: 13px;
-    border: 1px solid rgba(0,0,0,0.12);
+    border: 1px solid var(--border2);
     border-radius: 8px;
-    background: #fff;
+    background: var(--card);
+    color: var(--text);
 }
 
 .user-row select {
@@ -242,8 +293,8 @@ body {
     padding: 0 12px;
     border: none;
     border-radius: 999px;
-    background: rgba(255,255,255,0.95);
-    color: #222;
+    background: var(--alarm-bg);
+    color: var(--text);
     font-size: 12px;
     cursor: pointer;
     box-shadow: 0 1px 3px rgba(0,0,0,0.12);
@@ -257,7 +308,7 @@ body {
     flex: 1;
     overflow-y: auto;
     padding: 14px 12px 18px;
-    background: #b2c7da;
+    background: var(--surface);
 }
 
 .msg-row {
@@ -289,7 +340,7 @@ body {
 
 .name {
     font-size: 12px;
-    color: #3e3e3e;
+    color: var(--text2);
     margin-bottom: 4px;
     padding: 0 2px;
 }
@@ -321,8 +372,8 @@ body {
 }
 
 .msg-row.other .bubble {
-    background: #ffffff;
-    color: #111;
+    background: var(--card);
+    color: var(--text);
     border-top-left-radius: 4px;
 }
 
@@ -349,9 +400,9 @@ body {
     display: inline-block;
     max-width: 180px;
     padding: 4px 6px;
-    border: 1px solid #8f8f8f;
-    background: #ffffff;
-    color: #111;
+    border: 1px solid var(--border2);
+    background: var(--card);
+    color: var(--text);
     font-size: 12px;
     line-height: 1.35;
     word-break: break-word;
@@ -361,15 +412,15 @@ body {
 
 .time {
     font-size: 11px;
-    color: #55606b;
+    color: var(--text2);
     white-space: nowrap;
     margin-top: 4px;
     padding: 0 2px;
 }
 
 .bottom-area {
-    background: #f7f7f7;
-    border-top: 1px solid rgba(0,0,0,0.08);
+    background: var(--card);
+    border-top: 1px solid var(--border);
     padding: 10px;
 }
 
@@ -386,9 +437,10 @@ body {
     resize: none;
     font-size: 14px;
     padding: 11px 12px;
-    border: 1px solid #d6d6d6;
+    border: 1px solid var(--border2);
     border-radius: 12px;
-    background: #fff;
+    background: var(--card);
+    color: var(--text);
     line-height: 1.4;
 }
 
@@ -398,8 +450,8 @@ body {
 }
 
 #msg:disabled {
-    background: #ececec;
-    color: #888;
+    background: var(--reply-bg);
+    color: var(--text3);
     cursor: not-allowed;
 }
 
@@ -514,7 +566,7 @@ body {
 
 /* ===== 링크 / 미디어 ===== */
 .bubble a {
-    color: #1a6fdb;
+    color: var(--link);
     text-decoration: underline;
     word-break: break-all;
 }
@@ -540,7 +592,7 @@ body {
     height: 36px;
     border: none;
     border-radius: 50%;
-    background: rgba(255,255,255,0.85);
+    background: var(--float-bg);
     font-size: 18px;
     cursor: pointer;
     display: flex;
@@ -550,13 +602,13 @@ body {
     box-shadow: 0 1px 3px rgba(0,0,0,0.12);
 }
 
-.attach-btn:hover { background: #fff; }
+.attach-btn:hover { background: var(--card); }
 
 .upload-preview {
     padding: 6px 12px;
-    background: rgba(255,255,255,0.6);
+    background: var(--float-bg);
     font-size: 12px;
-    color: #333;
+    color: var(--text2);
     display: none;
     align-items: center;
     gap: 8px;
@@ -573,7 +625,7 @@ body {
 
 .uploading-indicator {
     font-size: 12px;
-    color: #666;
+    color: var(--text2);
     padding: 4px 12px;
     display: none;
 }
@@ -593,17 +645,17 @@ body {
     border-radius: 0 7px 7px 0;
     padding: 5px 9px;
     font-size: 12px;
-    color: #1a3a22;
+    color: var(--reply-green-text);
     line-height: 1.45;
 }
 .msg-row.me .chat-reply-item {
     background: rgba(66,133,244,0.13);
     border-left: 2.5px solid rgba(66,133,244,0.5);
-    color: #1a2a45;
+    color: var(--reply-blue-text);
 }
 .chat-reply-meta {
     font-size: 10px;
-    color: #6a7580;
+    color: var(--text3);
     margin-bottom: 1px;
 }
 .chat-reply-input {
@@ -622,12 +674,13 @@ body {
 }
 .chat-reply-input input {
     flex: 1;
-    border: 1px solid rgba(0,0,0,0.15);
+    border: 1px solid var(--border2);
     border-radius: 6px;
     padding: 4px 8px;
     font-size: 12px;
     font-family: inherit;
-    background: rgba(255,255,255,0.7);
+    background: var(--reply-input-bg);
+    color: var(--text);
 }
 .chat-reply-input button {
     background: #2b5fad;
@@ -670,8 +723,8 @@ body {
 
 /* ── 필터/검색 바 ── */
 .filter-bar {
-    background: #a0b8cc;
-    border-bottom: 1px solid rgba(0,0,0,0.08);
+    background: var(--filter-bg);
+    border-bottom: 1px solid var(--border);
     padding: 7px 12px;
     display: flex;
     flex-wrap: wrap;
@@ -682,33 +735,33 @@ body {
 .filter-bar input[type="date"],
 .filter-bar select {
     padding: 4px 8px;
-    border: 1px solid rgba(0,0,0,0.15);
+    border: 1px solid var(--border2);
     border-radius: 6px;
     font-size: 12px;
     font-family: inherit;
-    background: rgba(255,255,255,0.85);
-    color: #222;
+    background: var(--float-bg);
+    color: var(--text);
 }
 .filter-bar input[type="text"] { width: 130px; }
 .filter-bar input[type="date"] { width: 120px; }
 .filter-bar select { width: 90px; }
-.filter-bar label { font-size: 11px; color: #3a4a55; font-weight: 600; }
+.filter-bar label { font-size: 11px; color: var(--text2); font-weight: 600; }
 .filter-reset {
     margin-left: auto;
     font-size: 11px;
-    color: #3a4a55;
+    color: var(--text2);
     cursor: pointer;
     padding: 3px 8px;
     border-radius: 5px;
-    background: rgba(255,255,255,0.5);
-    border: 1px solid rgba(0,0,0,0.12);
+    background: var(--float-bg);
+    border: 1px solid var(--border2);
 }
-.filter-reset:hover { background: rgba(255,255,255,0.8); }
+.filter-reset:hover { background: var(--card); }
 .filter-active-count {
     font-size: 11px;
     color: #1a4fa0;
     font-weight: 700;
-    background: rgba(255,255,255,0.7);
+    background: var(--float-bg);
     padding: 2px 7px;
     border-radius: 10px;
     display: none;
@@ -719,16 +772,16 @@ body {
     width: 100%;
     padding: 8px 0;
     text-align: center;
-    background: rgba(255,255,255,0.5);
-    border: 1px solid rgba(0,0,0,0.1);
+    background: var(--float-bg);
+    border: 1px solid var(--border2);
     border-radius: 8px;
     font-size: 12px;
-    color: #3a4a55;
+    color: var(--text2);
     cursor: pointer;
     margin-bottom: 8px;
     font-weight: 600;
 }
-.load-more-btn:hover { background: rgba(255,255,255,0.8); }
+.load-more-btn:hover { background: var(--card); }
 /* 검색 하이라이트 */
 .highlight { background: #ffe066; border-radius: 2px; padding: 0 1px; }
 </style>

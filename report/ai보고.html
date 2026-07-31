@@ -12,7 +12,13 @@
   --teal:#2a7a6f; --teal-mid:#3a9a8f; --red:#c0392b; --orange:#e8834a;
   --green:#27ae60; --yellow:#f39c12; --text:#1a1a2e; --sub:#555577; --muted:#8888aa;
   --border:#dde0ea; --shadow:0 2px 12px rgba(30,40,80,0.08);
+  --heading:#1a2e50; --well:#f8fafc; --hover:#f8f9fd;
   --font:'Malgun Gothic','맑은 고딕',sans-serif;
+}
+body.dark-mode {
+  --bg:#0d1825; --card:#111e35; --text:#c8ddf0; --sub:#a8c4df; --muted:#7a9ec0;
+  --border:#243d6a; --shadow:0 2px 12px rgba(0,0,0,0.45);
+  --heading:#8ab4e8; --well:#16294a; --hover:#16294a;
 }
 body { font-family:var(--font); background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
 
@@ -40,16 +46,16 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .spinner { display:inline-block; width:11px; height:11px; border:2px solid rgba(255,255,255,.3); border-top-color:#fdcb6e; border-radius:50%; animation:spin .7s linear infinite; }
 
 /* 네비 */
-.section-nav { display:flex; padding:0 28px; background:#fff; border-bottom:2px solid var(--border); overflow-x:auto; align-items:center; justify-content:space-between; }
+.section-nav { display:flex; padding:0 28px; background:var(--card); border-bottom:2px solid var(--border); overflow-x:auto; align-items:center; justify-content:space-between; }
 .snav-item { padding:10px 18px; font-size:12.5px; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; white-space:nowrap; font-weight:600; }
-.snav-item:hover { color:var(--navy); }
+.snav-item:hover { color:var(--heading); }
 .snav-item.active { color:var(--navy-mid); border-bottom-color:var(--navy-mid); }
 
 /* 콘텐츠 */
 .content { padding:20px 28px 40px; }
 .section { display:none; } .section.active { display:block; }
 .card { background:var(--card); border-radius:10px; box-shadow:var(--shadow); padding:18px 20px; }
-.card-title { font-size:13px; font-weight:700; color:var(--navy); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.card-title { font-size:13px; font-weight:700; color:var(--heading); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
 .card-title .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:stretch; }
 .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
@@ -143,9 +149,9 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 /* 테이블 */
 .report-table { width:100%; border-collapse:collapse; font-size:12px; }
 .report-table th { background:var(--navy); color:#fff; padding:8px 10px; text-align:center; font-weight:600; font-size:11px; }
-.report-table td { padding:8px 10px; border-bottom:1px solid #eef0f5; vertical-align:top; color:var(--sub); }
+.report-table td { padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:top; color:var(--sub); }
 .report-table tr:last-child td { border-bottom:none; }
-.report-table tr:hover td { background:#f8f9fd; }
+.report-table tr:hover td { background:var(--hover); }
 .report-table td:first-child { color:var(--text); font-weight:600; }
 .report-table td.center { text-align:center; }
 .rate-badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700; }
@@ -156,30 +162,32 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 /* 액션 테이블 */
 .action-table { width:100%; border-collapse:collapse; font-size:12px; }
 .action-table th { background:var(--teal); color:#fff; padding:8px 10px; text-align:center; font-size:11px; font-weight:600; }
-.action-table td { padding:8px 10px; border-bottom:1px solid #eef0f5; vertical-align:middle; }
-.action-table tr:hover td { background:#f0faf8; }
+.action-table td { padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+.action-table tr:hover td { background:var(--hover); }
 
 /* 액션 카드 */
-.action-card { background:#fff; border-radius:10px; border:1.5px solid #e8edf5; padding:14px 14px 10px; display:flex; flex-direction:column; gap:7px; transition:box-shadow .2s; }
+.action-card { background:var(--card); border-radius:10px; border:1.5px solid var(--border); padding:14px 14px 10px; display:flex; flex-direction:column; gap:7px; transition:box-shadow .2s; }
 .action-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.08); }
 .action-card.is-done { opacity:.4; }
 .action-card.is-ai   { border-color:#f59e0b; background:#fffdf5; }
 .action-card.is-issue { border-color:#dc2626; background:#fff8f8; }
+body.dark-mode .action-card.is-ai   { background:rgba(245,158,11,0.08); }
+body.dark-mode .action-card.is-issue { background:rgba(220,38,38,0.1); }
 .action-card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:6px; }
-.action-card-title { font-size:12.5px; font-weight:700; color:var(--navy); flex:1; line-height:1.45; }
+.action-card-title { font-size:12.5px; font-weight:700; color:var(--heading); flex:1; line-height:1.45; }
 .action-card-badge { font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; white-space:nowrap; flex-shrink:0; }
 .badge-ai     { background:#f59e0b; color:#fff; }
 .badge-insight { display:inline-flex; align-items:center; gap:3px; font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; background:#7c3aed; color:#fff; opacity:.85; flex-shrink:0; }
 .badge-issue  { background:#dc2626; color:#fff; }
 .badge-core   { background:#fef3c7; color:#92400e; }
 .badge-normal { background:#e2e8f0; color:#475569; }
-.action-card-bar-wrap { background:#eef0f5; border-radius:4px; height:5px; width:100%; }
+.action-card-bar-wrap { background:var(--well); border-radius:4px; height:5px; width:100%; }
 .action-card-bar { height:100%; border-radius:4px; transition:width .6s ease; }
-.action-card-note { font-size:11px; color:#64748b; min-height:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.action-card-note { font-size:11px; color:var(--sub); min-height:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .action-card-bottom { display:flex; align-items:center; justify-content:space-between; }
-.action-card-meta { font-size:10.5px; color:#94a3b8; }
+.action-card-meta { font-size:10.5px; color:var(--muted); }
 .action-card-actions { display:flex; gap:2px; }
-.progress-wrap { background:#e8eef5; border-radius:10px; height:8px; overflow:hidden; }
+.progress-wrap { background:var(--well); border-radius:10px; height:8px; overflow:hidden; }
 .progress-bar  { height:100%; border-radius:10px; background:linear-gradient(90deg,var(--teal-mid),var(--teal)); transition:width .8s ease; }
 .progress-bar.warn { background:linear-gradient(90deg,#f39c12,#e8834a); }
 .progress-bar.bad  { background:linear-gradient(90deg,var(--red),#e74c3c); }
@@ -246,7 +254,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .voc-delta.down { color:#27ae60; }
 .voc-delta.eq   { color:#aaa; }
 
-.sec-title { font-size:15px; font-weight:800; color:var(--navy); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.sec-title { font-size:15px; font-weight:800; color:var(--heading); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
 .sec-title::before { content:''; display:inline-block; width:4px; height:18px; background:var(--navy-mid); border-radius:2px; }
 
 /* 즐겨찾기 별 버튼 */
@@ -259,6 +267,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 .fav-btn:hover { color:#f39c12; transform:scale(1.2); }
 .fav-btn.active { color:#f39c12; }
 .fav-row td { background:#fffbf0 !important; }
+body.dark-mode .fav-row td { background:rgba(243,156,18,0.12) !important; }
 
 @media(max-width:900px){ .grid-4{grid-template-columns:repeat(2,1fr);} .grid-2{grid-template-columns:1fr;} }
 
@@ -306,33 +315,33 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 }
 #snavVisModal.open { display: flex; }
 .snav-vis-modal-box {
-  background: #fff;
-  border: 1px solid #dde0ea;
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 28px 28px 22px;
   width: 370px;
   max-width: 95vw;
   box-shadow: 0 16px 40px rgba(0,0,0,0.18);
 }
-.snav-vis-modal-title { font-size: 15px; font-weight: 700; color: #1a2e50; margin-bottom: 6px; }
-.snav-vis-modal-sub { font-size: 11px; color: #8888aa; margin-bottom: 18px; line-height: 1.6; }
+.snav-vis-modal-title { font-size: 15px; font-weight: 700; color: var(--heading); margin-bottom: 6px; }
+.snav-vis-modal-sub { font-size: 11px; color: var(--muted); margin-bottom: 18px; line-height: 1.6; }
 .snav-vis-role-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
 .snav-vis-role-row {
   display: flex; align-items: center; justify-content: space-between;
-  background: #f8fafc; border-radius: 6px; padding: 9px 14px;
-  border: 1px solid #e2e8f0;
+  background: var(--well); border-radius: 6px; padding: 9px 14px;
+  border: 1px solid var(--border);
 }
-.snav-vis-role-row .role-name { font-size: 12.5px; color: #334155; font-weight: 600; }
-.snav-vis-role-row .role-desc { font-size: 10px; color: #94a3b8; margin-top:1px; }
+.snav-vis-role-row .role-name { font-size: 12.5px; color: var(--text); font-weight: 600; }
+.snav-vis-role-row .role-desc { font-size: 10px; color: var(--muted); margin-top:1px; }
 .snav-vis-badge { font-size: 10.5px; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
 .snav-badge-open   { background: #e8f8f0; color: #27ae60; border: 1px solid #b2dfce; }
 .snav-badge-hidden { background: #fef0ee; color: #c0392b; border: 1px solid #f5c6b8; }
 .snav-vis-toggle-btn {
-  background: none; border: 1px solid #cbd5e1; color: #64748b;
+  background: none; border: 1px solid var(--border); color: var(--muted);
   border-radius: 4px; padding: 3px 10px; font-size: 11px;
   cursor: pointer; font-family: var(--font); transition: all 0.15s;
 }
-.snav-vis-toggle-btn:hover { background: #f1f5f9; color: #1a2e50; }
+.snav-vis-toggle-btn:hover { background: var(--well); color: var(--heading); }
 .snav-vis-modal-footer { display: flex; justify-content: flex-end; gap: 8px; }
 .snav-vis-save-btn {
   background: #2356a8; border: none; color: #fff;
@@ -342,11 +351,11 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
 }
 .snav-vis-save-btn:hover { background: #1a3a7a; }
 .snav-vis-cancel-btn {
-  background: #f1f5f9; border: 1px solid #cbd5e1; color: #64748b;
+  background: var(--well); border: 1px solid var(--border); color: var(--muted);
   padding: 8px 16px; border-radius: 6px; font-size: 13px;
   cursor: pointer; font-family: var(--font); transition: background 0.15s;
 }
-.snav-vis-cancel-btn:hover { background: #e2e8f0; }
+.snav-vis-cancel-btn:hover { background: var(--border); }
 </style>
 </head>
 <body>
@@ -506,7 +515,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
           <th style="width:12%">진행단계</th>
           <th style="width:12%">요청자</th>
         </tr></thead>
-        <tbody id="qualityBody"><tr><td colspan="7" style="text-align:center;color:#aaa;padding:30px;">로딩 중...</td></tr></tbody>
+        <tbody id="qualityBody"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px;">로딩 중...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -552,23 +561,23 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
       <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
         <span id="saveStatus" class="save-status" style="display:none;"></span>
       </div>
-      <div id="actionInsightBox" style="flex:1;background:#f0f4ff;border:1.5px solid #c7d7f5;border-radius:8px;padding:7px 14px;font-size:11.5px;line-height:1.7;color:#1e3a6e;display:none;min-width:0;"></div>
+      <div id="actionInsightBox" style="flex:1;background:rgba(35,86,168,0.08);border:1.5px solid rgba(35,86,168,0.25);border-radius:8px;padding:7px 14px;font-size:11.5px;line-height:1.7;color:var(--heading);display:none;min-width:0;"></div>
       <div style="display:flex;gap:8px;flex-shrink:0;margin-left:auto;">
         <button onclick="addIssue()" style="background:#dc2626;border:none;color:#fff;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);font-weight:600;">+ Issue 추가</button>
         <button onclick="addAction()" style="background:var(--teal);border:none;color:#fff;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">+ 과제 추가</button>
-        <button onclick="loadFromSheet()" style="background:#eee;border:none;color:#555;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">☁ 불러오기</button>
-        <button onclick="clearDone()" style="background:#f5f5f5;border:none;color:#999;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">완료 정리</button>
+        <button onclick="loadFromSheet()" style="background:var(--well);border:none;color:var(--sub);padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">☁ 불러오기</button>
+        <button onclick="clearDone()" style="background:var(--well);border:none;color:var(--muted);padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--font);">완료 정리</button>
       </div>
     </div>
     <!-- 상태 필터 버튼 -->
     <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center;">
-      <span style="font-size:11px;color:#aaa;margin-right:2px;">필터</span>
-      <button id="filter-all"    onclick="setActionFilter('all')"    style="padding:4px 12px;border-radius:20px;border:1.5px solid #ccc;background:#f5f5f5;color:#555;font-size:11.5px;cursor:pointer;font-family:var(--font);font-weight:600;">전체</button>
+      <span style="font-size:11px;color:var(--muted);margin-right:2px;">필터</span>
+      <button id="filter-all"    onclick="setActionFilter('all')"    style="padding:4px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--well);color:var(--sub);font-size:11.5px;cursor:pointer;font-family:var(--font);font-weight:600;">전체</button>
       <button id="filter-미착수" onclick="setActionFilter('미착수')" style="padding:4px 12px;border-radius:20px;border:1.5px solid #c8d6e5;background:#f0f4f8;color:#5a7a9a;font-size:11.5px;cursor:pointer;font-family:var(--font);">미착수</button>
       <button id="filter-진행중" onclick="setActionFilter('진행중')" style="padding:4px 12px;border-radius:20px;border:1.5px solid #b3d4f0;background:#e8f4fc;color:#1a6aa0;font-size:11.5px;cursor:pointer;font-family:var(--font);">진행중</button>
       <button id="filter-지연"   onclick="setActionFilter('지연')"   style="padding:4px 12px;border-radius:20px;border:1.5px solid #f5c6a0;background:#fef3ea;color:#c06820;font-size:11.5px;cursor:pointer;font-family:var(--font);">지연</button>
       <button id="filter-완료"   onclick="setActionFilter('완료')"   style="padding:4px 12px;border-radius:20px;border:1.5px solid #b2dfce;background:#eaf6f0;color:#1a7a50;font-size:11.5px;cursor:pointer;font-family:var(--font);">완료</button>
-      <span id="filter-count" style="font-size:11px;color:#aaa;margin-left:4px;"></span>
+      <span id="filter-count" style="font-size:11px;color:var(--muted);margin-left:4px;"></span>
     </div>
     <div id="actionCardGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;"></div>
   </div>
@@ -576,7 +585,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
   <!-- ⑤ AI 간이보고 -->
   <div class="section" id="sec-aireport">
     <div class="sec-title">AI 간이보고</div>
-    <div id="aireportEmpty" style="display:none;padding:60px;text-align:center;color:#aaa;font-size:14px;">
+    <div id="aireportEmpty" style="display:none;padding:60px;text-align:center;color:var(--muted);font-size:14px;">
       📄 아직 이 회차의 보고서가 없습니다.
     </div>
     <iframe

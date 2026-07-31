@@ -21,7 +21,14 @@
   --border:#e2e8f0;--border2:#cbd5e1;
   --text:#1e293b;--textD:#475569;--textL:#64748b;--textXL:#94a3b8;
   --ai-from:#4f46e5;--ai-to:#0d9488;
+  --fill-weak:rgba(0,0,0,0.04);--fill-mid:rgba(0,0,0,0.06);--fill-border:rgba(0,0,0,0.08);--fill-hover:rgba(0,0,0,0.02);
   --font:'Noto Sans KR',sans-serif;
+}
+body.dark-mode{
+  --bg:#0d1825;--card:#111e35;--card2:#0f1c33;
+  --border:#243d6a;--border2:#2c4a7d;
+  --text:#c8ddf0;--textD:#a8c4df;--textL:#7a9ecc;--textXL:#5f86ad;
+  --fill-weak:rgba(255,255,255,0.06);--fill-mid:rgba(255,255,255,0.08);--fill-border:rgba(255,255,255,0.12);--fill-hover:rgba(255,255,255,0.05);
 }
 html,body{width:100%;min-height:100vh;background:var(--bg);font-family:var(--font);color:var(--text);font-size:13px;}
 
@@ -162,13 +169,13 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:var(--fon
 .sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
 .sec-line{width:4px;height:18px;border-radius:2px;flex-shrink:0;}
 .sec-title{font-size:14px;font-weight:700;color:var(--text);}
-.sec-period{font-size:10px;color:var(--textL);margin-left:auto;background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.08);padding:2px 8px;border-radius:3px;}
+.sec-period{font-size:10px;color:var(--textL);margin-left:auto;background:var(--fill-weak);border:1px solid var(--fill-border);padding:2px 8px;border-radius:3px;}
 
 /* ══ 미니 바 ══ */
 .mini-bar-wrap{display:flex;flex-direction:column;gap:6px;}
 .mini-bar-row{display:flex;align-items:center;gap:8px;}
 .mini-bar-lbl{font-size:11px;color:var(--textD);width:100px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.mini-bar-track{flex:1;height:8px;background:rgba(0,0,0,0.06);border-radius:4px;overflow:hidden;}
+.mini-bar-track{flex:1;height:8px;background:var(--fill-mid);border-radius:4px;overflow:hidden;}
 .mini-bar-fill{height:100%;border-radius:4px;transition:width .8s ease;}
 .mini-bar-val{font-size:11px;font-weight:700;color:var(--text);width:36px;text-align:right;flex-shrink:0;font-family:'Inter',sans-serif;}
 .mini-bar-pct{font-size:10px;color:var(--textL);width:32px;text-align:right;flex-shrink:0;}
@@ -177,10 +184,10 @@ html,body{width:100%;min-height:100vh;background:var(--bg);font-family:var(--fon
 .data-table{width:100%;border-collapse:collapse;}
 .data-table th{font-size:10px;color:var(--textXL);font-weight:600;text-align:left;padding:6px 8px;border-bottom:2px solid var(--border);}
 .data-table th.num{text-align:right;}
-.data-table td{font-size:12px;color:var(--text);padding:7px 8px;border-bottom:1px solid rgba(0,0,0,0.04);}
+.data-table td{font-size:12px;color:var(--text);padding:7px 8px;border-bottom:1px solid var(--fill-weak);}
 .data-table tr:last-child td{border-bottom:none;}
 .data-table td.num{text-align:right;font-family:'Inter',sans-serif;font-weight:600;}
-.data-table tr:hover td{background:rgba(0,0,0,0.02);}
+.data-table tr:hover td{background:var(--fill-hover);}
 
 /* ══ 배지 ══ */
 .bdg{display:inline-flex;align-items:center;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;}
@@ -213,7 +220,7 @@ svg.chart{width:100%;display:block;}
 .cx-dist{flex:1;}
 .cx-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
 .cx-bar-star{font-size:11px;color:var(--textD);width:28px;text-align:right;flex-shrink:0;}
-.cx-bar-track{flex:1;height:10px;background:rgba(0,0,0,0.06);border-radius:5px;overflow:hidden;}
+.cx-bar-track{flex:1;height:10px;background:var(--fill-mid);border-radius:5px;overflow:hidden;}
 .cx-bar-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,#fbbf24,#f59e0b);}
 .cx-bar-cnt{font-size:10px;color:var(--textL);width:28px;flex-shrink:0;}
 .cx-meta{display:flex;gap:14px;margin-top:12px;flex-wrap:wrap;}
@@ -240,7 +247,7 @@ svg.chart{width:100%;display:block;}
 .compare-icon.human{background:linear-gradient(135deg,var(--teal),var(--teal2));}
 .compare-title{font-size:12px;font-weight:700;color:var(--text);}
 .compare-sub{font-size:10px;color:var(--textL);}
-.compare-stat{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.04);}
+.compare-stat{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--fill-weak);}
 .compare-stat:last-child{border-bottom:none;}
 .compare-stat-lbl{font-size:11px;color:var(--textD);}
 .compare-stat-val{font-size:14px;font-weight:800;color:var(--text);font-family:'Inter',sans-serif;}
@@ -946,7 +953,7 @@ function renderLineTrend(trend) {
   let html='';
   gridYs.forEach(v=>{
     const y=py(v);
-    html+=`<line x1="${padL}" x2="${W-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>`;
+    html+=`<line x1="${padL}" x2="${W-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--fill-mid)" stroke-width="0.5"/>`;
     html+=`<text x="${padL-4}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="9" fill="#94a3b8">${Math.round(v)}</text>`;
   });
   const areaTop=trend.map((d,i)=>`${px(i).toFixed(1)},${py(d.total).toFixed(1)}`).join(' ');
@@ -1017,7 +1024,7 @@ function renderWeeklyTrend(trend) {
   let html='';
   [0,yMax*0.5,yMax].forEach(v=>{
     const y=py(v);
-    html+=`<line x1="${padL}" x2="${W-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>`;
+    html+=`<line x1="${padL}" x2="${W-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--fill-mid)" stroke-width="0.5"/>`;
     html+=`<text x="${padL-4}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="9" fill="#94a3b8">${Math.round(v)}</text>`;
   });
 
@@ -1084,7 +1091,7 @@ function renderDOWChart(trend) {
   let html='';
   [0,yMax*0.5,yMax].forEach(v=>{
     const y=padT+pH*(1-v/yMax);
-    html+=`<line x1="${padL}" x2="${W-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>`;
+    html+=`<line x1="${padL}" x2="${W-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--fill-mid)" stroke-width="0.5"/>`;
     html+=`<text x="${padL-4}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="9" fill="#94a3b8">${Math.round(v)}</text>`;
   });
 
@@ -1182,7 +1189,7 @@ function renderAgentTable(agents) {
             const bar=isGood?'linear-gradient(90deg,#16a34a,#4ade80)':isMid?'linear-gradient(90deg,#d97706,#fbbf24)':'linear-gradient(90deg,#dc2626,#f87171)';
             const lbl=isGood?'🟢':isMid?'🟡':'🔴';
             respCell=`<div style="display:flex;align-items:center;gap:6px;">
-              <div style="flex:1;height:8px;background:rgba(0,0,0,0.07);border-radius:4px;overflow:hidden;position:relative;">
+              <div style="flex:1;height:8px;background:var(--fill-mid);border-radius:4px;overflow:hidden;position:relative;">
                 <div style="position:absolute;left:50%;top:0;width:1px;height:100%;background:rgba(0,0,0,0.2);z-index:1;"></div>
                 <div style="width:${barPct/2}%;height:100%;background:${bar};border-radius:4px;"></div>
               </div>
@@ -1196,7 +1203,7 @@ function renderAgentTable(agents) {
             <td class="num">${fmtN(a.handled||0)}</td>
             <td>
               <div style="display:flex;align-items:center;gap:8px;">
-                <div style="flex:1;height:8px;background:rgba(0,0,0,0.07);border-radius:4px;overflow:hidden;">
+                <div style="flex:1;height:8px;background:var(--fill-mid);border-radius:4px;overflow:hidden;">
                   <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,var(--ch),var(--blue3));border-radius:4px;"></div>
                 </div>
                 <span style="font-size:10px;color:var(--textL);width:36px;">${pct}%</span>

@@ -23,6 +23,30 @@
     --border: #dde0ea;
     --shadow: 0 2px 12px rgba(30,40,80,0.08);
     --font: 'Malgun Gothic', '맑은 고딕', sans-serif;
+    --track: #eef0f6;
+    --badge-bg: #e8eef8;
+    --badge-bg-done: #e3f5f2;
+    --badge-bg-none: #f0f0f0;
+    --icon-bg: #f5f5f5;
+    --icon-border: #ccc;
+    --badge-text-none: #999;
+  }
+
+  body.dark-mode {
+    --bg: #0d1825;
+    --card: #111e35;
+    --text-main: #c8ddf0;
+    --text-sub: #a8c4df;
+    --text-muted: #7a9ec0;
+    --border: #243d6a;
+    --shadow: 0 2px 12px rgba(0,0,0,0.4);
+    --track: #1a2e50;
+    --badge-bg: #1a2e50;
+    --badge-bg-done: #163326;
+    --badge-bg-none: #2a1e22;
+    --icon-bg: #1a2e50;
+    --icon-border: #3a5a8a;
+    --badge-text-none: #7a9ec0;
   }
 
   body {
@@ -144,7 +168,7 @@
   .kpi-desc { font-size: 11px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5; word-break: keep-all; }
 
   .kpi-bottom { display: flex; align-items: center; justify-content: space-between; }
-  .kpi-bar-wrap { flex: 1; background: #eef0f6; border-radius: 4px; height: 6px; margin-right: 12px; }
+  .kpi-bar-wrap { flex: 1; background: var(--track); border-radius: 4px; height: 6px; margin-right: 12px; }
   .kpi-bar { height: 6px; border-radius: 4px; background: var(--blue-mid); transition: width 0.8s ease; }
   .kpi-card.done .kpi-bar { background: var(--green-mid); }
   .kpi-card.none .kpi-bar { background: #ccc; }
@@ -154,12 +178,12 @@
     font-weight: 700;
     padding: 3px 10px;
     border-radius: 20px;
-    background: #e8eef8;
+    background: var(--badge-bg);
     color: var(--blue-mid);
     white-space: nowrap;
   }
-  .kpi-card.done .kpi-pct-badge { background: #e3f5f2; color: var(--green-dark); }
-  .kpi-card.none .kpi-pct-badge { background: #f0f0f0; color: #999; }
+  .kpi-card.done .kpi-pct-badge { background: var(--badge-bg-done); color: var(--green-dark); }
+  .kpi-card.none .kpi-pct-badge { background: var(--badge-bg-none); color: var(--badge-text-none); }
 
   /* ── 체크박스 아이콘 ── */
   .status-icon {
@@ -167,8 +191,8 @@
     top: 14px; right: 14px;
     width: 22px; height: 22px;
     border-radius: 5px;
-    border: 2px solid #ccc;
-    background: #f5f5f5;
+    border: 2px solid var(--icon-border);
+    background: var(--icon-bg);
     display: flex; align-items: center; justify-content: center;
     font-size: 13px; font-weight: 900; color: transparent;
     line-height: 1;

@@ -6,10 +6,18 @@
 <title>상담실적</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:#f1f5f9;font-family:'Malgun Gothic','맑은 고딕',sans-serif;font-size:13px;color:#334155;padding:14px;}
-.card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px;}
-.card-title{font-size:13px;font-weight:600;color:#0f1f3d;}
-.card-header{padding-bottom:8px;border-bottom:1px solid #e2e8f0;margin-bottom:12px;}
+:root{
+  --bg:#f1f5f9;--surface:#fff;--border:#e2e8f0;--text:#334155;--heading:#0f1f3d;
+  --muted:#64748b;--muted2:#94a3b8;--well:#f8fafc;
+}
+body.dark-mode{
+  --bg:#0d1825;--surface:#111e35;--border:#243d6a;--text:#c8ddf0;--heading:#8ab4e8;
+  --muted:#a8c4df;--muted2:#7a9ec0;--well:#16294a;
+}
+body{background:var(--bg);font-family:'Malgun Gothic','맑은 고딕',sans-serif;font-size:13px;color:var(--text);padding:14px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+.card-title{font-size:13px;font-weight:600;color:var(--heading);}
+.card-header{padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:12px;}
 .main-row{display:flex;gap:10px;align-items:flex-start;}
 .left-col{flex:1.1;display:flex;flex-direction:column;gap:10px;min-width:0;}
 .right-col{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0;}
@@ -22,22 +30,22 @@ body{background:#f1f5f9;font-family:'Malgun Gothic','맑은 고딕',sans-serif;f
 .donut-inner{display:flex;align-items:center;gap:10px;width:100%;}
 .donut-wrap{position:relative;width:90px;height:90px;flex-shrink:0;}
 .donut-wrap svg{position:absolute;top:0;left:0;width:90px;height:90px;}
-.donut-hole{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;background:#fff;border-radius:50%;}
+.donut-hole{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;background:var(--surface);border-radius:50%;}
 .donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;line-height:1.2;z-index:2;}
-.dnum{font-size:16px;font-weight:700;color:#0f1f3d;display:block;}
-.dsub{font-size:8px;color:#64748b;display:block;}
-.legend{font-size:10px;color:#334155;line-height:1.9;min-width:0;}
+.dnum{font-size:16px;font-weight:700;color:var(--heading);display:block;}
+.dsub{font-size:8px;color:var(--muted);display:block;}
+.legend{font-size:10px;color:var(--text);line-height:1.9;min-width:0;}
 .leg-row{display:flex;align-items:center;gap:4px;white-space:nowrap;}
 .leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.alf-badge{font-size:9px;color:#94a3b8;background:#f1f5f9;border-radius:4px;padding:2px 6px;margin-bottom:6px;display:inline-block;}
+.alf-badge{font-size:9px;color:var(--muted2);background:var(--well);border-radius:4px;padding:2px 6px;margin-bottom:6px;display:inline-block;}
 .data-tbl{width:100%;border-collapse:collapse;font-size:11px;}
 .data-tbl th{background:#0f1f3d;color:#fff;padding:5px 6px;text-align:center;font-weight:500;white-space:nowrap;font-size:10px;}
-.data-tbl td{padding:5px 6px;text-align:center;border-bottom:1px solid #f1f5f9;color:#334155;white-space:nowrap;}
-.data-tbl tbody tr:last-child td{font-weight:600;background:#f8fafc;}
-.chip-header{display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid #e2e8f0;margin-bottom:10px;}
-.chip{font-size:10px;font-weight:600;padding:3px 8px;border-radius:12px;background:#e2e8f0;color:#334155;}
+.data-tbl td{padding:5px 6px;text-align:center;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;}
+.data-tbl tbody tr:last-child td{font-weight:600;background:var(--well);}
+.chip-header{display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:10px;}
+.chip{font-size:10px;font-weight:600;padding:3px 8px;border-radius:12px;background:var(--border);color:var(--text);}
 .chip.on{background:#0f1f3d;color:#fff;}
-.loading{color:#94a3b8;font-size:12px;padding:20px;text-align:center;}
+.loading{color:var(--muted2);font-size:12px;padding:20px;text-align:center;}
 .err{color:#ef4444;font-size:11px;padding:8px;}
 </style>
 </head>
@@ -284,11 +292,11 @@ function buildLineChart(rows, valueKey, unit, color, fillColor) {
     y:yp(maxV*r),
     label: unit==='%'?(maxV*r*100).toFixed(0)+'%':Math.round(maxV*r).toLocaleString()
   }));
-  const grids  = yticks.map(t=>`<line x1="${PL}" y1="${t.y.toFixed(1)}" x2="${W-PR}" y2="${t.y.toFixed(1)}" stroke="#e2e8f0" stroke-width="1"/>`).join('');
-  const ylbls  = yticks.map(t=>`<text x="${PL-3}" y="${(t.y+3).toFixed(1)}" text-anchor="end" font-size="8" fill="#94a3b8">${t.label}</text>`).join('');
+  const grids  = yticks.map(t=>`<line x1="${PL}" y1="${t.y.toFixed(1)}" x2="${W-PR}" y2="${t.y.toFixed(1)}" stroke="var(--border)" stroke-width="1"/>`).join('');
+  const ylbls  = yticks.map(t=>`<text x="${PL-3}" y="${(t.y+3).toFixed(1)}" text-anchor="end" font-size="8" fill="var(--muted2)">${t.label}</text>`).join('');
   const xlbls  = rows.map((d,i)=>{
     let lbl = FILTER.period==='주간' ? (s=>s.slice(0,2)+'/'+s.slice(2))(String(d.round).slice(2)) : d.round;
-    return `<text x="${xp(i).toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="8" fill="#94a3b8">${lbl}</text>`;
+    return `<text x="${xp(i).toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="8" fill="var(--muted2)">${lbl}</text>`;
   }).join('');
   const dots = rows.map((d,i)=>{
     const x=xp(i).toFixed(1), y=yp(d[valueKey]).toFixed(1);

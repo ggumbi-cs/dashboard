@@ -11,17 +11,23 @@
   --navy:#0f1f3d; --blue:#1e40af; --teal:#0f766e;
   --amber:#b45309; --purple:#6d28d9;
   --slate:#334155; --slateL:#64748b;
-  --border:#e2e8f0; --bg:#f0f2f5;
+  --border:#e2e8f0; --bg:#f0f2f5; --surface:#fff;
+  --text2:#888; --text3:#aaa;
+}
+body.dark-mode {
+  --navy:#e8f4ff; --border:#243d6a; --bg:#0d1825; --surface:#111e35;
+  --slate:#c8ddf0; --slateL:#7a9ec0;
+  --text2:#7a9ec0; --text3:#5a7fa0;
 }
 body { background:var(--bg); font-family:'Malgun Gothic',sans-serif; font-size:12px; color:var(--slate); margin:0; padding:12px; overflow-x:hidden; }
 
 #root { width:1200px; padding:0; transform-origin:top left; }
 
 /* 공통 카드 */
-.card { background:#fff; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.08); padding:10px 12px; }
+.card { background:var(--surface); border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.08); padding:10px 12px; }
 .card-header { padding-bottom:6px; border-bottom:1px solid var(--border); margin-bottom:8px; }
-.card-title { font-size:10px; font-weight:600; color:#888; }
-.card-sub   { font-size:9px; color:#aaa; margin-top:1px; }
+.card-title { font-size:10px; font-weight:600; color:var(--text2); }
+.card-sub   { font-size:9px; color:var(--text3); margin-top:1px; }
 
 /* 섹션 제목바 */
 .sec { font-size:10px; font-weight:700; color:#fff; padding:5px 10px; border-radius:4px; margin-bottom:8px; letter-spacing:.03em; }
@@ -48,30 +54,30 @@ body { background:var(--bg); font-family:'Malgun Gothic',sans-serif; font-size:1
 .col-val    { font-size:9px; font-weight:700; color:var(--navy); white-space:nowrap; margin-bottom:2px; line-height:1; }
 .col-bars   { display:flex; align-items:flex-end; gap:2px; }
 .col-bar    { width:20px; border-radius:3px 3px 0 0; transition:height .3s; }
-.col-lbl    { font-size:9px; color:#888; margin-top:2px; }
-.bar-legend { display:flex; gap:8px; flex-wrap:wrap; font-size:9px; color:#888; margin-top:6px; }
+.col-lbl    { font-size:9px; color:var(--text2); margin-top:2px; }
+.bar-legend { display:flex; gap:8px; flex-wrap:wrap; font-size:9px; color:var(--text2); margin-top:6px; }
 .leg-dot    { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:3px; vertical-align:middle; }
 
 /* 도넛차트 */
 .donut-wrap { display:flex; flex-direction:column; align-items:flex-start; gap:6px; }
 .donut-rel  { position:relative; flex-shrink:0; }
 .dcenter    { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:11px; font-weight:700; color:var(--navy); text-align:center; line-height:1.2; white-space:nowrap; }
-.dcenter small { font-size:9px; font-weight:400; color:#888; display:block; }
+.dcenter small { font-size:9px; font-weight:400; color:var(--text2); display:block; }
 .dlegend    { font-size:9px; color:var(--slate); line-height:1.9; }
 .ldot       { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:3px; vertical-align:middle; }
 
 /* 라인차트 */
 .line-svg   { width:100%; height:100px; display:block; }
-.x-labels   { display:flex; justify-content:space-around; font-size:9px; color:#888; margin-top:2px; }
+.x-labels   { display:flex; justify-content:space-around; font-size:9px; color:var(--text2); margin-top:2px; }
 
 /* 로딩/에러 */
-.no-data { color:#aaa; font-size:10px; padding:16px 0; text-align:center; }
+.no-data { color:var(--text3); font-size:10px; padding:16px 0; text-align:center; }
 </style>
 </head>
 <body>
 <div id="summary-toast" style="display:none;position:fixed;bottom:18px;right:18px;background:#0f1f3d;color:#fff;font-size:12px;padding:8px 16px;border-radius:6px;z-index:9999;"></div>
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-  <div id="sync-label" style="font-size:10px;color:#888;">📅 마지막 노션 동기화: - <span style="color:#bbb;">(매일 자정 자동 동기화)</span></div>
+  <div id="sync-label" style="font-size:10px;color:var(--text2);">📅 마지막 노션 동기화: - <span style="color:var(--text3);">(매일 자정 자동 동기화)</span></div>
   <div style="display:flex;gap:8px;">
     <button id="btn-sync-notion" onclick="manualSync()" style="font-size:12px;font-weight:600;padding:7px 16px;background:#0f766e;color:#fff;border:none;border-radius:6px;cursor:pointer;">🔄 노션 수동 동기화</button>
     <button id="btn-save-summary" onclick="saveSummaryToSheet()" style="font-size:12px;font-weight:600;padding:7px 16px;background:#0f766e;color:#fff;border:none;border-radius:6px;cursor:pointer;">☁ 이번 마감 데이터 AI에 전달</button>
@@ -302,7 +308,7 @@ async function loadXlsx(forceSync) {
 
     AGG = json.agg;
     if (!AGG) {
-      document.getElementById('root').innerHTML += `<div class="no-data" style="color:#888;padding:40px;text-align:center;">해당 기간 집계 데이터가 없습니다.<br><small>노션 동기화 후 다시 시도해 주세요.</small></div>`;
+      document.getElementById('root').innerHTML += `<div class="no-data" style="color:var(--text2);padding:40px;text-align:center;">해당 기간 집계 데이터가 없습니다.<br><small>노션 동기화 후 다시 시도해 주세요.</small></div>`;
       return;
     }
 
@@ -531,7 +537,7 @@ function renderDonut(containerId, items, totalLabel) {
       stroke-dashoffset="${(-offset).toFixed(2)}" transform="rotate(-90 ${CX} ${CY})"/>`;
     offset += pct * circ;
   });
-  circles += `<circle cx="${CX}" cy="${CY}" r="${R-SW/2-1}" fill="#fff"/>`;
+  circles += `<circle cx="${CX}" cy="${CY}" r="${R-SW/2-1}" style="fill:var(--surface);"/>`;
 
   // 범례
   const legend = top.map(item => {
@@ -573,14 +579,14 @@ function renderLine(svgId, xlblId, rounds, values, color) {
   const maxV = Math.max(...nonNull, minV + 0.1);
 
   // 그리드
-  let inner = `<line x1="${PAD_L}" y1="${PAD_T}" x2="${W-PAD_R}" y2="${PAD_T}" stroke="#f1f5f9" stroke-width="1"/>
-    <line x1="${PAD_L}" y1="${PAD_T+chartH/2}" x2="${W-PAD_R}" y2="${PAD_T+chartH/2}" stroke="#f1f5f9" stroke-width="1"/>
-    <line x1="${PAD_L}" y1="${PAD_T+chartH}" x2="${W-PAD_R}" y2="${PAD_T+chartH}" stroke="#e2e8f0" stroke-width="1"/>`;
+  let inner = `<line x1="${PAD_L}" y1="${PAD_T}" x2="${W-PAD_R}" y2="${PAD_T}" style="stroke:var(--border);" stroke-width="1"/>
+    <line x1="${PAD_L}" y1="${PAD_T+chartH/2}" x2="${W-PAD_R}" y2="${PAD_T+chartH/2}" style="stroke:var(--border);" stroke-width="1"/>
+    <line x1="${PAD_L}" y1="${PAD_T+chartH}" x2="${W-PAD_R}" y2="${PAD_T+chartH}" style="stroke:var(--border);" stroke-width="1"/>`;
 
   // Y축 레이블
-  inner += `<text x="${PAD_L-4}" y="${PAD_T+4}" text-anchor="end" font-size="9" fill="#94a3b8">${maxV.toFixed(1)}</text>`;
-  inner += `<text x="${PAD_L-4}" y="${PAD_T+chartH/2+4}" text-anchor="end" font-size="9" fill="#94a3b8">${((maxV+minV)/2).toFixed(1)}</text>`;
-  inner += `<text x="${PAD_L-4}" y="${PAD_T+chartH+4}" text-anchor="end" font-size="9" fill="#94a3b8">${minV.toFixed(1)}</text>`;
+  inner += `<text x="${PAD_L-4}" y="${PAD_T+4}" text-anchor="end" font-size="9" style="fill:var(--text2);">${maxV.toFixed(1)}</text>`;
+  inner += `<text x="${PAD_L-4}" y="${PAD_T+chartH/2+4}" text-anchor="end" font-size="9" style="fill:var(--text2);">${((maxV+minV)/2).toFixed(1)}</text>`;
+  inner += `<text x="${PAD_L-4}" y="${PAD_T+chartH+4}" text-anchor="end" font-size="9" style="fill:var(--text2);">${minV.toFixed(1)}</text>`;
 
   // 점 좌표
   const pts = rounds.map((r, i) => {
@@ -599,7 +605,7 @@ function renderLine(svgId, xlblId, rounds, values, color) {
 
   // 점 + 값
   linePts.forEach(p => {
-    inner += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="#fff" stroke="${color}" stroke-width="2"/>`;
+    inner += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" style="fill:var(--surface);" stroke="${color}" stroke-width="2"/>`;
     inner += `<text x="${p.x.toFixed(1)}" y="${(p.y-8).toFixed(1)}" text-anchor="middle" font-size="9" fill="${color}" font-weight="600">${p.val.toFixed(2)}</text>`;
   });
 
@@ -671,7 +677,7 @@ function render() {
   const dayEl = document.getElementById('chart-day-repair');
   const dayLblEl = document.getElementById('xlbl-day-repair');
   if (dayEl && gm.평균소요일 != null) {
-    dayEl.innerHTML = `<text x="50%" y="55%" text-anchor="middle" font-size="22" font-weight="700" fill="#6d28d9">${gm.평균소요일}</text><text x="50%" y="72%" text-anchor="middle" font-size="11" fill="#888">일 (평균)</text>`;
+    dayEl.innerHTML = `<text x="50%" y="55%" text-anchor="middle" font-size="22" font-weight="700" fill="#6d28d9">${gm.평균소요일}</text><text x="50%" y="72%" text-anchor="middle" font-size="11" style="fill:var(--text2);">일 (평균)</text>`;
     if (dayLblEl) dayLblEl.innerHTML = '';
   }
 
@@ -703,7 +709,7 @@ function render() {
   const avgVal = ge.평균소요일 != null ? ge.평균소요일 : '-';
   document.getElementById('sub-ge-day').textContent = `평균 ${avgVal}일`;
   if (geDayEl) {
-    geDayEl.innerHTML = `<text x="50%" y="55%" text-anchor="middle" font-size="22" font-weight="700" fill="#6d28d9">${avgVal}</text><text x="50%" y="72%" text-anchor="middle" font-size="11" fill="#888">일 (평균)</text>`;
+    geDayEl.innerHTML = `<text x="50%" y="55%" text-anchor="middle" font-size="22" font-weight="700" fill="#6d28d9">${avgVal}</text><text x="50%" y="72%" text-anchor="middle" font-size="11" style="fill:var(--text2);">일 (평균)</text>`;
     if (geDayLbl) geDayLbl.innerHTML = '';
   }
 

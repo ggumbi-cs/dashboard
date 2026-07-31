@@ -7,22 +7,32 @@
 <!-- SheetJS: 엑셀 직접 파싱 -->
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #f0f2f5; font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; font-size: 12px; color: #222; padding: 12px; }
+:root {
+  --bg: #f0f2f5; --surface: #fff; --border: #eee;
+  --text: #222; --text2: #888; --text3: #777; --text4: #444;
+  --heading: #333; --kpi-val: #1a3a6e;
+}
+body.dark-mode {
+  --bg: #0d1825; --surface: #111e35; --border: #243d6a;
+  --text: #c8ddf0; --text2: #7a9ec0; --text3: #6a8faa; --text4: #9fb8d4;
+  --heading: #d8e8f8; --kpi-val: #8fc4ff;
+}
+body { background: var(--bg); font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; font-size: 12px; color: var(--text); padding: 12px; }
 
 .sec-header { padding: 6px 12px; color: #fff; font-size: 12px; font-weight: 700; border-radius: 4px; margin-bottom: 10px; }
 .sec-red { background: #b03030; }
 .sec-green { background: #2a7a6f; }
 .section-wrap { margin-bottom: 14px; }
 
-.card { background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 10px 12px; }
-.card-title { font-size: 10px; color: #888; margin-bottom: 5px; }
-.sm-card-title { font-size: 10px; font-weight: 700; color: #333; margin-bottom: 8px; }
+.card { background: var(--surface); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 10px 12px; }
+.card-title { font-size: 10px; color: var(--text2); margin-bottom: 5px; }
+.sm-card-title { font-size: 10px; font-weight: 700; color: var(--heading); margin-bottom: 8px; }
 
 .ldot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:4px; vertical-align:middle; flex-shrink:0; }
-.dlegend { font-size:9px; color:#444; line-height:1.9; width:100%; }
+.dlegend { font-size:9px; color:var(--text4); line-height:1.9; width:100%; }
 .dlegend-row { display:flex; align-items:center; justify-content:space-between; }
 .dlegend-label { display:flex; align-items:center; }
-.dlegend-val { color:#777; margin-left:4px; white-space:nowrap; }
+.dlegend-val { color:var(--text3); margin-left:4px; white-space:nowrap; }
 
 .badge { display:inline-block; padding:2px 7px; border-radius:10px; font-size:10px; font-weight:600; }
 .badge-blue   { background:#e8f0fb; color:#2356a8; }
@@ -34,12 +44,12 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', '맑은 고딕', sans-
 .row1 { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-bottom:8px; align-items:stretch; }
 .inflow-num { font-size:30px; font-weight:700; color:#b03030; margin:4px 0 4px; }
 
-.top-card { background:#fff; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.08); overflow:hidden; }
+.top-card { background:var(--surface); border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.08); overflow:hidden; }
 .top-card-bar { height:5px; width:100%; }
 .top-card-body { padding:8px 10px; }
 .top-rank { font-size:9px; font-weight:700; margin-bottom:3px; }
-.top-name { font-size:11px; font-weight:700; color:#222; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.top-count { font-size:10px; color:#777; }
+.top-name { font-size:11px; font-weight:700; color:var(--text); margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.top-count { font-size:10px; color:var(--text3); }
 
 .row23-grid {
   display:grid;
@@ -50,27 +60,27 @@ body { background: #f0f2f5; font-family: 'Malgun Gothic', '맑은 고딕', sans-
 }
 .big-donut-card {
   grid-column:1; grid-row:1/3;
-  background:#fff; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.08);
+  background:var(--surface); border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.08);
   padding:10px 12px;
 }
 .donut-rel { position:relative; flex-shrink:0; }
 .dcenter { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; line-height:1.2; }
-.sm-donut-card { background:#fff; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.08); padding:10px 12px; height:100%; box-sizing:border-box; }
+.sm-donut-card { background:var(--surface); border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.08); padding:10px 12px; height:100%; box-sizing:border-box; }
 .sm-donut-inner { display:flex; align-items:center; gap:10px; }
 
 .kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:8px; }
-.kpi-card { background:#fff; border-radius:6px; padding:10px 12px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
-.kpi-label { font-size:10px; color:#888; margin-bottom:3px; }
-.kpi-val { font-size:22px; font-weight:700; color:#1a3a6e; }
-.kpi-sub { font-size:9px; color:#aaa; margin-top:2px; }
+.kpi-card { background:var(--surface); border-radius:6px; padding:10px 12px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+.kpi-label { font-size:10px; color:var(--text2); margin-bottom:3px; }
+.kpi-val { font-size:22px; font-weight:700; color:var(--kpi-val); }
+.kpi-sub { font-size:9px; color:var(--text3); margin-top:2px; }
 
 .improve-table { width:100%; border-collapse:collapse; font-size:11px; }
 .improve-table th { background:#e8f0fb; color:#333; padding:5px 8px; text-align:left; font-weight:600; border-bottom:2px solid #c5d8f5; }
-.improve-table td { padding:5px 8px; border-bottom:1px solid #eee; color:#444; vertical-align:top; }
+.improve-table td { padding:5px 8px; border-bottom:1px solid var(--border); color:var(--text4); vertical-align:top; }
 </style>
 </head>
 <body>
-<div id="loading" style="text-align:center;padding:40px;color:#888;font-size:14px;">📊 노션 데이터 불러오는 중...</div>
+<div id="loading" style="text-align:center;padding:40px;color:var(--text2);font-size:14px;">📊 노션 데이터 불러오는 중...</div>
 <div id="content" style="display:none;"></div>
 
 <script>
@@ -387,7 +397,7 @@ function render(agg, improve) {
   // agg가 없으면 (집계 데이터 없음) 빈 화면 표시
   if (!agg) {
     document.getElementById('loading').innerHTML =
-      `<div style="color:#888;padding:40px;text-align:center;">해당 기간 집계 데이터가 없습니다.<br><small>노션 동기화 후 다시 시도해 주세요.</small></div>`;
+      `<div style="color:var(--text2);padding:40px;text-align:center;">해당 기간 집계 데이터가 없습니다.<br><small>노션 동기화 후 다시 시도해 주세요.</small></div>`;
     document.getElementById('loading').style.display = 'block';
     document.getElementById('content').style.display = 'none';
     return;
@@ -468,9 +478,9 @@ function render(agg, improve) {
         <div class="donut-rel" style="width:80px;height:80px;">
           <svg viewBox="0 0 80 80" width="80" height="80">
             ${donutSVG}
-            <circle cx="40" cy="40" r="25" fill="#fff"/>
+            <circle cx="40" cy="40" r="25" style="fill:var(--surface);"/>
           </svg>
-          <div class="dcenter"><span style="font-size:13px;font-weight:700;">${t.cnt}</span><br><span style="font-size:8px;color:#888;">건</span></div>
+          <div class="dcenter"><span style="font-size:13px;font-weight:700;color:var(--text);">${t.cnt}</span><br><span style="font-size:8px;color:var(--text2);">건</span></div>
         </div>
         <div class="dlegend">${legendHTML}</div>
       </div>
@@ -485,19 +495,19 @@ function render(agg, improve) {
     const h자재 = Math.round((d.자재/maxH)*BAR);
     const h수리 = Math.round((d.수리/maxH)*BAR);
     return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
-      <span style="font-size:9px;font-weight:700;color:#333;">${d.total||''}</span>
+      <span style="font-size:9px;font-weight:700;color:var(--heading);">${d.total||''}</span>
       <div style="width:24px;border-radius:3px 3px 0 0;overflow:hidden;display:flex;flex-direction:column;">
         <div style="height:${h교환}px;background:#e05c6e;"></div>
         <div style="height:${h자재}px;background:#f0a0b0;"></div>
         <div style="height:${h수리}px;background:#f8d0d8;"></div>
       </div>
-      <span style="font-size:9px;color:#888;">${d.label}</span>
+      <span style="font-size:9px;color:var(--text2);">${d.label}</span>
     </div>`;
   }).join('');
 
   // ── 개선 테이블 ──
   const tableRows = improveFiltered.length === 0
-    ? `<tr><td colspan="5" style="text-align:center;color:#aaa;padding:12px;">해당 기간 데이터 없음</td></tr>`
+    ? `<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:12px;">해당 기간 데이터 없음</td></tr>`
     : improveFiltered.map(r => `<tr>
         <td>${gubunBadge(r.gubun)}</td>
         <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.prod||''}">${r.prod||'-'}</td>
@@ -514,26 +524,26 @@ function render(agg, improve) {
   <div class="section-wrap">
     <div class="sec-header sec-red">1. 불량 TOP5 (접수일 기준)</div>
     <div class="row1">
-      <div style="background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.08);overflow:hidden;">
+      <div style="background:var(--surface);border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.08);overflow:hidden;">
         <div style="height:5px;background:#b03030;"></div>
         <div style="padding:10px 12px;">
           <div class="card-title">불량인입 건수</div>
           <div class="inflow-num">${total}</div>
-          <div style="font-size:10px;color:#888;">${type==='monthly'?'월간':'주간'} 기준</div>
+          <div style="font-size:10px;color:var(--text2);">${type==='monthly'?'월간':'주간'} 기준</div>
         </div>
       </div>
       ${topCards}
     </div>
     <div class="row23-grid">
       <div class="big-donut-card">
-        <div class="card-title">제품 불량 발생 비율 &nbsp;<span style="color:#aaa;">총 ${total}건</span></div>
+        <div class="card-title">제품 불량 발생 비율 &nbsp;<span style="color:var(--text3);">총 ${total}건</span></div>
         <div style="display:flex;justify-content:center;margin:12px 0 14px;">
           <div class="donut-rel" style="width:150px;height:150px;">
             <svg viewBox="0 0 150 150" width="150" height="150">
               ${bigSVG}
-              <circle cx="75" cy="75" r="53" fill="#fff"/>
+              <circle cx="75" cy="75" r="53" style="fill:var(--surface);"/>
             </svg>
-            <div class="dcenter"><span style="font-size:22px;font-weight:700;color:#222;">${total}</span><br><span style="font-size:10px;color:#888;">건</span></div>
+            <div class="dcenter"><span style="font-size:22px;font-weight:700;color:var(--text);">${total}</span><br><span style="font-size:10px;color:var(--text2);">건</span></div>
           </div>
         </div>
         <div class="dlegend" style="font-size:10px;">${bigLegend}</div>
@@ -545,9 +555,9 @@ function render(agg, improve) {
       <div style="grid-column:3;grid-row:2;">${top5[4]?topDonutCard(5,top5[4],TOP_COLORS[4]):'<div class="sm-donut-card" style="height:100%;box-sizing:border-box;"><div class="sm-card-title">Top.5 -</div></div>'}</div>
       <div class="sm-donut-card" style="grid-column:4;grid-row:2;">
         <div class="sm-card-title">불량 추이 — ${trendLabel}</div>
-        <div style="font-size:9px;color:#999;margin-bottom:10px;">${lastLabel}까지 누적 · 접수일 기준</div>
+        <div style="font-size:9px;color:var(--text3);margin-bottom:10px;">${lastLabel}까지 누적 · 접수일 기준</div>
         <div style="display:flex;align-items:flex-end;justify-content:space-around;height:88px;margin-bottom:6px;">${trendBars}</div>
-        <div style="display:flex;gap:8px;font-size:9px;color:#666;">
+        <div style="display:flex;gap:8px;font-size:9px;color:var(--text3);">
           <span><span class="ldot" style="background:#e05c6e;"></span>교환/환불</span>
           <span><span class="ldot" style="background:#f0a0b0;"></span>자재출고</span>
           <span><span class="ldot" style="background:#f8d0d8;"></span>수리출고</span>
@@ -685,7 +695,7 @@ function injectControlBar() {
   bar.id = 'control-bar';
   bar.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;';
   bar.innerHTML = `
-    <div style="font-size:10px;color:#888;">📅 마지막 노션 동기화: ${lastSyncedLabel || '-'} <span style="color:#bbb;">(매일 자정 자동 동기화)</span></div>
+    <div style="font-size:10px;color:var(--text2);">📅 마지막 노션 동기화: ${lastSyncedLabel || '-'} <span style="color:var(--text3);">(매일 자정 자동 동기화)</span></div>
     <div style="display:flex;gap:8px;">
       <button id="btn-sync-notion" onclick="manualSync()" style="font-size:12px;font-weight:600;padding:7px 16px;background:#2a7a6f;color:#fff;border:none;border-radius:6px;cursor:pointer;">🔄 노션 수동 동기화</button>
       <button id="btn-save-summary" onclick="saveSummaryToSheet()" style="font-size:12px;font-weight:600;padding:7px 16px;background:#2356a8;color:#fff;border:none;border-radius:6px;cursor:pointer;">☁ 이번 마감 데이터 AI에 전달</button>

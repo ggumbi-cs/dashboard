@@ -744,7 +744,7 @@ body.is-admin .notice-admin-gear { display:flex; }
       <div class="modal-section-title">로그인 유형별 호칭</div>
       <div class="banner-role-grid">
         <div class="banner-role-row"><span class="banner-role-badge adm">관리자</span><input class="modal-input" id="beAdmin" placeholder="관리자"></div>
-        <div class="banner-role-row"><span class="banner-role-badge ldr">리더</span><input class="modal-input" id="beLeader" placeholder="리더급"></div>
+        <div class="banner-role-row"><span class="banner-role-badge ldr">리더</span><input class="modal-input" id="beLeader" placeholder="리더"></div>
         <div class="banner-role-row"><span class="banner-role-badge ggm">꿈비</span><input class="modal-input" id="beGgumbi" placeholder="꿈비팀"></div>
         <div class="banner-role-row"><span class="banner-role-badge aff">계열사</span><input class="modal-input" id="beAffiliate" placeholder="계열사"></div>
         <div class="banner-role-row"><span class="banner-role-badge vis">방문자</span><input class="modal-input" id="beVisitor" placeholder="방문자"></div>
@@ -830,7 +830,7 @@ body.is-admin .notice-admin-gear { display:flex; }
 // 상수
 // ─────────────────────────────────────────────
 const ROLE_ORDER = { admin:0, leader:1, ggumbi:2, affiliate:3 };
-const ROLE_LABEL = { admin:'관리자', leader:'리더급', ggumbi:'꿈비', affiliate:'계열사' };
+const ROLE_LABEL = { admin:'관리자', leader:'리더', ggumbi:'꿈비', affiliate:'계열사' };
 
 const ICON_LIST = [
   '📊','📈','📉','📋','📌','📎','🗂️','🗃️',
@@ -886,7 +886,7 @@ let DEFAULT_NOTICES_UPDATE = [
   { text:'품질관리 대시보드 QC 시스템 초기 구축', date:'07.01', dot:'gold' },
 ];
 let DEFAULT_NOTICES_OPS = [
-  { text:'관리자모드 접속 시 각 카드·공지·배너 편집 가능', date:'', dot:'gold' },
+  { text:'관리자 접속 시 각 카드·공지·배너 편집 가능', date:'', dot:'gold' },
   { text:'사이드바 메뉴 클릭 시 해당 서브페이지 로딩', date:'', dot:'cyan' },
   { text:'반품 종합검사는 외부 Vercel 앱과 연동', date:'', dot:'green' },
   { text:'GitHub Pages 경로: ggumbi-cs/dashboard/qc/', date:'', dot:'cyan' },
@@ -896,7 +896,7 @@ const DEFAULT_BANNER = {
   greeting:  '안녕하세요,',
   suffix:    '님 QC 모니터링 시스템입니다',
   subtitle:  '오늘도 더 나은 품질을 위한 하루를 만들어가세요.',
-  roleNames: { admin:'관리자', leader:'리더급', ggumbi:'꿈비팀', affiliate:'계열사', visitor:'방문자' }
+  roleNames: { admin:'관리자', leader:'리더', ggumbi:'꿈비팀', affiliate:'계열사', visitor:'방문자' }
 };
 
 // ─────────────────────────────────────────────

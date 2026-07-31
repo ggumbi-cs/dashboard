@@ -574,7 +574,7 @@ window.addEventListener('message', e => {
   if (e.data.type === 'SCRIPT_URL') {
     _isAdmin = e.data.userRole === 'admin';
     if (_isAdmin) document.body.classList.add('is-admin');
-    const lb = {admin:'관리자',leader:'리더급',ggumbi:'꿈비',affiliate:'계열사'};
+    const lb = {admin:'관리자',leader:'리더',ggumbi:'꿈비',affiliate:'계열사'};
     document.getElementById('wbUser').textContent = lb[e.data.userRole] || e.data.userRole || '-';
   }
   if (e.data.type === 'CSV_DATA' && e.data.rows) {

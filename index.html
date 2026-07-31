@@ -263,6 +263,33 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
   padding: 5px 10px; background: var(--bg-item); border-radius: 5px;
   border-left: 3px solid var(--accent); display: none;
 }
+/* 임직원/계열사 전환 탭 */
+.login-mode-tabs {
+  display: flex; gap: 4px; margin-bottom: 20px;
+  background: var(--bg-item); border-radius: 8px; padding: 3px;
+}
+.mode-tab {
+  flex: 1; text-align: center; padding: 7px 0; font-size: 12px; font-weight: 600;
+  color: var(--text-muted); background: transparent; border: none; border-radius: 6px;
+  cursor: pointer; font-family: inherit; transition: background 0.15s, color 0.15s;
+}
+.mode-tab.active { background: var(--accent); color: #fff; }
+/* 동명이인 후보 선택 리스트 */
+.candidate-list { display: flex; flex-direction: column; gap: 6px; }
+.candidate-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 9px 12px; background: var(--bg-item); border: 1px solid var(--border-2);
+  border-radius: 8px; cursor: pointer; font-size: 12.5px; transition: border-color 0.15s, background 0.15s;
+}
+.candidate-item:hover { border-color: var(--accent); }
+.candidate-item.selected { border-color: var(--accent); background: var(--bg-active); }
+.candidate-item .cand-type { font-weight: 700; color: var(--text-head); }
+.candidate-item .cand-team { color: var(--text-muted); font-size: 11.5px; }
+.candidate-empty { font-size: 11.5px; color: var(--text-faint); padding: 4px 2px; }
+.affiliate-note {
+  font-size: 12px; color: var(--text-muted); line-height: 1.7;
+  background: var(--bg-item); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;
+}
 .login-remember {
   display: flex; align-items: center; gap: 8px;
   margin-bottom: 22px; cursor: pointer;
@@ -425,49 +452,63 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
       <div class="logo-sub">CS 대시보드 · 로그인</div>
     </div>
 
-    <div class="login-field">
-      <label>로그인유형</label>
-      <div class="login-input-wrap login-select-wrap">
-        <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;z-index:1;">👤</span>
-        <select class="login-input" id="loginId" autocomplete="username" onchange="onIdChange()">
-          <option value="관리자모드">관리자모드</option>
-          <option value="리더급">리더급</option>
-          <option value="꿈비">꿈비</option>
-          <option value="계열사">계열사</option>
-        </select>
-        <span class="sel-chevron">▼</span>
+    <div class="login-mode-tabs">
+      <button type="button" class="mode-tab active" data-mode="staff" onclick="setLoginMode('staff')">임직원 로그인</button>
+      <button type="button" class="mode-tab" data-mode="affiliate" onclick="setLoginMode('affiliate')">계열사 로그인</button>
+    </div>
+
+    <div id="staffLoginForm">
+      <div class="login-field">
+        <label>이름</label>
+        <div class="login-input-wrap">
+          <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;z-index:1;">🙋</span>
+          <input type="text" class="login-input" id="loginName" name="ggumbi_name_field" list="loginNameList" placeholder="이름 입력"
+                 autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                 data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"
+                 oninput="onNameInput()" onkeydown="if(event.key==='Enter'){ if(SELECTED_CANDIDATE) tryLogin(); }">
+          <datalist id="loginNameList"></datalist>
+        </div>
+      </div>
+
+      <div class="login-field" id="candidateField" style="display:none;">
+        <label>본인 확인 (동일한 이름이 있으면 본인 항목을 선택하세요)</label>
+        <div class="candidate-list" id="candidateList"></div>
+      </div>
+
+      <div class="login-field" id="pwField" style="display:none;">
+        <label>비밀번호</label>
+        <div class="login-input-wrap">
+          <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;z-index:1;">🔑</span>
+          <input type="password" class="login-input" id="loginPw" name="ggumbi_pw_field" placeholder="비밀번호 입력"
+                 autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false"
+                 data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"
+                 onkeydown="if(event.key==='Enter')tryLogin()">
+        </div>
       </div>
     </div>
 
-    <div class="login-field" id="teamField" style="display:none;">
-      <label>팀명</label>
-      <div class="login-input-wrap login-select-wrap">
-        <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;z-index:1;">🏷</span>
-        <select class="login-input" id="loginTeam" onchange="onTeamChange()">
-          <option value="">팀명 선택</option>
-        </select>
-        <span class="sel-chevron">▼</span>
+    <div id="affiliateLoginForm" style="display:none;">
+      <div class="login-field">
+        <label>이름</label>
+        <div class="login-input-wrap">
+          <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;z-index:1;">🙋</span>
+          <input type="text" class="login-input" id="affName" placeholder="이름 입력"
+                 autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                 data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"
+                 onkeydown="if(event.key==='Enter')tryLogin()">
+        </div>
       </div>
-    </div>
-
-    <div class="login-field" id="nameField" style="display:none;">
-      <label>사용자명</label>
-      <div class="login-input-wrap">
-        <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;z-index:1;">🙋</span>
-        <input type="text" class="login-input" id="loginName" list="loginNameList" placeholder="이름 입력"
-               autocomplete="off" onkeydown="if(event.key==='Enter')tryLogin()">
-        <datalist id="loginNameList"></datalist>
+      <div class="login-field">
+        <label>계열사명</label>
+        <div class="login-input-wrap">
+          <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;z-index:1;">🏢</span>
+          <input type="text" class="login-input" id="affCompany" placeholder="계열사명 입력"
+                 autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                 data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"
+                 onkeydown="if(event.key==='Enter')tryLogin()">
+        </div>
       </div>
-    </div>
-
-    <div class="login-field" id="pwField">
-      <label>비밀번호</label>
-      <div class="login-input-wrap">
-        <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;z-index:1;">🔑</span>
-        <input type="password" class="login-input" id="loginPw" placeholder="PW 입력"
-               autocomplete="current-password" onkeydown="if(event.key==='Enter')tryLogin()">
-      </div>
-      <div class="pw-hint" id="pwHint">비밀번호 없이 로그인 버튼을 눌러주세요 🔓</div>
+      <div class="affiliate-note">비밀번호 없이 이름과 계열사명만으로 로그인합니다. 팀Tool·지식DB 등 공개 자료만 열람할 수 있습니다.</div>
     </div>
 
     <div class="login-remember" onclick="toggleRemember()">
@@ -789,15 +830,33 @@ const TAB_MAP = {
   '통합마감허브': 'aggregated/aggregated.html',
 };
 
-// ── 계정 정보 ──
-// 계열사: PW 없이 로그인 (pw: null)
-// 리더급/꿈비의 pw는 미사용(비밀번호=본인 이름을 영문 자판으로 친 값, tryLogin()에서 별도 검증)
-const ACCOUNTS = {
-  '관리자모드': { pw: 'tladntmd',  role: 'admin'  },
-  '리더급':     { pw: null,        role: 'leader' },
-  '꿈비':       { pw: null,        role: 'ggumbi' },
-  '계열사':     { pw: null,        role: 'affiliate' },
-};
+// ── login_id.xlsx의 로그인유형 → 내부 role 매핑 (계열사는 개인 계정이 없어 별도 처리) ──
+const TYPE_ROLE_MAP = { '관리자': 'admin', '임원': 'leader', '리더': 'leader', '꿈비': 'ggumbi' };
+
+// 한/영 전환을 잊고 비밀번호를 치면 같은 자판 위치의 영문이 그대로 입력된다
+// (예: '심우승99' → 한/영 전환 없이 치면 'tladntmd99'). 엑셀 PW를 두벌식 자판
+// 기준으로 영문 변환한 값도 함께 허용해서 이 케이스를 호환 지원한다.
+const HANGUL_CHO  = ['r','R','s','e','E','f','a','q','Q','t','T','d','w','W','c','z','x','v','g'];
+const HANGUL_JUNG = ['k','o','i','O','j','p','u','P','h','hk','ho','hl','y','n','nj','np','nl','b','m','ml','l'];
+const HANGUL_JONG = ['','r','R','rt','s','sw','sg','e','f','fr','fa','fq','ft','fx','fv','fg','a','q','qt','t','T','d','w','c','z','x','v','g'];
+
+function hangulToKeyboard(str) {
+  let out = '';
+  for (const ch of String(str || '')) {
+    const code = ch.charCodeAt(0) - 0xAC00;
+    if (code < 0 || code > 11171) { out += ch; continue; }
+    const cho  = Math.floor(code / (21 * 28));
+    const jung = Math.floor((code % (21 * 28)) / 28);
+    const jong = code % 28;
+    out += HANGUL_CHO[cho] + HANGUL_JUNG[jung] + HANGUL_JONG[jong];
+  }
+  return out;
+}
+
+function pwMatches(inputPw, correctPw) {
+  if (inputPw === correctPw) return true;
+  return inputPw === hangulToKeyboard(correctPw);
+}
 
 // ── 권한 등급 (낮을수록 상위) ──
 const ROLE_LEVEL = { admin: 0, leader: 1, ggumbi: 2, affiliate: 3 };
@@ -823,29 +882,7 @@ let state = { tab: 'AI보고', type: 'monthly', period: '' };
 //  로그인
 // ═══════════════════════════════════════════
 
-// 팀명/사용자명 필수 입력 대상 (login_id.xlsx 대조 필요)
-const NAME_REQUIRED_TYPES = ['리더급', '꿈비'];
-
-// 한글 이름 → 두벌식 키보드 입력 시퀀스로 변환 (예: 홍길동 → ghdrlfehd)
-// 리더급 비밀번호 = 본인 이름을 영문 자판 상태로 그대로 친 값
-const HANGUL_CHO  = ['r','R','s','e','E','f','a','q','Q','t','T','d','w','W','c','z','x','v','g'];
-const HANGUL_JUNG = ['k','o','i','O','j','p','u','P','h','hk','ho','hl','y','n','nj','np','nl','b','m','ml','l'];
-const HANGUL_JONG = ['','r','R','rt','s','sw','sg','e','f','fr','fa','fq','ft','fx','fv','fg','a','q','qt','t','T','d','w','c','z','x','v','g'];
-
-function hangulToKeyboard(str) {
-  let out = '';
-  for (const ch of String(str || '')) {
-    const code = ch.charCodeAt(0) - 0xAC00;
-    if (code < 0 || code > 11171) { out += ch; continue; }
-    const cho  = Math.floor(code / (21 * 28));
-    const jung = Math.floor((code % (21 * 28)) / 28);
-    const jong = code % 28;
-    out += HANGUL_CHO[cho] + HANGUL_JUNG[jung] + HANGUL_JONG[jong];
-  }
-  return out;
-}
-
-// login_id.xlsx: 로그인유형 / 팀명 / 사용자명
+// login_id.xlsx: 로그인유형 / 팀명 / 사용자명 / PW
 let LOGIN_ID_DATA = [];
 let loginIdLoadPromise = null;
 
@@ -860,72 +897,98 @@ function loadLoginIdData() {
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
       LOGIN_ID_DATA = rows.slice(1)
         .filter(r => r[0] && r[2])
-        .map(r => ({ type: String(r[0]).trim(), team: String(r[1] || '').trim(), name: String(r[2]).trim() }));
+        .map(r => ({
+          type: String(r[0]).trim(),
+          team: String(r[1] || '').trim(),
+          name: String(r[2]).trim(),
+          pw:   String(r[3] || '').trim(),
+        }));
     } catch(e) {
       console.warn('[LOGIN] login_id.xlsx 로드 실패:', e.message);
       LOGIN_ID_DATA = [];
     }
-    populateTeamOptions();
+    populateNameSuggestions();
   })();
   return loginIdLoadPromise;
 }
 
-function populateTeamOptions() {
-  const id      = document.getElementById('loginId').value;
-  const teamSel = document.getElementById('loginTeam');
-  if (!teamSel) return;
-  const prevVal = teamSel.value;
-  const teams = [...new Set(LOGIN_ID_DATA.filter(r => r.type === id).map(r => r.team).filter(Boolean))];
-  teamSel.innerHTML = '<option value="">팀명 선택</option>' + teams.map(t => `<option value="${t}">${t}</option>`).join('');
-  if (teams.includes(prevVal)) teamSel.value = prevVal;
-  onTeamChange();
+// 자동완성용 힌트일 뿐, 실제 로그인 판정은 이름 일치→후보 선택→PW 대조로 이뤄짐
+function populateNameSuggestions() {
+  const list = document.getElementById('loginNameList');
+  if (!list) return;
+  const names = [...new Set(LOGIN_ID_DATA.map(r => r.name))];
+  list.innerHTML = names.map(n => `<option value="${n}"></option>`).join('');
 }
 
-function onTeamChange() {
-  const id       = document.getElementById('loginId').value;
-  const team     = document.getElementById('loginTeam').value;
-  const nameList = document.getElementById('loginNameList');
-  if (!nameList) return;
-  const names = LOGIN_ID_DATA.filter(r => r.type === id && r.team === team).map(r => r.name);
-  nameList.innerHTML = names.map(n => `<option value="${n}"></option>`).join('');
-}
+// ═══════════════════════════════════════════
+//  임직원 / 계열사 모드 전환
+// ═══════════════════════════════════════════
+let LOGIN_MODE = 'staff';
 
-function onIdChange() {
-  const id    = document.getElementById('loginId').value;
-  const hint  = document.getElementById('pwHint');
-  const pwInp = document.getElementById('loginPw');
-  if (id === '계열사') {
-    hint.textContent = '비밀번호 없이 로그인 버튼을 눌러주세요 🔓';
-    hint.style.display = 'block';
-    pwInp.value = '';
-    pwInp.placeholder = '로그인 버튼을 눌러주세요';
-    pwInp.disabled = true;
-  } else if (id === '리더급' || id === '꿈비') {
-    hint.textContent = '비밀번호는 본인 이름을 한/영 전환 없이 영문 자판 그대로 입력 (예: 김상준→rlatkdwns)';
-    hint.style.display = 'block';
-    pwInp.placeholder = '이름을 영문 자판으로 입력';
-    pwInp.disabled = false;
-  } else {
-    hint.style.display = 'none';
-    pwInp.placeholder = 'PW 입력';
-    pwInp.disabled = false;
-  }
-
-  const needsTeamName = NAME_REQUIRED_TYPES.includes(id);
-  const teamField = document.getElementById('teamField');
-  const nameField = document.getElementById('nameField');
-  if (teamField) teamField.style.display = needsTeamName ? 'block' : 'none';
-  if (nameField) nameField.style.display = needsTeamName ? 'block' : 'none';
-  if (needsTeamName) {
-    populateTeamOptions();
-  } else {
-    const teamEl = document.getElementById('loginTeam');
-    const nameEl = document.getElementById('loginName');
-    if (teamEl) teamEl.value = '';
-    if (nameEl) nameEl.value = '';
-  }
-
+function setLoginMode(mode) {
+  LOGIN_MODE = mode;
+  document.querySelectorAll('.mode-tab').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  document.getElementById('staffLoginForm').style.display     = mode === 'staff'     ? 'block' : 'none';
+  document.getElementById('affiliateLoginForm').style.display = mode === 'affiliate' ? 'block' : 'none';
   document.getElementById('loginError').textContent = '';
+}
+
+// ═══════════════════════════════════════════
+//  이름 입력 → 동명이인 후보 조회/선택
+// ═══════════════════════════════════════════
+let SELECTED_CANDIDATE = null;
+let _nameCandidates = [];
+
+function onNameInput() {
+  SELECTED_CANDIDATE = null;
+  document.getElementById('loginError').textContent = '';
+  const name = document.getElementById('loginName').value.trim();
+  const candidateField = document.getElementById('candidateField');
+  const pwField        = document.getElementById('pwField');
+
+  if (!name) {
+    candidateField.style.display = 'none';
+    pwField.style.display = 'none';
+    return;
+  }
+
+  _nameCandidates = LOGIN_ID_DATA.filter(r => r.name === name);
+
+  if (_nameCandidates.length === 0) {
+    candidateField.style.display = 'block';
+    document.getElementById('candidateList').innerHTML = '<div class="candidate-empty">등록된 이름이 아닙니다.</div>';
+    pwField.style.display = 'none';
+    return;
+  }
+
+  renderCandidates();
+
+  if (_nameCandidates.length === 1) {
+    selectCandidate(0);
+  } else {
+    pwField.style.display = 'none';
+  }
+}
+
+function renderCandidates() {
+  document.getElementById('candidateField').style.display = 'block';
+  document.getElementById('candidateList').innerHTML = _nameCandidates.map((c, i) => `
+    <div class="candidate-item" data-idx="${i}" onclick="selectCandidate(${i})">
+      <span class="cand-type">${escapeHtmlLogin(c.type)}</span>
+      <span class="cand-team">${escapeHtmlLogin(c.team)}</span>
+    </div>`).join('');
+}
+
+function selectCandidate(idx) {
+  SELECTED_CANDIDATE = _nameCandidates[idx];
+  document.querySelectorAll('#candidateList .candidate-item').forEach((el, i) => el.classList.toggle('selected', i === idx));
+  document.getElementById('pwField').style.display = 'block';
+  const pwEl = document.getElementById('loginPw');
+  if (pwEl) pwEl.focus();
+}
+
+function escapeHtmlLogin(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 const REMEMBER_KEY = 'ggumbi_remember';
@@ -938,63 +1001,69 @@ function toggleRemember() {
 }
 
 function tryLogin() {
-  const id    = document.getElementById('loginId').value;
-  const pw    = document.getElementById('loginPw').value;
-  const team  = (document.getElementById('loginTeam').value || '').trim();
-  const name  = (document.getElementById('loginName').value || '').trim();
   const errEl = document.getElementById('loginError');
-  const account = ACCOUNTS[id];
-  if (!account) { errEl.textContent = '로그인유형 정보가 없습니다.'; return; }
+  errEl.textContent = '';
 
-  const needsTeamName = NAME_REQUIRED_TYPES.includes(id);
-  if (needsTeamName) {
-    if (!team || !name) {
-      errEl.textContent = '팀명과 사용자명을 모두 입력해주세요.';
+  if (LOGIN_MODE === 'affiliate') {
+    const affName    = document.getElementById('affName').value.trim();
+    const affCompany = document.getElementById('affCompany').value.trim();
+    if (!affName || !affCompany) {
+      errEl.textContent = '이름과 계열사명을 모두 입력해주세요.';
       return;
     }
-    const matched = LOGIN_ID_DATA.some(r => r.type === id && r.team === team && r.name === name);
-    if (!matched) {
-      errEl.textContent = '팀명 또는 사용자명이 등록된 정보와 일치하지 않습니다.';
-      return;
+
+    if (rememberChecked) {
+      localStorage.setItem(REMEMBER_KEY, JSON.stringify({ mode: 'affiliate', name: affName, team: affCompany }));
+    } else {
+      localStorage.removeItem(REMEMBER_KEY);
     }
+
+    sessionStorage.setItem('loggedIn', '1');
+    sessionStorage.setItem('userId', '계열사');
+    sessionStorage.setItem('userRole', 'affiliate');
+    sessionStorage.setItem('userTeam', affCompany);
+    sessionStorage.setItem('userName', affName);
+    document.getElementById('loginOverlay').style.display = 'none';
+
+    const btn = document.querySelector('.logout-btn');
+    if (btn) btn.textContent = `🔒 ${affName} · 로그아웃`;
+
+    applyRolePermissions('affiliate');
+    loadVisSettings();
+    return;
   }
 
-  // 리더급/꿈비: 비밀번호 = 본인 이름을 영문 자판으로 친 값 / 계열사: PW 불필요 / 그 외: 고정 PW
-  if (id === '리더급' || id === '꿈비') {
-    if (pw !== hangulToKeyboard(name)) {
-      errEl.textContent = '아이디 또는 비밀번호가 올바르지 않습니다.';
-      document.getElementById('loginPw').value = '';
-      document.getElementById('loginPw').focus();
-      return;
-    }
-  } else if (account.pw !== null && account.pw !== pw) {
-    errEl.textContent = '아이디 또는 비밀번호가 올바르지 않습니다.';
+  const name = document.getElementById('loginName').value.trim();
+  const pw   = document.getElementById('loginPw').value;
+
+  if (!name) { errEl.textContent = '이름을 입력해주세요.'; return; }
+  if (!SELECTED_CANDIDATE) { errEl.textContent = '본인 확인 항목을 선택해주세요.'; return; }
+  if (!pwMatches(pw, SELECTED_CANDIDATE.pw)) {
+    errEl.textContent = '비밀번호가 올바르지 않습니다.';
     document.getElementById('loginPw').value = '';
     document.getElementById('loginPw').focus();
     return;
   }
 
-  const finalTeam = needsTeamName ? team : '';
-  const finalName = needsTeamName ? name : '';
+  const role = TYPE_ROLE_MAP[SELECTED_CANDIDATE.type] || 'affiliate';
 
   if (rememberChecked) {
-    localStorage.setItem(REMEMBER_KEY, JSON.stringify({ id, pw: id !== '계열사' ? pw : '', team: finalTeam, name: finalName }));
+    localStorage.setItem(REMEMBER_KEY, JSON.stringify({ mode: 'staff', name, pw, type: SELECTED_CANDIDATE.type, team: SELECTED_CANDIDATE.team }));
   } else {
     localStorage.removeItem(REMEMBER_KEY);
   }
 
   sessionStorage.setItem('loggedIn', '1');
-  sessionStorage.setItem('userId', id);
-  sessionStorage.setItem('userRole', account.role);
-  sessionStorage.setItem('userTeam', finalTeam);
-  sessionStorage.setItem('userName', finalName);
+  sessionStorage.setItem('userId', SELECTED_CANDIDATE.type);
+  sessionStorage.setItem('userRole', role);
+  sessionStorage.setItem('userTeam', SELECTED_CANDIDATE.team || '');
+  sessionStorage.setItem('userName', SELECTED_CANDIDATE.name);
   document.getElementById('loginOverlay').style.display = 'none';
-  errEl.textContent = '';
 
   const btn = document.querySelector('.logout-btn');
-  if (btn) btn.textContent = `🔒 ${finalName || id} · 로그아웃`;
+  if (btn) btn.textContent = `🔒 ${SELECTED_CANDIDATE.name} · 로그아웃`;
 
-  applyRolePermissions(account.role);
+  applyRolePermissions(role);
   loadVisSettings();
 }
 
@@ -1007,11 +1076,16 @@ function doLogout() {
   document.getElementById('loginOverlay').style.display = 'flex';
   document.getElementById('loginPw').value = '';
   document.getElementById('loginError').textContent = '';
-  // 계열사 hint 초기화
-  const hint  = document.getElementById('pwHint');
-  const pwInp = document.getElementById('loginPw');
-  if (hint)  hint.style.display = 'none';
-  if (pwInp) { pwInp.disabled = false; pwInp.placeholder = 'PW 입력'; }
+  SELECTED_CANDIDATE = null;
+  const candidateField = document.getElementById('candidateField');
+  const pwField = document.getElementById('pwField');
+  if (candidateField) candidateField.style.display = 'none';
+  if (pwField) pwField.style.display = 'none';
+  const affNameEl = document.getElementById('affName');
+  const affCompanyEl = document.getElementById('affCompany');
+  if (affNameEl) affNameEl.value = '';
+  if (affCompanyEl) affCompanyEl.value = '';
+  setLoginMode('staff');
 }
 
 // ── 세션/기억 복원 ──
@@ -1036,19 +1110,32 @@ function doLogout() {
   try {
     const saved = localStorage.getItem(REMEMBER_KEY);
     if (saved) {
-      const { id, pw, team, name } = JSON.parse(saved);
-      const sel  = document.getElementById('loginId');
-      const pwEl = document.getElementById('loginPw');
-      if (sel)  sel.value  = id;
-      if (pwEl && pw) pwEl.value = pw;
-      rememberChecked = true;
-      const box = document.getElementById('rememberChk');
-      if (box) box.classList.add('checked');
-      if (typeof onIdChange === 'function') onIdChange();
-      const teamEl = document.getElementById('loginTeam');
-      const nameEl = document.getElementById('loginName');
-      if (teamEl && team) teamEl.value = team;
-      if (nameEl && name) nameEl.value = name;
+      const data = JSON.parse(saved);
+
+      if (data.mode === 'affiliate') {
+        setLoginMode('affiliate');
+        if (data.name) document.getElementById('affName').value = data.name;
+        if (data.team) document.getElementById('affCompany').value = data.team;
+        rememberChecked = true;
+        const box = document.getElementById('rememberChk');
+        if (box) box.classList.add('checked');
+      } else if (data.mode === 'staff' && data.name) {
+        document.getElementById('loginName').value = data.name;
+        onNameInput();
+        // 후보와 정확히 일치할 때만 선택+비밀번호 채움 (구버전 형식이거나 엑셀이 바뀌어
+        // 일치하는 후보가 없는데 옛 비밀번호만 엉뚱하게 채워지는 것을 방지)
+        const idx = _nameCandidates.findIndex(c => c.type === data.type && c.team === data.team);
+        if (idx >= 0) {
+          selectCandidate(idx);
+          if (data.pw) document.getElementById('loginPw').value = data.pw;
+        }
+        rememberChecked = true;
+        const box = document.getElementById('rememberChk');
+        if (box) box.classList.add('checked');
+      } else {
+        // mode가 없는 구버전 형식 등 인식할 수 없는 데이터는 폐기
+        localStorage.removeItem(REMEMBER_KEY);
+      }
     }
   } catch(e) {}
 })();
@@ -1135,9 +1222,24 @@ function getClientIp() {
   return _clientIpPromise;
 }
 
-async function logPageView(pageName) {
+let _logPageViewTimer = null;
+
+// init()의 기본 탭 전환(AI보고) → 로그인 직후 loadHome()의 main.html 전환처럼,
+// 아주 짧은 시간 안에 연속으로 이동하는 경우는 실제 열람이 아니라 내부적으로
+// "거쳐 지나가는" 화면이므로, 마지막 이동만 기록되도록 살짝 지연시켜 묶는다(디바운스).
+function logPageView(pageName) {
+  if (!pageName) return;
+  // 로그인 화면 뒤에서 미리 불러오는 초기 렌더링은 실제 열람이 아니므로 기록하지 않음
+  if (sessionStorage.getItem('loggedIn') !== '1') return;
+  if (_logPageViewTimer) clearTimeout(_logPageViewTimer);
+  _logPageViewTimer = setTimeout(() => {
+    _logPageViewTimer = null;
+    _sendPageView(pageName);
+  }, 400);
+}
+
+async function _sendPageView(pageName) {
   try {
-    if (!pageName) return;
     const page = String(pageName).split('?')[0].split('#')[0];
     const ip = await getClientIp();
     const payload = {
@@ -1291,7 +1393,7 @@ async function loadVisSettings() {
 // GAS에 설정 저장 (GET 방식 — settingsJson 파라미터로 전달)
 async function saveVisToGAS() {
   try {
-    const userId = sessionStorage.getItem('userId') || '관리자모드';
+    const userId = sessionStorage.getItem('userId') || '관리자';
     const json = await gasGet({
       action:       'saveVisSettings',
       settingsJson: JSON.stringify(VIS_SETTINGS),
@@ -1334,7 +1436,7 @@ let visTempSettings = {}; // 모달 내 임시 상태
 
 const ROLE_DISPLAY = [
   // [role, 표시명, 레벨 설명]
-  ['leader',    '리더급',  '리더급 이하'],
+  ['leader',    '리더',    '리더 이하'],
   ['ggumbi',    '꿈비',    '꿈비 이하'],
   ['affiliate', '계열사',  '계열사'],
 ];

@@ -788,7 +788,7 @@ body.is-admin .q-item .item-gear, body.is-admin .stat-card .item-gear { display:
             <div class="cfg-section-title">로그인 유형별 표시 이름</div>
             <div class="be-role-grid">
               <div class="be-role-row"><span class="be-role-key">관리자 (admin)</span><input type="text" class="cfg-input" id="beRoleAdmin" placeholder="관리자"></div>
-              <div class="be-role-row"><span class="be-role-key">리더 (leader)</span><input type="text" class="cfg-input" id="beRoleLeader" placeholder="리더급"></div>
+              <div class="be-role-row"><span class="be-role-key">리더 (leader)</span><input type="text" class="cfg-input" id="beRoleLeader" placeholder="리더"></div>
               <div class="be-role-row"><span class="be-role-key">꿈비 (ggumbi)</span><input type="text" class="cfg-input" id="beRoleGgumbi" placeholder="꿈비"></div>
               <div class="be-role-row"><span class="be-role-key">계열사 (affiliate)</span><input type="text" class="cfg-input" id="beRoleAffiliate" placeholder="계열사"></div>
               <div class="be-role-row"><span class="be-role-key">미로그인 (visitor)</span><input type="text" class="cfg-input" id="beRoleVisitor" placeholder="방문자"></div>
@@ -839,7 +839,7 @@ body.is-admin .q-item .item-gear, body.is-admin .stat-card .item-gear { display:
 // 로그인 유형(권한) 체계 — 인덱스와 동일
 // ─────────────────────────────────────────────
 const ROLE_ORDER = { admin:0, leader:1, ggumbi:2, affiliate:3 };
-const ROLE_LABEL = { admin:'관리자', leader:'리더급', ggumbi:'꿈비', affiliate:'계열사' };
+const ROLE_LABEL = { admin:'관리자', leader:'리더', ggumbi:'꿈비', affiliate:'계열사' };
 let _userRole = '';
 let _userName = '';
 
@@ -866,7 +866,7 @@ const DEFAULT_STATS = [
 const DEFAULT_BANNER = {
   eyebrow:'Report Dashboard', greeting:'안녕하세요,', suffix:' 입니다',
   // 로그인 유형별 표시 이름 (관리자가 ⚙ 배너 편집에서 변경 가능)
-  roleNames: { admin:'관리자', leader:'리더급', ggumbi:'꿈비', affiliate:'계열사', visitor:'방문자' }
+  roleNames: { admin:'관리자', leader:'리더', ggumbi:'꿈비', affiliate:'계열사', visitor:'방문자' }
 };
 const DEFAULT_NOTICE_UPDATE = [{ text:'report_main 홈 화면 설정 기능 추가', date:'v0.4' }];
 const DEFAULT_NOTICE_OPS    = [{ text:'보고서 등록은 전체 리스트의 "추가" 또는 "간편 업로드"를 이용해주세요.', date:'안내' }];
@@ -915,7 +915,7 @@ window.addEventListener('message', e => {
 });
 
 // 로그인 유형(권한) 체크 — 하위 보고서 공개설정에 사용
-// 예: canAccess('leader') → 리더급 이상만 true
+// 예: canAccess('leader') → 리더 이상만 true
 function canAccess(minRole) {
   if (!minRole) return true;
   return (ROLE_ORDER[_userRole] ?? 99) <= (ROLE_ORDER[minRole] ?? 0);
@@ -1270,11 +1270,11 @@ async function downloadReport(fileKey, fileName) {
 // 열람권한 최소치 옵션 (관리자만 변경 가능)
 const VIS_ROLE_OPTIONS = [
   { value:'admin',     label:'관리자만' },
-  { value:'leader',    label:'리더급 이상' },
+  { value:'leader',    label:'리더 이상' },
   { value:'ggumbi',    label:'꿈비 이상' },
   { value:'affiliate', label:'전체(계열사 이상)' }
 ];
-const VIS_ROLE_LABEL = { admin:'관리자만', leader:'리더급 이상', ggumbi:'꿈비 이상', affiliate:'전체' };
+const VIS_ROLE_LABEL = { admin:'관리자만', leader:'리더 이상', ggumbi:'꿈비 이상', affiliate:'전체' };
 
 // ── 정렬/검색/구분탭 상태 ──
 let _alSortField = 'regDate';

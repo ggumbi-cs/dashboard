@@ -445,7 +445,7 @@ body.is-admin .banner-admin-gear { display:flex; }
 // 상수
 // ─────────────────────────────────────────────
 const ROLE_ORDER = { admin:0, leader:1, ggumbi:2, affiliate:3 };
-const ROLE_LABEL = { admin:'관리자', leader:'리더급', ggumbi:'꿈비', affiliate:'계열사' };
+const ROLE_LABEL = { admin:'관리자', leader:'리더', ggumbi:'꿈비', affiliate:'계열사' };
 
 const ICON_LIST = [
   '📊','📈','📉','📋','📌','📎','🗂️','🗃️',
@@ -500,7 +500,7 @@ let DEFAULT_NOTICES_UPDATE = [
   { text:'개발자탭 관리 매뉴얼 추가', date:'06.19', dot:'gold' },
 ];
 let DEFAULT_NOTICES_OPS = [
-  { text:'관리자모드 접속 시 각 카드/아이콘 설정 가능', date:'', dot:'gold' },
+  { text:'관리자 접속 시 각 카드/아이콘 설정 가능', date:'', dot:'gold' },
   { text:'스마트스토어 탭은 별도 사이드바 구성', date:'', dot:'cyan' },
   { text:'GAS 웹훅: 채널톡 CSAT 자동 수집 중', date:'', dot:'green' },
   { text:'GitHub Pages 레포: ggumbi-cs/dashboard', date:'', dot:'cyan' },
@@ -554,7 +554,7 @@ setInterval(tickTime,1000); tickTime();
 // 사용자 정보
 // ─────────────────────────────────────────────
 function applyUserInfo() {
-  const nameMap={admin:'관리자',leader:'리더급',ggumbi:'꿈비',affiliate:'계열사'};
+  const nameMap={admin:'관리자',leader:'리더',ggumbi:'꿈비',affiliate:'계열사'};
   const displayName=_userName||nameMap[_userRole]||_userRole||'방문자';
   document.getElementById('sbUser').textContent=displayName;
   document.getElementById('wbName').textContent=displayName;

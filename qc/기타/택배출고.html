@@ -393,7 +393,7 @@ async function loadData(){
 
   // ① 정적 JSON (출력요청 외 전체) + 수동동기화 오버레이
   try{
-    const res=await fetch(DATA_PATH);
+    const res=await fetch(DATA_PATH + '?t=' + Date.now());
     if(res.ok){
       const json=await res.json();
       const 택배Records = await withManualOverride('../수동동기화/', '택배출고', json.택배출고);

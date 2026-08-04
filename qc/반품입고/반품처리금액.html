@@ -310,7 +310,7 @@ async function loadData() {
   btn.classList.add('spin');
   try {
     // ① 정적 JSON + 수동동기화 오버레이
-    const res=await fetch('../qc_data.json');
+    const res=await fetch('../qc_data.json?t=' + Date.now());
     if (res.ok) {
       const json=await res.json();
       const 반품처리Records = await withManualOverride('../수동동기화/', '반품처리', json.반품처리);

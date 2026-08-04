@@ -448,7 +448,7 @@ async function loadData() {
   showLoading();
   try {
     // 1차: 정적 JSON
-    const res = await fetch(DATA_PATH);
+    const res = await fetch(DATA_PATH + '?t=' + Date.now());
     if (res.ok) {
       const json = await res.json();
       _records = await withManualOverride('../수동동기화/', '가전', json.가전);

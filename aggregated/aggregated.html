@@ -301,7 +301,7 @@ async function withManualOverride(sectionKey, autoSection) {
 // ── 공용: 정적 JSON(키) 우선 → 실패 시 GAS action 폴백 ──
 async function loadQcData(jsonKey, gasAction) {
   try {
-    const res = await fetch(QC_DATA_PATH);
+    const res = await fetch(QC_DATA_PATH + '?t=' + Date.now());
     if (res.ok) {
       const json = await res.json();
       if (json[jsonKey] && json[jsonKey].records) return await withManualOverride(jsonKey, json[jsonKey]);

@@ -400,6 +400,25 @@ function movePeriod(dir) {
 }
 
 // ─────────────────────────────────────────────
+// 수동동기화 오버레이: qc/수동동기화/{key}.json 이 자동동기화보다 최신이면 그걸 사용
+// (UrlFetch 할당량 초과 등으로 자동동기화가 막혔을 때 대비한 파일 기반 수동동기화)
+// ─────────────────────────────────────────────
+async function withManualOverride(relPath, sectionKey, autoSection) {
+  try {
+    const res = await fetch(`${relPath}${encodeURIComponent(sectionKey)}.json?t=${Date.now()}`);
+    if (res.ok) {
+      const manual = await res.json();
+      if (manual && Array.isArray(manual.records)) {
+        const mTime = manual.lastSynced ? new Date(manual.lastSynced).getTime() : 0;
+        const aTime = (autoSection && autoSection.lastSynced) ? new Date(autoSection.lastSynced).getTime() : 0;
+        if (mTime > aTime) return manual.records;
+      }
+    }
+  } catch (e) {}
+  return (autoSection && autoSection.records) || [];
+}
+
+// ─────────────────────────────────────────────
 // 데이터 로드
 // ─────────────────────────────────────────────
 async function loadData() {
@@ -408,10 +427,10 @@ async function loadData() {
     const res  = await fetch(DATA_PATH + '?t=' + Date.now());
     const data = await res.json();
 
-    _magam   = (data.반품마감 && data.반품마감.records) || [];
-    _rate    = (data.반품율 && data.반품율.records) || [];
-    _inspect = (data.반품검사 && data.반품검사.records) || [];
-    _restore = (data.반품처리 && data.반품처리.records) || [];
+    _magam   = await withManualOverride('../수동동기화/', '반품마감', data.반품마감);
+    _rate    = await withManualOverride('../수동동기화/', '반품율', data.반품율);
+    _inspect = await withManualOverride('../수동동기화/', '반품검사', data.반품검사);
+    _restore = await withManualOverride('../수동동기화/', '반품처리', data.반품처리);
 
     if (!_magam.length) { showEmpty(); return; }
 

@@ -280,13 +280,31 @@ function faultsOf(r) {
   return j.length > 0 ? j : valid(cfFaults);
 }
 
+// ── 수동동기화 오버레이: qc/수동동기화/{key}.json 이 자동동기화보다 최신이면 그걸 사용 ──
+// (UrlFetch 할당량 초과 등으로 자동동기화가 막혔을 때 대비한 파일 기반 수동동기화)
+const QC_MANUAL_SYNC_PATH = '../qc/수동동기화/';
+async function withManualOverride(sectionKey, autoSection) {
+  try {
+    const res = await fetch(`${QC_MANUAL_SYNC_PATH}${encodeURIComponent(sectionKey)}.json?t=${Date.now()}`);
+    if (res.ok) {
+      const manual = await res.json();
+      if (manual && Array.isArray(manual.records)) {
+        const mTime = manual.lastSynced ? new Date(manual.lastSynced).getTime() : 0;
+        const aTime = (autoSection && autoSection.lastSynced) ? new Date(autoSection.lastSynced).getTime() : 0;
+        if (mTime > aTime) return manual.records;
+      }
+    }
+  } catch (e) {}
+  return (autoSection && autoSection.records) || [];
+}
+
 // ── 공용: 정적 JSON(키) 우선 → 실패 시 GAS action 폴백 ──
 async function loadQcData(jsonKey, gasAction) {
   try {
     const res = await fetch(QC_DATA_PATH);
     if (res.ok) {
       const json = await res.json();
-      if (json[jsonKey] && json[jsonKey].records) return json[jsonKey].records;
+      if (json[jsonKey] && json[jsonKey].records) return await withManualOverride(jsonKey, json[jsonKey]);
     }
   } catch (e) {}
   const res2 = await fetch(`${QC_GAS_URL}?action=${gasAction}`, { redirect: 'follow' });
@@ -421,10 +439,12 @@ const MODULES = {
         const res = await fetch('../qc/qc_data.json?t=' + Date.now());
         if (res.ok) data = await res.json();
       } catch (e) {}
-      const magam   = (data.반품마감 && data.반품마감.records) || [];
-      const rate    = (data.반품율   && data.반품율.records)   || [];
-      const inspect = ((data.반품검사 && data.반품검사.records) || []).map(r => ({ ...r, dateObj: parseYmd(r.등록일자), _src: 'inspect' }));
-      const restore = ((data.반품처리 && data.반품처리.records) || []).map(r => ({ ...r, dateObj: parseYmd(r.처리일),   _src: 'restore' }));
+      const magam      = await withManualOverride('반품마감', data.반품마감);
+      const rate       = await withManualOverride('반품율', data.반품율);
+      const inspectRaw = await withManualOverride('반품검사', data.반품검사);
+      const restoreRaw = await withManualOverride('반품처리', data.반품처리);
+      const inspect = inspectRaw.map(r => ({ ...r, dateObj: parseYmd(r.등록일자), _src: 'inspect' }));
+      const restore = restoreRaw.map(r => ({ ...r, dateObj: parseYmd(r.처리일),   _src: 'restore' }));
       // magam/rate는 날짜별 원본 레코드가 아니라 마감회차별 사전집계라 dateObj가 없음 - buildSummary에서 periodType에 따라 별도 매칭
       return { magam, rate, inspect: [...inspect, ...restore], _raw: true };
     },
@@ -500,8 +520,9 @@ const MODULES = {
         const res = await fetch('../qc/qc_data.json?t=' + Date.now());
         if (res.ok) data = await res.json();
       } catch (e) {}
+      const matRaw = await withManualOverride('가전외AS', data.가전외AS);
       const cheori = ((data.처리현황 && data.처리현황.records) || []).map(r => ({ ...r, dateObj: parseYmd(r.처리일),   _src: 'cheori' }));
-      const mat    = ((data.가전외AS && data.가전외AS.records) || []).map(r => ({ ...r, dateObj: parseYmd(r.완료일자), _src: 'mat' }));
+      const mat    = matRaw.map(r => ({ ...r, dateObj: parseYmd(r.완료일자), _src: 'mat' }));
       return [...cheori, ...mat];
     },
     buildSummary(rows) {
@@ -562,9 +583,8 @@ const MODULES = {
         const res = await fetch('../qc/qc_data.json');
         if (res.ok) {
           const json = await res.json();
-          if (json.택배출고 && json.택배출고.records) {
-            staticRows = json.택배출고.records.filter(r => r.상태 !== '출력요청');
-          }
+          const 택배Records = await withManualOverride('택배출고', json.택배출고);
+          staticRows = 택배Records.filter(r => r.상태 !== '출력요청');
         }
       } catch (e) {}
       let realtimeRows = [];

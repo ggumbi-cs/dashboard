@@ -423,6 +423,25 @@ function movePeriod(dir) {
 }
 
 // ─────────────────────────────────────────────
+// 수동동기화 오버레이: qc/수동동기화/{key}.json 이 자동동기화보다 최신이면 그걸 사용
+// (UrlFetch 할당량 초과 등으로 자동동기화가 막혔을 때 대비한 파일 기반 수동동기화)
+// ─────────────────────────────────────────────
+async function withManualOverride(relPath, sectionKey, autoSection) {
+  try {
+    const res = await fetch(`${relPath}${encodeURIComponent(sectionKey)}.json?t=${Date.now()}`);
+    if (res.ok) {
+      const manual = await res.json();
+      if (manual && Array.isArray(manual.records)) {
+        const mTime = manual.lastSynced ? new Date(manual.lastSynced).getTime() : 0;
+        const aTime = (autoSection && autoSection.lastSynced) ? new Date(autoSection.lastSynced).getTime() : 0;
+        if (mTime > aTime) return manual.records;
+      }
+    }
+  } catch (e) {}
+  return (autoSection && autoSection.records) || [];
+}
+
+// ─────────────────────────────────────────────
 // 데이터 로드
 // ─────────────────────────────────────────────
 async function loadData() {
@@ -432,7 +451,7 @@ async function loadData() {
     const res = await fetch(DATA_PATH);
     if (res.ok) {
       const json = await res.json();
-      _records = (json.가전 && json.가전.records) ? json.가전.records : [];
+      _records = await withManualOverride('../수동동기화/', '가전', json.가전);
       document.getElementById('syncInfo').textContent =
         json.lastSynced ? `최근 동기화: ${new Date(json.lastSynced).toLocaleString('ko-KR')}` : '';
       if (_records.length === 0) { showEmpty(); return; }

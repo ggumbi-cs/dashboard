@@ -370,17 +370,34 @@ function acKeyDown(e) {
 }
 document.addEventListener('click',e=>{ const w=document.getElementById('acWrap'); if(w&&!w.contains(e.target))document.getElementById('acDrop').classList.remove('open'); });
 
+// 수동동기화 오버레이: qc/수동동기화/{key}.json 이 자동동기화보다 최신이면 그걸 사용
+// (UrlFetch 할당량 초과 등으로 자동동기화가 막혔을 때 대비한 파일 기반 수동동기화)
+async function withManualOverride(relPath, sectionKey, autoSection) {
+  try {
+    const res = await fetch(`${relPath}${encodeURIComponent(sectionKey)}.json?t=${Date.now()}`);
+    if (res.ok) {
+      const manual = await res.json();
+      if (manual && Array.isArray(manual.records)) {
+        const mTime = manual.lastSynced ? new Date(manual.lastSynced).getTime() : 0;
+        const aTime = (autoSection && autoSection.lastSynced) ? new Date(autoSection.lastSynced).getTime() : 0;
+        if (mTime > aTime) return manual.records;
+      }
+    }
+  } catch (e) {}
+  return (autoSection && autoSection.records) || [];
+}
+
 async function loadData(){
   showLoading();
   document.getElementById('refreshBtn').classList.add('spin');
 
-  // ① 정적 JSON (출력요청 외 전체)
+  // ① 정적 JSON (출력요청 외 전체) + 수동동기화 오버레이
   try{
     const res=await fetch(DATA_PATH);
     if(res.ok){
       const json=await res.json();
-      if(json.택배출고&&json.택배출고.records)
-        _static=json.택배출고.records.filter(r=>r.상태!=='출력요청');
+      const 택배Records = await withManualOverride('../수동동기화/', '택배출고', json.택배출고);
+      _static = 택배Records.filter(r=>r.상태!=='출력요청');
     }
   }catch(e){}
 

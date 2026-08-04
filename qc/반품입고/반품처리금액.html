@@ -287,18 +287,35 @@ function applyFilter() {
 }
 
 // ── 데이터 로드 (정적 JSON 우선, GAS 폴백) ──
+// 수동동기화 오버레이: qc/수동동기화/{key}.json 이 자동동기화보다 최신이면 그걸 사용
+async function withManualOverride(relPath, sectionKey, autoSection) {
+  try {
+    const res = await fetch(`${relPath}${encodeURIComponent(sectionKey)}.json?t=${Date.now()}`);
+    if (res.ok) {
+      const manual = await res.json();
+      if (manual && Array.isArray(manual.records)) {
+        const mTime = manual.lastSynced ? new Date(manual.lastSynced).getTime() : 0;
+        const aTime = (autoSection && autoSection.lastSynced) ? new Date(autoSection.lastSynced).getTime() : 0;
+        if (mTime > aTime) return manual.records;
+      }
+    }
+  } catch (e) {}
+  return (autoSection && autoSection.records) || [];
+}
+
 async function loadData() {
   document.getElementById('loadState').style.display='';
   document.getElementById('mainWrap').style.display='none';
   const btn=document.getElementById('refreshBtn');
   btn.classList.add('spin');
   try {
-    // ① 정적 JSON
+    // ① 정적 JSON + 수동동기화 오버레이
     const res=await fetch('../qc_data.json');
     if (res.ok) {
       const json=await res.json();
-      if (json.반품처리&&json.반품처리.records) {
-        _all=json.반품처리.records;
+      const 반품처리Records = await withManualOverride('../수동동기화/', '반품처리', json.반품처리);
+      if (반품처리Records.length) {
+        _all=반품처리Records;
         if (json.lastSynced)
           document.querySelector('.hd-title').title=`최근 동기화: ${new Date(json.lastSynced).toLocaleString('ko-KR')}`;
         applyFilter(); renderAll();

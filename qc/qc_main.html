@@ -232,6 +232,12 @@ body.is-admin #bannerAdminGear { display:flex; }
 .admin-gear:hover { background:rgba(240,192,96,0.3); }
 body.is-admin .admin-gear { display:flex; }
 
+/* 관리자 전용 블록 (GitHub 직접 연동 등) — 일반 팀원에겐 아예 렌더링/노출되지 않음 */
+.admin-only-block { display:none; }
+body.is-admin .admin-only-block { display:block; }
+.admin-only-inline { display:none; }
+body.is-admin .admin-only-inline { display:inline-block; }
+
 /* 슬라이더 */
 #sliderSection { margin-bottom:32px; }
 #sliderTrackOuter { overflow:hidden; border-radius:16px; }
@@ -701,13 +707,38 @@ body.is-admin .notice-admin-gear { display:flex; }
             <p style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.7;">
               노션에서 내보낸 zip(이중압축 포함, 여러 개 동시 가능)을 드래그하면 자동으로 압축을 풀고
               <strong style="color:var(--cyan);">_all.csv</strong> 위주로 찾아 항목별 개별 동기화를 진행합니다.
-              (노션 API 미사용 · GitHub qc_data.json 해당 섹션만 교체)
+              (노션 API 미사용 · GitHub qc_data.json 해당 섹션만 교체)<br>
+              <strong style="color:var(--gold);">동기화</strong> 버튼은 GAS를 거쳐 바로 GitHub에 올립니다 (UrlFetch 할당량 소모).
+              <strong style="color:var(--gold);">파일로 다운로드</strong> 버튼은 서버를 전혀 거치지 않고 {섹션}.json 파일만 내려받으니,
+              그 파일을 <strong style="color:var(--cyan);">qc/수동동기화/</strong> 폴더에 넣고 깃허브에 올리면 됩니다 (할당량 초과로 자동/기존 수동 동기화가 막혔을 때 사용).
+              <strong style="color:var(--gold);">🔗 직접쓰기</strong> 버튼(관리자 전용)은 GAS도 안 거치고 브라우저에서 GitHub API로 바로 씁니다 — 아래 GitHub 직접 연동에서 토큰을 먼저 저장해야 보입니다.
             </p>
             <div id="csvDropZone" style="border:2px dashed var(--border);border-radius:12px;padding:26px;text-align:center;font-size:12px;color:var(--text3);cursor:pointer;transition:border-color .15s;">
               📂 zip 파일을 여기로 드래그 (여러 개 가능) · 클릭해서 선택도 가능
               <input type="file" id="csvFileInput" accept=".zip" multiple style="display:none;">
             </div>
             <div id="csvFileList" style="margin-top:14px;display:flex;flex-direction:column;gap:10px;"></div>
+
+            <div style="margin-top:16px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px 18px;">
+              <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📋 마감 데이터 충족 현황 (현재 올라온 파일 기준)</div>
+              <div id="csvCoveragePanel" style="display:flex;flex-direction:column;gap:4px;"></div>
+            </div>
+
+            <!-- GitHub 직접 연동: 관리자(_isAdmin)에게만 노출. 일반 팀원 화면엔 이 블록 자체가 렌더링되지 않음 -->
+            <div class="admin-only-block" style="margin-top:16px;background:rgba(240,192,96,0.06);border:1px solid rgba(240,192,96,0.25);border-radius:12px;padding:14px 18px;">
+              <div style="font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">🔗 GitHub 직접 연동 (관리자 전용)</div>
+              <p style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.6;">
+                여기 입력한 토큰은 <strong style="color:var(--gold);">이 브라우저에만</strong> 저장되고 어떤 파일에도 기록되지 않습니다.
+                저장하면 각 CSV 행에 "🔗 직접쓰기" 버튼이 생기고, GAS를 거치지 않고 브라우저에서 GitHub API로 바로 씁니다 (UrlFetch 할당량과 무관).
+                이 저장소(qc/qc_data.json)에만 쓰기 권한이 있는 fine-grained PAT 사용을 추천합니다.
+              </p>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <input type="password" id="ghTokenInput" placeholder="ghp_... 또는 github_pat_..." style="flex:1;min-width:220px;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:12px;">
+                <button onclick="saveGhToken()" style="padding:7px 14px;background:var(--gold);color:#000;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">저장</button>
+                <button onclick="clearGhToken()" style="padding:7px 14px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;cursor:pointer;">삭제</button>
+                <span id="ghTokenStatus" style="font-size:11px;color:var(--text3);"></span>
+              </div>
+            </div>
           </div>
 
           <!-- 주의사항 -->
@@ -1585,6 +1616,42 @@ const CSV_SECTION_OPTIONS = [
 
 let _csvSyncTimes = {}; // { sectionKey: isoTime }
 
+// ── 마감 데이터 충족 현황: 어떤 대시보드 페이지가 어떤 섹션(들)을 필요로 하는지 ──
+const PAGE_SECTION_MAP = [
+  { page: '불량현황 (모니터링)',           sections: ['가전'] },
+  { page: '처리현황 (모니터링 · 가전외AS)', sections: ['가전외AS'] },
+  { page: '반품현황 (모니터링)',           sections: ['반품마감', '반품율', '반품검사', '반품처리'] },
+  { page: '반품처리금액 (반품입고)',       sections: ['반품처리'] },
+  { page: '휴가일정 (기타)',               sections: ['휴가일정'] },
+  { page: '택배출고 (기타)',               sections: ['택배출고'] },
+];
+let _csvRowSections = {};              // { rowId: sectionKey } - 현재 목록에 올라온 각 행이 선택된 섹션
+let _csvActionedSections = new Set();  // 이번 세션에서 실제로 동기화(GAS) 또는 다운로드까지 완료한 섹션
+
+function renderCsvCoveragePanel() {
+  const panel = document.getElementById('csvCoveragePanel');
+  if (!panel) return;
+  const present = new Set(Object.values(_csvRowSections));
+  panel.innerHTML = PAGE_SECTION_MAP.map(p => {
+    const missing = p.sections.filter(s => !present.has(s));
+    let icon, label, color;
+    if (missing.length) {
+      icon = '⬜'; color = 'var(--text3)';
+      label = `없음 (${missing.join(', ')} 미확인)`;
+    } else if (p.sections.every(s => _csvActionedSections.has(s))) {
+      icon = '✅'; color = 'var(--green)';
+      label = '충족 완료';
+    } else {
+      icon = '🟡'; color = 'var(--gold)';
+      label = '파일 인식됨 · 동기화/다운로드 대기';
+    }
+    return `<div style="display:flex;align-items:center;gap:8px;font-size:12px;">
+      <span>${icon}</span><span style="flex:1;color:var(--text);">${p.page}</span>
+      <span style="color:${color};">${label}</span>
+    </div>`;
+  }).join('');
+}
+
 function guessCsvSection(koreanLabel) {
   const t = koreanLabel;
   if (/반품/.test(t) && /마감/.test(t)) return '반품마감';
@@ -1596,6 +1663,37 @@ function guessCsvSection(koreanLabel) {
   if (/휴가/.test(t))   return '휴가일정';
   if (/택배|출고/.test(t)) return '택배출고';
   return CSV_SECTION_OPTIONS[0].key;
+}
+
+// 헤더(컬럼명) 기준 섹션 판별 — 파일명이 "2025년 07월~_all.csv"처럼 힌트가 없어도
+// 노션 CSV의 헤더는 그 DB의 속성명 그대로 나오므로, 섹션별로 나오는 속성명 조합을
+// 보면 코드만으로(AI 없이) 어떤 섹션인지 판별할 수 있다. 파일명 기반 guessCsvSection보다
+// 우선 적용되고, 확신도가 낮으면(2개 미만 일치) null을 반환해 파일명 추측으로 넘긴다.
+const CSV_HEADER_SIGNATURES = {
+  가전:     ['확인불량', '접수불량', '업무단계', '접수일'],
+  가전외AS: ['상품명', '상품구분', '수리방법', '진행사항'],
+  반품마감: ['마감회차', '교환/반품', '주/월', '품목'],
+  반품율:   ['마감월', '월간 배송수량', '월간 교환/반품 수량', '반품/교환율'],
+  반품검사: ['반품유형', '이동/처리', '리포트 구분', '리포트 판정'],
+  반품처리: ['처리결과', '처리수량', '처리금액', '처리일'],
+  휴가일정: ['휴가사유', '휴가유형', '휴가시작/종료', '휴가일수', '팀장/파트장'],
+  택배출고: ['모델명', '출고품', '송장번호', '주문번호', '택배사']
+};
+
+function getCsvHeaders(text) {
+  const t = text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
+  const firstLine = t.split(/\r\n|\n/).find(l => l.length > 0) || '';
+  return splitCsvLine(firstLine).map(h => h.trim());
+}
+
+function guessCsvSectionByHeaders(headers) {
+  const set = new Set(headers);
+  let best = null, bestScore = 0;
+  Object.entries(CSV_HEADER_SIGNATURES).forEach(([key, sig]) => {
+    const score = sig.filter(h => set.has(h)).length;
+    if (score > bestScore) { bestScore = score; best = key; }
+  });
+  return bestScore >= 2 ? best : null;
 }
 
 // 파일명에서 마지막 한글 문자 기준으로 왼쪽 전체를 한글 라벨로 추출
@@ -1678,6 +1776,92 @@ function renderCsvSyncTime(sectionKey) {
   return t ? `최근 동기화: ${new Date(t).toLocaleString('ko-KR')}` : '아직 동기화 이력 없음';
 }
 
+// UrlFetch(GAS)를 전혀 거치지 않는 수동동기화: CSV → {sectionKey}.json 파일 다운로드.
+// 다운로드한 파일을 qc/수동동기화/ 폴더에 넣고 깃허브에 올리면, 각 대시보드 페이지가
+// 자동동기화(qc_data.json)보다 이 파일이 최신일 때 이걸 우선 사용한다 (withManualOverride 참고).
+function downloadManualSyncJson(sectionKey, records) {
+  const payload = { records, lastSynced: new Date().toISOString(), source: '수동(파일다운로드)' };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${sectionKey}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// ── GitHub 직접 연동 (관리자 전용) ──────────────────────────
+// 토큰은 이 브라우저의 localStorage에만 저장되고 어떤 파일에도 기록되지 않는다.
+// _isAdmin은 클라이언트 자체 판단이 아니라 상위 index 페이지의 실제 로그인/권한
+// 시스템에서 postMessage로 내려오는 값이라(위 window.addEventListener('message',...) 참고),
+// 이 UI/버튼은 관리자로 로그인한 사람에게만 보인다.
+function getGhToken() { return localStorage.getItem('qc_gh_token') || ''; }
+
+function saveGhToken() {
+  const input = document.getElementById('ghTokenInput');
+  const v = input.value.trim();
+  if (!v) return;
+  localStorage.setItem('qc_gh_token', v);
+  input.value = '';
+  document.getElementById('ghTokenStatus').textContent = '✅ 이 브라우저에 저장됨';
+  showToast('✅ GitHub 토큰 저장 (이 브라우저에만)');
+}
+
+function clearGhToken() {
+  localStorage.removeItem('qc_gh_token');
+  document.getElementById('ghTokenStatus').textContent = '삭제됨';
+  showToast('🗑 GitHub 토큰 삭제');
+}
+
+// UTF-8 안전 base64 인코딩/디코딩 (GAS의 Utilities.base64Encode(...,Charset.UTF_8)와 동일 결과)
+function utf8ToBase64(str) { return btoa(unescape(encodeURIComponent(str))); }
+function base64ToUtf8(b64) { return decodeURIComponent(escape(atob(b64.replace(/\n/g, '')))); }
+
+// GAS(UrlFetchApp)를 전혀 거치지 않고, 브라우저에서 GitHub Contents API로
+// qc_data.json의 한 섹션만 직접 갱신한다. GitHub API 자체의 요청 한도(시간당 5000회, 인증 시)를
+// 쓰므로 GAS의 하루치 UrlFetch 할당량과는 완전히 무관하다.
+async function pushSectionDirectToGithub(sectionKey, records, statusEl) {
+  const token = getGhToken();
+  if (!token) { showToast('⚠ 먼저 GitHub 토큰을 저장하세요'); return; }
+
+  const apiUrl = 'https://api.github.com/repos/ggumbi-cs/dashboard/contents/qc/qc_data.json';
+  statusEl.textContent = 'GitHub 조회 중...';
+  try {
+    const getRes  = await fetch(apiUrl, { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github+json' } });
+    const getJson = await getRes.json();
+    if (!getJson.content) throw new Error(getJson.message || 'qc_data.json 조회 실패');
+
+    const payload = JSON.parse(base64ToUtf8(getJson.content));
+    const now = new Date().toISOString();
+    payload[sectionKey] = { records, lastSynced: now, source: '수동(브라우저직접)' };
+    payload.lastSynced = now;
+
+    statusEl.textContent = 'GitHub 업로드 중...';
+    const putRes = await fetch(apiUrl, {
+      method:  'PUT',
+      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: `manual-direct-sync: ${sectionKey} ${records.length}건 (${new Date().toLocaleString('ko-KR')})`,
+        content: utf8ToBase64(JSON.stringify(payload, null, 2)),
+        sha:     getJson.sha
+      })
+    });
+    const putJson = await putRes.json();
+    if (!putJson.content) throw new Error(putJson.message || 'GitHub 업로드 실패');
+
+    statusEl.textContent = `✅ ${records.length}건 직접쓰기 완료 · ${new Date(now).toLocaleString('ko-KR')}`;
+    showToast(`✅ ${sectionKey} GitHub 직접쓰기 완료 (${records.length}건)`);
+    _csvSyncTimes[sectionKey] = now;
+    _csvActionedSections.add(sectionKey);
+    renderCsvCoveragePanel();
+  } catch (e) {
+    statusEl.textContent = `⚠ 오류: ${e.message}`;
+    showToast('⚠ GitHub 직접쓰기 실패');
+  }
+}
+
 let _csvRowSeq = 0;
 
 async function handleCsvZipFiles(fileList) {
@@ -1706,7 +1890,7 @@ async function handleCsvZipFiles(fileList) {
     csvFiles.forEach(cf => {
       const rowId = 'row_' + (_csvRowSeq++);
       const koreanLabel = extractKoreanLabel(cf.name);
-      const guessKey = guessCsvSection(koreanLabel);
+      const guessKey = guessCsvSectionByHeaders(getCsvHeaders(cf.text)) || guessCsvSection(koreanLabel);
       const row = document.createElement('div');
       row.style.cssText = 'display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;';
       row.innerHTML = `
@@ -1716,13 +1900,38 @@ async function handleCsvZipFiles(fileList) {
         </div>
         ${csvSectionSelectHtml(rowId, guessKey)}
         <button id="csvBtn_${rowId}" style="padding:6px 14px;background:var(--green);color:#000;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">동기화</button>
+        <button id="csvDlBtn_${rowId}" style="padding:6px 14px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">⬇ 파일로 다운로드</button>
+        <button id="csvGhBtn_${rowId}" class="admin-only-inline" style="padding:6px 14px;background:var(--gold);color:#000;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">🔗 직접쓰기</button>
         <div id="csvStatus_${rowId}" style="font-size:11px;color:var(--text3);min-width:160px;">${renderCsvSyncTime(guessKey)}</div>
       `;
       innerWrap.appendChild(row);
+      _csvRowSections[rowId] = guessKey;
+      renderCsvCoveragePanel();
 
       const sel = row.querySelector(`#csvSel_${rowId}`);
       const statusEl = row.querySelector(`#csvStatus_${rowId}`);
-      sel.addEventListener('change', () => { statusEl.textContent = renderCsvSyncTime(sel.value); });
+      sel.addEventListener('change', () => {
+        statusEl.textContent = renderCsvSyncTime(sel.value);
+        _csvRowSections[rowId] = sel.value;
+        renderCsvCoveragePanel();
+      });
+
+      row.querySelector(`#csvDlBtn_${rowId}`).addEventListener('click', () => {
+        const sectionKey = sel.value;
+        const records = parseCsvToRecords(cf.text);
+        downloadManualSyncJson(sectionKey, records);
+        statusEl.textContent = `⬇ ${sectionKey}.json 다운로드됨 · qc/수동동기화/ 폴더에 넣고 깃허브에 올려주세요`;
+        showToast(`⬇ ${sectionKey}.json 다운로드 완료`);
+        _csvActionedSections.add(sectionKey);
+        renderCsvCoveragePanel();
+      });
+
+      row.querySelector(`#csvGhBtn_${rowId}`).addEventListener('click', async () => {
+        if (!_isAdmin) { showToast('⚠ 관리자만 사용 가능합니다'); return; }
+        const sectionKey = sel.value;
+        const records = parseCsvToRecords(cf.text);
+        await pushSectionDirectToGithub(sectionKey, records, statusEl);
+      });
 
       row.querySelector(`#csvBtn_${rowId}`).addEventListener('click', async () => {
         if (!_scriptUrl) { showToast('⚠ GAS URL 없음'); return; }
@@ -1747,6 +1956,8 @@ async function handleCsvZipFiles(fileList) {
             _csvSyncTimes[sectionKey] = data.time;
             statusEl.textContent = `✅ ${data.count}건 동기화 · ${new Date(data.time).toLocaleString('ko-KR')}`;
             showToast(`✅ ${sectionKey} 동기화 완료 (${data.count}건)`);
+            _csvActionedSections.add(sectionKey);
+            renderCsvCoveragePanel();
           } else {
             statusEl.textContent = `⚠ 실패: ${data.msg || '오류'}`;
             showToast('⚠ CSV 동기화 실패');
@@ -1783,6 +1994,11 @@ function initCsvDropZone() {
       .then(d => { if (d.ok) _csvSyncTimes = d.times || {}; })
       .catch(() => {});
   }
+
+  renderCsvCoveragePanel();
+
+  const ghStatusEl = document.getElementById('ghTokenStatus');
+  if (ghStatusEl) ghStatusEl.textContent = getGhToken() ? '✅ 이 브라우저에 저장됨' : '아직 저장된 토큰 없음';
 }
 document.addEventListener('DOMContentLoaded', initCsvDropZone);
 </script>

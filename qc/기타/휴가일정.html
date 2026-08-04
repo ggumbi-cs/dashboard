@@ -267,17 +267,34 @@ function fmtDate(s){
   return s.slice(0,10).replace(/-/g,'.');
 }
 
-function loadData(bust){
+// 수동동기화 오버레이: qc/수동동기화/{key}.json 이 자동동기화보다 최신이면 그걸 사용
+async function withManualOverride(relPath, sectionKey, autoSection) {
+  try {
+    const res = await fetch(`${relPath}${encodeURIComponent(sectionKey)}.json?t=${Date.now()}`);
+    if (res.ok) {
+      const manual = await res.json();
+      if (manual && Array.isArray(manual.records)) {
+        const mTime = manual.lastSynced ? new Date(manual.lastSynced).getTime() : 0;
+        const aTime = (autoSection && autoSection.lastSynced) ? new Date(autoSection.lastSynced).getTime() : 0;
+        if (mTime > aTime) return manual.records;
+      }
+    }
+  } catch (e) {}
+  return (autoSection && autoSection.records) || [];
+}
+
+async function loadData(bust){
   const url = '../qc_data.json' + (bust ? ('?t=' + Date.now()) : '');
-  return fetch(url).then(r=>r.json()).then(data=>{
-    RAW = (data.휴가일정 && data.휴가일정.records) || [];
+  try {
+    const data = await fetch(url).then(r=>r.json());
+    RAW = await withManualOverride('../수동동기화/', '휴가일정', data.휴가일정);
     if(data.lastSynced) document.getElementById('lastSync').textContent = '최근 동기화: ' + fmtDateTime(data.lastSynced);
     buildFilters();
     render();
-  }).catch(err=>{
+  } catch(err){
     document.getElementById('listBody').innerHTML =
       '<tr class="empty-row"><td colspan="7">데이터를 불러오지 못했습니다. (' + err + ')</td></tr>';
-  });
+  }
 }
 
 function fmtDateTime(iso){

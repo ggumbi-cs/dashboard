@@ -384,6 +384,25 @@ function movePeriod(dir) {
 }
 
 // ─────────────────────────────────────────────
+// 수동동기화 오버레이: qc/수동동기화/{key}.json 이 자동동기화보다 최신이면 그걸 사용
+// (처리현황 섹션은 CSV 수동동기화 대상이 아니라 가전외AS만 대상)
+// ─────────────────────────────────────────────
+async function withManualOverride(relPath, sectionKey, autoSection) {
+  try {
+    const res = await fetch(`${relPath}${encodeURIComponent(sectionKey)}.json?t=${Date.now()}`);
+    if (res.ok) {
+      const manual = await res.json();
+      if (manual && Array.isArray(manual.records)) {
+        const mTime = manual.lastSynced ? new Date(manual.lastSynced).getTime() : 0;
+        const aTime = (autoSection && autoSection.lastSynced) ? new Date(autoSection.lastSynced).getTime() : 0;
+        if (mTime > aTime) return manual.records;
+      }
+    }
+  } catch (e) {}
+  return (autoSection && autoSection.records) || [];
+}
+
+// ─────────────────────────────────────────────
 // 데이터 로드
 // ─────────────────────────────────────────────
 async function loadData() {
@@ -393,7 +412,7 @@ async function loadData() {
     const data = await res.json();
 
     _cheori = (data.처리현황 && data.처리현황.records) || [];
-    _mat    = (data.가전외AS && data.가전외AS.records) || [];
+    _mat    = await withManualOverride('../수동동기화/', '가전외AS', data.가전외AS);
 
     if (!_cheori.length) { showEmpty(); return; }
 

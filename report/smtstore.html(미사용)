@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스마트스토어 분석</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #0d1117;
+  --bg2:       #161b22;
+  --bg3:       #1c2128;
+  --border:    #30363d;
+  --text:      #e6edf3;
+  --text2:     #8b949e;
+  --text3:     #484f58;
+  --green:     #3fb950;
+  --green2:    #0d4b25;
+  --orange:    #f0883e;
+  --orange2:   #4a2108;
+  --red:       #f85149;
+  --red2:      #4a1010;
+  --blue:      #58a6ff;
+  --blue2:     #0c2d6b;
+  --purple:    #bc8cff;
+  --yellow:    #e3b341;
+  --naver:     #03C75A;
+
+  --radius:    8px;
+  --radius-lg: 12px;
+  font-size: 14px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 400;
+  min-height: 100vh;
+}
+
+/* ── 상단 헤더 ── */
+.top-bar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.top-bar .logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.top-bar .logo svg { width: 20px; height: 20px; }
+.top-bar h1 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.top-bar .period-badge {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text2);
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+.top-bar .status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--text3);
+  transition: background 0.3s;
+}
+.top-bar .status-dot.ok  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.top-bar .status-dot.err { background: var(--red); }
+.top-bar .status-dot.loading {
+  background: var(--yellow);
+  animation: pulse 1s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ── 탭 ── */
+.tab-bar {
+  display: flex;
+  gap: 2px;
+  padding: 12px 20px 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+}
+.tab-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  font-family: inherit;
+  margin-bottom: -1px;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active {
+  color: var(--blue);
+  border-bottom-color: var(--blue);
+}
+
+/* ── 컨텐츠 ── */
+.content {
+  padding: 20px;
+  max-width: 1200px;
+}
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── KPI 그리드 ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.kpi-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent, var(--blue));
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.kpi-card.green  { --accent: var(--green); }
+.kpi-card.orange { --accent: var(--orange); }
+.kpi-card.red    { --accent: var(--red); }
+.kpi-card.purple { --accent: var(--purple); }
+.kpi-card .kpi-label {
+  font-size: 11px;
+  color: var(--text2);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  margin-bottom: 8px;
+}
+.kpi-card .kpi-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1;
+}
+.kpi-card .kpi-sub {
+  font-size: 11px;
+  color: var(--text2);
+  margin-top: 6px;
+}
+.kpi-card .kpi-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.badge-red    { background: var(--red2);    color: var(--red); }
+.badge-green  { background: var(--green2);  color: var(--green); }
+.badge-orange { background: var(--orange2); color: var(--orange); }
+.badge-blue   { background: var(--blue2);   color: var(--blue); }
+
+/* ── 섹션 ── */
+.section {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.section-head {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-head h2 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.section-head .count-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: var(--text2);
+}
+.section-head .ml-auto { margin-left: auto; }
+.section-body { padding: 0; }
+
+/* ── 필터 바 ── */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text2);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.filter-btn:hover { border-color: var(--blue); color: var(--blue); }
+.filter-btn.active { background: var(--blue2); border-color: var(--blue); color: var(--blue); }
+.filter-input {
+  padding: 5px 12px;
+  font-size: 12px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+  min-width: 200px;
+}
+.filter-input:focus { border-color: var(--blue); }
+
+/* ── QnA 리스트 ── */
+.qna-list { max-height: 520px; overflow-y: auto; }
+.qna-item {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.qna-item:last-child { border-bottom: none; }
+.qna-item:hover { background: var(--bg3); }
+.qna-row1 {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.qna-product {
+  font-size: 11px;
+  color: var(--text2);
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.qna-status {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+.qna-status.answered   { background: var(--green2);  color: var(--green); }
+.qna-status.unanswered { background: var(--orange2); color: var(--orange); }
+.qna-date {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  white-space: nowrap;
+}
+.qna-content {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+  word-break: break-all;
+}
+.qna-answer {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--bg3);
+  border-left: 3px solid var(--naver);
+  border-radius: 0 4px 4px 0;
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.5;
+}
+.qna-answer .ans-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--naver);
+  margin-bottom: 4px;
+}
+.new-tag {
+  font-size: 10px;
+  font-weight: 700;
+  background: #2d1b00;
+  color: var(--yellow);
+  border: 1px solid var(--yellow);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* ── 주문 테이블 ── */
+.order-table-wrap { overflow-x: auto; max-height: 480px; overflow-y: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  white-space: nowrap;
+  z-index: 1;
+}
+tbody td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: middle;
+}
+tbody tr:hover td { background: var(--bg3); }
+tbody tr:last-child td { border-bottom: none; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* ── 상태 칩 ── */
+.status-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.chip-pay    { background: #1a2e50; color: var(--blue); }
+.chip-depart { background: var(--green2); color: var(--green); }
+.chip-deliv  { background: #1a2e50; color: #79c0ff; }
+.chip-done   { background: #1c2128; color: var(--text2); }
+.chip-cancel { background: var(--red2); color: var(--red); }
+.chip-return { background: var(--orange2); color: var(--orange); }
+.chip-other  { background: var(--bg3); color: var(--text3); }
+
+/* ── 상태 분포 바 ── */
+.status-bar-wrap { padding: 16px 18px; }
+.status-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.status-bar-label { width: 100px; font-size: 12px; color: var(--text2); flex-shrink: 0; }
+.status-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--bg3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.status-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+.status-bar-cnt {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text2);
+  width: 40px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── 제품 그리드 ── */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  padding: 16px 18px;
+}
+.product-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  font-size: 12px;
+}
+.product-card .pname {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.product-card .pmeta {
+  color: var(--text2);
+  font-size: 11px;
+  line-height: 1.8;
+}
+.product-card .pstatus {
+  margin-top: 8px;
+}
+
+/* ── 로딩 / 빈 상태 ── */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  color: var(--text3);
+  gap: 10px;
+  font-size: 13px;
+}
+.placeholder svg { opacity: 0.3; }
+.spinner {
+  width: 28px; height: 28px;
+  border: 3px solid var(--border);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── 에러 배너 ── */
+.err-banner {
+  background: var(--red2);
+  border: 1px solid var(--red);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--red);
+  margin-bottom: 16px;
+}
+
+/* ── 스크롤바 ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+</style>
+</head>
+<body>
+
+<!--
+  ================================================================
+  report/smtstore.html  ─  스마트스토어 분석 대시보드
+  index.html TAB_MAP 추가 필요:
+    '스마트스토어': 'report/smtstore.html'
+  ================================================================
+-->
+
+<!-- 상단 바 -->
+<div class="top-bar">
+  <div class="logo">
+    <svg viewBox="0 0 20 20" fill="none">
+      <rect width="20" height="20" rx="4" fill="#03C75A"/>
+      <path d="M4 10h12M10 4v12" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+    </svg>
+    <h1>스마트스토어 분석</h1>
+  </div>
+  <span id="periodBadge" class="period-badge">─</span>
+  <span id="statusDot" class="status-dot"></span>
+</div>
+
+<!-- 탭 -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="overview">개요</button>
+  <button class="tab-btn" data-tab="qna">문의 <span id="qnaBadge" class="count-badge" style="display:none"></span></button>
+  <button class="tab-btn" data-tab="orders">주문</button>
+  <button class="tab-btn" data-tab="products">상품</button>
+</div>
+
+<div class="content">
+
+  <!-- ═══ 탭: 개요 ═══ -->
+  <div class="tab-panel active" id="panel-overview">
+    <div class="kpi-grid" id="kpiGrid">
+      <div class="placeholder" style="grid-column:1/-1">
+        <div class="spinner"></div>
+        <span>데이터 불러오는 중…</span>
+      </div>
+    </div>
+
+    <!-- 주문 상태 분포 -->
+    <div class="section" id="overviewOrderSection" style="display:none">
+      <div class="section-head">
+        <h2>주문 상태 분포</h2>
+        <span id="overviewOrderTotal" class="count-badge">0건</span>
+      </div>
+      <div class="status-bar-wrap" id="overviewStatusBars"></div>
+    </div>
+
+    <!-- 미답변 문의 미리보기 -->
+    <div class="section" id="overviewQnaSection" style="display:none">
+      <div class="section-head">
+        <h2>미답변 문의</h2>
+        <span id="overviewQnaCount" class="count-badge">0건</span>
+        <button class="filter-btn ml-auto" onclick="switchTab('qna')">전체 보기 →</button>
+      </div>
+      <div class="qna-list" id="overviewQnaList"></div>
+    </div>
+
+    <!-- 신제품 관련 문의 미리보기 -->
+    <div class="section" id="overviewNewSection" style="display:none">
+      <div class="section-head">
+        <h2>신제품 관련 문의</h2>
+        <span id="overviewNewCount" class="count-badge">0건</span>
+        <button class="filter-btn ml-auto" onclick="switchTab('qna'); setTimeout(()=>applyQnaFilter('new'),100)">전체 보기 →</button>
+      </div>
+      <div class="qna-list" id="overviewNewList"></div>
+    </div>
+
+    <div id="overviewError" class="err-banner" style="display:none"></div>
+  </div>
+
+  <!-- ═══ 탭: 문의 ═══ -->
+  <div class="tab-panel" id="panel-qna">
+    <div class="section">
+      <div class="section-head">
+        <h2>상품 문의</h2>
+        <span id="qnaTotalBadge" class="count-badge">0건</span>
+      </div>
+      <div class="filter-bar">
+        <button class="filter-btn active" data-qna-filter="all" onclick="applyQnaFilter('all')">전체</button>
+        <button class="filter-btn" data-qna-filter="unanswered" onclick="applyQnaFilter('unanswered')">미답변</button>
+        <button class="filter-btn" data-qna-filter="answered" onclick="applyQnaFilter('answered')">답변완료</button>
+        <button class="filter-btn" data-qna-filter="new" onclick="applyQnaFilter('new')">🌱 신제품 관련</button>
+        <input class="filter-input" id="qnaSearch" type="text" placeholder="문의 내용 검색…" oninput="renderQnaList()">
+      </div>
+      <div class="qna-list" id="qnaList">
+        <div class="placeholder">
+          <div class="spinner"></div>
+          <span>문의 데이터 불러오는 중…</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 탭: 주문 ═══ -->
+  <div class="tab-panel" id="panel-orders">
+    <div class="section">
+      <div class="section-head">
+        <h2>주문 현황</h2>
+        <span id="orderTotalBadge" class="count-badge">0건</span>
+      </div>
+      <div class="filter-bar">
+        <button class="filter-btn active" data-order-filter="all" onclick="applyOrderFilter('all')">전체</button>
+        <button class="filter-btn" data-order-filter="PAYMENT_WAITING" onclick="applyOrderFilter('PAYMENT_WAITING')">결제대기</button>
+        <button class="filter-btn" data-order-filter="PAYED" onclick="applyOrderFilter('PAYED')">결제완료</button>
+        <button class="filter-btn" data-order-filter="DELIVERING" onclick="applyOrderFilter('DELIVERING')">배송중</button>
+        <button class="filter-btn" data-order-filter="DELIVERED" onclick="applyOrderFilter('DELIVERED')">배송완료</button>
+        <button class="filter-btn" data-order-filter="CANCEL" onclick="applyOrderFilter('CANCEL')">취소/반품</button>
+      </div>
+      <div class="order-table-wrap">
+        <table id="orderTable">
+          <thead>
+            <tr>
+              <th>주문번호</th>
+              <th>상품명</th>
+              <th>수량</th>
+              <th>결제금액</th>
+              <th>수령인</th>
+              <th>상태</th>
+              <th>주문일시</th>
+            </tr>
+          </thead>
+          <tbody id="orderTbody">
+            <tr><td colspan="7">
+              <div class="placeholder">
+                <div class="spinner"></div>
+                <span>주문 데이터 불러오는 중…</span>
+              </div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 탭: 상품 ═══ -->
+  <div class="tab-panel" id="panel-products">
+    <div class="section">
+      <div class="section-head">
+        <h2>상품 목록</h2>
+        <span id="productTotalBadge" class="count-badge">0건</span>
+        <div class="ml-auto" style="display:flex;gap:8px;align-items:center">
+          <input class="filter-input" id="productSearch" type="text" placeholder="상품명 검색…" style="min-width:160px" oninput="renderProducts()">
+        </div>
+      </div>
+      <div class="product-grid" id="productGrid">
+        <div class="placeholder" style="grid-column:1/-1">
+          <div class="spinner"></div>
+          <span>상품 데이터 불러오는 중…</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<script>
+// ================================================================
+// ★ 상태
+// ================================================================
+const STATE = {
+  type:      '', period: '',
+  startDate: null, endDate: null,
+  scriptUrl: '', userRole: '',
+  // 데이터
+  qnas:      [], qnaFilter: 'all',
+  orders:    [], orderFilter: 'all', statusMap: {},
+  products:  [],
+};
+
+const ROLE_LEVEL = { admin:0, leader:1, ggumbi:2, affiliate:3 };
+function hasRole(r) { return (ROLE_LEVEL[STATE.userRole]??99) <= (ROLE_LEVEL[r]??99); }
+
+const NEW_KEYWORDS = ['신제품','새로','출시','언제','출시예정','사전예약','신상','언제나와'];
+
+// ================================================================
+// ★ URL 파라미터 파싱
+// ================================================================
+function initFromURL() {
+  const params = new URLSearchParams(location.search);
+  STATE.type   = params.get('type')   || '';
+  STATE.period = params.get('period') || '';
+
+  let startDate, endDate, label;
+  const type = STATE.type, period = STATE.period;
+
+  if (type === 'monthly' && period) {
+    const yy = period.slice(0,2), mm = period.slice(3,5);
+    const year = 2000 + parseInt(yy), month = parseInt(mm) - 1;
+    startDate = new Date(year, month, 1);
+    endDate   = new Date(year, month+1, 0);
+    label     = `${year}년 ${parseInt(mm)}월`;
+  } else if (type === 'weekly' && period.length === 6) {
+    const friday  = new Date(`20${period.slice(0,2)}-${period.slice(2,4)}-${period.slice(4,6)}T00:00:00+09:00`);
+    const saturday = new Date(friday); saturday.setDate(friday.getDate() - 6);
+    startDate = saturday; endDate = friday;
+    label = `주간 ${fmtDisp(saturday)} ~ ${fmtDisp(friday)}`;
+  } else if (type === 'yearly' && period) {
+    const year = parseInt(period);
+    startDate = new Date(year, 0, 1); endDate = new Date(year, 11, 31);
+    label = `${year}년 연간`;
+  } else {
+    // 파라미터 없으면 이번 달 기본
+    const now = new Date();
+    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    endDate   = new Date(now.getFullYear(), now.getMonth()+1, 0);
+    label = `${now.getFullYear()}년 ${now.getMonth()+1}월`;
+  }
+
+  STATE.startDate = startDate;
+  STATE.endDate   = endDate;
+  document.getElementById('periodBadge').textContent = label;
+}
+
+function fmtDate(d) {
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function fmtDisp(d) { return `${d.getMonth()+1}/${d.getDate()}`; }
+function pad(n) { return String(n).padStart(2,'0'); }
+function fmtDateTime(str) {
+  if (!str) return '─';
+  const d = new Date(str);
+  if (isNaN(d)) return str;
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function numFmt(n) { return Number(n||0).toLocaleString(); }
+
+// ================================================================
+// ★ postMessage 수신
+// ================================================================
+window.addEventListener('message', e => {
+  if (!e.data) return;
+  if (e.data.type === 'SCRIPT_URL') {
+    STATE.scriptUrl = e.data.url      || '';
+    STATE.userRole  = e.data.userRole || '';
+    loadAll();
+  }
+});
+
+// ================================================================
+// ★ 탭 전환
+// ================================================================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
+}
+
+// ================================================================
+// ★ GAS 호출
+// ================================================================
+async function gasGet(params) {
+  const url = STATE.scriptUrl + '?' + new URLSearchParams(params).toString();
+  const res  = await fetch(url);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+// ================================================================
+// ★ 전체 로드
+// ================================================================
+async function loadAll() {
+  if (!STATE.scriptUrl) return;
+  setStatus('loading');
+  try {
+    const sd = fmtDate(STATE.startDate);
+    const ed = fmtDate(STATE.endDate);
+
+    // 병렬 호출
+    const [qnaRes, orderRes, productRes] = await Promise.all([
+      gasGet({ action:'smtstore', sub:'qna',      startDate:sd, endDate:ed, pageSize:200 }),
+      gasGet({ action:'smtstore', sub:'orders',   startDate:sd, endDate:ed }),
+      gasGet({ action:'smtstore', sub:'products' }),
+    ]);
+
+    if (qnaRes.ok) {
+      STATE.qnas = qnaRes.qnas || [];
+      renderKpi(qnaRes, orderRes);
+      renderOverviewQna(qnaRes);
+      renderQnaList();
+      // 탭 뱃지
+      const ub = document.getElementById('qnaBadge');
+      if (qnaRes.unanswered > 0) {
+        ub.textContent = '미답변 ' + qnaRes.unanswered;
+        ub.style.display = '';
+        ub.style.background = '#4a2108';
+        ub.style.color = '#f0883e';
+      }
+    }
+
+    if (orderRes.ok) {
+      STATE.orders    = orderRes.orders    || [];
+      STATE.statusMap = orderRes.statusMap || {};
+      renderOverviewOrders(orderRes);
+      renderOrderTable();
+    }
+
+    if (productRes.ok) {
+      STATE.products = productRes.products || [];
+      renderProducts();
+    }
+
+    setStatus('ok');
+  } catch(err) {
+    setStatus('err');
+    document.getElementById('overviewError').textContent = '데이터 로드 실패: ' + err.message;
+    document.getElementById('overviewError').style.display = '';
+  }
+}
+
+function setStatus(s) {
+  const dot = document.getElementById('statusDot');
+  dot.className = 'status-dot ' + s;
+}
+
+// ================================================================
+// ★ KPI 카드
+// ================================================================
+function renderKpi(qna, order) {
+  const grid = document.getElementById('kpiGrid');
+  const qnaUn = qna.unanswered || 0;
+  const qnaNew = qna.newRelated || 0;
+  const orderTotal = order.total || 0;
+
+  // 주문 상태별
+  const sm = order.statusMap || {};
+  const cancelCount = Object.entries(sm)
+    .filter(([k]) => /CANCEL|RETURN|EXCHANGE/i.test(k))
+    .reduce((s,[,v]) => s + v, 0);
+
+  grid.innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-label">전체 문의</div>
+      <div class="kpi-value">${numFmt(qna.total || 0)}</div>
+      <div class="kpi-sub">조회 기간 합계</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">미답변</div>
+      <div class="kpi-value">${numFmt(qnaUn)}</div>
+      <div class="kpi-sub">${qnaUn > 0 ? '<span class="kpi-badge badge-orange">답변 필요</span>' : '<span class="kpi-badge badge-green">없음</span>'}</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-label">신제품 관련 문의</div>
+      <div class="kpi-value">${numFmt(qnaNew)}</div>
+      <div class="kpi-sub">키워드 감지</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">주문 건수</div>
+      <div class="kpi-value">${numFmt(orderTotal)}</div>
+      <div class="kpi-sub">기간 내 변경</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">취소/반품</div>
+      <div class="kpi-value">${numFmt(cancelCount)}</div>
+      <div class="kpi-sub">${orderTotal > 0 ? Math.round(cancelCount/orderTotal*100) + '%' : '─'}</div>
+    </div>
+  `;
+}
+
+// ================================================================
+// ★ 개요 - 주문 상태 바
+// ================================================================
+const STATUS_META = {
+  PAYMENT_WAITING:  { label:'결제대기',  color:'#58a6ff' },
+  PAYED:            { label:'결제완료',  color:'#3fb950' },
+  DISPATCHED:       { label:'발송완료',  color:'#79c0ff' },
+  DELIVERING:       { label:'배송중',    color:'#a5d6ff' },
+  DELIVERED:        { label:'배송완료',  color:'#56d364' },
+  PURCHASE_DECIDED: { label:'구매확정',  color:'#8b949e' },
+  CANCEL_DONE:      { label:'취소완료',  color:'#f85149' },
+  RETURN_DONE:      { label:'반품완료',  color:'#f0883e' },
+  EXCHANGE_DONE:    { label:'교환완료',  color:'#e3b341' },
+};
+function statusLabel(k) { return STATUS_META[k]?.label || k; }
+function statusColor(k) { return STATUS_META[k]?.color || '#484f58'; }
+
+function renderOverviewOrders(res) {
+  const sec = document.getElementById('overviewOrderSection');
+  const sm  = res.statusMap || {};
+  const total = res.total || 0;
+  if (total === 0) return;
+  sec.style.display = '';
+  document.getElementById('overviewOrderTotal').textContent = numFmt(total) + '건';
+
+  const bars = document.getElementById('overviewStatusBars');
+  const sorted = Object.entries(sm).sort(([,a],[,b]) => b - a);
+  const max = sorted[0]?.[1] || 1;
+  bars.innerHTML = sorted.map(([k, cnt]) => `
+    <div class="status-bar-row">
+      <div class="status-bar-label">${statusLabel(k)}</div>
+      <div class="status-bar-track">
+        <div class="status-bar-fill" style="width:${cnt/max*100}%;background:${statusColor(k)}"></div>
+      </div>
+      <div class="status-bar-cnt">${numFmt(cnt)}</div>
+    </div>
+  `).join('');
+}
+
+// ================================================================
+// ★ 개요 - 문의 미리보기
+// ================================================================
+function renderOverviewQna(res) {
+  const unList = res.unansweredList || [];
+  const newList = res.newRelatedList || [];
+
+  if (unList.length > 0) {
+    document.getElementById('overviewQnaSection').style.display = '';
+    document.getElementById('overviewQnaCount').textContent = numFmt(res.unanswered) + '건';
+    document.getElementById('overviewQnaList').innerHTML = unList.slice(0,5).map(q => qnaItemHTML(q)).join('');
+  }
+  if (newList.length > 0) {
+    document.getElementById('overviewNewSection').style.display = '';
+    document.getElementById('overviewNewCount').textContent = numFmt(res.newRelated) + '건';
+    document.getElementById('overviewNewList').innerHTML = newList.slice(0,5).map(q => qnaItemHTML(q)).join('');
+  }
+}
+
+// ================================================================
+// ★ 문의 탭
+// ================================================================
+function applyQnaFilter(f) {
+  STATE.qnaFilter = f;
+  document.querySelectorAll('[data-qna-filter]').forEach(b => {
+    b.classList.toggle('active', b.dataset.qnaFilter === f);
+  });
+  renderQnaList();
+}
+
+function renderQnaList() {
+  const kw = (document.getElementById('qnaSearch')?.value || '').toLowerCase();
+  let list = STATE.qnas;
+
+  if (STATE.qnaFilter === 'unanswered') list = list.filter(q => !q.answered && q.answerContent == null);
+  if (STATE.qnaFilter === 'answered')   list = list.filter(q => q.answered  || q.answerContent);
+  if (STATE.qnaFilter === 'new')        list = list.filter(q => isNewRelated(q));
+  if (kw) list = list.filter(q => ((q.questionContent||'') + (q.productName||'')).toLowerCase().includes(kw));
+
+  document.getElementById('qnaTotalBadge').textContent = numFmt(list.length) + '건';
+
+  const el = document.getElementById('qnaList');
+  if (list.length === 0) {
+    el.innerHTML = '<div class="placeholder"><svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/></svg><span>해당하는 문의가 없습니다</span></div>';
+    return;
+  }
+  el.innerHTML = list.map(q => qnaItemHTML(q)).join('');
+}
+
+function isNewRelated(q) {
+  const t = ((q.questionContent||'') + (q.productName||'')).toLowerCase();
+  return NEW_KEYWORDS.some(k => t.includes(k));
+}
+
+function qnaItemHTML(q) {
+  const answered = q.answered || !!q.answerContent;
+  const isNew    = isNewRelated(q);
+  const date     = fmtDateTime(q.createdDate || q.createdAt || q.questionCreatedDate);
+  const product  = q.productName || q.channelProductName || '상품명 없음';
+  const content  = (q.questionContent || q.content || '내용 없음').slice(0, 200);
+  const answer   = q.answerContent || '';
+
+  return `
+    <div class="qna-item">
+      <div class="qna-row1">
+        <span class="qna-product" title="${product}">${product}</span>
+        <span class="qna-status ${answered ? 'answered' : 'unanswered'}">${answered ? '답변완료' : '미답변'}</span>
+        ${isNew ? '<span class="new-tag">🌱 신제품</span>' : ''}
+        <span class="qna-date">${date}</span>
+      </div>
+      <div class="qna-content">${escHtml(content)}</div>
+      ${answer ? `<div class="qna-answer"><div class="ans-label">판매자 답변</div>${escHtml(answer.slice(0,200))}</div>` : ''}
+    </div>
+  `;
+}
+
+// ================================================================
+// ★ 주문 탭
+// ================================================================
+function applyOrderFilter(f) {
+  STATE.orderFilter = f;
+  document.querySelectorAll('[data-order-filter]').forEach(b => {
+    b.classList.toggle('active', b.dataset.orderFilter === f);
+  });
+  renderOrderTable();
+}
+
+function orderStatusChip(s) {
+  const map = {
+    PAYMENT_WAITING:  ['결제대기',  'chip-pay'],
+    PAYED:            ['결제완료',  'chip-pay'],
+    DISPATCHED:       ['발송완료',  'chip-depart'],
+    DELIVERING:       ['배송중',    'chip-deliv'],
+    DELIVERED:        ['배송완료',  'chip-deliv'],
+    PURCHASE_DECIDED: ['구매확정',  'chip-done'],
+    CANCEL_DONE:      ['취소완료',  'chip-cancel'],
+    CANCEL_NOPAY:     ['미결제취소','chip-cancel'],
+    RETURN_DONE:      ['반품완료',  'chip-return'],
+    EXCHANGE_DONE:    ['교환완료',  'chip-return'],
+  };
+  const [label, cls] = map[s] || [s || '─', 'chip-other'];
+  return `<span class="status-chip ${cls}">${label}</span>`;
+}
+
+function renderOrderTable() {
+  let list = STATE.orders;
+  if (STATE.orderFilter !== 'all') {
+    list = list.filter(o => {
+      const s = (o.productOrderStatus || o.lastChangedStatus || '').toUpperCase();
+      if (STATE.orderFilter === 'CANCEL') return /CANCEL|RETURN|EXCHANGE/.test(s);
+      return s === STATE.orderFilter;
+    });
+  }
+
+  document.getElementById('orderTotalBadge').textContent = numFmt(list.length) + '건';
+
+  const tbody = document.getElementById('orderTbody');
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="placeholder">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span>해당하는 주문이 없습니다</span></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(o => {
+    const orderInfo   = o.order || o;
+    const productOrder = o.productOrder || o;
+    const orderId     = productOrder.productOrderId || orderInfo.orderId || '─';
+    const productName = productOrder.productName  || orderInfo.productName || '─';
+    const qty         = productOrder.quantity     || 1;
+    const price       = numFmt(productOrder.totalPaymentAmount || productOrder.unitPrice || 0);
+    const buyer       = (orderInfo.order && orderInfo.order.ordererName) || orderInfo.ordererName || '─';
+    const status      = productOrder.productOrderStatus || orderInfo.productOrderStatus || '─';
+    const createdAt   = fmtDateTime(productOrder.paymentDate || orderInfo.paymentDate || orderInfo.createdAt);
+
+    return `<tr>
+      <td class="mono" style="font-size:11px">${orderId}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${productName}">${productName}</td>
+      <td class="mono" style="text-align:right">${qty}</td>
+      <td class="mono" style="text-align:right">${price}원</td>
+      <td>${buyer}</td>
+      <td>${orderStatusChip(status)}</td>
+      <td class="mono" style="font-size:11px;color:var(--text2)">${createdAt}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ================================================================
+// ★ 상품 탭
+// ================================================================
+function renderProducts() {
+  const kw  = (document.getElementById('productSearch')?.value || '').toLowerCase();
+  let list  = STATE.products;
+  if (kw) list = list.filter(p => (p.originProductNo ? String(p.originProductNo) : '')
+    .toLowerCase().includes(kw) || (p.name||'').toLowerCase().includes(kw));
+
+  document.getElementById('productTotalBadge').textContent = numFmt(list.length) + '건';
+  const grid = document.getElementById('productGrid');
+
+  if (list.length === 0) {
+    grid.innerHTML = `<div class="placeholder" style="grid-column:1/-1">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" stroke="currentColor" stroke-width="1.5"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="currentColor" stroke-width="1.5"/></svg>
+      <span>상품 데이터가 없습니다</span></div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(p => {
+    const name   = p.name || p.channelProductName || p.originProductNo || '─';
+    const price  = numFmt(p.salePrice || p.price || 0);
+    const status = p.statusType || p.saleStatusType || '─';
+    const no     = p.originProductNo || '─';
+    return `<div class="product-card">
+      <div class="pname" title="${name}">${name}</div>
+      <div class="pmeta">
+        <div>번호: <span class="mono">${no}</span></div>
+        <div>판매가: <strong>${price}원</strong></div>
+        <div>상태: ${status}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ================================================================
+// ★ 유틸
+// ================================================================
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ================================================================
+// ★ 실행
+// ================================================================
+initFromURL();
+
+// scriptUrl이 postMessage로 안 오면 로컬 테스트용 (개발 시 주석 해제)
+// STATE.scriptUrl = 'https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec';
+// STATE.userRole  = 'admin';
+// loadAll();
+</script>
+</body>
+</html>

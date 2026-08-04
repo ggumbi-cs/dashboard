@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>접속로그 — 엄마감동팀</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #f4f6fb;
+  --surface:  #ffffff;
+  --surface2: #eef1f8;
+  --border:   #dbe1ee;
+  --border2:  #c9d2e3;
+  --text:     #1c2536;
+  --text2:    #5b6472;
+  --text3:    #8590a1;
+  --blue:     #1a6eb8;
+  --blue-dim: #dceaf9;
+  --green:    #1a7a44;
+  --green-dim:#dcf3e4;
+  --yellow:   #96690a;
+  --yellow-dim:#faf0d8;
+  --red:      #c0392b;
+  --red-dim:  #fbe1de;
+  --purple:   #7047c9;
+  --purple-dim:#ece3fa;
+  --mono:     'JetBrains Mono', monospace;
+  --sans:     'Noto Sans KR', sans-serif;
+}
+body.dark-mode {
+  --bg:       #0d1117;
+  --surface:  #161b22;
+  --surface2: #1c2128;
+  --border:   #30363d;
+  --border2:  #21262d;
+  --text:     #e6edf3;
+  --text2:    #8b949e;
+  --text3:    #6e7681;
+  --blue:     #388bfd;
+  --blue-dim: #1f3a5f;
+  --green:    #3fb950;
+  --green-dim:#1a3a22;
+  --yellow:   #d29922;
+  --yellow-dim:#2d2208;
+  --red:      #f85149;
+  --red-dim:  #3d1c1a;
+  --purple:   #bc8cff;
+  --purple-dim:#2a1f42;
+}
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 13px; line-height: 1.6; min-height: 100vh; }
+
+/* ── 차단 화면 ── */
+#blockScreen {
+  display: none; min-height: 100vh; flex-direction: column;
+  align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 40px;
+}
+#blockScreen .icon { font-size: 44px; }
+#blockScreen .title { font-size: 16px; font-weight: 700; color: var(--text); }
+#blockScreen .desc { font-size: 12.5px; color: var(--text2); }
+
+/* ── 본문 ── */
+#appRoot { display: none; padding: 28px 32px 60px; max-width: 1280px; margin: 0 auto; }
+.page-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 22px; flex-wrap: wrap; gap: 10px; }
+.page-title { font-size: 19px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.page-title .badge { font-family: var(--mono); font-size: 10px; background: var(--red-dim); color: var(--red); padding: 2px 8px; border-radius: 10px; }
+.page-sub { font-size: 12px; color: var(--text2); margin-top: 4px; }
+.refresh-btn {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+  padding: 7px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; gap: 6px; transition: background .15s;
+}
+.refresh-btn:hover { background: var(--border2); }
+.refresh-btn:disabled { opacity: .5; cursor: default; }
+
+.summary-note {
+  background: var(--blue-dim); border: 1px solid #244a7a; color: #a9cdfa;
+  border-radius: 8px; padding: 10px 14px; font-size: 12px; margin-bottom: 20px; line-height: 1.7;
+}
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+@media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+.panel-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.panel-title .cnt { font-family: var(--mono); font-size: 10.5px; color: var(--text3); font-weight: 400; }
+
+.user-row {
+  display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border2);
+}
+.user-row:last-child { border-bottom: none; }
+.user-row .rank { width: 18px; text-align: center; font-family: var(--mono); font-size: 11px; color: var(--text3); flex-shrink: 0; }
+.user-row .who { flex: 1; min-width: 0; }
+.user-row .who .nm { font-weight: 600; font-size: 12.5px; }
+.user-row .who .nm.exec { color: var(--yellow); }
+.user-row .who .top-page { font-size: 11px; color: var(--text2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-row .cnt-badge { font-family: var(--mono); font-size: 11px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 2px 9px; flex-shrink: 0; }
+
+.page-row {
+  display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border2);
+}
+.page-row:last-child { border-bottom: none; }
+.page-row .bar-wrap { flex: 1; background: var(--surface2); border-radius: 4px; height: 18px; position: relative; overflow: hidden; }
+.page-row .bar { position: absolute; inset: 0; background: var(--blue-dim); border-right: 2px solid var(--blue); }
+.page-row .bar-label { position: absolute; inset: 0; display: flex; align-items: center; padding: 0 8px; font-size: 11px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.page-row .cnt-badge { font-family: var(--mono); font-size: 11px; color: var(--text2); flex-shrink: 0; width: 32px; text-align: right; }
+
+.filter-bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.filter-bar input, .filter-bar select {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+  padding: 7px 10px; border-radius: 6px; font-size: 12px; font-family: inherit; outline: none;
+}
+.filter-bar input:focus, .filter-bar select:focus { border-color: var(--blue); }
+.filter-bar input[type="text"] { flex: 1; min-width: 160px; }
+
+.table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th {
+  text-align: left; padding: 9px 12px; background: var(--surface2); color: var(--text2);
+  font-weight: 600; font-size: 11px; letter-spacing: .3px; border-bottom: 1px solid var(--border);
+  position: sticky; top: 0;
+}
+tbody td { padding: 8px 12px; border-bottom: 1px solid var(--border2); color: var(--text); white-space: nowrap; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--surface2); }
+td.page-cell { max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
+.tbl-scroll { max-height: 520px; overflow: auto; }
+.role-chip { font-family: var(--mono); font-size: 10px; padding: 1px 7px; border-radius: 8px; }
+.role-chip.admin { background: var(--red-dim); color: var(--red); }
+.role-chip.leader { background: var(--yellow-dim); color: var(--yellow); }
+.role-chip.ggumbi { background: var(--purple-dim); color: var(--purple); }
+.role-chip.affiliate { background: var(--surface2); color: var(--text2); }
+
+.empty-state { padding: 40px; text-align: center; color: var(--text3); font-size: 12.5px; }
+.load-more-btn {
+  width: 100%; padding: 10px; background: var(--surface2); border: none; border-top: 1px solid var(--border);
+  color: var(--text2); font-size: 12px; cursor: pointer; font-family: inherit;
+}
+.load-more-btn:hover { background: var(--border2); color: var(--text); }
+
+/* ── 페이지 필터 모달 ── */
+.filter-toggle-btn {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+  padding: 7px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; gap: 5px; transition: background .15s;
+}
+.filter-toggle-btn:hover { background: var(--border2); }
+.filter-toggle-btn .cnt-dot {
+  font-family: var(--mono); font-size: 10px; background: var(--red-dim); color: var(--red);
+  border-radius: 8px; padding: 0 6px;
+}
+#filterModal {
+  display: none; position: fixed; inset: 0; z-index: 3000;
+  background: rgba(10,14,22,0.45); align-items: center; justify-content: center;
+}
+#filterModal.open { display: flex; }
+.filter-modal-box {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  width: 460px; max-width: 92vw; max-height: 80vh; display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.filter-modal-hd { padding: 18px 20px 12px; border-bottom: 1px solid var(--border2); }
+.filter-modal-hd .ttl { font-size: 14.5px; font-weight: 700; margin-bottom: 4px; }
+.filter-modal-hd .sub { font-size: 11.5px; color: var(--text2); line-height: 1.6; }
+.filter-modal-actions { display: flex; gap: 8px; padding: 10px 20px; border-bottom: 1px solid var(--border2); }
+.filter-modal-actions button {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text2);
+  padding: 4px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; font-family: inherit;
+}
+.filter-modal-actions button:hover { background: var(--border2); color: var(--text); }
+.filter-modal-list { flex: 1; overflow-y: auto; padding: 6px 20px; }
+.filter-page-row {
+  display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border2);
+  font-size: 12.5px; cursor: pointer;
+}
+.filter-page-row:last-child { border-bottom: none; }
+.filter-page-row input[type="checkbox"] { width: 15px; height: 15px; flex-shrink: 0; cursor: pointer; }
+.filter-page-row .fp-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.filter-page-row.excluded .fp-name { color: var(--text3); text-decoration: line-through; }
+.filter-page-row .fp-cnt { font-family: var(--mono); font-size: 10.5px; color: var(--text3); flex-shrink: 0; }
+.filter-modal-footer {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 14px 20px; border-top: 1px solid var(--border2);
+}
+.filter-modal-footer .status { font-size: 11px; color: var(--text3); }
+.filter-modal-footer .btns { display: flex; gap: 8px; }
+.filter-modal-footer button {
+  padding: 7px 16px; border-radius: 6px; font-size: 12.5px; cursor: pointer; font-family: inherit; border: none;
+}
+.filter-cancel-btn { background: var(--surface2); color: var(--text2); border: 1px solid var(--border) !important; }
+.filter-save-btn { background: var(--blue); color: #fff; }
+.filter-save-btn:disabled { opacity: .6; cursor: default; }
+</style>
+</head>
+<body>
+
+<div id="blockScreen">
+  <div class="icon">🔒</div>
+  <div class="title">관리자 전용 페이지입니다</div>
+  <div class="desc">접속로그는 관리자 로그인 시에만 열람할 수 있습니다.</div>
+</div>
+
+<div id="appRoot">
+  <div class="page-header">
+    <div>
+      <div class="page-title">📊 접속로그 <span class="badge">ADMIN ONLY</span></div>
+      <div class="page-sub">사용자별 · 페이지별 열람 현황 — 누가 무엇을 많이 보는지 파악해 우선순위를 정합니다.</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="filter-toggle-btn" id="filterToggleBtn" onclick="openFilterModal()">
+        <span>🧰</span><span>페이지 필터</span><span class="cnt-dot" id="filterCntDot" style="display:none;"></span>
+      </button>
+      <button class="refresh-btn" id="refreshBtn" onclick="loadLogs()"><span>🔄</span><span>새로고침</span></button>
+    </div>
+  </div>
+
+  <div class="summary-note">
+    ℹ️ IP는 브라우저가 스스로 조회해 전송한 <b>자기신고 공인 IP</b>이며, 서버가 별도로 검증한 값은 아닙니다. 팀 내부 참고용 통계로만 활용해주세요.
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title">👤 사용자별 열람 순위 <span class="cnt" id="userCount"></span></div>
+      <div id="userRankList"><div class="empty-state">불러오는 중...</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">📄 페이지별 열람 순위 <span class="cnt" id="pageCount"></span></div>
+      <div id="pageRankList"><div class="empty-state">불러오는 중...</div></div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <input type="text" id="fSearch" placeholder="사용자명 / 팀명 / 페이지 검색..." oninput="renderTable()">
+    <select id="fRole" onchange="renderTable()">
+      <option value="">전체 로그인유형</option>
+      <option value="관리자">관리자</option>
+      <option value="임원">임원</option>
+      <option value="리더">리더</option>
+      <option value="꿈비">꿈비</option>
+      <option value="계열사">계열사</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:150px;">시각</th>
+            <th style="width:90px;">로그인유형</th>
+            <th style="width:100px;">팀명</th>
+            <th style="width:100px;">사용자명</th>
+            <th style="width:120px;">IP</th>
+            <th>페이지</th>
+          </tr>
+        </thead>
+        <tbody id="logTbody">
+          <tr><td colspan="6" class="empty-state">불러오는 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <button class="load-more-btn" id="loadMoreBtn" style="display:none;" onclick="showMore()">더 보기</button>
+  </div>
+</div>
+
+<div id="filterModal">
+  <div class="filter-modal-box">
+    <div class="filter-modal-hd">
+      <div class="ttl">🧰 페이지 필터</div>
+      <div class="sub">체크 해제한 페이지는 위 순위 집계와 아래 표에서 제외됩니다. 설정은 저장하면 팀 전체에 공통 적용됩니다.</div>
+    </div>
+    <div class="filter-modal-actions">
+      <button type="button" onclick="setAllFilterChecks(true)">전체 포함</button>
+      <button type="button" onclick="setAllFilterChecks(false)">전체 제외</button>
+    </div>
+    <div class="filter-modal-list" id="filterPageList"></div>
+    <div class="filter-modal-footer">
+      <div class="status" id="filterStatus"></div>
+      <div class="btns">
+        <button class="filter-cancel-btn" onclick="closeFilterModal()">취소</button>
+        <button class="filter-save-btn" id="filterSaveBtn" onclick="saveFilterSettings()">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec';
+const ROLE_LABEL_CLASS = { '관리자':'admin', '임원':'leader', '리더':'leader', '꿈비':'ggumbi', '계열사':'affiliate' };
+const EXEC_TYPE = '임원'; // login_id.xlsx 상 임원 로그인유형 — 강조 표시용
+
+let ALL_ROWS = [];
+let filteredRows = [];
+let renderLimit = 100;
+let EXCLUDED_PAGES = [];      // 집계/표시에서 제외할 페이지 목록 (GAS에 저장/로드)
+let _filterDraft = new Set(); // 모달에서 편집 중인 임시 상태
+
+function checkAdmin() {
+  const role = sessionStorage.getItem('userRole') || '';
+  if (role !== 'admin') {
+    document.getElementById('blockScreen').style.display = 'flex';
+    return false;
+  }
+  document.getElementById('appRoot').style.display = 'block';
+  return true;
+}
+
+function identityOf(row) {
+  if (row.userName) return { label: (row.team ? row.team + ' · ' : '') + row.userName, isExec: row.loginType === EXEC_TYPE, key: row.loginType + '|' + row.team + '|' + row.userName };
+  return { label: row.loginType || '알수없음', isExec: false, key: row.loginType || '' };
+}
+
+async function loadLogs() {
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true;
+  try {
+    const res  = await fetch(SCRIPT_URL + '?action=getViewLogs', { redirect: 'follow' });
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.msg || '조회 실패');
+    const rows = json.rows || [];
+    // getViewLogs 액션이 아직 GAS에 배포되지 않으면 doGet()이 알 수 없는 action을
+    // 무시하고 다른 시트(액션현황판 등)를 기본 반환하므로, 모양이 다르면 오배포로 간주한다.
+    if (rows.length > 0 && !('page' in rows[0] && 'loginType' in rows[0])) {
+      throw new Error('GAS에 getViewLogs 액션이 아직 배포되지 않은 것 같습니다 (다른 시트 데이터가 반환됨)');
+    }
+    ALL_ROWS = rows.slice().reverse(); // 최신순
+    renderSummary();
+    renderLimit = 100;
+    renderTable();
+  } catch(e) {
+    document.getElementById('logTbody').innerHTML = `<tr><td colspan="6" class="empty-state">불러오기 실패: ${e.message}<br><span style="font-size:11px;">GAS에 getViewLogs 액션이 배포되었는지 확인해주세요.</span></td></tr>`;
+    document.getElementById('userRankList').innerHTML = '<div class="empty-state">데이터 없음</div>';
+    document.getElementById('pageRankList').innerHTML = '<div class="empty-state">데이터 없음</div>';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderSummary() {
+  // 사용자별 집계 (필터에서 제외한 페이지는 집계에서 빠짐)
+  const byUser = {};
+  const byPage = {};
+  ALL_ROWS.filter(r => !EXCLUDED_PAGES.includes(r.page)).forEach(r => {
+    const id = identityOf(r);
+    if (!byUser[id.key]) byUser[id.key] = { label: id.label, isExec: id.isExec, count: 0, pages: {} };
+    byUser[id.key].count++;
+    byUser[id.key].pages[r.page] = (byUser[id.key].pages[r.page] || 0) + 1;
+
+    byPage[r.page] = (byPage[r.page] || 0) + 1;
+  });
+
+  const userList = Object.values(byUser).sort((a,b) => b.count - a.count);
+  document.getElementById('userCount').textContent = `${userList.length}명`;
+  const userHtml = userList.slice(0, 15).map((u, i) => {
+    const topPage = Object.entries(u.pages).sort((a,b) => b[1]-a[1])[0];
+    return `
+    <div class="user-row">
+      <div class="rank">${i+1}</div>
+      <div class="who">
+        <div class="nm${u.isExec ? ' exec':''}">${u.isExec ? '⭐ ' : ''}${escapeHtml(u.label)}</div>
+        <div class="top-page">주로 봄: ${topPage ? escapeHtml(topPage[0]) : '-'}</div>
+      </div>
+      <div class="cnt-badge">${u.count}회</div>
+    </div>`;
+  }).join('') || '<div class="empty-state">데이터 없음</div>';
+  document.getElementById('userRankList').innerHTML = userHtml;
+
+  const pageList = Object.entries(byPage).sort((a,b) => b[1]-a[1]);
+  document.getElementById('pageCount').textContent = `${pageList.length}개`;
+  const maxCnt = pageList.length ? pageList[0][1] : 1;
+  const pageHtml = pageList.slice(0, 15).map(([page, cnt]) => {
+    const pct = Math.max(6, Math.round(cnt / maxCnt * 100));
+    return `
+    <div class="page-row">
+      <div class="bar-wrap">
+        <div class="bar" style="width:${pct}%;"></div>
+        <div class="bar-label">${escapeHtml(page)}</div>
+      </div>
+      <div class="cnt-badge">${cnt}</div>
+    </div>`;
+  }).join('') || '<div class="empty-state">데이터 없음</div>';
+  document.getElementById('pageRankList').innerHTML = pageHtml;
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderTable() {
+  const kw   = (document.getElementById('fSearch').value || '').trim().toLowerCase();
+  const role = document.getElementById('fRole').value;
+
+  filteredRows = ALL_ROWS.filter(r => {
+    if (EXCLUDED_PAGES.includes(r.page)) return false;
+    if (role && r.loginType !== role) return false;
+    if (!kw) return true;
+    return [r.userName, r.team, r.page, r.loginType].some(v => String(v||'').toLowerCase().includes(kw));
+  });
+
+  const slice = filteredRows.slice(0, renderLimit);
+  document.getElementById('logTbody').innerHTML = slice.length ? slice.map(r => `
+    <tr>
+      <td>${escapeHtml(r.time)}</td>
+      <td><span class="role-chip ${ROLE_LABEL_CLASS[r.loginType]||''}">${escapeHtml(r.loginType)}</span></td>
+      <td>${escapeHtml(r.team)}</td>
+      <td>${escapeHtml(r.userName)}</td>
+      <td style="font-family:var(--mono);font-size:11px;">${escapeHtml(r.ip)}</td>
+      <td class="page-cell">${escapeHtml(r.page)}</td>
+    </tr>`).join('') : '<tr><td colspan="6" class="empty-state">조건에 맞는 로그가 없습니다</td></tr>';
+
+  document.getElementById('loadMoreBtn').style.display = filteredRows.length > renderLimit ? 'block' : 'none';
+}
+
+function showMore() {
+  renderLimit += 200;
+  renderTable();
+}
+
+// ═══════════════════════════════════════════
+//  페이지 필터 (제외 목록, GAS에 저장/로드)
+// ═══════════════════════════════════════════
+async function loadFilterSettings() {
+  try {
+    const res  = await fetch(SCRIPT_URL + '?action=getLogFilterSettings', { redirect: 'follow' });
+    const json = await res.json();
+    EXCLUDED_PAGES = (json.ok && Array.isArray(json.excludedPages)) ? json.excludedPages : [];
+  } catch(e) {
+    EXCLUDED_PAGES = [];
+  }
+  updateFilterCntDot();
+}
+
+function updateFilterCntDot() {
+  const dot = document.getElementById('filterCntDot');
+  if (EXCLUDED_PAGES.length > 0) { dot.style.display = 'inline'; dot.textContent = `${EXCLUDED_PAGES.length}개 제외중`; }
+  else { dot.style.display = 'none'; }
+}
+
+function openFilterModal() {
+  // 지금까지 수집된 로그에 등장한 모든 페이지 + 각 페이지 등장 횟수
+  const counts = {};
+  ALL_ROWS.forEach(r => { counts[r.page] = (counts[r.page] || 0) + 1; });
+  const pages = Object.keys(counts).sort((a,b) => counts[b] - counts[a]);
+
+  _filterDraft = new Set(EXCLUDED_PAGES);
+
+  document.getElementById('filterPageList').innerHTML = pages.length ? pages.map(p => {
+    const excluded = _filterDraft.has(p);
+    return `
+    <label class="filter-page-row${excluded ? ' excluded':''}" data-page="${escapeHtml(p)}">
+      <input type="checkbox" ${excluded ? '' : 'checked'} onchange="toggleFilterPage('${p.replace(/'/g,"\\'")}', this.checked)">
+      <span class="fp-name">${escapeHtml(p)}</span>
+      <span class="fp-cnt">${counts[p]}회</span>
+    </label>`;
+  }).join('') : '<div class="empty-state">아직 수집된 로그가 없습니다</div>';
+
+  document.getElementById('filterStatus').textContent = '';
+  document.getElementById('filterModal').classList.add('open');
+}
+
+function closeFilterModal() {
+  document.getElementById('filterModal').classList.remove('open');
+}
+
+function toggleFilterPage(page, checked) {
+  if (checked) _filterDraft.delete(page);
+  else _filterDraft.add(page);
+  const row = document.querySelector(`.filter-page-row[data-page="${CSS.escape(page)}"]`);
+  if (row) row.classList.toggle('excluded', !checked);
+}
+
+function setAllFilterChecks(checked) {
+  document.querySelectorAll('#filterPageList input[type="checkbox"]').forEach(cb => {
+    cb.checked = checked;
+    const page = cb.closest('.filter-page-row').dataset.page;
+    if (checked) _filterDraft.delete(page);
+    else _filterDraft.add(page);
+    cb.closest('.filter-page-row').classList.toggle('excluded', !checked);
+  });
+}
+
+async function saveFilterSettings() {
+  const btn = document.getElementById('filterSaveBtn');
+  const statusEl = document.getElementById('filterStatus');
+  btn.disabled = true;
+  statusEl.textContent = '저장 중...';
+  const excludedPages = [..._filterDraft];
+  try {
+    const res  = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'saveLogFilterSettings', excludedPages })
+    });
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.msg || '저장 실패');
+    EXCLUDED_PAGES = excludedPages;
+    updateFilterCntDot();
+    renderSummary();
+    renderTable();
+    closeFilterModal();
+  } catch(e) {
+    statusEl.textContent = `저장 실패: ${e.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// index.html이 주는 라이트/다크 신호를 받아 표시 (기본값: 라이트)
+window.addEventListener('message', e => {
+  if (!e || !e.data || e.data.type !== 'THEME') return;
+  document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+});
+try {
+  if ((sessionStorage.getItem('_theme') || localStorage.getItem('ggumbi-theme') || 'light') === 'dark') {
+    document.body.classList.add('dark-mode');
+  }
+} catch(e) {}
+
+if (checkAdmin()) { loadFilterSettings().then(loadLogs); }
+
+document.getElementById('filterModal').addEventListener('click', function(e) {
+  if (e.target === this) closeFilterModal();
+});
+</script>
+</body>
+</html>

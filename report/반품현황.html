@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>반품현황</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f1f5f9; --surface: #fff; --border: #e2e8f0;
+  --text: #334155; --text2: #64748b; --heading: #0f1f3d;
+}
+body.dark-mode {
+  --bg: #0d1825; --surface: #111e35; --border: #243d6a;
+  --text: #c8ddf0; --text2: #7a9ec0; --heading: #e8f4ff;
+}
+body {
+  font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+  font-size: 13px; color: var(--text);
+  background: var(--bg); padding: 14px;
+}
+#loading {
+  display: flex; align-items: center; justify-content: center;
+  height: 200px; color: var(--text2); font-size: 14px; gap: 8px;
+}
+.spinner {
+  width: 18px; height: 18px; border: 2px solid var(--border);
+  border-top-color: #1e40af; border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#error-msg {
+  display: none; padding: 14px 18px; background: #fef2f2;
+  border: 1px solid #fca5a5; border-radius: 8px;
+  color: #991b1b; font-size: 13px; margin-bottom: 10px;
+}
+.period-badge {
+  display: inline-block; font-size: 11px; font-weight: 600;
+  color: var(--text2); background: var(--surface); border: 1px solid var(--border);
+  border-radius: 4px; padding: 3px 10px; margin-bottom: 10px;
+}
+.brands-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.brand-box { display: flex; flex-direction: column; }
+.section-title {
+  font-size: 12px; font-weight: 700; color: #fff;
+  padding: 7px 14px; border-radius: 6px;
+  margin-bottom: 10px; letter-spacing: .03em;
+}
+.inner { display: flex; gap: 10px; align-items: stretch; flex: 1; }
+.leftCol  { display: flex; flex-direction: column; gap: 8px; flex: 4; }
+.rightCol { display: flex; flex-direction: column; gap: 10px; flex: 6; }
+.kpi-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 14px;
+}
+.kpi-label {
+  font-size: 11px; font-weight: 600; color: var(--text2);
+  letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px;
+}
+.kpi-value { font-size: 22px; font-weight: 700; color: var(--heading); line-height: 1; }
+.kpi-sub   { font-size: 12px; color: var(--text2); margin-top: 4px; }
+.gaug-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: 14px 16px; border-top: 3px solid var(--border);
+}
+.gaug-label { font-size: 12px; font-weight: 600; color: var(--heading); }
+.gaug-num { font-size: 17px; font-weight: 700; color: var(--heading); margin: 5px 0 2px; }
+.bar-track {
+  height: 7px; background: var(--border); border-radius: 4px;
+  overflow: hidden; display: flex; margin: 4px 0 3px;
+}
+.bar-pct { display: flex; justify-content: space-between; font-size: 10px; }
+.trendCard, .pieCard {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 16px; flex: 1;
+}
+.card-header { padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+.card-title { font-size: 13px; font-weight: 600; color: var(--heading); }
+.card-sub   { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.x-labels {
+  display: flex; justify-content: space-around;
+  font-size: 10px; color: var(--text2); margin-top: 3px;
+}
+.ldot {
+  display: inline-block; width: 7px; height: 7px;
+  border-radius: 50%; margin-right: 3px; vertical-align: middle;
+}
+.reason-legend { font-size: 10px; color: var(--text2); line-height: 1.85; }
+.no-data { color: #94a3b8; font-size: 12px; padding: 12px 0; }
+</style>
+</head>
+<body>
+
+<div id="summary-toast" style="display:none;position:fixed;bottom:18px;right:18px;background:#0f1f3d;color:#fff;font-size:12px;padding:8px 16px;border-radius:6px;z-index:9999;"></div>
+<div id="error-msg"></div>
+<div id="loading"><div class="spinner"></div> 데이터 불러오는 중...</div>
+<div id="app" style="display:none;"></div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwn8m-r1UB1tYD3MSjq9D2Kt13R79a74w0wA2Lm60hTaavwL3IOgd4H2Rm258lv-xEW/exec';
+
+const REASON_COLORS = [
+  '#1e40af','#3b82f6','#0f766e','#10b981',
+  '#f59e0b','#fd8d3c','#e74c3c','#9b59b6',
+  '#3498db','#2ecc71','#e8834a','#64748b'
+];
+
+// SCRIPT_URL: index에서 postMessage로 수신
+let SCRIPT_URL = '';
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'SCRIPT_URL' && e.data.url) SCRIPT_URL = e.data.url;
+});
+
+// ── URL 파라미터 ──────────────────────────────────────────
+const params = new URLSearchParams(window.location.search);
+const TYPE   = params.get('type')   || 'monthly';
+const PERIOD = params.get('period') || '';
+
+let AGG_BANHUM = null;
+let LAST_SYNCED = null;
+
+async function loadData(forceSync) {
+  try {
+    if (forceSync) {
+      const sr = await fetch(`${GAS_URL}?action=sync`);
+      const sj = await sr.json();
+      if (sj && sj.error) throw new Error('동기화 오류: ' + sj.error);
+      LAST_SYNCED = sj.lastSynced ? new Date(sj.lastSynced).toLocaleString('ko-KR') : '-';
+    }
+
+    const period = PERIOD.replace(/월$/, '');
+    const fetchUrl = `${GAS_URL}?tab=banhum&type=${TYPE}&period=${encodeURIComponent(period)}`;
+    console.log('[반품현황] fetch URL:', fetchUrl);
+    console.log('[반품현황] TYPE:', TYPE, 'PERIOD:', PERIOD, 'period:', period);
+
+    const res = await fetch(fetchUrl);
+    console.log('[반품현황] res.ok:', res.ok, 'status:', res.status);
+    const json = await res.json();
+    console.log('[반품현황] json:', JSON.stringify(json).slice(0,200));
+
+    if (json && json.error) throw new Error(json.error);
+    if (!forceSync) LAST_SYNCED = json.lastSynced ? new Date(json.lastSynced).toLocaleString('ko-KR') : '동기화 기록 없음';
+
+    document.getElementById('loading').style.display = 'none';
+
+    AGG_BANHUM = json.agg;
+    if (!AGG_BANHUM) {
+      document.getElementById('error-msg').style.display = 'block';
+      document.getElementById('error-msg').textContent = '⚠️ 해당 기간 집계 데이터가 없습니다. 노션 동기화 후 다시 시도해 주세요.';
+      return;
+    }
+
+    document.getElementById('app').style.display = 'block';
+    renderAll();
+    injectControlBar();
+  } catch(e) {
+    console.error('[반품현황] 에러:', e);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error-msg').style.display = 'block';
+    document.getElementById('error-msg').textContent = '⚠️ ' + e.message;
+  }
+}
+
+function injectControlBar() {
+  const old = document.getElementById('control-bar');
+  if (old) old.remove();
+  const bar = document.createElement('div');
+  bar.id = 'control-bar';
+  bar.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;';
+  bar.innerHTML = `
+    <div style="font-size:10px;color:#888;">📅 마지막 노션 동기화: ${LAST_SYNCED||'-'} <span style="color:#bbb;">(매일 자정 자동 동기화)</span></div>
+    <div style="display:flex;gap:8px;">
+      <button id="btn-sync-notion" onclick="manualSync()" style="font-size:12px;font-weight:600;padding:7px 16px;background:#1e40af;color:#fff;border:none;border-radius:6px;cursor:pointer;">🔄 노션 수동 동기화</button>
+      <button id="btn-save-summary" onclick="saveSummaryToSheet()" style="font-size:12px;font-weight:600;padding:7px 16px;background:#1e40af;color:#fff;border:none;border-radius:6px;cursor:pointer;">☁ 이번 마감 데이터 AI에 전달</button>
+    </div>
+  `;
+  document.getElementById('app').insertAdjacentElement('beforebegin', bar);
+}
+
+let syncTimer = null;
+async function manualSync() {
+  const btn = document.getElementById('btn-sync-notion');
+  if (btn) btn.disabled = true;
+  let elapsed = 0;
+  syncTimer = setInterval(() => { elapsed++; if(btn) btn.textContent=`🔄 동기화 중... (${elapsed}초)`; }, 1000);
+  try {
+    await loadData(true);
+    showToast('✓ 노션 동기화 완료', '#1e40af');
+  } catch(e) {
+    showToast('⚠ 동기화 실패: '+e.message, '#991b1b');
+  } finally {
+    clearInterval(syncTimer);
+    if (btn) { btn.disabled=false; btn.textContent='🔄 노션 수동 동기화'; }
+  }
+}
+
+function parsePeriod() {
+  if (TYPE === 'monthly') {
+    return { label: PERIOD || '기간 미선택', key: PERIOD, mode: 'monthly' };
+  }
+  const yy = PERIOD.slice(0,2), mm = PERIOD.slice(2,4), dd = PERIOD.slice(4,6);
+  const friday   = new Date(`20${yy}-${mm}-${dd}`);
+  const saturday = new Date(friday);
+  saturday.setDate(friday.getDate() - 6);
+  const fmt = d => `${d.getMonth()+1}/${d.getDate()}`;
+  return {
+    label: `${fmt(saturday)}~${fmt(friday)}주`,
+    key: parseInt(PERIOD, 10),
+    mode: 'weekly'
+  };
+}
+const pInfo = parsePeriod();
+
+// ── CSV 파싱 유틸 ─────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^\uFEFF/, ''));
+  return lines.slice(1).map(line => {
+    // 쉼표 포함 따옴표 처리
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    cols.push(cur.trim());
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (cols[i] || '').replace(/^"|"$/g, '').trim());
+    return obj;
+  }).filter(r => Object.values(r).some(v => v !== ''));
+}
+
+const BASE = 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/data/';
+
+async function fetchCSV(filename) {
+  const resp = await fetch(BASE + filename);
+  if (!resp.ok) throw new Error(`${filename} 로드 실패 (${resp.status})`);
+  const text = await resp.text();
+  return parseCSV(text);
+}
+
+// ── 데이터 로드 ───────────────────────────────────────────
+// 클로드_반품관리.csv  : 주/월, 마감회차, 구분, 사유, 품목, 교환/반품, 건수
+// 클로드_반품율.csv    : 구분, 마감월, 항목, 월간 배송수량, 월간 교환/반품 수량, 반품/교환율
+// ── 필터링 (구버전 — 참조용으로만 유지, 실제 데이터는 GAS에서 수신) ────
+function filterRows({ mgmt, rate }) {
+  const periodType = pInfo.mode === 'monthly' ? '월간' : '주간';
+
+  // left: 클로드_반품관리.csv 필터
+  // 주/월 컬럼: '월간'|'주간', 마감회차: 회차 키
+  const left = mgmt
+    .filter(r =>
+      r['주/월'] === periodType &&
+      String(r['마감회차']) === String(pInfo.key) &&
+      (r['구분'] === '꿈비' || r['구분'] === '소브') &&
+      r['사유'] && r['건수']
+    )
+    .map(r => ({
+      brand:  r['구분'],
+      reason: r['사유'],
+      item:   r['품목'],
+      type:   r['교환/반품'],
+      cnt:    Number(r['건수'])
+    }));
+
+  // right: 클로드_반품율.csv — 월간 고정
+  // 반품/교환율 컬럼: '5.46%' 형식 → 숫자로 변환
+  const right = rate
+    .filter(r =>
+      (r['구분'] === '꿈비' || r['구분'] === '소브') &&
+      r['마감월'] && r['반품/교환율']
+    )
+    .map(r => ({
+      brand:  r['구분'],
+      period: r['마감월'],  // '26.03월'
+      rate:   parseFloat(r['반품/교환율'].replace('%','')) / 100
+    }));
+
+  return { left, right };
+}
+
+// ── 추이 집계 ────────────────────────────────────────────
+function buildTrend(mgmt, brand) {
+  const periodType = pInfo.mode === 'monthly' ? '월간' : '주간';
+  const map = {};
+  mgmt
+    .filter(r => r['주/월'] === periodType && r['구분'] === brand && r['건수'])
+    .forEach(r => {
+      const k = String(r['마감회차']);
+      map[k] = (map[k] || 0) + Number(r['건수']);
+    });
+
+  if (pInfo.mode === 'monthly') {
+    return Object.entries(map).sort((a,b) => a[0].localeCompare(b[0])).slice(-3);
+  }
+
+  // 주간: 전체 주간 회차 정렬 후 선택 회차 기준 최근 6주 (0값 포함)
+  const allWeeks = [...new Set(
+    mgmt.filter(r => r['주/월'] === '주간').map(r => String(r['마감회차']))
+  )].sort((a,b) => a.localeCompare(b));
+
+  const currentKey = String(pInfo.key);
+  let idx = allWeeks.indexOf(currentKey);
+  if (idx === -1) idx = allWeeks.length - 1;
+  const targetWeeks = allWeeks.slice(Math.max(0, idx - 5), idx + 1);
+  return targetWeeks.map(w => [w, map[w] || 0]);
+}
+
+// ── 헬퍼 ─────────────────────────────────────────────────
+const fmtN = n => (n >= 1000 ? n.toLocaleString() : n);
+
+function buildLineChart(trend, color) {
+  if (!trend.length) return '<div class="no-data">데이터 없음</div>';
+  const W=260, H=120, PL=34, PR=12, PT=18, PB=10;
+  const vals = trend.map(t => t[1]);
+  const maxV = Math.max(...vals, 1);
+  const xs   = trend.map((_,i) => PL + i*(W-PL-PR)/Math.max(trend.length-1,1));
+  const ys   = vals.map(v => PT + (1 - v/maxV)*(H-PT-PB));
+  const ticks = [maxV, Math.round(maxV*0.66), Math.round(maxV*0.33), 0];
+  const tickY = [PT, PT+(H-PT-PB)/3, PT+(H-PT-PB)*2/3, H-PB];
+
+  let grids = '', tickLbls = '';
+  ticks.forEach((v,i) => {
+    grids    += `<line x1="${PL}" y1="${tickY[i].toFixed(1)}" x2="${W-PR}" y2="${tickY[i].toFixed(1)}" style="stroke:var(--border);" stroke-width="1"/>`;
+    const lbl = v >= 1000 ? (v/1000).toFixed(1)+'k' : v;
+    tickLbls += `<text x="${PL-4}" y="${(tickY[i]+4).toFixed(1)}" text-anchor="end" font-size="9" fill="#94a3b8">${lbl}</text>`;
+  });
+
+  const pts     = xs.map((x,i) => `${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+  const areaPts = [...xs.map((x,i)=>`${x.toFixed(1)},${ys[i].toFixed(1)}`),
+                    `${(W-PR).toFixed(1)},${H-PB}`, `${PL},${H-PB}`].join(' ');
+
+  let dots = '', lbls = '';
+  xs.forEach((x,i) => {
+    dots += `<circle cx="${x.toFixed(1)}" cy="${ys[i].toFixed(1)}" r="4" fill="${color}"/>`;
+    const dy = ys[i] < PT+14 ? 14 : -7;
+    lbls += `<text x="${x.toFixed(1)}" y="${(ys[i]+dy).toFixed(1)}" text-anchor="middle" font-size="10" fill="${color}" font-weight="600">${fmtN(vals[i])}</text>`;
+  });
+
+  const xLbls = trend.map(t => {
+    const k = String(t[0]);
+    const lbl = pInfo.mode === 'monthly'
+      ? k.slice(3,5)+'월'
+      : k.slice(2,4)+'/'+k.slice(4,6);
+    return `<span>${lbl}</span>`;
+  }).join('');
+
+  return `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;">
+      ${grids}${tickLbls}
+      <polygon points="${areaPts}" fill="${color}" opacity="0.08"/>
+      <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2"/>
+      ${dots}${lbls}
+    </svg>
+    <div class="x-labels">${xLbls}</div>`;
+}
+
+function buildDonut(exchCnt, retCnt, color) {
+  const total = exchCnt + retCnt || 1;
+  const R=46, CX=55, CY=55, CIRC=2*Math.PI*R;
+  const eDash = (exchCnt/total)*CIRC;
+  const rDash = CIRC - eDash;
+  const ePct  = Math.round(exchCnt/total*100);
+  return `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:6px;">
+      <div style="position:relative;width:110px;height:110px;flex-shrink:0;">
+        <svg viewBox="0 0 110 110" style="width:110px;height:110px;">
+          <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${color}" stroke-width="12"
+            stroke-dasharray="${eDash.toFixed(1)} ${rDash.toFixed(1)}" stroke-dashoffset="${(CIRC*0.25).toFixed(1)}"/>
+          <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" style="stroke:var(--border);" stroke-width="12"
+            stroke-dasharray="${rDash.toFixed(1)} ${eDash.toFixed(1)}" stroke-dashoffset="${(CIRC*0.25-eDash).toFixed(1)}"/>
+        </svg>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:16px;font-weight:700;text-align:center;color:var(--heading);line-height:1.15;">
+          ${fmtN(total)}<br><span style="font-size:9px;color:var(--text2);font-weight:400;">건</span>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;gap:16px;font-size:11px;color:var(--text2);">
+        <span><span class="ldot" style="background:${color};"></span>교환 ${fmtN(exchCnt)} (${ePct}%)</span>
+        <span><span class="ldot" style="background:var(--border);"></span>반품 ${fmtN(retCnt)} (${100-ePct}%)</span>
+      </div>
+    </div>`;
+}
+
+function buildReasonPie(reasonMap, color) {
+  const sorted = Object.entries(reasonMap).sort((a,b) => b[1]-a[1]);
+  const total  = sorted.reduce((s,[,v]) => s+v, 0) || 1;
+  const R=50, CX=65, CY=65, CIRC=2*Math.PI*R;
+  let offset = 0, arcs = '';
+  sorted.forEach(([,v], i) => {
+    const dash = (v/total)*CIRC;
+    const c    = i===0 ? color : REASON_COLORS[i % REASON_COLORS.length];
+    const off  = -(offset - CIRC*0.25);
+    arcs += `<circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${c}" stroke-width="20"
+      stroke-dasharray="${dash.toFixed(1)} ${(CIRC-dash).toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"/>`;
+    offset += dash;
+  });
+  const legend = sorted.slice(0,9).map(([reason,cnt],i) => {
+    const c   = i===0 ? color : REASON_COLORS[i % REASON_COLORS.length];
+    const pct = Math.round(cnt/total*100);
+    return `<div><span class="ldot" style="background:${c};"></span>${reason} ${pct}% (${cnt})</div>`;
+  }).join('');
+  return `
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="position:relative;width:130px;height:130px;flex-shrink:0;">
+        <svg viewBox="0 0 130 130" style="width:130px;height:130px;">${arcs}
+          <circle cx="${CX}" cy="${CY}" r="38" style="fill:var(--surface);"/>
+        </svg>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:16px;font-weight:700;text-align:center;color:var(--heading);line-height:1.15;">
+          ${fmtN(total)}<br><span style="font-size:9px;color:var(--text2);font-weight:400;">건</span>
+        </div>
+      </div>
+      <div class="reason-legend" style="flex:1;min-width:0;">${legend}</div>
+    </div>`;
+}
+
+function renderBrand(brand, left, right, mgmt, color) {
+  const bRows   = left.filter(r => r.brand === brand);
+  const exchCnt = bRows.filter(r=>r.type==='교환').reduce((s,r)=>s+r.cnt,0);
+  const retCnt  = bRows.filter(r=>r.type==='반품').reduce((s,r)=>s+r.cnt,0);
+  const total   = exchCnt + retCnt;
+  const ga      = bRows.filter(r=>r.item==='가전').reduce((s,r)=>s+r.cnt,0);
+  const gaOth   = bRows.filter(r=>r.item==='가전외').reduce((s,r)=>s+r.cnt,0);
+  const gaTotal = ga + gaOth || 1;
+  const gaPct   = Math.round(ga/gaTotal*100);
+
+  // 반품/교환율 매칭 (월간: 해당월, 주간: 속한 월)
+  let rateMatchPeriod = '';
+  if (pInfo.mode === 'monthly') {
+    rateMatchPeriod = String(pInfo.key);
+  } else {
+    const k = String(pInfo.key);
+    rateMatchPeriod = k.slice(0,2) + '.' + k.slice(2,4) + '월';
+  }
+  const rateRow = right.find(r => r.brand === brand && r.period === rateMatchPeriod);
+  const rate = rateRow ? (rateRow.rate * 100).toFixed(2) + '%' : '-';
+
+  // 사유 집계 (교환+반품 전체)
+  const reasonMap = {};
+  bRows.forEach(r => { reasonMap[r.reason] = (reasonMap[r.reason]||0) + r.cnt; });
+
+  const trend = buildTrend(mgmt, brand);
+  const trendTitle = pInfo.mode === 'monthly' ? '월별 추이' : '주별 추이';
+  const trendSub   = pInfo.mode === 'monthly' ? '반품/교환건 월별 추이' : '반품/교환건 주별 추이';
+
+  return `
+    <div class="brand-box">
+      <div class="section-title" style="background:${color};">${brand}</div>
+      <div class="inner">
+        <div class="leftCol">
+          <div class="kpi-card" style="border-top:3px solid #991b1b;">
+            <div class="kpi-label">반품/교환율</div>
+            <div class="kpi-value" style="color:#991b1b;">${rate}</div>
+            <div class="kpi-sub">${pInfo.label}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">반품/교환 총계</div>
+            <div class="kpi-value">${fmtN(total)}<span style="font-size:13px;font-weight:400;color:var(--text2);"> 건</span></div>
+            <div class="kpi-sub">교환 ${fmtN(exchCnt)} · 반품 ${fmtN(retCnt)}</div>
+          </div>
+          <div class="gaug-card">
+            <div class="gaug-label">가전 / 가전외</div>
+            <div class="gaug-num">${fmtN(ga)} <span style="font-size:12px;font-weight:400;color:var(--text2);">/ ${fmtN(gaOth)}</span></div>
+            <div class="bar-track">
+              <div style="width:${gaPct}%;background:${color};"></div>
+              <div style="width:${100-gaPct}%;background:#bbb;"></div>
+            </div>
+            <div class="bar-pct">
+              <span style="color:${color};">가전 ${gaPct}%</span>
+              <span style="color:var(--text2);">가전외 ${100-gaPct}%</span>
+            </div>
+          </div>
+          <div class="kpi-card" style="flex:1;">
+            <div class="kpi-label">교환 / 반품</div>
+            ${buildDonut(exchCnt, retCnt, color)}
+          </div>
+        </div>
+        <div class="rightCol">
+          <div class="trendCard">
+            <div class="card-header">
+              <div class="card-title">${trendTitle}</div>
+              <div class="card-sub">${trendSub}</div>
+            </div>
+            ${buildLineChart(trend, color)}
+          </div>
+          <div class="pieCard">
+            <div class="card-header">
+              <div class="card-title">반품 사유 비율</div>
+            </div>
+            ${Object.keys(reasonMap).length
+              ? buildReasonPie(reasonMap, color)
+              : '<div class="no-data">데이터 없음</div>'}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── AGG 기반 렌더 ─────────────────────────────────────────
+function renderAll() {
+  if (!AGG_BANHUM) return;
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="period-badge">📅 ${pInfo.label}</div>
+    <div class="brands-grid">
+      ${renderBrandAgg('꿈비', '#1e40af')}
+      ${renderBrandAgg('소브', '#0f766e')}
+    </div>`;
+}
+
+function renderBrandAgg(brand, color) {
+  const b = (AGG_BANHUM && AGG_BANHUM[brand]) || {};
+  const exchCnt = b.교환 || 0;
+  const retCnt  = b.반품 || 0;
+  const total   = exchCnt + retCnt;
+  const ga      = b.가전 || 0;
+  const gaOth   = b.가전외 || 0;
+  const gaTotal = ga + gaOth || 1;
+  const gaPct   = Math.round(ga/gaTotal*100);
+  const rate    = b.반품교환율 != null ? b.반품교환율.toFixed(2) + '%' : '-';
+
+  // 사유 파이
+  const reasonMap = {};
+  (b.사유 || []).forEach(d => { reasonMap[d.name] = d.val; });
+
+  // 추이 라인
+  const trend = (b.trend || []).map(t => [t.label, (t.교환||0)+(t.반품||0)]);
+  const trendTitle = pInfo.mode === 'monthly' ? '월별 추이' : '주별 추이';
+  const trendSub   = pInfo.mode === 'monthly' ? '반품/교환건 월별 추이' : '반품/교환건 주별 추이';
+
+  return `
+    <div class="brand-box">
+      <div class="section-title" style="background:${color};">${brand}</div>
+      <div class="inner">
+        <div class="leftCol">
+          <div class="kpi-card" style="border-top:3px solid #991b1b;">
+            <div class="kpi-label">반품/교환율</div>
+            <div class="kpi-value" style="color:#991b1b;">${rate}</div>
+            <div class="kpi-sub">${pInfo.label}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">반품/교환 총계</div>
+            <div class="kpi-value">${fmtN(total)}<span style="font-size:13px;font-weight:400;color:var(--text2);"> 건</span></div>
+            <div class="kpi-sub">교환 ${fmtN(exchCnt)} · 반품 ${fmtN(retCnt)}</div>
+          </div>
+          <div class="gaug-card">
+            <div class="gaug-label">가전 / 가전외</div>
+            <div class="gaug-num">${fmtN(ga)} <span style="font-size:12px;font-weight:400;color:var(--text2);">/ ${fmtN(gaOth)}</span></div>
+            <div class="bar-track">
+              <div style="width:${gaPct}%;background:${color};"></div>
+              <div style="width:${100-gaPct}%;background:#bbb;"></div>
+            </div>
+            <div class="bar-pct">
+              <span style="color:${color};">가전 ${gaPct}%</span>
+              <span style="color:var(--text2);">가전외 ${100-gaPct}%</span>
+            </div>
+          </div>
+          <div class="kpi-card" style="flex:1;">
+            <div class="kpi-label">교환 / 반품</div>
+            ${buildDonut(exchCnt, retCnt, color)}
+          </div>
+        </div>
+        <div class="rightCol">
+          <div class="trendCard">
+            <div class="card-header">
+              <div class="card-title">${trendTitle}</div>
+              <div class="card-sub">${trendSub}</div>
+            </div>
+            ${buildLineChart(trend, color)}
+          </div>
+          <div class="pieCard">
+            <div class="card-header">
+              <div class="card-title">반품 사유 비율</div>
+            </div>
+            ${Object.keys(reasonMap).length
+              ? buildReasonPie(reasonMap, color)
+              : '<div class="no-data">데이터 없음</div>'}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── AI 전달 ───────────────────────────────────────────────
+function showToast(msg, bg) {
+  const el = document.getElementById('summary-toast');
+  el.textContent = msg; el.style.background = bg||'#0f1f3d'; el.style.display='block';
+  setTimeout(()=>{ el.style.display='none'; }, 3000);
+}
+
+async function saveSummaryToSheet() {
+  const btn = document.getElementById('btn-save-summary');
+  btn.disabled = true; btn.textContent = '저장 중...';
+  try {
+    if (!AGG_BANHUM) throw new Error('집계 데이터 없음. 먼저 동기화해 주세요.');
+    const brandData = {};
+    ['꿈비','소브'].forEach(brand => {
+      const b = AGG_BANHUM[brand] || {};
+      brandData[brand] = {
+        교환: b.교환||0, 반품: b.반품||0, 합계: (b.교환||0)+(b.반품||0),
+        반품교환율: b.반품교환율,
+        사유TOP5: Object.fromEntries((b.사유||[]).slice(0,5).map(d=>[d.name,d.val])),
+        가전: b.가전||0, 가전외: b.가전외||0,
+      };
+    });
+    const resp = await fetch(SCRIPT_URL, {
+      method:'POST',
+      body: JSON.stringify({
+        action:'saveSummary', tab:'반품현황',
+        period: String(pInfo.key),
+        data: { period: pInfo.mode, round: String(pInfo.key), label: pInfo.label, 브랜드별: brandData }
+      })
+    });
+    const json = await resp.json();
+    showToast(json.ok?`✓ 저장 완료 (${json.mode==='update'?'갱신':'신규'})`:'⚠ 저장 실패: '+json.msg, json.ok?'#0f1f3d':'#991b1b');
+  } catch(e) {
+    showToast('⚠ 오류: '+e.message, '#991b1b');
+  } finally {
+    btn.disabled=false; btn.textContent='☁ 이번 마감 데이터 AI에 전달';
+  }
+}
+
+// ── 실행 ─────────────────────────────────────────────────
+loadData(false);
+
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>통합 마감전송 허브</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f6fb; --surface: #ffffff; --surface2: #f0f3f9; --border: #dde3ef;
+    --accent: #4470e8; --accent2: #7c5cdb; --accent-low: #4470e812;
+    --green: #0d9e6e; --green-low: #0d9e6e12;
+    --yellow: #d97706; --yellow-low: #d9770612;
+    --red: #dc3545; --red-low: #dc354512;
+    --text: #1a1f2e; --text2: #4a5568; --text3: #9aa5b4;
+    --radius: 10px;
+    --font: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  body.dark-mode {
+    --bg: #0d1825; --surface: #111e35; --surface2: #16294a; --border: #243d6a;
+    --accent: #5b93e8; --accent2: #9b7ff0; --accent-low: #5b93e825;
+    --green: #22c58d; --green-low: #22c58d25;
+    --yellow: #f0a830; --yellow-low: #f0a83025;
+    --red: #ff6b6b; --red-low: #ff6b6b25;
+    --text: #c8ddf0; --text2: #a8c4df; --text3: #7a9ec0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 14px; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+
+  .header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 8px rgba(0,0,0,.06); padding: 16px 24px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .header-title { font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: -.5px; }
+  .header-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  .content { max-width: 980px; margin: 0 auto; padding: 24px; }
+
+  .category { margin-bottom: 28px; }
+  .category-title {
+    font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .category-title .bar { width: 4px; height: 14px; background: var(--accent); border-radius: 2px; }
+
+  .item-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    margin-bottom: 10px; overflow: hidden;
+  }
+  .item-head {
+    display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+  }
+  .item-name { font-size: 13px; font-weight: 700; color: var(--text); min-width: 120px; }
+  .item-status { display: flex; gap: 8px; flex: 1; flex-wrap: wrap; }
+  .status-badge {
+    font-size: 11px; padding: 3px 10px; border-radius: 20px; font-family: var(--mono);
+    background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
+  }
+  .status-badge.monthly { color: var(--accent); border-color: var(--accent); background: var(--accent-low); }
+  .status-badge.weekly  { color: var(--green); border-color: var(--green); background: var(--green-low); }
+  .status-badge.none    { color: var(--text3); }
+
+  .item-toggle-btn {
+    background: linear-gradient(135deg, #4470e8, #7c5cdb); color: #fff; border: none;
+    border-radius: 8px; padding: 7px 14px; font-family: var(--font); font-size: 12px; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+  }
+  .item-toggle-btn:hover { opacity: .9; }
+  .item-toggle-btn:disabled { background: var(--surface2); color: var(--text3); cursor: not-allowed; }
+
+  .item-panel { display: none; border-top: 1px solid var(--border); padding: 16px 18px; background: var(--surface2); }
+  .item-panel.open { display: block; }
+
+  .panel-not-ready { font-size: 12px; color: var(--text3); line-height: 1.6; }
+
+  .period-type-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .period-type-btn {
+    flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+    padding: 7px 0; font-family: var(--font); font-size: 12px; font-weight: 600; color: var(--text2);
+    cursor: pointer; transition: all .15s;
+  }
+  .period-type-btn.active { background: var(--accent-low); border-color: var(--accent); color: var(--accent); }
+
+  .period-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 6px;
+    margin-bottom: 12px; max-height: 260px; overflow-y: auto; padding: 2px;
+  }
+  .period-check {
+    display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 7px 10px; font-size: 12px; cursor: pointer; user-select: none;
+  }
+  .period-check.sent { border-color: var(--green); background: var(--green-low); }
+  .period-check input { cursor: pointer; }
+  .period-check .lbl { flex: 1; }
+  .period-check .tag-sent { font-size: 10px; color: var(--green); font-weight: 700; }
+
+  .panel-actions { display: flex; align-items: center; gap: 10px; }
+  .btn-select-all {
+    background: none; border: 1px solid var(--border); border-radius: 6px; padding: 7px 12px;
+    font-family: var(--font); font-size: 12px; color: var(--text2); cursor: pointer;
+  }
+  .btn-select-all:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-send-selected {
+    background: linear-gradient(135deg, #4470e8, #7c5cdb); color: #fff; border: none; border-radius: 6px;
+    padding: 8px 16px; font-family: var(--font); font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .btn-send-selected:hover { opacity: .9; }
+  .btn-send-selected:disabled { opacity: .5; cursor: not-allowed; }
+
+  .panel-log { margin-top: 10px; font-size: 11px; color: var(--text2); font-family: var(--mono); max-height: 120px; overflow-y: auto; }
+  .panel-log div { padding: 2px 0; }
+  .panel-log .ok  { color: var(--green); }
+  .panel-log .err { color: var(--red); }
+  .panel-log .run { color: var(--yellow); }
+
+  /* ── 전역 일괄전송 바 ── */
+  .global-bar {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .global-bar-label { font-size: 12px; font-weight: 700; color: var(--text); margin-right: 4px; }
+  .btn-global-send {
+    background: linear-gradient(135deg, #0d9e6e, #4470e8); color: #fff; border: none; border-radius: 7px;
+    padding: 8px 16px; font-family: var(--font); font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .btn-global-send:hover { opacity: .9; }
+  .btn-global-send:disabled { opacity: .5; cursor: not-allowed; }
+  .global-bar-note { font-size: 11px; color: var(--text3); width: 100%; margin-top: 2px; }
+
+  .btn-copy-claude {
+    background: linear-gradient(135deg, #7c5cdb, #4470e8); color: #fff; border: none; border-radius: 7px;
+    padding: 8px 16px; font-family: var(--font); font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+  .btn-copy-claude:hover { opacity: .9; }
+
+  /* ── 클로드 전송데이터 복사 모달 ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(10,15,30,.45);
+    z-index: 200; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--surface); border-radius: 14px; width: 560px; max-width: 92vw; max-height: 86vh;
+    overflow-y: auto; padding: 22px 24px; box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  }
+  .modal-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+  .modal-close { background: none; border: none; font-size: 16px; cursor: pointer; color: var(--text3); }
+  .modal-section-label { font-size: 12px; font-weight: 700; color: var(--text2); margin: 14px 0 6px; }
+  .modal-period-tabs { display: flex; gap: 6px; }
+  .modal-period-tabs .period-type-btn { flex: 1; }
+  .modal-project-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 6px; margin-top: 4px; }
+  .modal-project-item {
+    display: flex; align-items: center; gap: 6px; font-size: 12px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; cursor: pointer;
+  }
+  .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .modal-result {
+    margin-top: 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px; font-family: var(--mono); font-size: 11px; white-space: pre-wrap; max-height: 260px;
+    overflow-y: auto; display: none;
+  }
+  .modal-status { font-size: 12px; margin-top: 8px; min-height: 16px; }
+  .modal-status.ok { color: var(--green); }
+  .modal-status.err { color: var(--red); }
+
+  /* ── 항목별 실시간 전송 상태 ── */
+  .live-status {
+    font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 4px; white-space: nowrap;
+  }
+  .live-status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); }
+  .live-status.idle    .dot { background: var(--text3); }
+  .live-status.running .dot { background: var(--yellow); animation: pulse 1s infinite; }
+  .live-status.ok       .dot { background: var(--green); }
+  .live-status.err      .dot { background: var(--red); }
+  .live-status.idle    { color: var(--text3); }
+  .live-status.running { color: var(--yellow); }
+  .live-status.ok       { color: var(--green); }
+  .live-status.err      { color: var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">📋 통합 마감전송 허브</div>
+  <div class="header-sub">각 프로젝트별 실적을 주간/월간 단위로 집계해서 GAS로 전송</div>
+</div>
+
+<div class="content">
+  <div class="global-bar">
+    <span class="global-bar-label">📋 클로드용</span>
+    <button class="btn-copy-claude" onclick="openCopyModal()">클로드 전송데이터 복사</button>
+    <div class="global-bar-note">원하는 항목·기간을 골라 GAS에 저장된 마감 데이터를 정리된 텍스트로 클립보드에 복사합니다. 클로드 채팅에 붙여넣기만 하면 됩니다.</div>
+  </div>
+
+  <div class="global-bar">
+    <span class="global-bar-label">🚀 전체 일괄 마감전송</span>
+    <button class="btn-global-send" onclick="sendAllReady('monthly')">이번 달치 전체 전송</button>
+    <button class="btn-global-send" onclick="sendAllReady('weekly')">이번 주치(최근 마감주) 전체 전송</button>
+    <div class="global-bar-note">연동 완료된(⏳ 아닌) 항목들만 대상으로 각자 해당 기간을 집계해서 한 번에 전송합니다.</div>
+  </div>
+  <div id="content"></div>
+</div>
+
+<div class="modal-overlay" id="copyModalOverlay">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span>📋 클로드 전송데이터 복사</span>
+      <button class="modal-close" onclick="closeCopyModal()">✕</button>
+    </div>
+
+    <div class="modal-section-label">기간 유형</div>
+    <div class="modal-period-tabs">
+      <button type="button" class="period-type-btn active" id="cm-type-monthly" onclick="cmSetPeriodType('monthly')">월간</button>
+      <button type="button" class="period-type-btn" id="cm-type-weekly" onclick="cmSetPeriodType('weekly')">주간</button>
+    </div>
+
+    <div class="modal-section-label">회차 선택</div>
+    <select id="cmPeriodSelect" style="width:100%;padding:8px 10px;border-radius:7px;border:1px solid var(--border);font-family:var(--font);font-size:12px;"></select>
+
+    <div class="modal-section-label">포함할 항목 <button class="btn-select-all" style="padding:3px 8px;font-size:10px;" onclick="cmToggleAll()">전체 선택/해제</button></div>
+    <div class="modal-project-grid" id="cmProjectGrid"></div>
+
+    <div class="modal-actions">
+      <button class="btn-send-selected" onclick="cmGenerateAndCopy()">✅ 확정 · 클립보드 복사</button>
+    </div>
+    <div class="modal-status" id="cmStatus"></div>
+    <div class="modal-result" id="cmResult"></div>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// 공통 설정
+// ================================================================
+const GAS_URL = 'https://script.google.com/macros/s/AKfycby5wfJy4LMghTp4ILrdQ_hMLblDtV8gTigOEnpcJQT0dB1Xk-7XUyWbaryP9mrbFLrrCg/exec';
+
+// 품질관리/처리관리 원본 프로젝트들이 공용으로 쓰는 데이터 소스 GAS (읽기 전용, report_hub와는 별개)
+const QC_GAS_URL  = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
+const QC_DATA_PATH = '../qc/qc_data.json'; // qc/기타/ 폴더 기준 원본의 '../qc_data.json' = qc/qc_data.json (aggregated/ 폴더 기준 보정)
+
+// ── 공용: 'YYYY-MM-DD' 또는 유사 날짜 문자열 파싱 ──
+function parseYmd(str) {
+  if (!str) return null;
+  const s = String(str).trim();
+  const m = s.match(/(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/);
+  if (m) return new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+// ── 공용: 브랜드/괄호 태그 제거한 짧은 이름 ──
+function stripTag(name) {
+  if (!name) return '';
+  return String(name).replace(/\[.*?\]\s*/g, '').trim();
+}
+
+// ── 공용: 상위 N개 집계 (이름별 카운트) ──
+function topNByCount(rows, getKey, n, excludeFn) {
+  const counts = {};
+  rows.forEach(r => {
+    const key = getKey(r);
+    if (!key) return;
+    if (excludeFn && excludeFn(key)) return;
+    counts[key] = (counts[key] || 0) + 1;
+  });
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,n).map(([name,cnt])=>({name,cnt}));
+}
+
+// ── 불량현황 전용: 접수불량 우선, 없으면 확인불량으로 보완 (원본 로직 그대로) ──
+function faultsOf(r) {
+  const parseArr = v => Array.isArray(v) ? v : (() => { try { return JSON.parse(v||'[]'); } catch { return []; } })();
+  const jsFaults = parseArr(r.접수불량);
+  const cfFaults = parseArr(r.확인불량);
+  const valid = arr => arr.filter(f => f && f!=='특이사항없음' && f!=='미확인');
+  const j = valid(jsFaults);
+  return j.length > 0 ? j : valid(cfFaults);
+}
+
+// ── 공용: 정적 JSON(키) 우선 → 실패 시 GAS action 폴백 ──
+async function loadQcData(jsonKey, gasAction) {
+  try {
+    const res = await fetch(QC_DATA_PATH);
+    if (res.ok) {
+      const json = await res.json();
+      if (json[jsonKey] && json[jsonKey].records) return json[jsonKey].records;
+    }
+  } catch (e) {}
+  const res2 = await fetch(`${QC_GAS_URL}?action=${gasAction}`, { redirect: 'follow' });
+  const json2 = await res2.json();
+  if (json2.ok && json2.records) return json2.records;
+  throw new Error('데이터 로드 실패 (' + jsonKey + ')');
+}
+
+// ── 스마트스토어 브랜드명 매핑 (원본 로직 이식) ──
+function ssShortName(orig) {
+  const s = String(orig || '');
+  return s.replace(/^\[[^\]]*\]\s*/, '').slice(0, 24);
+}
+function ssGetBrand(name) {
+  const s = String(name || '');
+  if (s.includes('꿈비')) return '꿈비';
+  if (s.includes('리코코')) return '리코코';
+  if (s.includes('바바디토')) return '바바디토';
+  return '기타';
+}
+function ssParseDate(str) {
+  if (!str) return null;
+  const m = String(str).match(/(\d{4})\.(\d{2})\.(\d{2})/);
+  if (m) return new Date(m[1], m[2]-1, m[3]);
+  return null;
+}
+
+// 대시보드 핵심 지표만 집계 (시각화 없이 숫자만)
+function buildDashboardSummary(rows, ratingKey) {
+  const total = rows.length;
+  if (total === 0) return null;
+  const ratingDist = {1:0,2:0,3:0,4:0,5:0};
+  rows.forEach(r => { const v = r[ratingKey]; if (ratingDist[v] !== undefined) ratingDist[v]++; });
+  const avgRating = rows.reduce((s,r)=>s+(r[ratingKey]||0),0) / total;
+  const lowCount = rows.filter(r => r[ratingKey] <= 3).length;
+  const lowRate  = Math.round(lowCount/total*100);
+  return { total, avgRating: Math.round(avgRating*100)/100, ratingDist, lowCount, lowRate };
+}
+
+// ================================================================
+// 프로젝트 모듈 정의
+//  - ready:true  인 항목만 실제 데이터 로딩/집계 가능
+//  - ready:false 인 항목은 "연동 대기" 상태로만 표시
+//  - loadData(): 데이터 로드 → dateObj 필드 포함된 배열 반환
+//  - buildSummary(rows): 해당 기간 rows → {total, avgRating, lowCount, lowRate, ...} 반환
+// ================================================================
+const MODULES = {
+
+  // ── 품질관리 ──
+  defect: {
+    name: '불량현황',
+    ready: true,
+    project: '불량현황',
+    async loadData() {
+      const records = await loadQcData('가전', 'getQcDefectData');
+      const rows = records.map(r => ({ ...r, dateObj: parseYmd(r.접수일) }));
+      rows._raw = true; // computeSummary가 ctx 기반으로 처리하도록 표시 (전기간 비교가 필요해서)
+      return rows;
+    },
+    buildSummary(allRows, ctx) {
+      const rows = allRows.filter(r => r.dateObj && ctx.inRange(r.dateObj));
+      const total = rows.length;
+      if (total === 0) return null;
+      const exchange = rows.filter(r => r.구분 === '교환/환불').length;
+      const material = rows.filter(r => r.구분 === '자재출고').length;
+      const repair   = rows.filter(r => r.구분 === '수리출고').length;
+      const top5Products = topNByCount(rows, r => r.제품명, 5, k => k.startsWith('[집계]'));
+      const top5Names = new Set(top5Products.map(p => stripTag(p.name)));
+
+      // 불량유형 Top10 - 각 유형 안에 제품별 건수/구성비까지 포함
+      // (전체수치 vs 특정제품 한정수치를 혼동하는 걸 방지하기 위해, 제품 구성이 항상 같이 보이도록)
+      const byFault = {};
+      rows.forEach(r => {
+        const product = stripTag(r.제품명) || '미지정';
+        faultsOf(r).forEach(f => {
+          if (!byFault[f]) byFault[f] = { total: 0, byProduct: {} };
+          byFault[f].total++;
+          byFault[f].byProduct[product] = (byFault[f].byProduct[product] || 0) + 1;
+        });
+      });
+      const top10Faults = Object.entries(byFault)
+        .sort((a,b) => b[1].total - a[1].total)
+        .slice(0, 10)
+        .map(([name, v]) => {
+          const byProduct = Object.entries(v.byProduct)
+            .sort((a,b) => b[1] - a[1])
+            .map(([pname, cnt]) => ({ name: pname, cnt, pct: Math.round(cnt / v.total * 1000) / 10 }));
+          return { name, cnt: v.total, byProduct };
+        });
+
+      // 급증하는 불량제품 (전 기간 대비) — 원본 불량현황.html의 renderSurge() 로직 그대로 이식
+      // diff>0 && curr>=2 인 것만, diff 큰 순 최대 6개. 각 제품의 현재기간 불량유형 Top3 비율도 같이 기록
+      // (top5에 없는 제품이 급증했을 때, 무슨 불량 때문인지 바로 보이게 하기 위함)
+      const prevRows = allRows.filter(r => r.dateObj && ctx.prevInRange(r.dateObj));
+      const curCnt = {}, prevCnt = {};
+      rows.forEach(r => { if (!r.제품명 || r.제품명.startsWith('[집계]')) return; const n = stripTag(r.제품명); curCnt[n] = (curCnt[n]||0)+1; });
+      prevRows.forEach(r => { if (!r.제품명 || r.제품명.startsWith('[집계]')) return; const n = stripTag(r.제품명); prevCnt[n] = (prevCnt[n]||0)+1; });
+
+      const surgeProducts = Object.entries(curCnt)
+        .map(([name, cnt]) => ({ name, curr: cnt, prev: prevCnt[name] || 0, diff: cnt - (prevCnt[name] || 0) }))
+        .filter(x => x.diff > 0 && x.curr >= 2)
+        .sort((a,b) => b.diff - a.diff)
+        .slice(0, 6)
+        .map(s => {
+          const productRows = rows.filter(r => r.제품명 && stripTag(r.제품명) === s.name);
+          const faultCnt = {};
+          productRows.forEach(r => faultsOf(r).forEach(f => { faultCnt[f] = (faultCnt[f]||0)+1; }));
+          const base = productRows.length || 1;
+          const topFaults = Object.entries(faultCnt).sort((a,b)=>b[1]-a[1]).slice(0,3)
+            .map(([f,c]) => ({ name: f, cnt: c, pct: Math.round(c/base*1000)/10 }));
+          return { name: s.name, prev: s.prev, curr: s.curr, diff: s.diff, inTop5: top5Names.has(s.name), topFaults };
+        });
+
+      return { total, exchange, material, repair, top5Products, top10Faults, surgeProducts };
+    }
+  },
+
+  action:  { name: '액션현황',       ready: false },
+
+  return: {
+    name: '반품현황',
+    ready: true,
+    project: '반품현황',
+    // 참고: 원본 반품현황.html은 4개 소스를 씀
+    //  DB1 반품마감(마감회차 기준 사전집계) / DB2 반품율(마감월 기준 사전집계, 월간 전용)
+    //  DB3 반품검사(등록일자 원본 레코드) / DB4 반품처리(처리일 원본 레코드, 재상품화 금액)
+    // DB1·DB2는 원본 자체의 '마감회차' 주기(월요일 기준 주간)로 이미 집계되어 있어
+    // 우리 허브의 금~토 주간 주기와 안 맞음 → 월간 전송에서만 DB1·DB2 포함, 주간 전송은 DB3·DB4만 사용
+    async loadData() {
+      let data = {};
+      try {
+        const res = await fetch('../qc/qc_data.json?t=' + Date.now());
+        if (res.ok) data = await res.json();
+      } catch (e) {}
+      const magam   = (data.반품마감 && data.반품마감.records) || [];
+      const rate    = (data.반품율   && data.반품율.records)   || [];
+      const inspect = ((data.반품검사 && data.반품검사.records) || []).map(r => ({ ...r, dateObj: parseYmd(r.등록일자), _src: 'inspect' }));
+      const restore = ((data.반품처리 && data.반품처리.records) || []).map(r => ({ ...r, dateObj: parseYmd(r.처리일),   _src: 'restore' }));
+      // magam/rate는 날짜별 원본 레코드가 아니라 마감회차별 사전집계라 dateObj가 없음 - buildSummary에서 periodType에 따라 별도 매칭
+      return { magam, rate, inspect: [...inspect, ...restore], _raw: true };
+    },
+    buildSummary(rowsBundle, ctx) {
+      // ctx: { periodType, period, year, month } - sendSelected/sendAllReady에서 넘겨줌
+      const { magam, rate, inspect } = rowsBundle;
+      const yy = ctx && ctx.year ? String(ctx.year).slice(2) : '';
+      const monthCode = ctx && ctx.month ? `${yy}.${String(ctx.month).padStart(2,'0')}월` : null;
+
+      const periodRows = inspect.filter(r => r.dateObj && ctx.inRange(r.dateObj));
+      const inspectRows = periodRows.filter(r => r._src === 'inspect');
+      const restoreRows = periodRows.filter(r => r._src === 'restore');
+
+      let kpi = null, rateInfo = null;
+      if (ctx.periodType === 'monthly' && monthCode) {
+        const curMagam = magam.filter(r => r.주월 === '월간' && r.마감회차 === monthCode);
+        const total = curMagam.reduce((s,r)=>s+(r.건수||0),0);
+        if (total > 0 || curMagam.length > 0) {
+          const sumWhere = fn => curMagam.filter(fn).reduce((s,r)=>s+(r.건수||0),0);
+          kpi = {
+            total,
+            appliance: sumWhere(r=>r.품목==='가전'),
+            mat:       sumWhere(r=>r.품목==='가전외'),
+            returnCnt: sumWhere(r=>r.교환반품==='반품'),
+            exchangeCnt: sumWhere(r=>r.교환반품==='교환'),
+          };
+        }
+        const curRate = rate.filter(r => r.마감월 === monthCode);
+        const ship = curRate.reduce((s,r)=>s+(r.월간배송수량||0),0);
+        const ret  = curRate.reduce((s,r)=>s+(r.월간교환반품수량||0),0);
+        if (curRate.length) rateInfo = { ship, ret, ratePct: ship ? Math.round(ret/ship*10000)/100 : null };
+      }
+
+      if (!kpi && inspectRows.length === 0 && restoreRows.length === 0) return null;
+
+      // 반품검사 기준: 상위 모델 Top5 + 반품유형 구성비, 이동/처리결과 분포
+      const modelCnt = {};
+      inspectRows.forEach(r => { const k = r.제품명 || '미지정'; modelCnt[k] = (modelCnt[k]||0)+1; });
+      const top5Models = Object.entries(modelCnt).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([name,cnt]) => {
+        const rs = inspectRows.filter(r => (r.제품명||'미지정') === name);
+        const typeCnt = {};
+        rs.forEach(r => { const t = r.반품유형 || '미지정'; typeCnt[t] = (typeCnt[t]||0)+1; });
+        return { name, cnt, byType: typeCnt };
+      });
+      const dispCnt = { 재상품화:0, 폐기:0, 원자재화:0, 미선택:0 };
+      inspectRows.forEach(r => {
+        if (r.이동처리 === '안성물류이동') dispCnt.재상품화++;
+        else if (r.이동처리 === '안성폐기' || r.이동처리 === '자체폐기') dispCnt.폐기++;
+        else if (r.이동처리 === '원자재화') dispCnt.원자재화++;
+        else dispCnt.미선택++;
+      });
+
+      // 반품처리(재상품화 금액)
+      const restoreAmount = restoreRows.reduce((s,r)=>s+(r.처리금액||0),0);
+      const restoreQty    = restoreRows.reduce((s,r)=>s+(r.처리수량||0),0);
+
+      return {
+        kpi, rateInfo,
+        inspectCount: inspectRows.length, top5Models, dispCnt,
+        restoreCount: restoreRows.length, restoreAmount, restoreQty,
+      };
+    }
+  },
+
+  // ── 처리관리 ──
+  process: {
+    name: '처리현황',
+    ready: true,
+    project: '처리현황',
+    async loadData() {
+      let data = {};
+      try {
+        const res = await fetch('../qc/qc_data.json?t=' + Date.now());
+        if (res.ok) data = await res.json();
+      } catch (e) {}
+      const cheori = ((data.처리현황 && data.처리현황.records) || []).map(r => ({ ...r, dateObj: parseYmd(r.처리일),   _src: 'cheori' }));
+      const mat    = ((data.가전외AS && data.가전외AS.records) || []).map(r => ({ ...r, dateObj: parseYmd(r.완료일자), _src: 'mat' }));
+      return [...cheori, ...mat];
+    },
+    buildSummary(rows) {
+      const cheori = rows.filter(r => r._src === 'cheori');
+      const mat    = rows.filter(r => r._src === 'mat');
+      if (cheori.length === 0 && mat.length === 0) return null;
+
+      const total = cheori.length;
+      const countGubun = name => cheori.filter(r => r.구분 === name).length;
+      const byGubun = {
+        수리출고: countGubun('수리출고'),
+        자재출고: countGubun('자재출고'),
+        '교환/환불': countGubun('교환/환불'),
+        점검: countGubun('점검'),
+      };
+
+      // 평균 처리 소요일 (수리출고 기준)
+      const repairDays = cheori.filter(r => r.구분 === '수리출고' && typeof r.소요일 === 'number').map(r => r.소요일);
+      let avgDays = null, minDays = null, medDays = null, maxDays = null;
+      if (repairDays.length) {
+        avgDays = Math.round(repairDays.reduce((a,b)=>a+b,0) / repairDays.length * 10) / 10;
+        const sorted = [...repairDays].sort((a,b)=>a-b);
+        minDays = sorted[0];
+        medDays = sorted[Math.floor(sorted.length/2)];
+        maxDays = sorted[sorted.length-1];
+      }
+
+      // 유상/무상, 비용
+      const paidCount = cheori.filter(r => r.유무상 === '유상수리').length;
+      const freeCount = cheori.filter(r => r.유무상 === '무상수리').length;
+      const costAppliance = cheori.filter(r => r.유무상 === '유상수리').reduce((s,r)=>s+(r.유상AS비용||0),0);
+      const costMat = mat.filter(r => r.유무상 === '유상').reduce((s,r)=>s+(r.비용||0),0);
+
+      // 제품명 Top10, 사용부품(수리출고) Top10
+      const top10Products = topNByCount(cheori, r => r.제품명, 10);
+      const repairRows = cheori.filter(r => r.구분 === '수리출고');
+      const partsFlat = repairRows.flatMap(r => (r.사용부품 || []).map(part => ({ __p: part })));
+      const top10Parts = topNByCount(partsFlat, r => r.__p, 10);
+
+      return {
+        total, byGubun,
+        repairDaysCount: repairDays.length, avgDays, minDays, medDays, maxDays,
+        paidCount, freeCount, costAppliance, costMat, costTotal: costAppliance + costMat,
+        top10Products, top10Parts,
+      };
+    }
+  },
+
+  delivery: {
+    name: '택배출고 현황',
+    ready: true,
+    project: '택배출고 현황',
+    async loadData() {
+      // 원본 파일(qc/기타/택배출고.html) 기준 '../qc_data.json' = qc/qc_data.json
+      // aggregated.html은 aggregated/ 폴더에 있으므로 경로를 '../qc/qc_data.json'로 보정
+      let staticRows = [];
+      try {
+        const res = await fetch('../qc/qc_data.json');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.택배출고 && json.택배출고.records) {
+            staticRows = json.택배출고.records.filter(r => r.상태 !== '출력요청');
+          }
+        }
+      } catch (e) {}
+      let realtimeRows = [];
+      try {
+        const res2 = await fetch(`${QC_GAS_URL}?action=getTaekbaeRealtime`, { redirect: 'follow' });
+        const json2 = await res2.json();
+        if (json2.ok && json2.records) realtimeRows = json2.records;
+      } catch (e) {}
+      const all = [...realtimeRows, ...staticRows];
+      // '현황보기' 탭 원본 로직: 출력일이 기록된 건만 대상, 기간 필터도 출력일 기준
+      return all.filter(r => r.출력일).map(r => ({ ...r, dateObj: parseYmd(r.출력일) }));
+    },
+    buildSummary(rows) {
+      const total = rows.length;
+      if (total === 0) return null;
+      // 4분류 원본 로직 그대로 (classifyOutbound)
+      // 1) 구분='대상' → 자재출고
+      // 2) 요청자에 심우승/이대훈 포함 → 수리출고
+      // 3) 요청자에 '엄마감동팀' 포함 → 일반출고
+      // 4) 그 외 → 출고지원
+      const classify = r => {
+        if (r.구분 === '대상') return '자재출고';
+        const req = r.요청자 || '';
+        if (req.includes('심우승') || req.includes('이대훈')) return '수리출고';
+        if (req.includes('엄마감동팀')) return '일반출고';
+        return '출고지원';
+      };
+      const CATS = ['자재출고','수리출고','일반출고','출고지원'];
+      const byModel = {};
+      rows.forEach(r => {
+        const model = r.모델명 || '(모델명 미지정)';
+        if (!byModel[model]) { byModel[model] = { model, total: 0 }; CATS.forEach(c => byModel[model][c] = 0); }
+        byModel[model].total++;
+        byModel[model][classify(r)]++;
+      });
+      const modelRows = Object.values(byModel);
+      const byCategory = {};
+      CATS.forEach(c => { byCategory[c] = modelRows.reduce((s,r)=>s+r[c], 0); });
+      const top5Models = modelRows.sort((a,b)=>b.total-a.total).slice(0,5)
+        .map(r => ({ name: r.model, cnt: r.total, ...Object.fromEntries(CATS.map(c=>[c, r[c]])) }));
+      return { total, byCategory, modelCount: modelRows.length, top5Models };
+    }
+  },
+
+  material_out: { name: '자재출고 현황',   ready: false },
+
+  material_in: {
+    name: '자재발주 현황',
+    ready: true,
+    project: '자재발주 현황',
+    // ★ 이 모듈은 기안일 기준 기간필터를 쓰지 않음 (snapshotMode)
+    //   기안-입고예정-입고완료로 여러 회차에 걸쳐 이어지는 건들이라,
+    //   "그 회차 마감 시점 기준 전체 건의 현재 상태"를 매 회차 빠짐없이 스냅샷으로 기록한다.
+    //   예) 7/1 기안, 7/21 입고 예정 건 → 7/17 마감엔 '미입고' 상태로, 7/24 마감엔 '입고완료' 상태로 각각 기록됨
+    snapshotMode: true,
+    async loadData() {
+      const res = await fetch(`${QC_GAS_URL}?action=getZaejaeData`, { redirect: 'follow' });
+      const json = await res.json();
+      if (!json.ok || !json.records) throw new Error('자재발주 데이터 로드 실패');
+      return json.records; // 날짜 필터 없이 전체 건을 그대로 사용
+    },
+    buildSummary(rows) {
+      const total = rows.length;
+      if (total === 0) return null;
+      const statuses = ['사전체크','기안진행','결재대기','입고대기','미입고','중단'];
+      const byStatus = {};
+      statuses.forEach(s => { byStatus[s] = rows.filter(r => r.진행상태 === s).length; });
+      const top5Products = topNByCount(rows, r => r.제품구분, 5);
+      // 전체 건 개별 스냅샷 (건명 / 제품구분 / 현재상태 / 기안일 / 기안승인일 / 입고예정일 / 입고일) — 건수가 적어(보통 5~10건) 전부 기록
+      const items = rows.map(r => ({
+        건명: r.건명 || '', 제품구분: r.제품구분 || '', 진행상태: r.진행상태 || '',
+        기안일: r.기안일 || '', 기안승인일: r.기안승인 || '', 입고예정일: r.예상일정 || '', 입고일: r.입고일 || '',
+      }));
+      return { total, byStatus, top5Products, items };
+    }
+  },
+
+  // ── 고객관리 ──
+  smartstore: {
+    name: '스마트스토어',
+    ready: true,
+    project: '스마트스토어',
+    async loadData() {
+      const GITHUB_URL = 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/data/smtstore_review.xlsx';
+      let wb;
+      try {
+        const res = await fetch('./data/smtstore_review.xlsx');
+        if (!res.ok) throw new Error('local not found');
+        wb = XLSX.read(await res.arrayBuffer(), {type:'array'});
+      } catch {
+        const res = await fetch(GITHUB_URL);
+        wb = XLSX.read(await res.arrayBuffer(), {type:'array'});
+      }
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1});
+      const header = rows[0];
+      const idx = {
+        prodName: header.indexOf('상품명'),
+        rating:   header.indexOf('구매자평점'),
+        date:     header.indexOf('리뷰등록일'),
+      };
+      return rows.slice(1).map(r => ({
+        prodName: String(r[idx.prodName] || ''),
+        rating:   Number(r[idx.rating]) || 0,
+        dateObj:  ssParseDate(r[idx.date]),
+      })).filter(r => r.prodName);
+    },
+    buildSummary(rows) {
+      return buildDashboardSummary(rows, 'rating');
+    }
+  },
+
+  channeltalk: { name: '채널톡', ready: false },
+};
+
+// ================================================================
+// 카테고리 구성
+// ================================================================
+const CATEGORIES = [
+  { title: '품질관리', items: ['defect', 'action', 'return'] },
+  { title: '처리관리', items: ['process', 'delivery', 'material_out', 'material_in'] },
+  { title: '고객관리', items: ['smartstore', 'channeltalk'] },
+];
+
+// ================================================================
+// 렌더링
+// ================================================================
+function render() {
+  const el = document.getElementById('content');
+  el.innerHTML = CATEGORIES.map(cat => `
+    <div class="category">
+      <div class="category-title"><div class="bar"></div>${cat.title}</div>
+      ${cat.items.map(id => renderItemCard(id)).join('')}
+    </div>
+  `).join('');
+}
+
+function renderItemCard(id) {
+  const m = MODULES[id];
+  return `
+    <div class="item-card" id="card-${id}">
+      <div class="item-head">
+        <div class="item-name">${m.name}</div>
+        <div class="item-status" id="status-${id}">
+          <span class="status-badge none">상태 확인 중...</span>
+        </div>
+        <div class="live-status idle" id="live-${id}"><span class="dot"></span><span class="live-text">대기</span></div>
+        <button class="item-toggle-btn" ${m.ready ? '' : 'disabled'} onclick="togglePanel('${id}')">
+          ${m.ready ? '📤 마감전송 ▾' : '⏳ 연동 대기'}
+        </button>
+      </div>
+      <div class="item-panel" id="panel-${id}"></div>
+    </div>
+  `;
+}
+
+render();
+Object.keys(MODULES).forEach(id => { if (MODULES[id].ready) refreshStatus(id); });
+
+// ================================================================
+// 최근 마감 상태 뱃지 (GAS에서 최신 월간/주간 1건씩 조회)
+// ================================================================
+async function refreshStatus(id) {
+  const m = MODULES[id];
+  const statusEl = document.getElementById(`status-${id}`);
+  try {
+    const [monthly, weekly] = await Promise.all([
+      fetchSummary(m.project, 'monthly'),
+      fetchSummary(m.project, 'weekly'),
+    ]);
+    const badges = [];
+    if (monthly.length) badges.push(`<span class="status-badge monthly">월 최신 ${monthly[0].period}</span>`);
+    else badges.push(`<span class="status-badge none">월간 전송 이력 없음</span>`);
+    if (weekly.length) badges.push(`<span class="status-badge weekly">주 최신 ${weekly[0].period}</span>`);
+    else badges.push(`<span class="status-badge none">주간 전송 이력 없음</span>`);
+    statusEl.innerHTML = badges.join('');
+  } catch (e) {
+    statusEl.innerHTML = `<span class="status-badge none">상태 조회 실패</span>`;
+  }
+}
+
+async function fetchSummary(project, periodType) {
+  const url = `${GAS_URL}?action=getSummary&project=${encodeURIComponent(project)}&periodType=${periodType}`;
+  const res = await fetch(url);
+  const json = await res.json();
+  if (!json.ok) return [];
+  // period 내림차순 정렬 (최신 우선)
+  return (json.rows || []).sort((a,b) => String(b.period).localeCompare(String(a.period)));
+}
+
+// ================================================================
+// 마감전송 패널 (체크박스 다중선택 → 일괄전송)
+// ================================================================
+const panelState = {}; // id -> { periodType, sentMonthly:Set, sentWeekly:Set, dataCache }
+
+async function togglePanel(id) {
+  const panel = document.getElementById(`panel-${id}`);
+  const isOpen = panel.classList.contains('open');
+  if (isOpen) { panel.classList.remove('open'); return; }
+  panel.classList.add('open');
+  if (!panelState[id]) {
+    panel.innerHTML = `<div class="panel-not-ready">불러오는 중...</div>`;
+    await initPanel(id);
+  }
+}
+
+async function initPanel(id) {
+  const m = MODULES[id];
+  const panel = document.getElementById(`panel-${id}`);
+
+  const [monthlySent, weeklySent] = await Promise.all([
+    fetchSummary(m.project, 'monthly'),
+    fetchSummary(m.project, 'weekly'),
+  ]);
+
+  panelState[id] = {
+    periodType: 'monthly',
+    sentMonthly: new Set(monthlySent.map(r => r.period)),
+    sentWeekly:  new Set(weeklySent.map(r => r.period)),
+    rows: null, // loadData() 결과 캐시
+  };
+
+  panel.innerHTML = `
+    <div class="period-type-tabs">
+      <button type="button" class="period-type-btn active" id="ptbtn-${id}-monthly" onclick="setPeriodType('${id}','monthly')">월간</button>
+      <button type="button" class="period-type-btn" id="ptbtn-${id}-weekly" onclick="setPeriodType('${id}','weekly')">주간</button>
+    </div>
+    <div class="period-grid" id="grid-${id}"></div>
+    <div class="panel-actions">
+      <button class="btn-select-all" onclick="toggleSelectAll('${id}')">전체 선택/해제</button>
+      <button class="btn-send-selected" id="sendbtn-${id}" onclick="sendSelected('${id}')">선택 항목 전송</button>
+    </div>
+    <div class="panel-log" id="log-${id}"></div>
+  `;
+
+  renderPeriodGrid(id);
+}
+
+function setPeriodType(id, type) {
+  panelState[id].periodType = type;
+  document.getElementById(`ptbtn-${id}-monthly`).classList.toggle('active', type === 'monthly');
+  document.getElementById(`ptbtn-${id}-weekly`).classList.toggle('active', type === 'weekly');
+  renderPeriodGrid(id);
+}
+
+// 최근 12개월 / 최근 12주(토~금) 목록 생성
+function getRecentMonths(n) {
+  const now = new Date();
+  const list = [];
+  for (let i = 0; i < n; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    list.push({ year: d.getFullYear(), month: d.getMonth() + 1,
+      period: `${String(d.getFullYear()).slice(2)}.${String(d.getMonth()+1).padStart(2,'0')}`,
+      label: `${d.getFullYear()}년 ${d.getMonth()+1}월` });
+  }
+  return list;
+}
+function getRecentFridays(n) {
+  const now = new Date();
+  const dow = now.getDay();
+  const diffToFriday = (dow >= 5) ? (dow - 5) : (dow + 2);
+  const baseFriday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diffToFriday);
+  const list = [];
+  for (let i = 0; i < n; i++) {
+    const fri = new Date(baseFriday.getFullYear(), baseFriday.getMonth(), baseFriday.getDate() - 7*i);
+    const sat = new Date(fri.getFullYear(), fri.getMonth(), fri.getDate() - 6);
+    const pad = x => String(x).padStart(2,'0');
+    const period = `${String(fri.getFullYear()).slice(2)}${pad(fri.getMonth()+1)}${pad(fri.getDate())}`;
+    list.push({ sat, fri, period, label: `${sat.getMonth()+1}/${sat.getDate()} ~ ${fri.getMonth()+1}/${fri.getDate()}` });
+  }
+  return list;
+}
+
+function renderPeriodGrid(id) {
+  const state = panelState[id];
+  const grid = document.getElementById(`grid-${id}`);
+  const sentSet = state.periodType === 'monthly' ? state.sentMonthly : state.sentWeekly;
+  const list = state.periodType === 'monthly' ? getRecentMonths(12) : getRecentFridays(12);
+
+  grid.innerHTML = list.map((p, i) => {
+    const sent = sentSet.has(p.period);
+    return `
+      <label class="period-check ${sent ? 'sent' : ''}">
+        <input type="checkbox" data-idx="${i}">
+        <span class="lbl">${p.label}</span>
+        ${sent ? '<span class="tag-sent">✓전송됨</span>' : ''}
+      </label>
+    `;
+  }).join('');
+
+  state.currentList = list;
+}
+
+function toggleSelectAll(id) {
+  const grid = document.getElementById(`grid-${id}`);
+  const boxes = grid.querySelectorAll('input[type=checkbox]');
+  const allChecked = [...boxes].every(b => b.checked);
+  boxes.forEach(b => b.checked = !allChecked);
+}
+
+// ================================================================
+// 공용: 데이터 캐시 + 실시간 상태 표시 + 전송 1건 실행
+// ================================================================
+const rowsCache = {}; // id -> rows[] (loadData 결과, 최초 1회만 로드해서 재사용)
+
+async function getRowsCached(id) {
+  if (!rowsCache[id]) rowsCache[id] = await MODULES[id].loadData();
+  return rowsCache[id];
+}
+
+function setLiveStatus(id, status, text) {
+  const el = document.getElementById(`live-${id}`);
+  if (!el) return;
+  el.className = `live-status ${status}`;
+  el.querySelector('.live-text').textContent =
+    text || { idle:'대기', running:'전송 중', ok:'완료', err:'실패' }[status];
+}
+
+// 기간 rows 필터링 (월간/주간 공용)
+function filterRowsByPeriod(rows, periodType, p) {
+  if (periodType === 'monthly') {
+    return rows.filter(r => r.dateObj && r.dateObj.getFullYear() === p.year && r.dateObj.getMonth()+1 === p.month);
+  }
+  const start = new Date(p.sat.getFullYear(), p.sat.getMonth(), p.sat.getDate(), 0,0,0);
+  const end   = new Date(p.fri.getFullYear(), p.fri.getMonth(), p.fri.getDate(), 23,59,59,999);
+  return rows.filter(r => r.dateObj && r.dateObj >= start && r.dateObj <= end);
+}
+
+// 여러 원본 소스를 조합해야 하는 모듈(예: 반품현황)을 위한 기간 컨텍스트
+function buildCtx(periodType, p) {
+  if (periodType === 'monthly') {
+    let prevMonth = p.month - 1, prevYear = p.year;
+    if (prevMonth < 1) { prevMonth = 12; prevYear--; }
+    return {
+      periodType, period: p.period, year: p.year, month: p.month, raw: p,
+      inRange: d => d && d.getFullYear() === p.year && d.getMonth()+1 === p.month,
+      prevInRange: d => d && d.getFullYear() === prevYear && d.getMonth()+1 === prevMonth,
+    };
+  }
+  const start = new Date(p.sat.getFullYear(), p.sat.getMonth(), p.sat.getDate(), 0,0,0);
+  const end   = new Date(p.fri.getFullYear(), p.fri.getMonth(), p.fri.getDate(), 23,59,59,999);
+  const prevSat = new Date(p.sat.getFullYear(), p.sat.getMonth(), p.sat.getDate()-7, 0,0,0);
+  const prevFri = new Date(p.fri.getFullYear(), p.fri.getMonth(), p.fri.getDate()-7, 23,59,59,999);
+  return {
+    periodType, period: p.period, raw: p,
+    inRange: d => d && d >= start && d <= end,
+    prevInRange: d => d && d >= prevSat && d <= prevFri,
+  };
+}
+
+// loadData() 결과가 flat rows 배열이면 기존 방식, {_raw:true} 번들이면 ctx를 넘겨서 모듈이 직접 필터링,
+// snapshotMode 모듈은 기간 필터 없이 전체 rows를 그대로 사용 (그 회차 마감 시점 스냅샷)
+function computeSummary(m, rows, periodType, p) {
+  if (m.snapshotMode) {
+    return m.buildSummary(rows);
+  }
+  if (rows && rows._raw) {
+    return m.buildSummary(rows, buildCtx(periodType, p));
+  }
+  return m.buildSummary(filterRowsByPeriod(rows, periodType, p));
+}
+
+async function postSummary(project, periodType, period, summary) {
+  await fetch(GAS_URL, {
+    method: 'POST', mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'saveSummary', project, periodType, period,
+      data: { periodType, period, ...summary }
+    })
+  });
+}
+
+async function sendSelected(id) {
+  const m = MODULES[id];
+  const state = panelState[id];
+  const grid = document.getElementById(`grid-${id}`);
+  const log  = document.getElementById(`log-${id}`);
+  const btn  = document.getElementById(`sendbtn-${id}`);
+
+  const checked = [...grid.querySelectorAll('input[type=checkbox]:checked')].map(b => Number(b.dataset.idx));
+  if (checked.length === 0) { log.innerHTML = `<div class="err">선택된 기간이 없습니다</div>`; return; }
+
+  btn.disabled = true;
+  log.innerHTML = '';
+  setLiveStatus(id, 'running');
+
+  let rows;
+  try {
+    log.innerHTML += `<div class="run">데이터 로딩 중...</div>`;
+    rows = await getRowsCached(id);
+  } catch (e) {
+    log.innerHTML += `<div class="err">데이터 로드 실패: ${e.message}</div>`;
+    setLiveStatus(id, 'err');
+    btn.disabled = false;
+    return;
+  }
+
+  let hadError = false;
+  for (const idx of checked) {
+    const p = state.currentList[idx];
+    const label = p.label;
+    log.innerHTML += `<div class="run">[${label}] 전송 중...</div>`;
+
+    const summary = computeSummary(m, rows, state.periodType, p);
+    if (!summary) {
+      log.innerHTML += `<div class="err">[${label}] 데이터 없음 - 건너뜀</div>`;
+      continue;
+    }
+
+    try {
+      await postSummary(m.project, state.periodType, p.period, summary);
+      log.innerHTML += `<div class="ok">[${label}] ✅ 전송 완료</div>`;
+      (state.periodType === 'monthly' ? state.sentMonthly : state.sentWeekly).add(p.period);
+    } catch (e) {
+      hadError = true;
+      log.innerHTML += `<div class="err">[${label}] ❌ 전송 실패: ${e.message}</div>`;
+    }
+    log.scrollTop = log.scrollHeight;
+  }
+
+  btn.disabled = false;
+  setLiveStatus(id, hadError ? 'err' : 'ok');
+  renderPeriodGrid(id);
+  refreshStatus(id);
+}
+
+// ================================================================
+// 전역 일괄전송 — 연동 완료된(ready) 모든 항목에 대해
+// '이번 달' 또는 '최근 마감주(가장 최근 지난 금요일 기준)'를 한 번에 전송
+// ================================================================
+async function sendAllReady(periodType) {
+  const readyIds = Object.keys(MODULES).filter(id => MODULES[id].ready);
+  if (readyIds.length === 0) { alert('연동된 항목이 없습니다.'); return; }
+
+  const p = periodType === 'monthly' ? getRecentMonths(1)[0] : getRecentFridays(1)[0];
+
+  for (const id of readyIds) {
+    setLiveStatus(id, 'running');
+    try {
+      const rows = await getRowsCached(id);
+      const summary = computeSummary(MODULES[id], rows, periodType, p);
+      if (!summary) { setLiveStatus(id, 'err', '데이터 없음'); continue; }
+      await postSummary(MODULES[id].project, periodType, p.period, summary);
+      setLiveStatus(id, 'ok');
+      refreshStatus(id);
+    } catch (e) {
+      setLiveStatus(id, 'err');
+    }
+  }
+}
+
+// ================================================================
+// 📋 클로드 전송데이터 복사 모달
+// ================================================================
+let cmPeriodType = 'monthly';
+let cmPeriodList = [];
+
+function openCopyModal() {
+  document.getElementById('copyModalOverlay').classList.add('open');
+  document.getElementById('cmResult').style.display = 'none';
+  document.getElementById('cmResult').textContent = '';
+  document.getElementById('cmStatus').textContent = '';
+  document.getElementById('cmStatus').className = 'modal-status';
+  cmSetPeriodType('monthly');
+  cmRenderProjectGrid();
+}
+function closeCopyModal() {
+  document.getElementById('copyModalOverlay').classList.remove('open');
+}
+
+function cmSetPeriodType(type) {
+  cmPeriodType = type;
+  document.getElementById('cm-type-monthly').classList.toggle('active', type === 'monthly');
+  document.getElementById('cm-type-weekly').classList.toggle('active', type === 'weekly');
+  cmPeriodList = type === 'monthly' ? getRecentMonths(12) : getRecentFridays(12);
+  const sel = document.getElementById('cmPeriodSelect');
+  sel.innerHTML = cmPeriodList.map((p,i) => `<option value="${i}">${p.label} (${p.period})</option>`).join('');
+}
+
+function cmRenderProjectGrid() {
+  const grid = document.getElementById('cmProjectGrid');
+  const readyIds = Object.keys(MODULES).filter(id => MODULES[id].ready);
+  grid.innerHTML = readyIds.map(id => `
+    <label class="modal-project-item">
+      <input type="checkbox" value="${MODULES[id].project}" checked>
+      <span>${MODULES[id].name}</span>
+    </label>
+  `).join('');
+}
+
+function cmToggleAll() {
+  const boxes = document.querySelectorAll('#cmProjectGrid input[type=checkbox]');
+  const allChecked = [...boxes].every(b => b.checked);
+  boxes.forEach(b => b.checked = !allChecked);
+}
+
+// 데이터 오브젝트를 사람이 읽기 쉬운 텍스트로 변환 (필드명 = 라벨 그대로 노출해서 식별 가능하게)
+function cmFormatData(obj, pad) {
+  pad = pad || '  ';
+  const lines = [];
+  for (const [k, v] of Object.entries(obj || {})) {
+    if (v === null || v === undefined || v === '') continue;
+    if (Array.isArray(v)) {
+      if (v.length === 0) continue;
+      lines.push(`${pad}${k}:`);
+      v.forEach((item, i) => {
+        if (item && typeof item === 'object') {
+          // 단순 필드(name=값)와 중첩 배열/객체 필드를 분리 - 중첩된 건 하위 목록으로 풀어서 출력
+          const simple = [];
+          const nested = [];
+          Object.entries(item).forEach(([kk, vv]) => {
+            if (vv === null || vv === undefined || vv === '') return;
+            if (Array.isArray(vv) || (typeof vv === 'object')) nested.push([kk, vv]);
+            else simple.push(`${kk}=${vv}`);
+          });
+          lines.push(`${pad}  ${i+1}. ${simple.join(', ')}`);
+          nested.forEach(([nk, nv]) => {
+            lines.push(...cmFormatData({ [nk]: nv }, pad + '     '));
+          });
+        } else {
+          lines.push(`${pad}  ${i+1}. ${item}`);
+        }
+      });
+    } else if (typeof v === 'object') {
+      lines.push(`${pad}${k}:`);
+      lines.push(...cmFormatData(v, pad + '  '));
+    } else {
+      lines.push(`${pad}${k}: ${v}`);
+    }
+  }
+  return lines;
+}
+
+async function cmGenerateAndCopy() {
+  const status = document.getElementById('cmStatus');
+  const resultBox = document.getElementById('cmResult');
+  const idx = Number(document.getElementById('cmPeriodSelect').value);
+  const p = cmPeriodList[idx];
+  const checkedProjects = [...document.querySelectorAll('#cmProjectGrid input[type=checkbox]:checked')].map(b => b.value);
+
+  if (checkedProjects.length === 0) {
+    status.textContent = '항목을 1개 이상 선택해주세요.';
+    status.className = 'modal-status err';
+    return;
+  }
+
+  status.textContent = '데이터 불러오는 중...';
+  status.className = 'modal-status';
+
+  try {
+    const url = `${GAS_URL}?action=getAllForPeriod&periodType=${cmPeriodType}&period=${encodeURIComponent(p.period)}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.msg || '조회 실패');
+
+    const projects = json.projects || {};
+    const periodTypeLabel = cmPeriodType === 'monthly' ? '월간' : '주간';
+    const lines = [];
+    lines.push(`=== 통합 마감 데이터 (${periodTypeLabel} · ${p.label} · 회차코드 ${p.period}) ===`);
+    lines.push(`복사시각: ${new Date().toLocaleString('ko-KR')}`);
+    lines.push('');
+
+    const missing = [];
+    checkedProjects.forEach(projectName => {
+      const entry = projects[projectName];
+      if (!entry) { missing.push(projectName); return; }
+      lines.push(`■ ${projectName} (저장시각: ${entry.savedAt || '-'})`);
+      lines.push(...cmFormatData(entry.data));
+      lines.push('');
+    });
+
+    if (missing.length) {
+      lines.push(`(해당 회차 전송 이력 없음: ${missing.join(', ')})`);
+      lines.push('');
+    }
+
+    const text = lines.join('\n');
+    resultBox.textContent = text;
+    resultBox.style.display = '';
+
+    try {
+      await navigator.clipboard.writeText(text);
+      status.textContent = '✅ 클립보드에 복사 완료! 클로드 채팅에 붙여넣으세요.';
+      status.className = 'modal-status ok';
+    } catch (e) {
+      // 클립보드 API 실패 시 수동 선택 유도
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      status.textContent = '✅ 복사 완료 (대체 방식). 안 되면 아래 텍스트를 직접 드래그해서 복사해주세요.';
+      status.className = 'modal-status ok';
+    }
+  } catch (e) {
+    status.textContent = '❌ 실패: ' + e.message;
+    status.className = 'modal-status err';
+  }
+}
+
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
+</script>
+</body>
+</html>

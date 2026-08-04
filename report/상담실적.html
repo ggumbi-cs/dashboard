@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>상담실적</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f1f5f9;--surface:#fff;--border:#e2e8f0;--text:#334155;--heading:#0f1f3d;
+  --muted:#64748b;--muted2:#94a3b8;--well:#f8fafc;
+}
+body.dark-mode{
+  --bg:#0d1825;--surface:#111e35;--border:#243d6a;--text:#c8ddf0;--heading:#8ab4e8;
+  --muted:#a8c4df;--muted2:#7a9ec0;--well:#16294a;
+}
+body{background:var(--bg);font-family:'Malgun Gothic','맑은 고딕',sans-serif;font-size:13px;color:var(--text);padding:14px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+.card-title{font-size:13px;font-weight:600;color:var(--heading);}
+.card-header{padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:12px;}
+.main-row{display:flex;gap:10px;align-items:flex-start;}
+.left-col{flex:1.1;display:flex;flex-direction:column;gap:10px;min-width:0;}
+.right-col{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0;}
+.donut-row{display:flex;gap:10px;}
+.donut-card{flex:1;min-width:0;display:flex;flex-direction:column;}
+.donut-card .card-header{flex-shrink:0;}
+.line-row{display:flex;gap:10px;}
+.line-card{flex:1;min-width:0;}
+.donut-body{flex:1;display:flex;align-items:center;}
+.donut-inner{display:flex;align-items:center;gap:10px;width:100%;}
+.donut-wrap{position:relative;width:90px;height:90px;flex-shrink:0;}
+.donut-wrap svg{position:absolute;top:0;left:0;width:90px;height:90px;}
+.donut-hole{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;background:var(--surface);border-radius:50%;}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;line-height:1.2;z-index:2;}
+.dnum{font-size:16px;font-weight:700;color:var(--heading);display:block;}
+.dsub{font-size:8px;color:var(--muted);display:block;}
+.legend{font-size:10px;color:var(--text);line-height:1.9;min-width:0;}
+.leg-row{display:flex;align-items:center;gap:4px;white-space:nowrap;}
+.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.alf-badge{font-size:9px;color:var(--muted2);background:var(--well);border-radius:4px;padding:2px 6px;margin-bottom:6px;display:inline-block;}
+.data-tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.data-tbl th{background:#0f1f3d;color:#fff;padding:5px 6px;text-align:center;font-weight:500;white-space:nowrap;font-size:10px;}
+.data-tbl td{padding:5px 6px;text-align:center;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;}
+.data-tbl tbody tr:last-child td{font-weight:600;background:var(--well);}
+.chip-header{display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:10px;}
+.chip{font-size:10px;font-weight:600;padding:3px 8px;border-radius:12px;background:var(--border);color:var(--text);}
+.chip.on{background:#0f1f3d;color:#fff;}
+.loading{color:var(--muted2);font-size:12px;padding:20px;text-align:center;}
+.err{color:#ef4444;font-size:11px;padding:8px;}
+</style>
+</head>
+<body>
+
+<div id="summary-toast" style="display:none;position:fixed;bottom:18px;right:18px;background:#0f1f3d;color:#fff;font-size:12px;padding:8px 16px;border-radius:6px;z-index:9999;"></div>
+<div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+  <button id="btn-save-summary" onclick="saveSummaryToSheet()" style="font-size:12px;font-weight:600;padding:7px 16px;background:#0f1f3d;color:#fff;border:none;border-radius:6px;cursor:pointer;letter-spacing:.02em;">
+    ☁ 이번 마감 데이터 AI에 전달
+  </button>
+</div>
+<div class="main-row">
+  <div class="left-col">
+    <div class="donut-row">
+      <div class="card donut-card" id="card-inflow">
+        <div class="card-header"><div class="card-title">총인입데이터</div></div>
+        <div class="loading">로딩 중...</div>
+      </div>
+      <div class="card donut-card" id="card-tag">
+        <div class="card-header"><div class="card-title">태그별 통계</div></div>
+        <div class="loading">로딩 중...</div>
+      </div>
+      <div class="card donut-card" id="card-alf">
+        <div class="card-header"><div class="card-title">ALF 관여/해결률</div></div>
+        <div class="loading">로딩 중...</div>
+      </div>
+    </div>
+    <div class="line-row">
+      <div class="card line-card" id="card-receive">
+        <div class="card-header"><div class="card-title">수신 응답률</div></div>
+        <div class="loading">로딩 중...</div>
+      </div>
+      <div class="card line-card" id="card-call">
+        <div class="card-header"><div class="card-title">총유입 Call</div></div>
+        <div class="loading">로딩 중...</div>
+      </div>
+    </div>
+  </div>
+  <div class="right-col">
+    <div class="card" id="card-satisfy">
+      <div class="chip-header">
+        <div class="card-title" style="flex:1;">만족도조사</div>
+        <span class="chip on">만족도조사</span>
+      </div>
+      <div class="loading">로딩 중...</div>
+    </div>
+    <div class="card" id="card-callrate">
+      <div class="chip-header">
+        <div class="card-title" style="flex:1;">통화성공률</div>
+        <span class="chip on">통화성공률</span>
+      </div>
+      <div class="loading">로딩 중...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 인덱스 신호 (URL 파라미터)
+const params      = new URLSearchParams(window.location.search);
+const typeParam   = params.get('type')   || 'monthly';
+const periodParam = params.get('period') || '';
+const FILTER = {
+  period: typeParam === 'weekly' ? '주간' : '월간',
+  round:  periodParam
+};
+
+const PALETTE = [
+  '#4e79c4','#74c476','#6baed6','#fd8d3c','#e8834a',
+  '#5b9bd5','#70b8a8','#9b59b6','#e74c3c','#3498db','#2ecc71','#f39c12'
+];
+
+// ── CSV 파일 경로 (data/ 폴더)
+const BASE = '../data/';
+const FILES = {
+  inflow  : BASE + '클로드_인입태그.csv',
+  tag     : BASE + '클로드_상담태그.csv',
+  alf     : BASE + '클로드_관여율.csv',
+  callStat: BASE + '클로드_통화성공율.csv',
+  satisfy : BASE + '클로드_만족도조사.csv',
+};
+
+let SCRIPT_URL = '';
+window.addEventListener('message', e => {
+  if (e.data?.type === 'SCRIPT_URL' && e.data.url) SCRIPT_URL = e.data.url;
+});
+
+// ── CSV 파싱 (BOM 제거, 쉼표/따옴표 처리)
+function parseCSV(text) {
+  const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(l => l.trim());
+  const headers = splitCSVLine(lines[0]);
+  return lines.slice(1).map(line => {
+    const vals = splitCSVLine(line);
+    const obj = {};
+    headers.forEach((h, i) => { obj[h.trim()] = (vals[i] || '').trim(); });
+    return obj;
+  }).filter(r => Object.values(r).some(v => v !== ''));
+}
+
+function splitCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
+    else { cur += c; }
+  }
+  result.push(cur);
+  return result;
+}
+
+// 숫자 파싱 (콤마, %, 공백 제거)
+function toNum(v) {
+  if (v == null || v === '') return 0;
+  return parseFloat(String(v).replace(/,/g, '').replace(/%/, '')) || 0;
+}
+
+// ── 각 CSV 로드 및 파싱
+async function loadData() {
+  const [inflowRaw, tagRaw, alfRaw, callRaw, satRaw] = await Promise.all(
+    Object.values(FILES).map(p => fetch(p).then(r => {
+      if (!r.ok) throw new Error(`로드 실패: ${p}`);
+      return r.text();
+    }))
+  );
+
+  // 총인입데이터: 클로드_인입태그.csv
+  // 컬럼: 마감기준, 구분, 년, 주/월, 회차, 서비스태그, 인입수, 비고
+  const inflow = parseCSV(inflowRaw).map(r => ({
+    period: r['주/월'],
+    round:  String(r['회차']),
+    item:   r['서비스태그'],
+    val:    toNum(r['인입수'])
+  }));
+
+  // 태그별통계: 클로드_상담태그.csv
+  // 컬럼: 마감기준, 구분, 년, 주/월, 회차, 상담태그, 인입수, 비고
+  const tag = parseCSV(tagRaw).map(r => ({
+    period: r['주/월'],
+    round:  String(r['회차']),
+    item:   r['상담태그'],
+    val:    toNum(r['인입수'])
+  }));
+
+  // ALF 관여율: 클로드_관여율.csv
+  // 컬럼: 마감기준, 년, 월, 텍스트, 관여건, 비고  → 월간만 존재
+  const alf = parseCSV(alfRaw).map(r => ({
+    period: '월간',
+    round:  String(r['월']),
+    item:   r['텍스트'],
+    val:    toNum(r['관여건'])
+  }));
+
+  // 통화성공율: 클로드_통화성공율.csv
+  // 컬럼: 마감일, 년, 회차, 총유입, 부재중, 수신콜(IN) , 통화성공률(IN), IN, OUT, 통화 call, 발신콜(OUT), 비고, 주기
+  const callStat = parseCSV(callRaw).map(r => {
+    const rateStr = r['통화성공률(IN)'] || '';
+    const rateVal = rateStr ? parseFloat(rateStr.replace('%','')) / 100 : null;
+    return {
+      period: r['주기'],
+      round:  String(r['회차']),
+      total:  toNum(r['총유입']),
+      absent: toNum(r['부재중']),
+      recv:   toNum(r['수신콜(IN) '] || r['수신콜(IN)']),
+      rate:   isNaN(rateVal) ? null : rateVal
+    };
+  });
+
+  // 만족도조사: 클로드_만족도조사.csv
+  // 컬럼: 구분, 월별, 상담종료, 문자발송, 참여건, 참여율, 만족도, 비고, 마감일
+  const satisfy = parseCSV(satRaw).map(r => {
+    const joinRateStr = r['참여율'] || '';
+    const joinRate = joinRateStr ? parseFloat(joinRateStr.replace('%','')) / 100 : null;
+    return {
+      period:   '월간',
+      round:    String(r['월별']),
+      end:      toNum(r['상담종료']),
+      sms:      toNum(r['문자발송']),
+      join:     toNum(r['참여건']),
+      joinRate: isNaN(joinRate) ? null : joinRate,
+      score:    toNum(r['만족도'])
+    };
+  });
+
+  return { inflow, tag, alf, callStat, satisfy };
+}
+
+// ── 슬라이딩 최근 N개
+function getRecentN(arr, period, selectedRound, n=6) {
+  const pool = arr
+    .filter(d => d.period === period)
+    .map(d => ({ ...d, _sort: period === '주간' ? Number(d.round) : d.round }))
+    .sort((a, b) => a._sort < b._sort ? -1 : a._sort > b._sort ? 1 : 0);
+  const cutoff = period === '주간' ? Number(selectedRound) : selectedRound;
+  return pool.filter(d => d._sort <= cutoff).slice(-n);
+}
+
+function f(arr, period, round) {
+  return arr.filter(d => d.period === period && d.round === round);
+}
+
+// ── 도넛 SVG
+function buildDonut(items, total, centerNum, subLabel) {
+  const CIRC = 2 * Math.PI * 35;
+  let offset = 0, arcs = '';
+  items.forEach((it, i) => {
+    const dash = (it.val / total) * CIRC;
+    arcs += `<circle cx="45" cy="45" r="35" fill="none" stroke="${PALETTE[i%PALETTE.length]}"
+      stroke-width="9" stroke-dasharray="${dash.toFixed(1)} ${CIRC.toFixed(1)}"
+      stroke-dashoffset="${(-offset).toFixed(1)}"/>`;
+    offset += dash;
+  });
+  return `<div class="donut-body"><div class="donut-inner">
+    <div class="donut-wrap">
+      <svg viewBox="0 0 90 90"><g transform="rotate(-90 45 45)">${arcs}</g></svg>
+      <div class="donut-hole"></div>
+      <div class="donut-center">
+        <span class="dnum">${centerNum.toLocaleString()}</span>
+        <span class="dsub">${subLabel}</span>
+      </div>
+    </div>
+    <div class="legend">
+      ${items.map((it,i)=>{
+        const pct = total>0?(it.val/total*100).toFixed(1):'0.0';
+        const lbl = it.item.length>6?it.item.slice(0,6)+'..':it.item;
+        return `<div class="leg-row"><span class="leg-dot" style="background:${PALETTE[i%PALETTE.length]}"></span>${lbl} ${pct}% (${it.val.toLocaleString()}건)</div>`;
+      }).join('')}
+    </div>
+  </div></div>`;
+}
+
+// ── 꺾은선 SVG
+function buildLineChart(rows, valueKey, unit, color, fillColor) {
+  if (!rows.length) return '<div class="err">데이터 없음</div>';
+  const vals = rows.map(d=>d[valueKey]);
+  const maxV = Math.max(...vals) || 1;
+  const PL=44, PR=14, PT=14, PB=22, W=260, H=120;
+  const CW=W-PL-PR, CH=H-PT-PB, n=rows.length;
+  const xp = i => PL+(i/Math.max(n-1,1))*CW;
+  const yp = v => PT+(1-v/maxV)*CH;
+  const pts = rows.map((d,i)=>`${xp(i).toFixed(1)},${yp(d[valueKey]).toFixed(1)}`).join(' ');
+  const ac  = `${xp(n-1).toFixed(1)},${(PT+CH).toFixed(1)} ${xp(0).toFixed(1)},${(PT+CH).toFixed(1)}`;
+  const yticks = [0,.25,.5,.75,1].map(r=>({
+    y:yp(maxV*r),
+    label: unit==='%'?(maxV*r*100).toFixed(0)+'%':Math.round(maxV*r).toLocaleString()
+  }));
+  const grids  = yticks.map(t=>`<line x1="${PL}" y1="${t.y.toFixed(1)}" x2="${W-PR}" y2="${t.y.toFixed(1)}" stroke="var(--border)" stroke-width="1"/>`).join('');
+  const ylbls  = yticks.map(t=>`<text x="${PL-3}" y="${(t.y+3).toFixed(1)}" text-anchor="end" font-size="8" fill="var(--muted2)">${t.label}</text>`).join('');
+  const xlbls  = rows.map((d,i)=>{
+    let lbl = FILTER.period==='주간' ? (s=>s.slice(0,2)+'/'+s.slice(2))(String(d.round).slice(2)) : d.round;
+    return `<text x="${xp(i).toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="8" fill="var(--muted2)">${lbl}</text>`;
+  }).join('');
+  const dots = rows.map((d,i)=>{
+    const x=xp(i).toFixed(1), y=yp(d[valueKey]).toFixed(1);
+    const vl = unit==='%'?(d[valueKey]*100).toFixed(1)+'%':d[valueKey].toLocaleString();
+    return `<circle cx="${x}" cy="${y}" r="4" fill="${color}"/>
+    <text x="${x}" y="${(parseFloat(y)-5).toFixed(1)}" text-anchor="middle" font-size="8" fill="${color}" font-weight="700">${vl}</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;">${grids}${ylbls}
+    <polygon points="${pts} ${ac}" fill="${fillColor}" opacity="0.2"/>
+    <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2"/>
+    ${dots}${xlbls}</svg>`;
+}
+
+// ── 렌더링
+function renderInflow(data) {
+  const rows  = f(data.inflow, FILTER.period, FILTER.round);
+  const total = rows.reduce((s,d)=>s+d.val,0);
+  document.querySelector('#card-inflow .loading')?.remove();
+  document.getElementById('card-inflow').insertAdjacentHTML('beforeend',
+    buildDonut([...rows].sort((a,b)=>b.val-a.val), total, total, '합계 인입수'));
+}
+
+function renderTag(data) {
+  const rows  = f(data.tag, FILTER.period, FILTER.round);
+  const total = rows.reduce((s,d)=>s+d.val,0);
+  document.querySelector('#card-tag .loading')?.remove();
+  document.getElementById('card-tag').insertAdjacentHTML('beforeend',
+    buildDonut([...rows].sort((a,b)=>b.val-a.val).slice(0,8), total, total, '합계 인입수'));
+}
+
+function renderAlf(data) {
+  // ALF는 월간만 존재 → 주간 선택 시 최근 월간 회차 자동 선택
+  let round = FILTER.round, isWeekly = false;
+  if (FILTER.period === '주간') {
+    isWeekly = true;
+    const rounds = [...new Set(data.alf.map(d=>d.round))].sort();
+    round = rounds[rounds.length-1] || '';
+  }
+  const rows  = f(data.alf, '월간', round);
+  const total = rows.reduce((s,d)=>s+d.val,0);
+  const el    = document.getElementById('card-alf');
+  el.querySelector('.loading')?.remove();
+  const badge = isWeekly ? `<div class="alf-badge">📅 월단위 집계 (${round})</div>` : '';
+  el.insertAdjacentHTML('beforeend', badge + buildDonut([...rows].sort((a,b)=>b.val-a.val), total, total, '합계 관여건'));
+}
+
+function renderCallStat(data) {
+  const valid  = data.callStat.filter(d=>d.rate!=null&&d.total>0);
+  const recent = getRecentN(valid, FILTER.period, FILTER.round, 6);
+  document.getElementById('card-receive').querySelector('.loading')?.remove();
+  document.getElementById('card-receive').insertAdjacentHTML('beforeend',
+    buildLineChart(recent, 'rate', '%', '#6d28d9', '#c5b8e8'));
+  document.getElementById('card-call').querySelector('.loading')?.remove();
+  document.getElementById('card-call').insertAdjacentHTML('beforeend',
+    buildLineChart(recent, 'total', '', '#1e40af', '#b8c8e8'));
+}
+
+function renderSatisfy(data) {
+  // 만족도: 항상 월간, 26.으로 시작, 선택회차 이하 최근 6개
+  const satRound = FILTER.period==='월간' ? FILTER.round : '99.99월';
+  const recent = getRecentN(data.satisfy, '월간', satRound, 6)
+    .filter(r=>String(r.round).startsWith('26.'));
+  const el = document.getElementById('card-satisfy');
+  el.querySelector('.loading')?.remove();
+
+  const tbody = recent.map(r=>`<tr>
+    <td>${r.round}</td>
+    <td>${r.end?.toLocaleString()??'-'}</td>
+    <td>${r.sms?.toLocaleString()??'-'}</td>
+    <td>${r.join?.toLocaleString()??'-'}</td>
+    <td>${r.joinRate!=null?(r.joinRate*100).toFixed(1)+'%':'-'}</td>
+    <td>${r.score??'-'}</td>
+    <td></td>
+  </tr>`).join('');
+
+  el.insertAdjacentHTML('beforeend', `
+    <table class="data-tbl">
+      <thead><tr><th>월별</th><th>상담종료</th><th>문자발송</th><th>참여건</th><th>참여율</th><th>만족도</th><th>비고</th></tr></thead>
+      <tbody>${tbody}</tbody>
+    </table>`);
+}
+
+function renderCallRate(data) {
+  const valid  = data.callStat.filter(d=>d.total>0&&String(d.round).startsWith('26'));
+  const recent = getRecentN(valid, FILTER.period, FILTER.round, 6);
+  const el     = document.getElementById('card-callrate');
+  el.querySelector('.loading')?.remove();
+
+  const fmtRound = r => {
+    if (FILTER.period==='주간') {
+      const s=String(r.round);
+      return `${s.slice(0,2)}.${s.slice(2,4)}.${s.slice(4,6)} 주차`;
+    }
+    return r.round;
+  };
+
+  const tbody = recent.map(r=>`<tr>
+    <td>${fmtRound(r)}</td>
+    <td>${r.total?.toLocaleString()??'-'}</td>
+    <td>${r.total?.toLocaleString()??'-'}</td>
+    <td>${r.absent?.toLocaleString()??'-'}</td>
+    <td>${r.recv?.toLocaleString()??'-'}</td>
+    <td>${r.rate!=null?(r.rate*100).toFixed(2)+'%':'-'}</td>
+    <td></td>
+  </tr>`).join('');
+
+  el.insertAdjacentHTML('beforeend', `
+    <table class="data-tbl">
+      <thead><tr><th>회차</th><th>총유입</th><th>IN</th><th>부재중</th><th>수신도(IN)</th><th>통화성공률(IN)</th><th>비고</th></tr></thead>
+      <tbody>${tbody}</tbody>
+    </table>`);
+}
+
+// ── AI 전달
+async function saveSummaryToSheet() {
+  const btn = document.getElementById('btn-save-summary');
+  btn.disabled=true; btn.textContent='저장 중...';
+  try {
+    const data = await loadData();
+    const inflowRows = f(data.inflow, FILTER.period, FILTER.round);
+    const totalInflow = inflowRows.reduce((s,d)=>s+d.val,0);
+    const tagRows = f(data.tag, FILTER.period, FILTER.round);
+    const tagSummary = {};
+    tagRows.forEach(d=>{tagSummary[d.item]=(tagSummary[d.item]||0)+d.val;});
+    const alfRound = FILTER.period==='주간'
+      ? [...new Set(data.alf.map(d=>d.round))].sort().slice(-1)[0]||''
+      : FILTER.round;
+    const alfRows  = f(data.alf,'월간',alfRound);
+    const alfTotal = alfRows.reduce((s,d)=>s+d.val,0);
+    const alfSum   = {};
+    alfRows.forEach(d=>{alfSum[d.item]=d.val;});
+    const recent1 = getRecentN(data.callStat.filter(d=>d.rate!=null&&d.total>0),FILTER.period,FILTER.round,1)[0]||null;
+    const satRecent = getRecentN(data.satisfy,'월간',FILTER.period==='월간'?FILTER.round:'99.99월',1)[0]||null;
+    const summaryData = {
+      period:FILTER.period, round:FILTER.round,
+      총인입:totalInflow, 태그별:tagSummary,
+      ALF관여해결:alfSum, ALF총계:alfTotal, ALF기준회차:alfRound,
+      수신응답률:recent1?+(recent1.rate*100).toFixed(2):null,
+      총유입Call:recent1?recent1.total:null,
+      만족도점수:satRecent?satRecent.score:null,
+      만족도참여율:satRecent?+(satRecent.joinRate*100).toFixed(1):null,
+    };
+    const resp = await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({action:'saveSummary',tab:'상담실적',period:FILTER.round||FILTER.period,data:summaryData})});
+    const json = await resp.json();
+    showToast(json.ok?`✓ 저장 완료 (${json.mode==='update'?'갱신':'신규'})`:'⚠ 저장 실패: '+json.msg, json.ok?'#0f1f3d':'#991b1b');
+  } catch(e) {
+    showToast('⚠ 오류: '+e.message,'#991b1b');
+  } finally {
+    btn.disabled=false; btn.textContent='☁ 이번 마감 데이터 AI에 전달';
+  }
+}
+
+function showToast(msg,bg){
+  const el=document.getElementById('summary-toast');
+  el.textContent=msg; el.style.background=bg||'#0f1f3d'; el.style.display='block';
+  setTimeout(()=>{el.style.display='none';},3000);
+}
+
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
+
+// ── 메인
+(async()=>{
+  try {
+    const data = await loadData();
+    renderInflow(data);
+    renderTag(data);
+    renderAlf(data);
+    renderCallStat(data);
+    renderSatisfy(data);
+    renderCallRate(data);
+  } catch(e) {
+    console.error(e);
+    document.querySelectorAll('.loading').forEach(el=>{
+      el.className='err';
+      el.textContent='데이터 로드 실패: '+e.message;
+    });
+  }
+})();
+</script>
+</body>
+</html>

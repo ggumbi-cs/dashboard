@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Issue</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f0f2f5;
+  --surface: #fff;
+  --border: #eee;
+  --text: #222;
+  --text2: #888;
+  --text3: #555;
+  --accent: #1a3a6e;
+}
+body.dark-mode {
+  --bg: #0d1825;
+  --surface: #111e35;
+  --border: #243d6a;
+  --text: #c8ddf0;
+  --text2: #a8c4df;
+  --text3: #7a9ec0;
+  --accent: #6ea8e0;
+}
+body { background: var(--bg); font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; font-size: 13px; color: var(--text); padding: 16px; }
+
+.section-header { padding: 7px 14px; color: #fff; font-size: 13px; font-weight: 600; border-radius: 4px; margin-bottom: 10px; }
+.sec-dark  { background: #1a2e50; }
+.sec-green { background: #2a7a6f; }
+.section-wrap { margin-bottom: 16px; }
+
+.card { background: var(--surface); border-radius: 6px; padding: 12px 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.card-title { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
+
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
+
+/* 환불 바차트 */
+.bar-chart-wrap { position: relative; }
+.bar-sum { font-size: 22px; font-weight: 700; color: var(--accent); position: absolute; top: -6px; right: 0; }
+.bar-wrap { display: flex; align-items: flex-end; justify-content: center; gap: 32px; padding: 4px 0 0; border-bottom: 1px solid var(--border); height: 150px; }
+.bar-group { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 9.8%; }
+.bar-val { font-size: 8px; color: #e8834a; font-weight: 600; white-space: nowrap; }
+.bar { border-radius: 3px 3px 0 0; width: 100%; }
+.bar-labels-row { display: flex; justify-content: center; gap: 32px; margin-top: 4px; }
+.bar-label { font-size: 8px; color: var(--text2); text-align: center; word-break: keep-all; line-height: 1.2; width: 9.8%; }
+
+/* 도넛 — 좌우 레이아웃 */
+.donut-side-wrap { display: flex; align-items: center; gap: 10px; }
+.donut-rel { position: relative; flex-shrink: 0; }
+.dcenter { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 11px; font-weight: 700; text-align: center; line-height: 1.3; }
+.dlegend-side { font-size: 10px; color: var(--text3); line-height: 1.9; flex: 1; min-width: 0; }
+.ldot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 3px; vertical-align: middle; }
+.dval { font-weight: 600; }
+
+/* 회수현황 라인 */
+.x-labels { display: flex; justify-content: space-around; font-size: 9px; color: var(--text2); margin-top: 2px; }
+
+.issue-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.issue-table th { background: #1a2e50; color: #fff; padding: 6px 8px; text-align: left; font-weight: 500; }
+.issue-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); color: var(--text3); }
+
+#loading { text-align: center; padding: 40px; color: var(--text2); font-size: 14px; }
+#error   { text-align: center; padding: 40px; color: #c0392b; font-size: 13px; display: none; }
+</style>
+</head>
+<body>
+<div id="loading">⏳ 데이터 로딩 중...</div>
+<div id="error"></div>
+<div id="content" style="display:none;"></div>
+
+<script>
+// ── URL 파라미터 ──────────────────────────────────────────
+const params = new URLSearchParams(window.location.search);
+const type   = params.get('type')   || 'monthly';
+const period = params.get('period') || '26.05월';
+
+function getSheetName() {
+  if (type === 'monthly') return period;
+  if (type === 'weekly') {
+    const yy = period.slice(0,2), mm = period.slice(2,4);
+    return '26.' + mm + '월';
+  }
+  return period;
+}
+
+// ── 상수 ─────────────────────────────────────────────────
+const COLORS = ['#e8834a','#9b59b6','#5b9bd5','#74c476','#2a7a6f','#fd8d3c','#e74c3c','#f1c40f'];
+
+// 깃허브 Raw URL — 실제 경로로 교체 필요
+const GITHUB_RAW_URL = 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/report/issue.xlsx';
+
+// ── 엑셀 시리얼 → 날짜 문자열 'M/D' ─────────────────────
+function serialToMD(serial) {
+  if (!serial || isNaN(serial)) return '';
+  const d = new Date(Date.UTC(1899,11,30) + serial * 86400000);
+  return (d.getUTCMonth()+1) + '/' + d.getUTCDate();
+}
+function serialToYMD(serial) {
+  if (!serial || isNaN(serial)) return '';
+  const d = new Date(Date.UTC(1899,11,30) + serial * 86400000);
+  return d.getUTCFullYear() + '-' + String(d.getUTCMonth()+1).padStart(2,'0') + '-' + String(d.getUTCDate()).padStart(2,'0');
+}
+
+// ── 시트 rows → 섹션별 데이터 파싱 ──────────────────────
+// 엑셀이 좌(A~G) / 우(J~R) 2블록 구조
+// SheetJS로 각각 분리해서 읽음
+function parseSheetRaw(ab, sheetName) {
+  const wb   = XLSX.read(ab, { type: 'array' });
+  const ws   = wb.Sheets[sheetName];
+  const data = { 환불: [], 회수: [], 네이버: [], 자재수급: [] };
+
+  // 좌측 블록: A~G (대분류, 차트주제, 구분, 구분2, 회수접수일, 건수, 금액)
+  const leftRows = XLSX.utils.sheet_to_json(ws, {
+    defval: '',
+    range: XLSX.utils.decode_range('A1:G200')
+  });
+
+  // 우측 블록: J~R (대분류, 차트주제, 진행상태, 제품구분, 건명, 기안일, 기안승인, 예상일정, 문서제목)
+  const rightRows = XLSX.utils.sheet_to_json(ws, {
+    defval: '',
+    range: XLSX.utils.decode_range('J1:R200')
+  });
+
+  // 좌측 파싱
+  leftRows.forEach(row => {
+    const 대분류   = String(row['대분류']   || '').trim();
+    const 차트주제 = String(row['차트주제'] || '').trim();
+    const 구분2    = String(row['구분2']    || '').trim();
+
+    if (!대분류) return;
+
+    if (차트주제.includes('환불')) {
+      if (구분2) {
+        const existing = data.환불.find(r => r.구분2 === 구분2);
+        const 건수 = Number(row['건수'] || 0);
+        const 금액 = Number(row['금액'] || 0);
+        if (existing) { existing.건수 += 건수; existing.금액 += 금액; }
+        else data.환불.push({ 구분2, 건수, 금액 });
+      }
+    }
+    if (차트주제.includes('회수')) {
+      const raw = row['회수접수일'];
+      const 건수 = Number(row['건수'] || 0);
+      if (raw) {
+        const 일 = typeof raw === 'number' ? serialToMD(raw) : String(raw).trim();
+        const existing = data.회수.find(r => r.일 === 일);
+        if (existing) existing.건수 += 건수;
+        else data.회수.push({ 일, 건수 });
+      }
+    }
+    if (차트주제.includes('네이버')) {
+      if (구분2) {
+        const 건수 = Number(row['건수'] || 0);
+        const existing = data.네이버.find(r => r.구분2 === 구분2);
+        if (existing) existing.건수 += 건수;
+        else data.네이버.push({ 구분2, 건수 });
+      }
+    }
+  });
+
+  // 우측 파싱 (자재수급)
+  rightRows.forEach(row => {
+    const 대분류   = String(row['대분류']   || '').trim();
+    const 진행상태 = String(row['진행상태'] || '').trim();
+    const 건명     = String(row['건명']     || '').trim();
+    if (!대분류 && !진행상태 && !건명) return;
+    if (대분류 === '대분류') return; // 헤더행 스킵
+
+    const 기안일_raw   = row['기안일'];
+    const 기안승인_raw = row['기안승인'];
+    data.자재수급.push({
+      진행상태,
+      제품구분: String(row['제품구분'] || '').trim(),
+      건명,
+      기안일:   typeof 기안일_raw   === 'number' ? serialToYMD(기안일_raw)   : String(기안일_raw   || '').trim(),
+      기안승인: typeof 기안승인_raw === 'number' ? serialToYMD(기안승인_raw) : String(기안승인_raw || '').trim(),
+      예상일정: String(row['예상일정'] || '').trim(),
+      문서제목: String(row['문서제목'] || '').replace(/\xa0/g, ' ').trim()
+    });
+  });
+
+  // 정렬
+  data.환불.sort((a,b) => b.금액 - a.금액);
+  data.회수.sort((a,b) => {
+    const toNum = s => { const [m,d] = s.split('/').map(Number); return m*100+d; };
+    return toNum(a.일) - toNum(b.일);
+  });
+  data.네이버.sort((a,b) => b.건수 - a.건수);
+
+  return data;
+}
+
+// ── 주단위 집계 ───────────────────────────────────────────
+function parseDate(str) {
+  const [m,d] = str.split('/').map(Number);
+  return new Date(2026, m-1, d);
+}
+function getMonday(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  d.setDate(d.getDate() + (day===0 ? -6 : 1-day));
+  return d;
+}
+function fmtMD(date) { return (date.getMonth()+1)+'/'+date.getDate(); }
+
+function groupByWeek(rows) {
+  const weeks = {};
+  rows.forEach(r => {
+    if (!r.일) return;
+    const d   = parseDate(r.일);
+    const mon = getMonday(d);
+    const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+    const key = fmtMD(mon)+'~'+fmtMD(sun);
+    if (!weeks[key]) weeks[key] = { label: key, 건수: 0 };
+    weeks[key].건수 += r.건수;
+  });
+  return Object.values(weeks);
+}
+
+// ── 도넛 SVG ─────────────────────────────────────────────
+function makeDonut(data, valKey, total) {
+  const circ = 2 * Math.PI * 34;
+  let offset = 0, paths = '';
+  data.forEach((d,i) => {
+    const dash = circ * (d[valKey]/total);
+    const gap  = circ - dash;
+    paths += `<circle cx="45" cy="45" r="34" fill="none" stroke="${COLORS[i]}" stroke-width="16"
+      stroke-dasharray="${dash.toFixed(1)} ${gap.toFixed(1)}"
+      stroke-dashoffset="${(-offset).toFixed(1)}"
+      transform="rotate(-90 45 45)"/>`;
+    offset += dash;
+  });
+  return paths;
+}
+
+// ── 렌더링 ────────────────────────────────────────────────
+function render(d) {
+  // 환불현황
+  const totalAmt = d.환불.reduce((s,r)=>s+r.금액,0);
+  const maxAmt   = Math.max(...d.환불.map(r=>r.금액), 1);
+  const BAR_H = 110;
+  const refundBars = d.환불.map((r,i) => {
+    const h = Math.max(2, Math.round(r.금액/maxAmt*BAR_H));
+    return `<div class="bar-group">
+      <div class="bar-val">₩${Math.round(r.금액/10000).toLocaleString()}만</div>
+      <div class="bar" style="height:${h}px;background:${COLORS[i]};"></div>
+    </div>`;
+  }).join('');
+  const refundLabels = d.환불.map(r=>`<div class="bar-label">${r.구분2}</div>`).join('');
+
+  // 환불비율
+  const totalCnt = d.환불.reduce((s,r)=>s+r.건수,0);
+  const donut1   = makeDonut(d.환불,'건수',totalCnt||1);
+  const legend1  = d.환불.map((r,i)=>{
+    const pct = totalCnt ? (r.건수/totalCnt*100).toFixed(1) : 0;
+    return `<div><span class="ldot" style="background:${COLORS[i]};"></span><span class="dval">${r.구분2}</span> ${r.건수.toLocaleString()} (${pct}%)</div>`;
+  }).join('');
+
+  // 회수현황 (주단위)
+  const weekly = groupByWeek(d.회수);
+  const wVals  = weekly.map(w=>w.건수);
+  const maxW   = Math.max(...wVals, 1);
+  const nW     = weekly.length;
+  const svgW=400, svgH=150, pL=28, pR=8, pT=14, pB=16;
+  const iW=svgW-pL-pR, iH=svgH-pT-pB;
+  const wPts = weekly.map((w,i)=>{
+    const x = pL+(nW===1?iW/2:i/(nW-1)*iW);
+    const y = pT+(1-w.건수/maxW)*iH;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const polyPts = wPts+` ${(pL+iW).toFixed(1)},${(pT+iH).toFixed(1)} ${pL},${(pT+iH).toFixed(1)}`;
+  const ySteps = [0,0.5,1].map(p=>({ val:Math.round(maxW*p), y:(pT+(1-p)*iH).toFixed(1) }));
+  const yGrid  = ySteps.map(s=>
+    `<line x1="${pL}" y1="${s.y}" x2="${svgW-pR}" y2="${s.y}" style="stroke:var(--border)" stroke-width="1"/>
+     <text x="${pL-3}" y="${parseFloat(s.y)+3}" text-anchor="end" font-size="7" style="fill:var(--text2)">${s.val}</text>`
+  ).join('');
+  const maxIdx = wVals.indexOf(Math.max(...wVals));
+  const wDots  = weekly.map((w,i)=>{
+    const x = pL+(nW===1?iW/2:i/(nW-1)*iW);
+    const y = pT+(1-w.건수/maxW)*iH;
+    if (i!==maxIdx) return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" style="fill:var(--accent)"/>`;
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" style="fill:var(--accent)"/>
+            <text x="${x.toFixed(1)}" y="${(y-6).toFixed(1)}" text-anchor="middle" font-size="8" style="fill:var(--accent)" font-weight="600">${w.건수}</text>`;
+  }).join('');
+  const xLabels = weekly.map(w=>`<span style="font-size:8px;">${w.label}</span>`).join('');
+
+  // 네이버폼현황
+  const totalNav = d.네이버.reduce((s,r)=>s+r.건수,0);
+  const donut2   = makeDonut(d.네이버,'건수',totalNav||1);
+  const legend2  = d.네이버.map((r,i)=>{
+    const pct = totalNav ? (r.건수/totalNav*100).toFixed(1) : 0;
+    return `<div><span class="ldot" style="background:${COLORS[i]};"></span><span class="dval">${r.구분2}</span> ${r.건수.toLocaleString()} (${pct}%)</div>`;
+  }).join('');
+
+  // 자재수급
+  const statusColor = { '결재대기':'#e8834a','미입고':'#5b9bd5','입고완료':'#74c476' };
+  const tableRows = d.자재수급.map(r=>
+    `<tr>
+      <td><span style="color:${statusColor[r.진행상태]||'#888'};font-weight:600;">${r.진행상태}</span></td>
+      <td>${r.제품구분}</td><td>${r.건명}</td>
+      <td>${r.기안일}</td><td>${r.기안승인||'-'}</td>
+      <td>${r.예상일정}</td>
+      <td style="font-size:10px;color:var(--text3);">${r.문서제목}</td>
+    </tr>`
+  ).join('');
+
+  document.getElementById('content').innerHTML = `
+  <div class="section-wrap">
+    <div class="section-header sec-dark">1. 낮잠이불 Issue</div>
+    <div class="grid-4">
+      <div class="card">
+        <div class="card-title">환불현황</div>
+        <div class="bar-chart-wrap">
+          <div class="bar-sum">합계 ${Math.round(totalAmt/10000).toLocaleString()}만원</div>
+          <div class="bar-wrap">${refundBars}</div>
+          <div class="bar-labels-row">${refundLabels}</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">환불비율</div>
+        <div class="donut-side-wrap">
+          <div class="donut-rel" style="width:110px;height:110px;">
+            <svg viewBox="0 0 90 90" style="width:110px;height:110px;">${donut1}<circle cx="45" cy="45" r="27" style="fill:var(--surface)"/></svg>
+            <div class="dcenter">${totalCnt.toLocaleString()}<br><span style="font-size:8px;color:var(--text2);font-weight:400;">건</span></div>
+          </div>
+          <div class="dlegend-side">${legend1}</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">회수현황</div>
+        <svg viewBox="0 0 ${svgW} ${svgH}" style="width:100%;height:${svgH}px;">
+          ${yGrid}
+          <polygon points="${polyPts}" fill="#b8c8e8" opacity="0.4"/>
+          <polyline points="${wPts}" fill="none" style="stroke:var(--accent)" stroke-width="1.5"/>
+          ${wDots}
+        </svg>
+        <div class="x-labels">${xLabels}</div>
+      </div>
+      <div class="card">
+        <div class="card-title">네이버폼현황</div>
+        <div class="donut-side-wrap">
+          <div class="donut-rel" style="width:110px;height:110px;">
+            <svg viewBox="0 0 90 90" style="width:110px;height:110px;">${donut2}<circle cx="45" cy="45" r="27" style="fill:var(--surface)"/></svg>
+            <div class="dcenter">${totalNav.toLocaleString()}<br><span style="font-size:8px;color:var(--text2);font-weight:400;">건</span></div>
+          </div>
+          <div class="dlegend-side">${legend2}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="section-wrap">
+    <div class="section-header sec-green">2. 자재수급 Issue</div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:8px;">자재수급현황</div>
+      <table class="issue-table">
+        <thead><tr>
+          <th>진행상태</th><th>제품구분</th><th>건명</th>
+          <th>기안일</th><th>기안승인</th><th>예상일정</th><th>문서제목</th>
+        </tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+  </div>`;
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+}
+
+// ── 메인: 깃허브에서 fetch → SheetJS 파싱 ────────────────
+async function main() {
+  const sheetName = getSheetName();
+  try {
+    const res = await fetch(GITHUB_RAW_URL + '?t=' + Date.now()); // 캐시 방지
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const ab   = await res.arrayBuffer();
+    const wb = XLSX.read(ab, { type: 'array' });
+    if (!wb.SheetNames.includes(sheetName)) {
+      throw new Error(`시트 없음: "${sheetName}"\n사용 가능: ${wb.SheetNames.join(', ')}`);
+    }
+    const data = parseSheetRaw(ab, sheetName);
+    render(data);
+  } catch (e) {
+    document.getElementById('loading').style.display = 'none';
+    const el = document.getElementById('error');
+    el.style.display = 'block';
+    el.innerHTML = `⚠️ 데이터 로드 실패<br><small>${e.message}</small>`;
+  }
+}
+
+main();
+
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
+</script>
+</body>
+</html>

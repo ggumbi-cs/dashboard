@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>지식포럼 간식 라벨</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+    background: #f0f0f0;
+    padding: 20px;
+  }
+
+  .upload-panel {
+    background: #fff;
+    border: 2px dashed #2563eb;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+    text-align: center;
+    transition: background .15s, border-color .15s;
+  }
+  .upload-panel.dragover { background: #eff6ff; border-color: #1d4ed8; }
+  .upload-panel h2 { font-size: 16px; color: #1e40af; margin-bottom: 6px; }
+  .upload-panel p  { font-size: 13px; color: #666; margin-bottom: 14px; line-height: 1.6; }
+  #fileInput { display: none; }
+  .btn-upload {
+    padding: 10px 22px; background: #2563eb; color: #fff;
+    border: none; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: bold;
+  }
+  .btn-upload:hover { background: #1d4ed8; }
+  #preview-img {
+    max-width: 320px; max-height: 160px; border-radius: 8px;
+    border: 1px solid #ddd; display: none; margin: 12px auto 0;
+  }
+
+  .status-panel {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 12px 20px;
+    margin-bottom: 16px;
+    display: none;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .status-panel.show { display: flex; }
+  .status-panel.pending { border-color: #f59e0b; background: #fffbeb; }
+  .status-text { font-size: 13px; color: #444; flex: 1; min-width: 200px; }
+  .status-text b { color: #b45309; }
+  .btn-apply {
+    padding: 9px 18px; background: #16a34a; color: #fff;
+    border: none; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold;
+  }
+  .btn-apply:hover { background: #15803d; }
+
+  .controls {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    align-items: center;
+  }
+  .controls label { font-size: 14px; font-weight: bold; color: #333; }
+  .controls input[type=range] { width: 130px; cursor: pointer; }
+  .controls span { font-size: 13px; color: #555; min-width: 36px; }
+  .ctrl-group { display: flex; align-items: center; gap: 8px; }
+  .ctrl-title { font-size: 15px; font-weight: 900; color: #222; border-right: 2px solid #ddd; padding-right: 16px; margin-right: 4px; }
+
+  /* ── 라벨 시트 ── */
+  .sheet {
+    background: white;
+    width: 210mm;
+    height: 297mm;
+    padding: 15mm 7.5mm 12.5mm 7.5mm;
+    margin: 0 auto;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    overflow: hidden;
+  }
+  .sheet + .sheet { margin-top: 20px; }
+
+  .label-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 65mm);
+    gap: 0;
+    width: 195mm;
+  }
+
+  .label-cell {
+    width: 65mm;
+    height: 38.5mm;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 0.3px solid #bbb;
+    padding: 4px;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .label-조 { font-weight: bold; line-height: 1.3; }
+  .label-org { line-height: 1.3; }
+  .label-place { line-height: 1.3; color: #333; }
+  .label-count { line-height: 1.3; }
+  .label-empty { color: #999; font-style: italic; }
+  .label-warn { color: #b45309; font-weight: bold; }
+  .label-highlight { color: #dc2626 !important; font-weight: 900 !important; }
+
+  /* ── 강조필터 패널 ── */
+  .filter-panel {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .filter-panel.show { display: block; }
+  .filter-panel-title {
+    font-size: 14px; font-weight: 900; color: #222; margin-bottom: 4px;
+  }
+  .filter-panel-desc { font-size: 12px; color: #888; margin-bottom: 10px; }
+  .filter-chip-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .filter-chip {
+    display: flex; align-items: center; gap: 6px;
+    border: 1px solid #ddd; border-radius: 20px; padding: 5px 12px;
+    font-size: 13px; cursor: pointer; user-select: none; background: #fafafa;
+  }
+  .filter-chip.checked { border-color: #dc2626; background: #fef2f2; color: #dc2626; font-weight: bold; }
+  .filter-chip input { cursor: pointer; accent-color: #dc2626; }
+  .filter-save-hint { font-size: 11px; color: #999; margin-top: 8px; }
+
+  .page-label { text-align: center; font-size: 12px; color: #999; margin: 8px 0 4px; }
+
+  /* ── 모달 ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    align-items: center; justify-content: center; z-index: 999;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: #fff; border-radius: 12px; padding: 24px 28px; max-width: 520px; width: 92%;
+    max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,.25);
+  }
+  .modal-box h3 { font-size: 16px; color: #b45309; margin-bottom: 4px; }
+  .modal-box p.desc { font-size: 13px; color: #666; margin-bottom: 16px; }
+  .leader-pick-row { margin-bottom: 14px; }
+  .leader-pick-row label { display: block; font-size: 13px; font-weight: bold; color: #333; margin-bottom: 4px; }
+  .leader-pick-row select {
+    width: 100%; padding: 8px; font-size: 13px; border: 1px solid #ccc; border-radius: 6px;
+  }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+  .modal-actions button {
+    padding: 9px 18px; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold;
+  }
+  .btn-confirm { background: #2563eb; color: #fff; }
+  .btn-confirm:hover { background: #1d4ed8; }
+  .btn-skip { background: #e5e7eb; color: #333; }
+  .btn-skip:hover { background: #d1d5db; }
+  .btn-cancel { background: #e5e7eb; color: #333; }
+  .btn-print-now { background: #dc2626; color: #fff; }
+  .btn-print-now:hover { background: #b91c1c; }
+
+  @page { size: A4; margin: 0; }
+  @media print {
+    body { background: none; padding: 0; }
+    .upload-panel, .controls, .page-label, .status-panel, .modal-overlay { display: none !important; }
+    .sheet { box-shadow: none; margin: 0; page-break-after: always; }
+    .sheet:last-child { page-break-after: avoid; }
+    .label-cell { border: 0.3px solid #999; }
+  }
+</style>
+</head>
+<body>
+
+<div class="upload-panel" id="dropZone">
+  <h2>📊 CSV / ZIP / 이미지 업로드</h2>
+  <p>
+    노션에서 내려받은 이중압축 ZIP 파일 또는 CSV 파일을 드래그하거나, 클릭해서 선택하세요.<br>
+    차트 이미지는 드래그·붙여넣기(Ctrl+V)로 미리보기만 표시됩니다.
+  </p>
+  <button class="btn-upload" onclick="document.getElementById('fileInput').click()">📂 파일 선택</button>
+  <input type="file" id="fileInput" accept=".zip,.csv,image/*" onchange="onFileSelected(event.target.files[0])">
+  <img id="preview-img" alt="미리보기">
+</div>
+
+<div class="status-panel" id="statusPanel">
+  <span class="status-text" id="statusText"></span>
+  <button class="btn-apply" id="applyBtn" onclick="applyPending()">🔄 갱신 적용</button>
+</div>
+
+<div class="controls">
+  <span class="ctrl-title">🏷️ 라벨 설정</span>
+  <div class="ctrl-group">
+    <label for="r-조-size">조 글씨 크기</label>
+    <input type="range" id="r-조-size" min="6" max="30" value="18" oninput="applyStyle()">
+    <span id="v-조-size">18pt</span>
+  </div>
+  <div class="ctrl-group">
+    <label for="r-명-size">본문 글씨 크기</label>
+    <input type="range" id="r-명-size" min="6" max="30" value="14" oninput="applyStyle()">
+    <span id="v-명-size">14pt</span>
+  </div>
+  <div class="ctrl-group">
+    <label><input type="checkbox" id="ck-조-bold" checked onchange="applyStyle()"> 조 진하게</label>
+    <label><input type="checkbox" id="ck-명-bold" onchange="applyStyle()"> 본문 진하게</label>
+  </div>
+  <div class="ctrl-group">
+    <label for="r-gap">줄 간격</label>
+    <input type="range" id="r-gap" min="1" max="2.5" step="0.1" value="1.4" oninput="applyStyle()">
+    <span id="v-gap">1.4</span>
+  </div>
+  <button onclick="tryPrint()" style="margin-left:auto;padding:8px 20px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;font-weight:bold;">🖨️ 인쇄</button>
+</div>
+
+<div class="filter-panel" id="filterPanel">
+  <div class="filter-panel-title">🔴 강조 필터 (본사 미참여 조 구분용)</div>
+  <div class="filter-panel-desc">체크한 장소에 해당하는 조는 라벨의 조번호·장소가 빨간 글씨로 강조됩니다. 변경 즉시 자동 저장됩니다.</div>
+  <div class="filter-chip-list" id="filterChipList"></div>
+  <div class="filter-save-hint" id="filterSaveHint"></div>
+</div>
+
+<div id="pagesContainer"></div>
+
+<!-- 조장 미지정 선택 모달 -->
+<div class="modal-overlay" id="leaderModal">
+  <div class="modal-box">
+    <h3>⚠️ 조장 미지정 그룹 발견</h3>
+    <p class="desc">아래 조는 '⭕조장' 표시가 없습니다. 명단에서 조장을 직접 선택하거나, 건너뛰면 "조장 미지정"으로 표시됩니다.</p>
+    <div id="leaderPickList"></div>
+    <div class="modal-actions">
+      <button class="btn-skip" onclick="skipLeaderModal()">건너뛰기 (미지정으로 표시)</button>
+      <button class="btn-confirm" onclick="confirmLeaderModal()">선택 적용</button>
+    </div>
+  </div>
+</div>
+
+<!-- 인쇄 전 미적용 확인 모달 -->
+<div class="modal-overlay" id="printConfirmModal">
+  <div class="modal-box">
+    <h3>⚠️ 적용되지 않은 변경사항</h3>
+    <p class="desc">새 내용이 아직 적용되지 않았습니다. 지금 적용하고 인쇄하시겠습니까?</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closePrintConfirm()">취소</button>
+      <button class="btn-print-now" onclick="applyThenPrint()">지금 적용 후 인쇄</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CELLS_PER_PAGE = 21; // 3열 × 7행
+const MAX_GROUP_NUM = 50;
+const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzJV-GUhzNPJVX37mOj2cea3BLxrLq0lzd-Lkq6oeB7FG2jEsGFfuA_hM6Wl4KCsPZI/exec';
+
+// 화면에 실제 적용된 데이터
+let currentGroups = [];
+// 마지막으로 파싱했지만 아직 "갱신 적용" 안 한 데이터
+let pendingGroups = null;
+let pendingMissingLeaders = []; // [{num, members}]
+
+// 강조필터: 체크된 장소 이름 집합 (전역 공용, GAS에 저장/불러오기)
+let highlightedPlaces = new Set();
+
+// ═══════════════════════════════════════════════════
+// 업로드 UI (드래그 / 클릭 / 붙여넣기)
+// ═══════════════════════════════════════════════════
+const dropZone = document.getElementById('dropZone');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const f = e.dataTransfer.files[0];
+  if (f) onFileSelected(f);
+});
+
+window.addEventListener('paste', e => {
+  const items = e.clipboardData.items;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      const file = item.getAsFile();
+      showImagePreview(file);
+      return;
+    }
+  }
+});
+
+function showImagePreview(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = document.getElementById('preview-img');
+    img.src = ev.target.result;
+    img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function onFileSelected(file) {
+  if (!file) return;
+  const name = file.name.toLowerCase();
+  if (file.type.startsWith('image/')) {
+    showImagePreview(file);
+    return;
+  }
+  if (name.endsWith('.zip')) {
+    processZipFile(file);
+  } else if (name.endsWith('.csv')) {
+    processCsvFile(file);
+  } else {
+    alert('zip, csv, 또는 이미지 파일만 지원합니다.');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// ZIP (이중압축) 처리 — as7.html 로직 참고
+// ═══════════════════════════════════════════════════
+async function loadZipWithKorean(src) {
+  return JSZip.loadAsync(src, {
+    decodeFileName: (bytes) => {
+      try { return new TextDecoder('utf-8', { fatal: true }).decode(bytes); } catch(e) {}
+      try { return new TextDecoder('euc-kr').decode(bytes); } catch(e) {}
+      return new TextDecoder('latin1').decode(bytes);
+    }
+  });
+}
+
+async function processZipFile(file) {
+  setStatus('ZIP 압축 해제 중...', false);
+  let outerZip;
+  try { outerZip = await loadZipWithKorean(file); }
+  catch(e) { alert('ZIP 파일을 열 수 없습니다.'); return; }
+
+  const outerEntries = Object.values(outerZip.files).filter(zf => !zf.dir);
+  const innerZipEntry = outerEntries.find(zf => zf.name.toLowerCase().endsWith('.zip'));
+
+  let csvEntries;
+  if (innerZipEntry) {
+    let innerBuf;
+    try { innerBuf = await innerZipEntry.async('arraybuffer'); }
+    catch(e) { alert('내부 ZIP을 읽을 수 없습니다.'); return; }
+    let innerZip;
+    try { innerZip = await loadZipWithKorean(innerBuf); }
+    catch(e) { alert('내부 ZIP 파싱 실패.'); return; }
+    csvEntries = Object.values(innerZip.files).filter(zf => !zf.dir && zf.name.toLowerCase().endsWith('.csv'));
+  } else {
+    csvEntries = outerEntries.filter(zf => zf.name.toLowerCase().endsWith('.csv'));
+  }
+
+  if (csvEntries.length === 0) { alert('ZIP 안에서 CSV 파일을 찾을 수 없습니다.'); return; }
+
+  // _all.csv 우선
+  const allCsv = csvEntries.find(zf => /_all\.csv$/i.test(zf.name.split('/').pop()));
+  const target = allCsv || csvEntries[0];
+
+  let text;
+  try {
+    const bytes = await target.async('uint8array');
+    text = decodeCsvBytes(bytes);
+  } catch(e) { alert('CSV 읽기 실패.'); return; }
+
+  handleCsvText(text, target.name.split('/').pop());
+}
+
+async function processCsvFile(file) {
+  const buf = await file.arrayBuffer();
+  const text = decodeCsvBytes(new Uint8Array(buf));
+  handleCsvText(text, file.name);
+}
+
+function decodeCsvBytes(bytes) {
+  // UTF-8 BOM 포함 처리
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
+  catch(e) {}
+  try { return new TextDecoder('euc-kr').decode(bytes); }
+  catch(e) { return new TextDecoder('latin1').decode(bytes); }
+}
+
+// ═══════════════════════════════════════════════════
+// CSV 파서 (RFC4180 호환, 따옴표/개행 처리)
+// ═══════════════════════════════════════════════════
+function parseCSV(text) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // strip BOM
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], next = text[i+1];
+    if (inQuotes) {
+      if (c === '"' && next === '"') { field += '"'; i++; }
+      else if (c === '"') { inQuotes = false; }
+      else { field += c; }
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\r') { /* skip */ }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+      else field += c;
+    }
+  }
+  if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+
+  if (rows.length === 0) return [];
+  const headers = rows[0];
+  const out = [];
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i].length === 1 && rows[i][0] === '') continue;
+    const obj = {};
+    headers.forEach((h, idx) => obj[h] = (rows[i][idx] !== undefined ? rows[i][idx] : '').trim());
+    out.push(obj);
+  }
+  return out;
+}
+
+// ═══════════════════════════════════════════════════
+// 조별 그룹핑
+// ═══════════════════════════════════════════════════
+function handleCsvText(text, fileName) {
+  const rows = parseCSV(text);
+  if (rows.length === 0 || !('조' in rows[0])) {
+    alert(`CSV에서 '조' 컬럼을 찾을 수 없습니다. (${fileName})`);
+    return;
+  }
+
+  const byNum = {};
+  let maxNum = 0;
+  rows.forEach(r => {
+    const raw = (r['조'] || '').trim();
+    if (!raw) return;
+    const m = raw.match(/(\d+)/);
+    if (!m) return;
+    const num = parseInt(m[1], 10);
+    if (num < 1 || num > MAX_GROUP_NUM) return;
+    if (!byNum[num]) byNum[num] = [];
+    byNum[num].push(r);
+    if (num > maxNum) maxNum = num;
+  });
+
+  if (maxNum === 0) { alert('유효한 조 데이터를 찾을 수 없습니다.'); return; }
+
+  const groups = [];
+  const missingLeaders = [];
+
+  for (let num = 1; num <= maxNum; num++) {
+    const members = byNum[num];
+    if (!members || members.length === 0) {
+      groups.push({ num, status: 'empty' });
+      continue;
+    }
+    const leaderRow = members.find(r => (r['조장'] || '').includes('조장'));
+    if (leaderRow) {
+      groups.push(buildGroupEntry(num, members, leaderRow));
+    } else {
+      groups.push({ num, status: 'missing_leader', members });
+      missingLeaders.push({ num, members });
+    }
+  }
+
+  pendingGroups = groups;
+  pendingMissingLeaders = missingLeaders;
+
+  if (missingLeaders.length > 0) {
+    openLeaderModal();
+  } else {
+    setStatus(`파일 로드 완료: ${fileName} — 총 ${maxNum}조 인식. "갱신 적용"을 눌러 라벨에 반영하세요.`, true);
+  }
+}
+
+function buildGroupEntry(num, members, leaderRow) {
+  const org = (leaderRow['소속'] || '').trim();
+  const teamRaw = (leaderRow['이름'] || '').trim();
+  const team = teamRaw.split(/\s+/)[0] || '';
+  const place = (leaderRow['장소'] || members[0]['장소'] || '').trim();
+  return { num, status: 'ok', org, team, place, count: members.length };
+}
+
+// ═══════════════════════════════════════════════════
+// 조장 미지정 모달
+// ═══════════════════════════════════════════════════
+function openLeaderModal() {
+  const list = document.getElementById('leaderPickList');
+  list.innerHTML = '';
+  pendingMissingLeaders.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'leader-pick-row';
+    const label = document.createElement('label');
+    label.textContent = `${item.num}조 (${item.members.length}명) — 조장 선택`;
+    const select = document.createElement('select');
+    select.dataset.num = item.num;
+    const emptyOpt = document.createElement('option');
+    emptyOpt.value = ''; emptyOpt.textContent = '-- 선택 안 함 (미지정으로 표시) --';
+    select.appendChild(emptyOpt);
+    item.members.forEach((m, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      opt.textContent = `${m['이름'] || '(이름 없음)'} / ${m['소속'] || ''}`;
+      select.appendChild(opt);
+    });
+    div.appendChild(label);
+    div.appendChild(select);
+    list.appendChild(div);
+  });
+  document.getElementById('leaderModal').classList.add('show');
+}
+
+function confirmLeaderModal() {
+  const selects = document.querySelectorAll('#leaderPickList select');
+  selects.forEach(sel => {
+    const num = parseInt(sel.dataset.num, 10);
+    const idx = sel.value;
+    const groupIdx = pendingGroups.findIndex(g => g.num === num);
+    if (groupIdx === -1) return;
+    if (idx === '') {
+      pendingGroups[groupIdx] = { num, status: 'leader_unset', members: pendingGroups[groupIdx].members };
+    } else {
+      const item = pendingMissingLeaders.find(m => m.num === num);
+      const chosen = item.members[parseInt(idx, 10)];
+      pendingGroups[groupIdx] = buildGroupEntry(num, item.members, chosen);
+    }
+  });
+  closeLeaderModal();
+  setStatus(`파일 로드 완료 — 조장 선택 반영됨. "갱신 적용"을 눌러 라벨에 반영하세요.`, true);
+}
+
+function skipLeaderModal() {
+  pendingMissingLeaders.forEach(item => {
+    const groupIdx = pendingGroups.findIndex(g => g.num === item.num);
+    if (groupIdx !== -1) {
+      pendingGroups[groupIdx] = { num: item.num, status: 'leader_unset', members: item.members };
+    }
+  });
+  closeLeaderModal();
+  setStatus(`파일 로드 완료 — 조장 미지정 ${pendingMissingLeaders.length}개조는 "조장 미지정"으로 표시됩니다. "갱신 적용"을 눌러 반영하세요.`, true);
+}
+
+function closeLeaderModal() {
+  document.getElementById('leaderModal').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════════
+// 상태 패널 / 갱신 적용
+// ═══════════════════════════════════════════════════
+function setStatus(text, pending) {
+  const panel = document.getElementById('statusPanel');
+  document.getElementById('statusText').innerHTML = text;
+  panel.classList.add('show');
+  panel.classList.toggle('pending', !!pending);
+}
+
+function applyPending() {
+  if (!pendingGroups) return;
+  currentGroups = pendingGroups;
+  pendingGroups = null;
+  renderAllPages();
+  document.getElementById('statusPanel').classList.remove('show', 'pending');
+}
+
+function isDirty() {
+  return pendingGroups !== null;
+}
+
+// ═══════════════════════════════════════════════════
+// 인쇄
+// ═══════════════════════════════════════════════════
+function tryPrint() {
+  if (isDirty()) {
+    document.getElementById('printConfirmModal').classList.add('show');
+  } else {
+    window.print();
+  }
+}
+function closePrintConfirm() {
+  document.getElementById('printConfirmModal').classList.remove('show');
+}
+function applyThenPrint() {
+  applyPending();
+  closePrintConfirm();
+  setTimeout(() => window.print(), 100);
+}
+
+// ═══════════════════════════════════════════════════
+// 강조필터 (GAS 연동 — 전역 공용 저장/불러오기)
+// ═══════════════════════════════════════════════════
+async function loadHighlightFilter() {
+  try {
+    const url = GAS_ENDPOINT + '?action=getLabelHighlightFilter&data=' + encodeURIComponent(JSON.stringify({}));
+    const res = await fetch(url);
+    const json = await res.json();
+    if (json.ok && json.data && Array.isArray(json.data.places)) {
+      highlightedPlaces = new Set(json.data.places);
+    }
+  } catch (e) {
+    console.warn('강조필터 불러오기 실패:', e);
+  }
+}
+
+async function saveHighlightFilter() {
+  const hint = document.getElementById('filterSaveHint');
+  hint.textContent = '저장 중...';
+  try {
+    const res = await fetch(GAS_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'saveLabelHighlightFilter',
+        data: { places: Array.from(highlightedPlaces) }
+      })
+    });
+    const json = await res.json();
+    hint.textContent = json.ok ? '✅ 저장됨' : '⚠️ 저장 실패: ' + (json.error || '');
+  } catch (e) {
+    hint.textContent = '⚠️ 저장 실패 (네트워크 오류)';
+    console.warn('강조필터 저장 실패:', e);
+  }
+  setTimeout(() => { hint.textContent = ''; }, 2000);
+}
+
+function renderFilterPanel() {
+  const panel = document.getElementById('filterPanel');
+  const list = document.getElementById('filterChipList');
+  const places = Array.from(new Set(
+    currentGroups.filter(g => g.status === 'ok' || g.status === 'leader_unset')
+      .map(g => g.status === 'ok' ? g.place : ((g.members && g.members[0] && g.members[0]['장소']) || ''))
+      .filter(Boolean)
+  )).sort();
+
+  if (places.length === 0) { panel.classList.remove('show'); return; }
+  panel.classList.add('show');
+  list.innerHTML = '';
+  places.forEach(place => {
+    const chip = document.createElement('label');
+    chip.className = 'filter-chip' + (highlightedPlaces.has(place) ? ' checked' : '');
+    chip.innerHTML = `<input type="checkbox" ${highlightedPlaces.has(place) ? 'checked' : ''}> ${place}`;
+    chip.querySelector('input').addEventListener('change', (e) => {
+      if (e.target.checked) highlightedPlaces.add(place);
+      else highlightedPlaces.delete(place);
+      chip.classList.toggle('checked', e.target.checked);
+      renderAllPages(); // 강조 즉시 반영
+      saveHighlightFilter(); // 즉시 자동 저장
+    });
+    list.appendChild(chip);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// 렌더링
+// ═══════════════════════════════════════════════════
+function renderAllPages() {
+  const container = document.getElementById('pagesContainer');
+  container.innerHTML = '';
+  const total = currentGroups.length;
+  const pageCount = Math.max(1, Math.ceil(total / CELLS_PER_PAGE));
+
+  for (let p = 0; p < pageCount; p++) {
+    const pageGroups = currentGroups.slice(p * CELLS_PER_PAGE, (p + 1) * CELLS_PER_PAGE);
+    const startNum = pageGroups.length ? pageGroups[0].num : '';
+    const endNum = pageGroups.length ? pageGroups[pageGroups.length - 1].num : '';
+
+    const pageLabel = document.createElement('div');
+    pageLabel.className = 'page-label';
+    pageLabel.textContent = `📄 ${p + 1}페이지 (${startNum}조~${endNum}조)`;
+    container.appendChild(pageLabel);
+
+    const sheet = document.createElement('div');
+    sheet.className = 'sheet';
+    const grid = document.createElement('div');
+    grid.className = 'label-grid';
+    sheet.appendChild(grid);
+    container.appendChild(sheet);
+
+    for (let i = 0; i < CELLS_PER_PAGE; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'label-cell';
+      const g = pageGroups[i];
+      if (g) {
+        const idx = p * CELLS_PER_PAGE + i;
+        cell.innerHTML = renderCellHtml(g, idx);
+      }
+      grid.appendChild(cell);
+    }
+  }
+  applyStyle();
+  renderFilterPanel();
+}
+
+function renderCellHtml(g, idx) {
+  if (g.status === 'empty') {
+    return `<div class="label-조" id="조-${idx}">${g.num}조</div>` +
+      `<div class="label-org label-empty" id="org-${idx}">조원 없음</div>`;
+  }
+
+  const place = g.status === 'ok' ? g.place : ((g.members && g.members[0] && g.members[0]['장소']) || '');
+  const isHighlighted = place && highlightedPlaces.has(place);
+  const 조Class = 'label-조' + (isHighlighted ? ' label-highlight' : '');
+  const placeClass = 'label-place' + (isHighlighted ? ' label-highlight' : '');
+  const 조Line = `<div class="${조Class}" id="조-${idx}">${g.num}조</div>`;
+
+  if (g.status === 'leader_unset') {
+    return 조Line +
+      `<div class="label-org label-warn" id="org-${idx}">조장 미지정</div>` +
+      `<div class="${placeClass}" id="place-${idx}">${place}</div>` +
+      `<div class="label-count" id="count-${idx}">${g.members.length}명</div>`;
+  }
+  return 조Line +
+    `<div class="label-org" id="org-${idx}">조장 : ${g.org} ${g.team}</div>` +
+    `<div class="${placeClass}" id="place-${idx}">${g.place}</div>` +
+    `<div class="label-count" id="count-${idx}">${g.count}명</div>`;
+}
+
+function applyStyle() {
+  const 조Size = document.getElementById('r-조-size').value;
+  const 명Size = document.getElementById('r-명-size').value;
+  const 조Bold = document.getElementById('ck-조-bold').checked;
+  const 명Bold = document.getElementById('ck-명-bold').checked;
+  const gap    = document.getElementById('r-gap').value;
+
+  document.getElementById('v-조-size').textContent = 조Size + 'pt';
+  document.getElementById('v-명-size').textContent = 명Size + 'pt';
+  document.getElementById('v-gap').textContent = gap;
+
+  document.querySelectorAll('.label-조').forEach(el => {
+    el.style.fontSize = 조Size + 'pt';
+    el.style.fontWeight = 조Bold ? 'bold' : 'normal';
+    el.style.lineHeight = gap;
+  });
+  document.querySelectorAll('.label-org, .label-place, .label-count').forEach(el => {
+    el.style.fontSize = 명Size + 'pt';
+    el.style.fontWeight = 명Bold ? 'bold' : 'normal';
+    el.style.lineHeight = gap;
+  });
+}
+
+// 초기화: 강조필터를 GAS에서 먼저 불러온 뒤 렌더 (샘플 데이터 없이 안내만 표시)
+loadHighlightFilter().then(renderAllPages);
+</script>
+<script>
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
+</script>
+</body>
+</html>

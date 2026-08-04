@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>품질관리</title>
+<!-- SheetJS: 엑셀 직접 파싱 -->
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f0f2f5; --surface: #fff; --border: #eee;
+  --text: #222; --text2: #888; --text3: #777; --text4: #444;
+  --heading: #333; --kpi-val: #1a3a6e;
+}
+body.dark-mode {
+  --bg: #0d1825; --surface: #111e35; --border: #243d6a;
+  --text: #c8ddf0; --text2: #7a9ec0; --text3: #6a8faa; --text4: #9fb8d4;
+  --heading: #d8e8f8; --kpi-val: #8fc4ff;
+}
+body { background: var(--bg); font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; font-size: 12px; color: var(--text); padding: 12px; }
+
+.sec-header { padding: 6px 12px; color: #fff; font-size: 12px; font-weight: 700; border-radius: 4px; margin-bottom: 10px; }
+.sec-red { background: #b03030; }
+.sec-green { background: #2a7a6f; }
+.section-wrap { margin-bottom: 14px; }
+
+.card { background: var(--surface); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 10px 12px; }
+.card-title { font-size: 10px; color: var(--text2); margin-bottom: 5px; }
+.sm-card-title { font-size: 10px; font-weight: 700; color: var(--heading); margin-bottom: 8px; }
+
+.ldot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:4px; vertical-align:middle; flex-shrink:0; }
+.dlegend { font-size:9px; color:var(--text4); line-height:1.9; width:100%; }
+.dlegend-row { display:flex; align-items:center; justify-content:space-between; }
+.dlegend-label { display:flex; align-items:center; }
+.dlegend-val { color:var(--text3); margin-left:4px; white-space:nowrap; }
+
+.badge { display:inline-block; padding:2px 7px; border-radius:10px; font-size:10px; font-weight:600; }
+.badge-blue   { background:#e8f0fb; color:#2356a8; }
+.badge-orange { background:#fff0e0; color:#c0640a; }
+.badge-green  { background:#e0f5f0; color:#2a7a6f; }
+.badge-red    { background:#fde8e8; color:#b03030; }
+.badge-gray   { background:#f0f0f0; color:#888; }
+
+.row1 { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-bottom:8px; align-items:stretch; }
+.inflow-num { font-size:30px; font-weight:700; color:#b03030; margin:4px 0 4px; }
+
+.top-card { background:var(--surface); border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.08); overflow:hidden; }
+.top-card-bar { height:5px; width:100%; }
+.top-card-body { padding:8px 10px; }
+.top-rank { font-size:9px; font-weight:700; margin-bottom:3px; }
+.top-name { font-size:11px; font-weight:700; color:var(--text); margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.top-count { font-size:10px; color:var(--text3); }
+
+.row23-grid {
+  display:grid;
+  grid-template-columns:1.6fr 1fr 1fr 1fr;
+  grid-template-rows:1fr 1fr;
+  gap:8px;
+  margin-bottom:14px;
+}
+.big-donut-card {
+  grid-column:1; grid-row:1/3;
+  background:var(--surface); border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.08);
+  padding:10px 12px;
+}
+.donut-rel { position:relative; flex-shrink:0; }
+.dcenter { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; line-height:1.2; }
+.sm-donut-card { background:var(--surface); border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.08); padding:10px 12px; height:100%; box-sizing:border-box; }
+.sm-donut-inner { display:flex; align-items:center; gap:10px; }
+
+.kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:8px; }
+.kpi-card { background:var(--surface); border-radius:6px; padding:10px 12px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+.kpi-label { font-size:10px; color:var(--text2); margin-bottom:3px; }
+.kpi-val { font-size:22px; font-weight:700; color:var(--kpi-val); }
+.kpi-sub { font-size:9px; color:var(--text3); margin-top:2px; }
+
+.improve-table { width:100%; border-collapse:collapse; font-size:11px; }
+.improve-table th { background:#e8f0fb; color:#333; padding:5px 8px; text-align:left; font-weight:600; border-bottom:2px solid #c5d8f5; }
+.improve-table td { padding:5px 8px; border-bottom:1px solid var(--border); color:var(--text4); vertical-align:top; }
+</style>
+</head>
+<body>
+<div id="loading" style="text-align:center;padding:40px;color:var(--text2);font-size:14px;">📊 노션 데이터 불러오는 중...</div>
+<div id="content" style="display:none;"></div>
+
+<script>
+// ── GAS 웹앱 주소 (통합) ─────────────────────────────────────────────
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwn8m-r1UB1tYD3MSjq9D2Kt13R79a74w0wA2Lm60hTaavwL3IOgd4H2Rm258lv-xEW/exec';
+
+// ── URL 파라미터 ─────────────────────────────────────────────────────
+const params = new URLSearchParams(window.location.search);
+const type   = params.get('type')   || 'monthly';
+let SCRIPT_URL = '';
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'SCRIPT_URL' && e.data.url) SCRIPT_URL = e.data.url;
+});
+const period = decodeURIComponent(params.get('period') || '');
+
+let lastSyncedLabel = null;
+
+// ── 개선품질 CSV 로드 (추후 노션 연동 전까지 유지) ─────────────────────
+const BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  ? '../data/' : 'https://raw.githubusercontent.com/ggumbi-cs/dashboard/main/data/';
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const header = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,''));
+  return lines.slice(1).map(line => {
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let c of line) {
+      if (c==='"') { inQ=!inQ; }
+      else if (c===',' && !inQ) { cols.push(cur.trim()); cur=''; }
+      else cur += c;
+    }
+    cols.push(cur.trim());
+    const obj = {};
+    header.forEach((h,i) => obj[h] = (cols[i]||'').replace(/^"|"$/g,'').trim() || null);
+    return obj;
+  });
+}
+
+function korDateToISO(v) {
+  if (!v) return null;
+  const m = String(v).match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
+  if (m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  if (String(v).match(/^\d{4}-\d{2}-\d{2}/)) return v.slice(0,10);
+  return null;
+}
+
+async function loadImprove() {
+  try {
+    const res = await fetch(BASE + '클로드_개선품질.csv');
+    if (!res.ok) return [];
+    const rows2 = parseCSV(await res.text());
+    return rows2.filter(r => r['구분']).map(r => ({
+      gubun: r['구분'], stage: r['진행단계'],
+      reg: korDateToISO(r['등록일']), comp: korDateToISO(r['완료일']),
+      prod: r['제품명'], kw: r['핵심키워드'],
+      subject: r['주제'], link: r['링크'] || null,
+    }));
+  } catch(e) { return []; }
+}
+
+// ── 집계 로드 (GAS 사전집계값만 수신 → 즉시 로딩) ──────────────────
+async function loadData(forceSync) {
+  try {
+    document.getElementById('loading').textContent = forceSync
+      ? '🔄 노션과 동기화 중...'
+      : '📊 집계 데이터 불러오는 중...';
+
+    if (forceSync) {
+      const sr = await fetch(`${GAS_URL}?action=sync`);
+      const sj = await sr.json();
+      if (sj && sj.error) throw new Error('동기화 오류: ' + sj.error);
+      lastSyncedLabel = sj.lastSynced ? new Date(sj.lastSynced).toLocaleString('ko-KR') : '-';
+    }
+
+    const [aggRes, improve] = await Promise.all([
+      fetch(`${GAS_URL}?tab=quality&type=${type}&period=${encodeURIComponent(period)}`),
+      loadImprove()
+    ]);
+    const aggJson = await aggRes.json();
+    if (aggJson && aggJson.error) throw new Error(aggJson.error);
+    if (!forceSync) lastSyncedLabel = aggJson.lastSynced ? new Date(aggJson.lastSynced).toLocaleString('ko-KR') : '동기화 기록 없음';
+
+    return { agg: aggJson.agg || null, improve };
+  } catch(e) {
+    document.getElementById('loading').innerHTML =
+      `<div style="color:#b03030;">❌ 데이터 로드 실패<br><small>${e.message}</small></div>`;
+    return null;
+  }
+}
+
+const TOP_COLORS = [
+  { bar:'#2356a8', shades:['#1a3a7a','#2356a8','#4a7fc1','#7aaee0','#b3d0f0'] },
+  { bar:'#2ab3a3', shades:['#1a7a70','#2ab3a3','#4ecdc0','#87e0d8','#b8ece8'] },
+  { bar:'#f0a030', shades:['#c07010','#f0a030','#f5bf65','#f8d490','#fce8c0'] },
+  { bar:'#e05c6e', shades:['#b02040','#e05c6e','#ea8a98','#f3b8c2','#f8d5da'] },
+  { bar:'#8e5fc4', shades:['#5c2e8a','#8e5fc4','#b896e0','#d4bff0','#ece0fa'] },
+];
+const BIG_COLORS = ['#2356a8','#2ab3a3','#f0a030','#e05c6e','#8e5fc4','#bbb'];
+
+// ── 기간 파싱 → 문자열 비교용 year/month 추출 ────────────────────
+function parsePeriod() {
+  if (type === 'monthly') {
+    const yy = parseInt('20' + period.slice(0,2));
+    const mm = parseInt(period.slice(3,5));
+    return { type:'monthly', year:yy, month:mm };
+  } else if (type === 'yearly') {
+    const yy = parseInt(period);
+    return { type:'yearly', year:yy };
+  } else {
+    const yy = '20' + period.slice(0,2);
+    const mm = period.slice(2,4);
+    const dd = period.slice(4,6);
+    const friday = new Date(parseInt(yy), parseInt(mm)-1, parseInt(dd));
+    const saturday = new Date(friday);
+    saturday.setDate(friday.getDate() - 6);
+    return { type:'weekly', friday, saturday };
+  }
+}
+
+// ── 날짜 매칭: new Date() 없이 문자열 직접 비교 ──────────────────
+function matchDate(dateStr, pi) {
+  if (!dateStr) return false;
+  const parts = dateStr.split('-');
+  const y = parseInt(parts[0]);
+  const m = parseInt(parts[1]);
+  const dayNum = parseInt(parts[2]);
+  if (pi.type === 'monthly') {
+    return y === pi.year && m === pi.month;
+  } else if (pi.type === 'yearly') {
+    return y === pi.year;
+  } else {
+    const d = new Date(y, m-1, dayNum);
+    return d >= pi.saturday && d <= pi.friday;
+  }
+}
+
+function getRecentPeriods(pi) {
+  if (pi.type === 'yearly') {
+    return Array.from({length:12}, (_,i) => ({
+      display: `${i+1}월`,
+      match: dateStr => {
+        if (!dateStr) return false;
+        const parts = dateStr.split('-');
+        return parseInt(parts[0])===pi.year && parseInt(parts[1])===(i+1);
+      }
+    }));
+  }
+  if (pi.type === 'monthly') {
+    // 2026년 1월 이전으로 가지 않도록 제한
+    const periods = [];
+    for (let i = 0; i < 4; i++) {
+      let m = pi.month - (3-i), y = pi.year;
+      if (m <= 0) { m += 12; y--; }
+      if (y < 2026 || (y === 2026 && m < 1)) continue; // 2026-01 미만 제외
+      const yStr = String(y).slice(2).padStart(2,'0');
+      const mStr = String(m).padStart(2,'0');
+      periods.push({
+        display: `${yStr}.${mStr}월`,
+        match: dateStr => {
+          if (!dateStr) return false;
+          const parts = dateStr.split('-');
+          return parseInt(parts[0])===y && parseInt(parts[1])===m;
+        }
+      });
+    }
+    return periods;
+  } else {
+    return Array.from({length:4}, (_,i) => {
+      const fri = new Date(pi.friday.getFullYear(), pi.friday.getMonth(), pi.friday.getDate());
+      fri.setDate(fri.getDate() - (3-i)*7);
+      const sat = new Date(fri); sat.setDate(fri.getDate() - 6);
+      return {
+        display: `${String(fri.getMonth()+1).padStart(2,'0')}.${String(fri.getDate()).padStart(2,'0')}주`,
+        match: dateStr => {
+          if (!dateStr) return false;
+          const p = dateStr.split('-');
+          const d = new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]));
+          return d >= sat && d <= fri;
+        }
+      };
+    });
+  }
+}
+
+function shortName(name) {
+  if (!name) return '-';
+  let n = name.replace(/\[집계\]\s*/g,'').replace(/\[.*?\]\s*/g,'').trim();
+  return n.length > 12 ? n.slice(0,11)+'..' : n;
+}
+
+function buildDonut(cx, cy, r, sw, vals, colors, total) {
+  const C = 2 * Math.PI * r;
+  const GAP = 1.5;
+  let offset = 0;
+  return vals.map((v, i) => {
+    const dash = Math.max(0, C * (v/total) - GAP);
+    const space = C - dash;
+    const out = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${colors[i]}" stroke-width="${sw}" stroke-dasharray="${dash.toFixed(2)} ${space.toFixed(2)}" stroke-dashoffset="${(-offset + GAP/2).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    offset += C * (v/total);
+    return out;
+  }).join('');
+}
+
+// ── 스파크라인 SVG ────────────────────────────────────────────────
+function buildSparkline(vals, color) {
+  const w = 100, h = 36;
+  const max = Math.max(...vals, 1);
+  const min = 0;
+  const points = vals.map((v, i) => {
+    const x = (i / (vals.length - 1)) * w;
+    const y = h - ((v - min) / (max - min)) * (h - 4) - 2;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="display:block;">
+    <polyline points="${points}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>`;
+}
+
+// ── 스파크라인 데이터 집계 ────────────────────────────────────────
+function getSparkData(improve, pi, gubun) {
+  if (pi.type === 'yearly') {
+    return Array.from({length:12}, (_,i) =>
+      improve.filter(r => {
+        if (!r.reg) return false;
+        const parts = r.reg.split('-');
+        return parseInt(parts[0])===pi.year && parseInt(parts[1])===(i+1) && r.gubun?.includes(gubun);
+      }).length
+    );
+  }
+  if (pi.type === 'monthly') {
+    // 2026년 1월 ~ 현재 월까지
+    const months = [];
+    for (let m = 1; m <= pi.month; m++) {
+      months.push({ y: pi.year, m });
+    }
+    return months.map(({y, m}) =>
+      improve.filter(r => {
+        if (!r.reg) return false;
+        const parts = r.reg.split('-');
+        return parseInt(parts[0])===y && parseInt(parts[1])===m && r.gubun?.includes(gubun);
+      }).length
+    );
+  } else {
+    // 최근 6주
+    return Array.from({length:6}, (_,i) => {
+      const fri = new Date(pi.friday.getFullYear(), pi.friday.getMonth(), pi.friday.getDate());
+      fri.setDate(fri.getDate() - (5-i)*7);
+      const sat = new Date(fri); sat.setDate(fri.getDate() - 6);
+      return improve.filter(r => {
+        if (!r.reg) return false;
+        const p = r.reg.split('-');
+        const d = new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]));
+        return d >= sat && d <= fri && r.gubun?.includes(gubun);
+      }).length;
+    });
+  }
+}
+
+function getTotalSparkData(improve, pi) {
+  if (pi.type === 'yearly') {
+    return Array.from({length:12}, (_,i) =>
+      improve.filter(r => {
+        if (!r.reg) return false;
+        const parts = r.reg.split('-');
+        return parseInt(parts[0])===pi.year && parseInt(parts[1])===(i+1);
+      }).length
+    );
+  }
+  if (pi.type === 'monthly') {
+    const months = [];
+    for (let m = 1; m <= pi.month; m++) {
+      months.push({ y: pi.year, m });
+    }
+    return months.map(({y, m}) =>
+      improve.filter(r => {
+        if (!r.reg) return false;
+        const parts = r.reg.split('-');
+        return parseInt(parts[0])===y && parseInt(parts[1])===m;
+      }).length
+    );
+  } else {
+    return Array.from({length:6}, (_,i) => {
+      const fri = new Date(pi.friday.getFullYear(), pi.friday.getMonth(), pi.friday.getDate());
+      fri.setDate(fri.getDate() - (5-i)*7);
+      const sat = new Date(fri); sat.setDate(fri.getDate() - 6);
+      return improve.filter(r => {
+        if (!r.reg) return false;
+        const p = r.reg.split('-');
+        const d = new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]));
+        return d >= sat && d <= fri;
+      }).length;
+    });
+  }
+}
+
+function stageBadge(s) {
+  if (!s) return '-';
+  if (s.includes('개선요청'))   return `<span class="badge badge-blue">${s}</span>`;
+  if (s.includes('샘플테스트')) return `<span class="badge badge-orange">${s}</span>`;
+  if (s.includes('취소')||s.includes('중단')) return `<span class="badge badge-gray">${s}</span>`;
+  if (s.includes('완료'))       return `<span class="badge badge-green">${s}</span>`;
+  if (s.includes('보완')||s.includes('피드백')) return `<span class="badge badge-red">${s}</span>`;
+  return `<span class="badge badge-blue">${s}</span>`;
+}
+function gubunBadge(g) {
+  if (!g) return '-';
+  if (g.includes('개선')) return `<span class="badge badge-blue">${g}</span>`;
+  if (g.includes('스펙')) return `<span class="badge badge-green">${g}</span>`;
+  return `<span class="badge badge-gray">${g}</span>`;
+}
+
+function render(agg, improve) {
+  // agg가 없으면 (집계 데이터 없음) 빈 화면 표시
+  if (!agg) {
+    document.getElementById('loading').innerHTML =
+      `<div style="color:var(--text2);padding:40px;text-align:center;">해당 기간 집계 데이터가 없습니다.<br><small>노션 동기화 후 다시 시도해 주세요.</small></div>`;
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('content').style.display = 'none';
+    return;
+  }
+
+  const pi = parsePeriod();
+
+  // ── GAS 사전집계에서 값 꺼내기 ──
+  const total    = agg.total || 0;
+  const top5     = agg.top5  || [];   // [{name, cnt, pct, faults:[{0:name,1:cnt}]}]
+  const othersVal= agg.othersVal || 0;
+  const trendData= (agg.trend || []).map(t => ({
+    label: t.label,
+    교환: t['교환'] || t['\uad50\ud658/\ud658\ubd88'] || 0,
+    자재: t['\uc790\uc7ac\ucd9c\uace0'] || 0,
+    수리: t['\uc218\ub9ac\ucd9c\uace0'] || 0,
+    total: (t['교환'] || t['\uad50\ud658/\ud658\ubd88'] || 0) + (t['\uc790\uc7ac\ucd9c\uace0'] || 0) + (t['\uc218\ub9ac\ucd9c\uace0'] || 0)
+  }));
+
+  // ── 개선품질 집계 (CSV에서 직접 계산 — 추후 노션 연동 시 agg로 이전) ──
+  const improveFiltered = improve.filter(r => r.reg && matchDate(r.reg, pi));
+  const kpiTotal   = improveFiltered.length;
+  const kpiRequest = improveFiltered.filter(r=>r.gubun?.includes('사후개선')).length;
+  const kpiSample  = improveFiltered.filter(r=>r.gubun?.includes('출시전검사')).length;
+  const kpiCancel  = improveFiltered.filter(r=>r.gubun?.includes('스펙비교')).length;
+
+  const sparkTotal   = buildSparkline(getTotalSparkData(improve, pi), '#e05c6e');
+  const sparkRequest = buildSparkline(getSparkData(improve, pi, '사후개선'), '#e05c6e');
+  const sparkSample  = buildSparkline(getSparkData(improve, pi, '출시전검사'), '#e05c6e');
+  const sparkCancel  = buildSparkline(getSparkData(improve, pi, '스펙비교'), '#e05c6e');
+
+  // ── 빅 도넛 ──
+  const bigItems  = agg.bigDonut || [];
+  const bigVals   = bigItems.map(d => d.val);
+  const bigColors2= bigItems.map((_,i) => BIG_COLORS[i] || '#ccc');
+  const bigSVG    = total > 0 ? buildDonut(75,75,58,22,bigVals,bigColors2,total) : '';
+  const bigLegend = top5.map((t,i) => {
+    return `<div class="dlegend-row"><span class="dlegend-label"><span class="ldot" style="background:${BIG_COLORS[i]};"></span>${shortName(t.name)}</span><span class="dlegend-val">${t.pct}% (${t.cnt}건)</span></div>`;
+  }).join('') + (othersVal > 0
+    ? `<div class="dlegend-row"><span class="dlegend-label"><span class="ldot" style="background:#bbb;"></span>기타</span><span class="dlegend-val">${total ? ((othersVal/total)*100).toFixed(1) : 0}% (${othersVal}건)</span></div>`
+    : '');
+
+  // ── Top 카드 ──
+  function topCard(rank, name, val, c) {
+    const pct = total ? ((val/total)*100).toFixed(0) : 0;
+    return `<div class="top-card"><div class="top-card-bar" style="background:${c.bar};"></div><div class="top-card-body"><div class="top-rank" style="color:${c.bar};">TOP${rank}</div><div class="top-name" title="${name}">${shortName(name)}</div><div class="top-count">${val}건 · ${pct}%</div></div></div>`;
+  }
+  const emptyCard = `<div class="top-card"><div class="top-card-bar" style="background:#eee;"></div><div class="top-card-body"><div class="top-rank" style="color:#ccc;">-</div><div class="top-name" style="color:#ccc;">-</div></div></div>`;
+  const topCards  = [...top5.map((t,i) => topCard(i+1, t.name, t.cnt, TOP_COLORS[i])), ...Array(Math.max(0,5-top5.length)).fill(emptyCard)].join('');
+
+  // ── Top 도넛 카드 ──
+  function topDonutCard(rank, t, c) {
+    const faults = t.faults || [];
+    const faultTotal = faults.reduce((s,f) => s + (f[1]||f.cnt||0), 0);
+    const topFaults  = faults.slice(0, 5);
+    const C = 2 * Math.PI * 30;
+    let donutSVG = '';
+    if (topFaults.length > 0 && faultTotal > 0) {
+      const fVals = topFaults.map(f => f[1]||f.cnt||0);
+      const otherF = faultTotal - fVals.reduce((s,v)=>s+v,0);
+      if (otherF > 0) fVals.push(otherF);
+      donutSVG = buildDonut(40,40,30,13,fVals,c.shades,faultTotal);
+    } else {
+      donutSVG = `<circle cx="40" cy="40" r="30" fill="none" stroke="${c.shades[0]}" stroke-width="13" stroke-dasharray="${C.toFixed(2)} 0" stroke-dashoffset="1.5" transform="rotate(-90 40 40)"/>`;
+    }
+    const legendHTML = topFaults.length > 0
+      ? topFaults.map((f,i) => {
+          const fn = (f[0]||f.name||''); const fv = f[1]||f.cnt||0;
+          const pct = faultTotal ? ((fv/faultTotal)*100).toFixed(1) : 0;
+          const fnS = fn.length > 6 ? fn.slice(0,5)+'..' : fn;
+          return `<div class="dlegend-row"><span class="dlegend-label"><span class="ldot" style="background:${c.shades[i]||c.shades[c.shades.length-1]};"></span>${fnS}</span><span class="dlegend-val">${pct}% (${fv})</span></div>`;
+        }).join('')
+      : `<div class="dlegend-row"><span style="color:#aaa;font-size:9px;">불량 데이터 없음</span></div>`;
+    return `
+    <div class="sm-donut-card">
+      <div class="sm-card-title">Top.${rank} ${shortName(t.name)}</div>
+      <div class="sm-donut-inner">
+        <div class="donut-rel" style="width:80px;height:80px;">
+          <svg viewBox="0 0 80 80" width="80" height="80">
+            ${donutSVG}
+            <circle cx="40" cy="40" r="25" style="fill:var(--surface);"/>
+          </svg>
+          <div class="dcenter"><span style="font-size:13px;font-weight:700;color:var(--text);">${t.cnt}</span><br><span style="font-size:8px;color:var(--text2);">건</span></div>
+        </div>
+        <div class="dlegend">${legendHTML}</div>
+      </div>
+    </div>`;
+  }
+
+  // ── 불량 추이 막대 ──
+  const maxH = Math.max(...trendData.map(d=>d.total), 1);
+  const BAR  = 65;
+  const trendBars = trendData.map(d => {
+    const h교환 = Math.round((d.교환/maxH)*BAR);
+    const h자재 = Math.round((d.자재/maxH)*BAR);
+    const h수리 = Math.round((d.수리/maxH)*BAR);
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+      <span style="font-size:9px;font-weight:700;color:var(--heading);">${d.total||''}</span>
+      <div style="width:24px;border-radius:3px 3px 0 0;overflow:hidden;display:flex;flex-direction:column;">
+        <div style="height:${h교환}px;background:#e05c6e;"></div>
+        <div style="height:${h자재}px;background:#f0a0b0;"></div>
+        <div style="height:${h수리}px;background:#f8d0d8;"></div>
+      </div>
+      <span style="font-size:9px;color:var(--text2);">${d.label}</span>
+    </div>`;
+  }).join('');
+
+  // ── 개선 테이블 ──
+  const tableRows = improveFiltered.length === 0
+    ? `<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:12px;">해당 기간 데이터 없음</td></tr>`
+    : improveFiltered.map(r => `<tr>
+        <td>${gubunBadge(r.gubun)}</td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.prod||''}">${r.prod||'-'}</td>
+        <td>${r.kw?`<span class="badge badge-orange">${r.kw}</span>`:'-'}</td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.subject||''}">${r.subject||'-'}</td>
+        <td>${stageBadge(r.stage)}</td>
+      </tr>`).join('');
+
+  const periodLabel = type==='monthly' ? `월간 · ${period}` : type==='yearly' ? `연간 · ${period}년` : `주간 · ${period}`;
+  const trendLabel  = type==='monthly' ? '월별' : type==='yearly' ? '월별' : '주별';
+  const lastLabel   = trendData[trendData.length-1]?.label || '';
+
+  document.getElementById('content').innerHTML = `
+  <div class="section-wrap">
+    <div class="sec-header sec-red">1. 불량 TOP5 (접수일 기준)</div>
+    <div class="row1">
+      <div style="background:var(--surface);border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.08);overflow:hidden;">
+        <div style="height:5px;background:#b03030;"></div>
+        <div style="padding:10px 12px;">
+          <div class="card-title">불량인입 건수</div>
+          <div class="inflow-num">${total}</div>
+          <div style="font-size:10px;color:var(--text2);">${type==='monthly'?'월간':'주간'} 기준</div>
+        </div>
+      </div>
+      ${topCards}
+    </div>
+    <div class="row23-grid">
+      <div class="big-donut-card">
+        <div class="card-title">제품 불량 발생 비율 &nbsp;<span style="color:var(--text3);">총 ${total}건</span></div>
+        <div style="display:flex;justify-content:center;margin:12px 0 14px;">
+          <div class="donut-rel" style="width:150px;height:150px;">
+            <svg viewBox="0 0 150 150" width="150" height="150">
+              ${bigSVG}
+              <circle cx="75" cy="75" r="53" style="fill:var(--surface);"/>
+            </svg>
+            <div class="dcenter"><span style="font-size:22px;font-weight:700;color:var(--text);">${total}</span><br><span style="font-size:10px;color:var(--text2);">건</span></div>
+          </div>
+        </div>
+        <div class="dlegend" style="font-size:10px;">${bigLegend}</div>
+      </div>
+      ${top5[0]?topDonutCard(1,top5[0],TOP_COLORS[0]):'<div class="sm-donut-card"><div class="sm-card-title">Top.1 -</div></div>'}
+      ${top5[1]?topDonutCard(2,top5[1],TOP_COLORS[1]):'<div class="sm-donut-card"><div class="sm-card-title">Top.2 -</div></div>'}
+      ${top5[2]?topDonutCard(3,top5[2],TOP_COLORS[2]):'<div class="sm-donut-card"><div class="sm-card-title">Top.3 -</div></div>'}
+      <div style="grid-column:2;grid-row:2;">${top5[3]?topDonutCard(4,top5[3],TOP_COLORS[3]):'<div class="sm-donut-card" style="height:100%;box-sizing:border-box;"><div class="sm-card-title">Top.4 -</div></div>'}</div>
+      <div style="grid-column:3;grid-row:2;">${top5[4]?topDonutCard(5,top5[4],TOP_COLORS[4]):'<div class="sm-donut-card" style="height:100%;box-sizing:border-box;"><div class="sm-card-title">Top.5 -</div></div>'}</div>
+      <div class="sm-donut-card" style="grid-column:4;grid-row:2;">
+        <div class="sm-card-title">불량 추이 — ${trendLabel}</div>
+        <div style="font-size:9px;color:var(--text3);margin-bottom:10px;">${lastLabel}까지 누적 · 접수일 기준</div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-around;height:88px;margin-bottom:6px;">${trendBars}</div>
+        <div style="display:flex;gap:8px;font-size:9px;color:var(--text3);">
+          <span><span class="ldot" style="background:#e05c6e;"></span>교환/환불</span>
+          <span><span class="ldot" style="background:#f0a0b0;"></span>자재출고</span>
+          <span><span class="ldot" style="background:#f8d0d8;"></span>수리출고</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="section-wrap">
+    <div class="sec-header sec-green">2. 품질 개선 현황</div>
+    <div class="kpi-row">
+      <div class="kpi-card" style="display:flex;align-items:center;gap:60px;">
+        <div><div class="kpi-label">총 개선 건수</div><div class="kpi-val">${kpiTotal}</div><div class="kpi-sub">${periodLabel} · 등록일 기준</div></div>
+        <div style="opacity:0.7;">${sparkTotal}</div>
+      </div>
+      <div class="kpi-card" style="display:flex;align-items:center;gap:60px;">
+        <div><div class="kpi-label">사후개선</div><div class="kpi-val">${kpiRequest}</div></div>
+        <div style="opacity:0.7;">${sparkRequest}</div>
+      </div>
+      <div class="kpi-card" style="display:flex;align-items:center;gap:60px;">
+        <div><div class="kpi-label">출시전검사</div><div class="kpi-val">${kpiSample}</div></div>
+        <div style="opacity:0.7;">${sparkSample}</div>
+      </div>
+      <div class="kpi-card" style="display:flex;align-items:center;gap:60px;">
+        <div><div class="kpi-label">스펙비교</div><div class="kpi-val">${kpiCancel}</div></div>
+        <div style="opacity:0.7;">${sparkCancel}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:8px;">개선 항목 상세 목록 &nbsp;<span style="color:#aaa;">${periodLabel} · 총 ${kpiTotal}건</span></div>
+      <table class="improve-table">
+        <thead><tr><th>구분</th><th>제품명</th><th>핵심키워드</th><th>주제</th><th>진행단계</th></tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+  </div>`;
+
+  document.getElementById('loading').style.display='none';
+  document.getElementById('content').style.display='block';
+}
+
+
+
+
+// ── 토스트
+function showToast(msg, bg) {
+  let el = document.getElementById('summary-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'summary-toast';
+    el.style.cssText = 'display:none;position:fixed;bottom:18px;right:18px;background:#0f1f3d;color:#fff;font-size:12px;padding:8px 16px;border-radius:6px;z-index:9999;';
+    document.body.appendChild(el);
+  }
+  el.textContent=msg; el.style.background=bg||'#0f1f3d'; el.style.display='block';
+  setTimeout(()=>{ el.style.display='none'; }, 3000);
+}
+
+// ── 마감 데이터 구글시트 저장 (agg + improve 기반)
+async function saveSummaryToSheet() {
+  const btn = document.getElementById('btn-save-summary');
+  if (btn) { btn.disabled=true; btn.textContent='저장 중...'; }
+  try {
+    const [aggRes, improve] = await Promise.all([
+      fetch(`${GAS_URL}?tab=quality&type=${type}&period=${encodeURIComponent(period)}`),
+      loadImprove()
+    ]);
+    const aggJson = await aggRes.json();
+    const agg = aggJson.agg;
+    if (!agg) throw new Error('집계 데이터 없음. 먼저 동기화해 주세요.');
+    const pi = parsePeriod();
+    const impFiltered = improve.filter(r => r.reg && matchDate(r.reg, pi));
+    const stageMap = {};
+    impFiltered.forEach(r => { if(r.stage) stageMap[r.stage]=(stageMap[r.stage]||0)+1; });
+    const gubunMap = {};
+    impFiltered.forEach(r => { if(r.gubun) gubunMap[r.gubun]=(gubunMap[r.gubun]||0)+1; });
+    const improveList = impFiltered.map(r => ({
+      구분: r.gubun, 진행단계: r.stage, 제품명: r.prod,
+      핵심키워드: r.kw, 주제: r.subject, 등록일: r.reg, 완료일: r.comp,
+    }));
+    const periodLabel = pi.type==='monthly'
+      ? `${String(pi.year).slice(2)}.${String(pi.month).padStart(2,'0')}월`
+      : pi.type==='weekly'
+        ? `${String(pi.friday.getFullYear()).slice(2)}${String(pi.friday.getMonth()+1).padStart(2,'0')}${String(pi.friday.getDate()).padStart(2,'0')}`
+        : String(pi.year);
+    const summaryData = {
+      period: pi.type, round: periodLabel,
+      접수총계: agg.total,
+      TOP5제품별: Object.fromEntries((agg.top5||[]).map(t => [t.name, { 총건수:t.cnt, 비율:t.pct+'%', 접수불량항목: Object.fromEntries((t.faults||[]).map(f=>[f[0]||f.name, f[1]||f.cnt])) }])),
+      불량추이: (agg.trend||[]).map(t => ({ 기간:t.label, 총계:(t['교환']||0)+(t['자재']||0)+(t['수리']||0), 교환환불:t['교환']||0, 자재출고:t['자재']||0, 수리출고:t['수리']||0 })),
+      구분별접수: agg.gubun||{},
+      개선총계: impFiltered.length, 개선구분별: gubunMap, 개선단계별: stageMap, 개선항목목록: improveList,
+    };
+    const resp = await fetch(SCRIPT_URL, {
+      method:'POST',
+      body: JSON.stringify({ action:'saveSummary', tab:'품질관리', period: periodLabel, data: summaryData })
+    });
+    const json = await resp.json();
+    showToast(json.ok?`✓ 저장 완료 (${json.mode==='update'?'갱신':'신규'})`:'⚠ 저장 실패: '+json.msg, json.ok?'#0f1f3d':'#991b1b');
+  } catch(e) {
+    showToast('⚠ 오류: '+e.message,'#991b1b');
+  } finally {
+    if (btn) { btn.disabled=false; btn.textContent='☁ 이번 마감 데이터 AI에 전달'; }
+  }
+}
+
+// ── 노션 수동 동기화 ──────────────────────────────────────────────────
+let syncTimerInterval = null;
+
+async function manualSync() {
+  const btn = document.getElementById('btn-sync-notion');
+  if (btn) btn.disabled = true;
+  let elapsed = 0;
+  syncTimerInterval = setInterval(() => {
+    elapsed += 1;
+    if (btn) btn.textContent = `🔄 동기화 중... (${elapsed}초)`;
+  }, 1000);
+  try {
+    const data = await loadData(true);
+    if (data) {
+      render(data.agg, data.improve);
+      injectControlBar();
+      showToast('✓ 노션 동기화 완료', '#0f1f3d');
+    }
+  } catch(e) {
+    showToast('⚠ 동기화 실패: ' + e.message, '#991b1b');
+  } finally {
+    clearInterval(syncTimerInterval);
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 노션 수동 동기화'; }
+  }
+}
+
+function injectControlBar() {
+  const old = document.getElementById('control-bar');
+  if (old) old.remove();
+  const bar = document.createElement('div');
+  bar.id = 'control-bar';
+  bar.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;';
+  bar.innerHTML = `
+    <div style="font-size:10px;color:var(--text2);">📅 마지막 노션 동기화: ${lastSyncedLabel || '-'} <span style="color:var(--text3);">(매일 자정 자동 동기화)</span></div>
+    <div style="display:flex;gap:8px;">
+      <button id="btn-sync-notion" onclick="manualSync()" style="font-size:12px;font-weight:600;padding:7px 16px;background:#2a7a6f;color:#fff;border:none;border-radius:6px;cursor:pointer;">🔄 노션 수동 동기화</button>
+      <button id="btn-save-summary" onclick="saveSummaryToSheet()" style="font-size:12px;font-weight:600;padding:7px 16px;background:#2356a8;color:#fff;border:none;border-radius:6px;cursor:pointer;">☁ 이번 마감 데이터 AI에 전달</button>
+    </div>
+  `;
+  const content2 = document.getElementById('content');
+  if (content2) content2.insertAdjacentElement('beforebegin', bar);
+}
+
+// ── 진입점 ───────────────────────────────────────────────────────────
+async function main() {
+  const data = await loadData(false);
+  if (!data) return;
+  render(data.agg, data.improve);
+  injectControlBar();
+}
+
+main();
+
+window.addEventListener('message', function(e){
+  if (e && e.data && e.data.type === 'THEME') {
+    document.body.classList.toggle('dark-mode', e.data.mode === 'dark');
+  }
+});
+</script>
+</body>
+</html>

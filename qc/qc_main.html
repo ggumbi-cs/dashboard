@@ -1834,11 +1834,27 @@ async function pushSectionDirectToGithub(sectionKey, records, statusEl) {
     let getJson;
     try { getJson = JSON.parse(getText); }
     catch (e) { throw new Error(`GitHub 응답이 JSON이 아님 (HTTP ${getRes.status}): ${getText.slice(0,150)}`); }
-    if (!getRes.ok || !getJson.content) {
+    if (!getRes.ok || !getJson.sha) {
       throw new Error(`조회 실패 (HTTP ${getRes.status} ${getRes.statusText}): ${getJson.message || getText.slice(0,150)}`);
     }
 
-    const payload = JSON.parse(base64ToUtf8(getJson.content));
+    // qc_data.json은 1MB가 넘어서(Contents API는 1MB 초과 파일은 GET 응답에 content를 안 실어줌),
+    // sha로 Git Blob API에서 직접 content를 받아온다. 1MB 이하일 땐 getJson.content가 이미 있으므로 생략.
+    let base64Content = getJson.content;
+    if (!base64Content) {
+      const blobUrl = `https://api.github.com/repos/ggumbi-cs/dashboard/git/blobs/${getJson.sha}`;
+      const blobRes  = await fetch(blobUrl, { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github+json' } });
+      const blobText = await blobRes.text();
+      let blobJson;
+      try { blobJson = JSON.parse(blobText); }
+      catch (e) { throw new Error(`blob 응답이 JSON이 아님 (HTTP ${blobRes.status}): ${blobText.slice(0,150)}`); }
+      if (!blobRes.ok || !blobJson.content) {
+        throw new Error(`blob 조회 실패 (HTTP ${blobRes.status} ${blobRes.statusText}): ${blobJson.message || blobText.slice(0,150)}`);
+      }
+      base64Content = blobJson.content;
+    }
+
+    const payload = JSON.parse(base64ToUtf8(base64Content));
     const now = new Date().toISOString();
     payload[sectionKey] = { records, lastSynced: now, source: '수동(브라우저직접)' };
     payload.lastSynced = now;

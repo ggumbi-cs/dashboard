@@ -1682,8 +1682,8 @@ const CSV_HEADER_SIGNATURES = {
 
 function getCsvHeaders(text) {
   const t = text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
-  const firstLine = t.split(/\r\n|\n/).find(l => l.length > 0) || '';
-  return splitCsvLine(firstLine).map(h => h.trim());
+  const rows = parseCsvRows(t);
+  return (rows[0] || []).map(h => h.trim());
 }
 
 function guessCsvSectionByHeaders(headers) {
@@ -1708,35 +1708,61 @@ function extractKoreanLabel(filename) {
   return base.slice(0, lastKorIdx + 1).trim();
 }
 
-function splitCsvLine(line) {
-  const result = []; let cur = ''; let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"') {
-      if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if (c === ',' && !inQuotes) { result.push(cur); cur = ''; }
-    else cur += c;
+// 따옴표로 감싼 셀 안의 줄바꿈(멀티라인 텍스트)·쉼표까지 올바르게 처리하는 완전한 CSV 파서.
+// (예전엔 텍스트를 줄바꿈 기준으로 먼저 나눈 뒤 각 줄을 파싱했는데, 노션의
+// 멀티라인 텍스트 속성이 셀 안에 실제 줄바꿈을 포함하면 그 지점에서 행이 둘로 쪼개져 데이터가
+// 밀리는 문제가 있었다. 전체 텍스트를 문자 단위로 훑으면서 따옴표 안/밖을 추적해야 안전하다.)
+function parseCsvRows(text) {
+  const rows = []; let row = []; let cur = ''; let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i+1] === '"') { cur += '"'; i++; }
+        else inQuotes = false;
+      } else {
+        cur += c;
+      }
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ',') {
+      row.push(cur); cur = '';
+    } else if (c === '\r') {
+      // \n에서 행을 종료하므로 무시
+    } else if (c === '\n') {
+      row.push(cur); cur = ''; rows.push(row); row = [];
+    } else {
+      cur += c;
+    }
   }
-  result.push(cur);
-  return result;
+  if (cur.length > 0 || row.length > 0) { row.push(cur); rows.push(row); }
+  return rows.filter(r => !(r.length === 1 && r[0].trim() === ''));
+}
+
+// 노션 CSV는 날짜를 "2025년 7월 14일" 같은 한글 형식으로 내보내는데, 대시보드 페이지들은
+// 전부 접수일/처리일 등을 "YYYY-MM-DD" ISO 문자열 비교로 기간을 필터링한다 (노션 API로 받으면
+// 원래 ISO 형식이라 그동안 문제가 없었음). CSV로 들어온 값은 여기서 ISO로 맞춰준다.
+function normalizeCsvValue(v) {
+  const m = /^(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/.exec(v);
+  if (!m) return v;
+  return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
 }
 
 // 헤더명 기준 매칭 (순서 바뀌어도 무관)
 function parseCsvToRecords(text) {
   text = text.replace(/^\uFEFF/, '');
-  const lines = text.split(/\r\n|\n/).filter(l => l.length > 0);
-  if (!lines.length) return [];
-  const headers = splitCsvLine(lines[0]).map(h => h.trim());
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const cols = splitCsvLine(lines[i]);
+  const rows = parseCsvRows(text);
+  if (!rows.length) return [];
+  const headers = rows[0].map(h => h.trim());
+  const records = [];
+  for (let i = 1; i < rows.length; i++) {
+    const cols = rows[i];
     if (cols.length === 1 && cols[0].trim() === '') continue;
     const obj = {};
-    headers.forEach((h, idx) => { obj[h] = (cols[idx] !== undefined ? cols[idx] : '').trim(); });
-    rows.push(obj);
+    headers.forEach((h, idx) => { obj[h] = normalizeCsvValue((cols[idx] !== undefined ? cols[idx] : '').trim()); });
+    records.push(obj);
   }
-  return rows;
+  return records;
 }
 
 // zip(이중압축 포함) → 내부 csv 전부 추출, _all.csv 우선

@@ -195,8 +195,21 @@ html, body { width:100%; height:100vh; overflow:hidden; background:var(--bg); co
 .stat-foot { display:flex; align-items:center; justify-content:space-between; font-size:10px; color:var(--text3); position:relative; z-index:1; }
 .stat-latest { font-family:var(--font-en); }
 
-/* 보고서 검색 시스템 (전체 리스트와 동일한 al-toolbar/al-cat-tabs/result-table 재사용) */
+/* 보고서 검색 시스템 */
 #searchSection { margin-bottom:32px; }
+.search-bar { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+.search-input-wrap { flex:1; min-width:220px; position:relative; }
+.search-input-wrap input {
+  width:100%; height:38px; background:var(--bg2); border:1px solid var(--border);
+  border-radius:10px; padding:0 14px 0 36px; font-size:12.5px; color:var(--text);
+  font-family:var(--font-kr); outline:none; transition:border-color 0.15s;
+}
+.search-input-wrap input:focus { border-color:var(--border2); }
+.search-input-wrap .si-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:13px; color:var(--text3); }
+.search-filter {
+  height:38px; background:var(--bg2); border:1px solid var(--border); border-radius:10px;
+  padding:0 12px; font-size:12px; color:var(--text2); font-family:var(--font-kr); cursor:pointer; outline:none;
+}
 .search-btn {
   height:38px; padding:0 18px; background:var(--cyan-dim); border:1px solid var(--border2);
   border-radius:10px; color:var(--cyan); font-size:12.5px; font-weight:600; cursor:pointer;
@@ -204,6 +217,7 @@ html, body { width:100%; height:100vh; overflow:hidden; background:var(--bg); co
 }
 .search-btn:hover { background:rgba(0,200,255,0.2); }
 
+#searchResultWrap { background:var(--bg2); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
 table.result-table { width:100%; border-collapse:collapse; font-size:12px; }
 table.result-table thead th {
   text-align:left; padding:10px 14px; background:var(--bg3); color:var(--text3);
@@ -217,6 +231,7 @@ table.result-table tbody tr:hover { background:var(--bg3); }
 .rtag { font-size:10px; padding:2px 8px; border-radius:8px; background:var(--bg4); border:1px solid var(--border); color:var(--text2); white-space:nowrap; }
 .rtag.issue { background:rgba(255,90,110,0.12); color:var(--red); border-color:rgba(255,90,110,0.2); }
 .rtag.report { background:var(--cyan-dim); color:var(--cyan); border-color:var(--border2); }
+#searchEmpty { padding:40px 20px; text-align:center; color:var(--text3); font-size:12px; }
 
 /* 전체 리스트 뷰 */
 .al-page-col { width:100%; height:100%; display:flex; flex-direction:column; min-height:0; }
@@ -549,49 +564,54 @@ body.is-admin .q-item .item-gear, body.is-admin .stat-card .item-gear { display:
             </div>
           </div>
 
+          <!-- 빠른 바로가기 -->
+          <div id="quickSection">
+            <div class="sec-title">Quick Access <span class="sec-count" id="qCount"></span>
+              <span class="sec-gear" onclick="openSettingModal('quick')" title="퀵액세스 편집">⚙</span>
+            </div>
+            <div id="quickGrid"></div>
+          </div>
+
           <!-- 집계 -->
           <div id="statsSection">
-            <div class="sec-title">Report Statistics &amp; Quick Access <span class="sec-count" id="statTotal"></span>
+            <div class="sec-title">Report Statistics <span class="sec-count" id="statTotal"></span>
               <span class="sec-gear" onclick="openSettingModal('stat')" title="집계카드 편집">⚙</span>
             </div>
             <div id="statsGrid"></div>
           </div>
 
-          <!-- 보고서 검색 시스템 (전체 리스트와 완전히 동일한 툴바/테이블 재사용, scope='home') -->
+          <!-- 보고서 검색 시스템 -->
           <div id="searchSection">
             <div class="sec-title">Report Search</div>
-            <div class="al-toolbar">
-              <div class="al-search-wrap">
-                <span class="al-search-icon">🔎</span>
-                <input type="text" id="homeSearchInput" placeholder="제품명·주제·작성자로 검색..." oninput="onAllListSearch('home')">
+            <div class="search-bar">
+              <div class="search-input-wrap">
+                <span class="si-icon">🔎</span>
+                <input type="text" id="searchInput" placeholder="제품명·주제·작성자·파일명으로 검색..." oninput="runSearch()">
               </div>
-              <div class="al-cat-tabs" id="homeCatTabs">
-                <button class="al-cat-tab home-cat-tab active" data-cat="all" onclick="onCatTabClick('home','all')">전체</button>
-                <button class="al-cat-tab home-cat-tab" data-cat="regular" onclick="onCatTabClick('home','regular')">정기</button>
-                <button class="al-cat-tab home-cat-tab" data-cat="once" onclick="onCatTabClick('home','once')">건별</button>
-                <button class="al-cat-tab home-cat-tab" data-cat="sub" onclick="onCatTabClick('home','sub')">Sub</button>
-                <button class="al-cat-tab home-cat-tab" data-cat="issue" onclick="onCatTabClick('home','issue')">Issue</button>
-                <button class="al-cat-tab home-cat-tab" data-cat="gw" onclick="onCatTabClick('home','gw')">기안서</button>
-              </div>
+              <select class="search-filter" id="searchTypeFilter" onchange="runSearch()">
+                <option value="">전체 구분</option>
+                <option value="regular">정기</option>
+                <option value="once">건별</option>
+                <option value="sub">Sub</option>
+                <option value="issue">Issue</option>
+                <option value="gw">기안서</option>
+              </select>
+              <select class="search-filter" id="searchPeriodFilter" onchange="runSearch()">
+                <option value="">전체 기간</option>
+                <option value="7">최근 7일</option>
+                <option value="30">최근 30일</option>
+                <option value="90">최근 90일</option>
+                <option value="365">최근 1년</option>
+              </select>
             </div>
-            <div id="homeListWrap">
-              <div class="al-table-scroll">
-                <table class="result-table" id="homeListTable" style="display:none;">
-                  <thead>
-                    <tr>
-                      <th style="width:11%;" class="al-th" data-field="visRole" onclick="onSortClick('home','visRole')">열람권한<span class="al-sort-arrow" data-arrow="visRole"></span></th>
-                      <th style="width:7%;" class="al-th" data-field="category" onclick="onSortClick('home','category')">구분<span class="al-sort-arrow" data-arrow="category"></span></th>
-                      <th style="width:9%;" class="al-th" data-field="regDate" onclick="onSortClick('home','regDate')">등록일<span class="al-sort-arrow" data-arrow="regDate"></span></th>
-                      <th style="width:10%;" class="al-th" data-field="author" onclick="onSortClick('home','author')">작성자<span class="al-sort-arrow" data-arrow="author"></span></th>
-                      <th style="width:14%;" class="al-th" data-field="product" onclick="onSortClick('home','product')">제품명<span class="al-sort-arrow" data-arrow="product"></span></th>
-                      <th style="width:36%;" class="al-th" data-field="topic" onclick="onSortClick('home','topic')">주제<span class="al-sort-arrow" data-arrow="topic"></span></th>
-                      <th style="width:13%; text-align:center;">파일명</th>
-                    </tr>
-                  </thead>
-                  <tbody id="homeListBody"></tbody>
-                </table>
-              </div>
-              <div id="homeListEmpty" style="padding:24px; text-align:center; color:var(--text3); font-size:12px;">검색어를 입력하거나 구분을 선택해 보고서를 찾아보세요.</div>
+            <div id="searchResultWrap">
+              <table class="result-table" id="searchResultTable" style="display:none;">
+                <thead>
+                  <tr><th style="width:80px;">구분</th><th style="width:120px;">등록일</th><th style="width:140px;">작성자</th><th style="width:180px;">제품명</th><th>주제</th><th style="width:80px;">열기</th></tr>
+                </thead>
+                <tbody id="searchResultBody"></tbody>
+              </table>
+              <div id="searchEmpty">검색어를 입력하거나 구분·기간을 선택해 보고서를 찾아보세요.</div>
             </div>
           </div>
 
@@ -634,15 +654,15 @@ body.is-admin .q-item .item-gear, body.is-admin .stat-card .item-gear { display:
           <div class="al-toolbar">
             <div class="al-search-wrap">
               <span class="al-search-icon">🔎</span>
-              <input type="text" id="alSearchInput" placeholder="제품명·주제·작성자로 검색..." oninput="onAllListSearch('al')">
+              <input type="text" id="alSearchInput" placeholder="제품명·주제·작성자로 검색..." oninput="onAllListSearch()">
             </div>
             <div class="al-cat-tabs" id="alCatTabs">
-              <button class="al-cat-tab active" data-cat="all" onclick="onCatTabClick('al','all')">전체</button>
-              <button class="al-cat-tab" data-cat="regular" onclick="onCatTabClick('al','regular')">정기</button>
-              <button class="al-cat-tab" data-cat="once" onclick="onCatTabClick('al','once')">건별</button>
-              <button class="al-cat-tab" data-cat="sub" onclick="onCatTabClick('al','sub')">Sub</button>
-              <button class="al-cat-tab" data-cat="issue" onclick="onCatTabClick('al','issue')">Issue</button>
-              <button class="al-cat-tab" data-cat="gw" onclick="onCatTabClick('al','gw')">기안서</button>
+              <button class="al-cat-tab active" data-cat="all" onclick="onCatTabClick('all')">전체</button>
+              <button class="al-cat-tab" data-cat="regular" onclick="onCatTabClick('regular')">정기</button>
+              <button class="al-cat-tab" data-cat="once" onclick="onCatTabClick('once')">건별</button>
+              <button class="al-cat-tab" data-cat="sub" onclick="onCatTabClick('sub')">Sub</button>
+              <button class="al-cat-tab" data-cat="issue" onclick="onCatTabClick('issue')">Issue</button>
+              <button class="al-cat-tab" data-cat="gw" onclick="onCatTabClick('gw')">기안서</button>
             </div>
           </div>
 
@@ -651,12 +671,12 @@ body.is-admin .q-item .item-gear, body.is-admin .stat-card .item-gear { display:
               <table class="result-table" id="allListTable" style="display:none;">
                 <thead>
                   <tr>
-                    <th style="width:11%;" class="al-th" data-field="visRole" onclick="onSortClick('al','visRole')">열람권한<span class="al-sort-arrow" data-arrow="visRole"></span></th>
-                    <th style="width:7%;" class="al-th" data-field="category" onclick="onSortClick('al','category')">구분<span class="al-sort-arrow" data-arrow="category"></span></th>
-                    <th style="width:9%;" class="al-th" data-field="regDate" onclick="onSortClick('al','regDate')">등록일<span class="al-sort-arrow" data-arrow="regDate"></span></th>
-                    <th style="width:10%;" class="al-th" data-field="author" onclick="onSortClick('al','author')">작성자<span class="al-sort-arrow" data-arrow="author"></span></th>
-                    <th style="width:14%;" class="al-th" data-field="product" onclick="onSortClick('al','product')">제품명<span class="al-sort-arrow" data-arrow="product"></span></th>
-                    <th style="width:36%;" class="al-th" data-field="topic" onclick="onSortClick('al','topic')">주제<span class="al-sort-arrow" data-arrow="topic"></span></th>
+                    <th style="width:11%;" class="al-th" data-field="visRole" onclick="onSortClick('visRole')">열람권한<span class="al-sort-arrow" data-arrow="visRole"></span></th>
+                    <th style="width:7%;" class="al-th" data-field="category" onclick="onSortClick('category')">구분<span class="al-sort-arrow" data-arrow="category"></span></th>
+                    <th style="width:9%;" class="al-th" data-field="regDate" onclick="onSortClick('regDate')">등록일<span class="al-sort-arrow" data-arrow="regDate"></span></th>
+                    <th style="width:10%;" class="al-th" data-field="author" onclick="onSortClick('author')">작성자<span class="al-sort-arrow" data-arrow="author"></span></th>
+                    <th style="width:14%;" class="al-th" data-field="product" onclick="onSortClick('product')">제품명<span class="al-sort-arrow" data-arrow="product"></span></th>
+                    <th style="width:36%;" class="al-th" data-field="topic" onclick="onSortClick('topic')">주제<span class="al-sort-arrow" data-arrow="topic"></span></th>
                     <th style="width:13%; text-align:center;">파일명</th>
                   </tr>
                 </thead>
@@ -768,7 +788,7 @@ body.is-admin .q-item .item-gear, body.is-admin .stat-card .item-gear { display:
             <div class="cfg-section-title">로그인 유형별 표시 이름</div>
             <div class="be-role-grid">
               <div class="be-role-row"><span class="be-role-key">관리자 (admin)</span><input type="text" class="cfg-input" id="beRoleAdmin" placeholder="관리자"></div>
-              <div class="be-role-row"><span class="be-role-key">리더 (leader)</span><input type="text" class="cfg-input" id="beRoleLeader" placeholder="리더"></div>
+              <div class="be-role-row"><span class="be-role-key">리더 (leader)</span><input type="text" class="cfg-input" id="beRoleLeader" placeholder="리더급"></div>
               <div class="be-role-row"><span class="be-role-key">꿈비 (ggumbi)</span><input type="text" class="cfg-input" id="beRoleGgumbi" placeholder="꿈비"></div>
               <div class="be-role-row"><span class="be-role-key">계열사 (affiliate)</span><input type="text" class="cfg-input" id="beRoleAffiliate" placeholder="계열사"></div>
               <div class="be-role-row"><span class="be-role-key">미로그인 (visitor)</span><input type="text" class="cfg-input" id="beRoleVisitor" placeholder="방문자"></div>
@@ -819,9 +839,8 @@ body.is-admin .q-item .item-gear, body.is-admin .stat-card .item-gear { display:
 // 로그인 유형(권한) 체계 — 인덱스와 동일
 // ─────────────────────────────────────────────
 const ROLE_ORDER = { admin:0, leader:1, ggumbi:2, affiliate:3 };
-const ROLE_LABEL = { admin:'관리자', leader:'리더', ggumbi:'꿈비', affiliate:'계열사' };
+const ROLE_LABEL = { admin:'관리자', leader:'리더급', ggumbi:'꿈비', affiliate:'계열사' };
 let _userRole = '';
-let _userName = '';
 
 // ─────────────────────────────────────────────
 // Quick Access — 클릭하면 전체 리스트로 이동 + 해당 구분 필터 적용
@@ -846,7 +865,7 @@ const DEFAULT_STATS = [
 const DEFAULT_BANNER = {
   eyebrow:'Report Dashboard', greeting:'안녕하세요,', suffix:' 입니다',
   // 로그인 유형별 표시 이름 (관리자가 ⚙ 배너 편집에서 변경 가능)
-  roleNames: { admin:'관리자', leader:'리더', ggumbi:'꿈비', affiliate:'계열사', visitor:'방문자' }
+  roleNames: { admin:'관리자', leader:'리더급', ggumbi:'꿈비', affiliate:'계열사', visitor:'방문자' }
 };
 const DEFAULT_NOTICE_UPDATE = [{ text:'report_main 홈 화면 설정 기능 추가', date:'v0.4' }];
 const DEFAULT_NOTICE_OPS    = [{ text:'보고서 등록은 전체 리스트의 "추가" 또는 "간편 업로드"를 이용해주세요.', date:'안내' }];
@@ -883,19 +902,17 @@ window.addEventListener('message', e => {
   }
   if (e.data.type === 'SCRIPT_URL') {
     _userRole = e.data.userRole || '';
-    _userName = e.data.userName || '';
     if (_userRole) sessionStorage.setItem('_userRole', _userRole);
-    sessionStorage.setItem('_userName', _userName);
     applyUserInfo();
     renderQuick();
     renderStats();
-    if (_allListLoaded) { renderAllList('al'); renderAllList('home'); }
+    if (_allListLoaded) renderAllList();
     sendRoleToSubFrame();
   }
 });
 
 // 로그인 유형(권한) 체크 — 하위 보고서 공개설정에 사용
-// 예: canAccess('leader') → 리더 이상만 true
+// 예: canAccess('leader') → 리더급 이상만 true
 function canAccess(minRole) {
   if (!minRole) return true;
   return (ROLE_ORDER[_userRole] ?? 99) <= (ROLE_ORDER[minRole] ?? 0);
@@ -903,7 +920,7 @@ function canAccess(minRole) {
 
 function applyUserInfo() {
   const rn = (_bannerCfg && _bannerCfg.roleNames) || DEFAULT_BANNER.roleNames;
-  const label = _userName || rn[_userRole] || ROLE_LABEL[_userRole] || _userRole || rn.visitor || '방문자';
+  const label = rn[_userRole] || ROLE_LABEL[_userRole] || _userRole || rn.visitor || '방문자';
   document.getElementById('sbUser').textContent = label;
   document.getElementById('wbName').textContent = label;
   // 관리자일 때만 ⚙ 설정 버튼들이 보이도록
@@ -914,7 +931,7 @@ function applyUserInfo() {
 function sendRoleToSubFrame() {
   const frame = document.getElementById('subFrame');
   if (!frame || !frame.contentWindow) return;
-  try { frame.contentWindow.postMessage({ type:'SCRIPT_URL', userRole:_userRole, userName:_userName }, '*'); } catch(e) {}
+  try { frame.contentWindow.postMessage({ type:'SCRIPT_URL', userRole:_userRole }, '*'); } catch(e) {}
 }
 function sendThemeToSubFrame(mode) {
   const frame = document.getElementById('subFrame');
@@ -984,9 +1001,7 @@ function setActiveNav(tab) {
 // 렌더링: 퀵액세스 (클릭 시 전체 리스트 + 구분 필터)
 // ─────────────────────────────────────────────
 function renderQuick() {
-  // Quick Access 섹션은 홈 화면에서 제거됨(Report Statistics에 통합) — 관련 DOM이 없으면 아무것도 하지 않음
   const grid = document.getElementById('quickGrid');
-  if (!grid) return;
   document.getElementById('qCount').textContent = _quickItems.length+' items';
   grid.innerHTML = _quickItems.map((it, i) => {
     const locked = !canAccess(it.minRole);
@@ -1004,18 +1019,7 @@ function renderQuick() {
 async function goListWithFilter(cat) {
   showAllList();
   if (!_allListLoaded) { await refreshAllList(); }
-  onCatTabClick('al', cat);
-}
-
-// Report Statistics 카드 클릭 시: 페이지 전환 없이 같은 화면의
-// REPORT SEARCH 영역(전체 리스트와 완전히 동일한 테이블, scope='home')에
-// 해당 구분으로 필터링한 결과를 그대로 띄운다.
-async function filterInSearch(cat) {
-  const searchInput = document.getElementById('homeSearchInput');
-  if (searchInput) searchInput.value = '';
-  _listUI.home.query = '';
-  if (!_allListLoaded) { await refreshAllList(); }
-  onCatTabClick('home', cat);
+  onCatTabClick(cat);
 }
 
 // ─────────────────────────────────────────────
@@ -1038,7 +1042,7 @@ function renderStats() {
     const pct = total ? Math.round(n / total * 100) : 0;
     const latest = items.map(f => f.regDate || '').filter(Boolean).sort().pop() || '-';
     return `
-    <div class="stat-card ${d.cls}${locked?' locked':''}" onclick="${locked?'':`filterInSearch('${d.cat}')`}">
+    <div class="stat-card ${d.cls}${locked?' locked':''}" onclick="${locked?'':`goListWithFilter('${d.cat}')`}">
       <div class="item-gear" onclick="event.stopPropagation(); openSettingModal('stat')">⚙</div>
       <div class="stat-top">
         <span class="stat-icon">${d.icon}${locked?' 🔒':''}</span>
@@ -1082,6 +1086,85 @@ function renderNotices() {
   if (u) u.innerHTML = mk(_noticeUpdate);
   if (o) o.innerHTML = mk(_noticeOps);
 }
+
+// ─────────────────────────────────────────────
+// 보고서 검색 시스템 (전체 리스트와 동일한 실데이터 기반)
+// ─────────────────────────────────────────────
+async function ensureListLoadedForSearch() {
+  if (!_allListLoaded) {
+    try { await refreshAllList(); } catch(e) {}
+  }
+}
+
+function runSearch() {
+  const q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+  const typeFilter = document.getElementById('searchTypeFilter').value;
+  const periodFilter = parseInt(document.getElementById('searchPeriodFilter').value || '0');
+
+  const table = document.getElementById('searchResultTable');
+  const body  = document.getElementById('searchResultBody');
+  const empty = document.getElementById('searchEmpty');
+
+  if (!_allListLoaded) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    empty.textContent = '목록을 불러오는 중입니다...';
+    ensureListLoadedForSearch().then(() => runSearch());
+    return;
+  }
+
+  // 열람권한 필터 → 구분 → 기간 → 검색어
+  let results = _allListRaw.filter(f => canAccess(f.visRole || 'affiliate'));
+
+  if (typeFilter) {
+    const allowed = CAT_TAB_GROUP[typeFilter] || [typeFilter];
+    results = results.filter(f => allowed.includes(f.category));
+  }
+
+  if (periodFilter) {
+    results = results.filter(f => {
+      if (!f.regDate) return false;
+      const diffDays = (Date.now() - new Date(f.regDate).getTime()) / 86400000;
+      return diffDays <= periodFilter;
+    });
+  }
+
+  if (q) {
+    results = results.filter(f =>
+      (f.product||'').toLowerCase().includes(q) ||
+      (f.topic||'').toLowerCase().includes(q) ||
+      (f.author||'').toLowerCase().includes(q) ||
+      (f.name||'').toLowerCase().includes(q)
+    );
+  }
+
+  results.sort((a,b) => (b.regDate||'').localeCompare(a.regDate||''));
+
+  if (!results.length) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    empty.textContent = '검색 결과가 없습니다.';
+    return;
+  }
+
+  body.innerHTML = results.map(f => {
+    const catLabel = CAT_LABEL_MAP[f.category] || f.category;
+    const catCls   = CAT_CLASS_MAP[f.category] || 'issue';
+    const fileUrl  = f.htmlUrl || `${PAGES_BASE}/${f.fileKey}`;
+    return `
+    <tr onclick="openReportPopup('${fileUrl}')">
+      <td><span class="rtag ${catCls}">${catLabel}</span></td>
+      <td>${f.regDate || '-'}</td>
+      <td>${f.author || '-'}</td>
+      <td>${f.product || '-'}</td>
+      <td>${f.topic || '-'}</td>
+      <td><button class="al-open-btn" onclick="event.stopPropagation(); openReportPopup('${fileUrl}')">열기</button></td>
+    </tr>`;
+  }).join('');
+  table.style.display = '';
+  empty.style.display = 'none';
+}
+document.getElementById('searchInput').addEventListener('keydown', e => { if (e.key==='Enter') runSearch(); });
 
 // ═══════════════════════════════════════════
 //  전체 리스트 (건별보고 + Sub + Issue)
@@ -1127,28 +1210,17 @@ async function fetchReportFileList() {
   return data.files; // [{ fileKey, name, category, regDate, author, product, topic, visRole, htmlUrl }, ...]
 }
 
-// scope: 'al'(전체 리스트 전용 화면) | 'home'(홈 화면 Report Search에 내장된 동일 테이블)
-const LIST_SCOPE_IDS = {
-  al:   { table:'allListTable',  empty:'allListEmpty',  body:'allListBody',  tabClass:'al-cat-tab',   searchInput:'alSearchInput' },
-  home: { table:'homeListTable', empty:'homeListEmpty', body:'homeListBody', tabClass:'home-cat-tab', searchInput:'homeSearchInput' },
-};
-
 async function refreshAllList() {
-  ['al','home'].forEach(scope => {
-    const ids = LIST_SCOPE_IDS[scope];
-    const table = document.getElementById(ids.table);
-    const empty = document.getElementById(ids.empty);
-    if (table) table.style.display = 'none';
-    if (empty) { empty.style.display = 'block'; empty.textContent = '불러오는 중...'; }
-  });
+  const table = document.getElementById('allListTable');
+  const empty = document.getElementById('allListEmpty');
+  table.style.display = 'none';
+  empty.style.display = 'block';
+  empty.textContent = '불러오는 중...';
 
   try {
     _allListRaw = await fetchReportFileList();
   } catch(e) {
-    ['al','home'].forEach(scope => {
-      const empty = document.getElementById(LIST_SCOPE_IDS[scope].empty);
-      if (empty) empty.textContent = 'GAS 목록 응답 실패: ' + e.message + ' (GAS listReports 액션 배포 상태를 확인해주세요)';
-    });
+    empty.textContent = 'GAS 목록 응답 실패: ' + e.message + ' (GAS listReports 액션 배포 상태를 확인해주세요)';
     return;
   }
 
@@ -1156,15 +1228,11 @@ async function refreshAllList() {
   renderStats(); // 집계 갱신
 
   if (!_allListRaw.length) {
-    ['al','home'].forEach(scope => {
-      const empty = document.getElementById(LIST_SCOPE_IDS[scope].empty);
-      if (empty) empty.textContent = '아직 등록된 보고서가 없습니다. 우측 상단 "➕ 추가"로 등록해주세요.';
-    });
+    empty.textContent = '아직 등록된 보고서가 없습니다. 우측 상단 "➕ 추가"로 등록해주세요.';
     countSafe(0);
     return;
   }
-  renderAllList('al');
-  renderAllList('home');
+  renderAllList();
 }
 function countSafe(n) { const el = document.getElementById('alCount'); if (el) el.textContent = n + '건'; }
 
@@ -1199,50 +1267,45 @@ async function downloadReport(fileKey, fileName) {
 // 열람권한 최소치 옵션 (관리자만 변경 가능)
 const VIS_ROLE_OPTIONS = [
   { value:'admin',     label:'관리자만' },
-  { value:'leader',    label:'리더 이상' },
+  { value:'leader',    label:'리더급 이상' },
   { value:'ggumbi',    label:'꿈비 이상' },
   { value:'affiliate', label:'전체(계열사 이상)' }
 ];
-const VIS_ROLE_LABEL = { admin:'관리자만', leader:'리더 이상', ggumbi:'꿈비 이상', affiliate:'전체' };
+const VIS_ROLE_LABEL = { admin:'관리자만', leader:'리더급 이상', ggumbi:'꿈비 이상', affiliate:'전체' };
 
-// ── 정렬/검색/구분탭 상태 (scope별로 독립: 'al'=전체 리스트 화면, 'home'=홈 화면 내장) ──
-const _listUI = {
-  al:   { sortField:'regDate', sortDir:'desc', query:'', cat:'all' },
-  home: { sortField:'regDate', sortDir:'desc', query:'', cat:'all' },
-};
+// ── 정렬/검색/구분탭 상태 ──
+let _alSortField = 'regDate';
+let _alSortDir   = 'desc'; // 'asc' | 'desc'
+let _alSearchQuery = '';
+let _alCategoryFilter = 'all'; // 'all' | 'once' | 'sub' | 'issue' | 'gw'
 
-function onSortClick(scope, field) {
-  const st = _listUI[scope];
-  if (st.sortField === field) {
-    st.sortDir = (st.sortDir === 'asc') ? 'desc' : 'asc';
+function onSortClick(field) {
+  if (_alSortField === field) {
+    _alSortDir = (_alSortDir === 'asc') ? 'desc' : 'asc';
   } else {
-    st.sortField = field;
-    st.sortDir = 'asc';
+    _alSortField = field;
+    _alSortDir = 'asc';
   }
-  renderAllList(scope);
+  renderAllList();
 }
 
-function onAllListSearch(scope) {
-  const inputEl = document.getElementById(LIST_SCOPE_IDS[scope].searchInput);
-  _listUI[scope].query = (inputEl && inputEl.value || '').trim().toLowerCase();
-  renderAllList(scope);
+function onAllListSearch() {
+  _alSearchQuery = (document.getElementById('alSearchInput').value || '').trim().toLowerCase();
+  renderAllList();
 }
 
-function onCatTabClick(scope, cat) {
-  _listUI[scope].cat = cat;
-  document.querySelectorAll('.' + LIST_SCOPE_IDS[scope].tabClass).forEach(el => {
+function onCatTabClick(cat) {
+  _alCategoryFilter = cat;
+  document.querySelectorAll('.al-cat-tab').forEach(el => {
     el.classList.toggle('active', el.getAttribute('data-cat') === cat);
   });
-  renderAllList(scope);
+  renderAllList();
 }
 
-function updateSortArrows(scope) {
-  const st = _listUI[scope];
-  const table = document.getElementById(LIST_SCOPE_IDS[scope].table);
-  if (!table) return;
-  table.querySelectorAll('.al-sort-arrow').forEach(el => {
+function updateSortArrows() {
+  document.querySelectorAll('.al-sort-arrow').forEach(el => {
     const field = el.getAttribute('data-arrow');
-    el.textContent = (field === st.sortField) ? (st.sortDir === 'asc' ? '▲' : '▼') : '';
+    el.textContent = (field === _alSortField) ? (_alSortDir === 'asc' ? '▲' : '▼') : '';
   });
 }
 
@@ -1257,54 +1320,50 @@ const CAT_TAB_GROUP = {
   gw:      ['gw']
 };
 
-function renderAllList(scope) {
-  scope = scope || 'al';
-  const ids   = LIST_SCOPE_IDS[scope];
-  const st    = _listUI[scope];
-  const body  = document.getElementById(ids.body);
-  const table = document.getElementById(ids.table);
-  const empty = document.getElementById(ids.empty);
-  if (!body || !table || !empty) return;
+function renderAllList() {
+  const body  = document.getElementById('allListBody');
+  const table = document.getElementById('allListTable');
+  const empty = document.getElementById('allListEmpty');
 
   // 1) 열람권한 필터링
   let visibleFiles = _allListRaw.filter(f => canAccess(f.visRole || 'affiliate'));
 
   // 2) 구분 탭 필터링
-  if (st.cat !== 'all') {
-    const allowed = CAT_TAB_GROUP[st.cat] || [st.cat];
+  if (_alCategoryFilter !== 'all') {
+    const allowed = CAT_TAB_GROUP[_alCategoryFilter] || [_alCategoryFilter];
     visibleFiles = visibleFiles.filter(f => allowed.includes(f.category));
   }
 
   // 3) 검색 필터링 (제품명·주제·작성자)
-  if (st.query) {
+  if (_alSearchQuery) {
     visibleFiles = visibleFiles.filter(f =>
-      (f.product||'').toLowerCase().includes(st.query) ||
-      (f.topic||'').toLowerCase().includes(st.query) ||
-      (f.author||'').toLowerCase().includes(st.query) ||
-      (f.name||'').toLowerCase().includes(st.query)
+      (f.product||'').toLowerCase().includes(_alSearchQuery) ||
+      (f.topic||'').toLowerCase().includes(_alSearchQuery) ||
+      (f.author||'').toLowerCase().includes(_alSearchQuery) ||
+      (f.name||'').toLowerCase().includes(_alSearchQuery)
     );
   }
 
-  if (scope === 'al') countSafe(visibleFiles.length);
-  updateSortArrows(scope);
+  countSafe(visibleFiles.length);
+  updateSortArrows();
 
   if (!visibleFiles.length) {
     table.style.display = 'none';
     empty.style.display = 'block';
-    empty.textContent = st.query ? '검색 결과가 없습니다.' : '열람 가능한 보고서가 없습니다.';
+    empty.textContent = _alSearchQuery ? '검색 결과가 없습니다.' : '열람 가능한 보고서가 없습니다.';
     return;
   }
 
   // 3) 정렬
-  const dirMul = st.sortDir === 'asc' ? 1 : -1;
+  const dirMul = _alSortDir === 'asc' ? 1 : -1;
   const sorted = visibleFiles.slice().sort((a, b) => {
     let av, bv;
-    if (st.sortField === 'category') {
+    if (_alSortField === 'category') {
       av = CAT_LABEL_MAP[a.category] || a.category || '';
       bv = CAT_LABEL_MAP[b.category] || b.category || '';
     } else {
-      av = (a[st.sortField] ?? '').toString();
-      bv = (b[st.sortField] ?? '').toString();
+      av = (a[_alSortField] ?? '').toString();
+      bv = (b[_alSortField] ?? '').toString();
     }
     return av.localeCompare(bv, 'ko') * dirMul;
   });
@@ -1318,12 +1377,12 @@ function renderAllList(scope) {
 
       return `
       <tr class="al-row" onclick="openReportPopup('${fileUrl}')">
-        <td>${visRoleCell(fileKey, f.visRole, scope)}</td>
+        <td>${visRoleCell(fileKey, f.visRole)}</td>
         <td><span class="rtag ${catCls}">${catLabel}</span></td>
-        <td>${editableCell(scope,fileKey,'regDate',f.regDate,'date')}</td>
-        <td>${editableCell(scope,fileKey,'author',f.author,'text')}</td>
-        <td>${editableCell(scope,fileKey,'product',f.product,'text')}</td>
-        <td>${editableCell(scope,fileKey,'topic',f.topic,'text')}</td>
+        <td>${editableCell(fileKey,'regDate',f.regDate,'date')}</td>
+        <td>${editableCell(fileKey,'author',f.author,'text')}</td>
+        <td>${editableCell(fileKey,'product',f.product,'text')}</td>
+        <td>${editableCell(fileKey,'topic',f.topic,'text')}</td>
         <td>
           <div class="al-file-cell">
             <button class="al-open-btn" onclick="event.stopPropagation(); openReportPopup('${fileUrl}')">열기</button>
@@ -1342,7 +1401,7 @@ function renderAllList(scope) {
 }
 
 // ── 열람권한 셀: 관리자만 드롭다운으로 수정 가능, 그 외는 뱃지로만 표시 ──
-function visRoleCell(fileKey, visRole, scope) {
+function visRoleCell(fileKey, visRole) {
   const cur = visRole || 'affiliate';
   if (_userRole === 'admin') {
     const opts = VIS_ROLE_OPTIONS.map(o => `<option value="${o.value}"${o.value===cur?' selected':''}>${o.label}</option>`).join('');
@@ -1353,14 +1412,13 @@ function visRoleCell(fileKey, visRole, scope) {
 
 function onVisRoleChange(fileKey, newRole) {
   saveReportEdit(fileKey, { visRole: newRole });
-  renderAllList('al');
-  renderAllList('home');
+  renderAllList();
 }
 
 // ── 셀 단위 인라인 편집 (연필 아이콘) ──
-function editableCell(scope, fileKey, field, value, inputType) {
+function editableCell(fileKey, field, value, inputType) {
   const safeVal = (value ?? '').toString();
-  const cellId = `${scope}_${field}_${btoa(unescape(encodeURIComponent(fileKey))).replace(/[^a-zA-Z0-9]/g,'')}`;
+  const cellId = `al_${field}_${btoa(unescape(encodeURIComponent(fileKey))).replace(/[^a-zA-Z0-9]/g,'')}`;
   return `
     <span class="al-editable" id="${cellId}" onclick="event.stopPropagation()">
       <span class="al-view-text">${safeVal || '-'}</span>
@@ -1412,8 +1470,7 @@ async function submitAddReport() {
 
     _allListRaw.push(data.file);
     _allListLoaded = true;
-    renderAllList('al');
-    renderAllList('home');
+    renderAllList();
     closeAddReportModal();
   } catch(e) {
     errEl.textContent = e.message;
@@ -1513,8 +1570,7 @@ async function submitBulkAdd() {
       else failLines.push(`- ${r.name}: ${r.error}`);
     });
     _allListLoaded = true;
-    renderAllList('al');
-    renderAllList('home');
+    renderAllList();
 
     resultEl.style.display = 'block';
     resultEl.textContent = `✅ ${okCount}건 등록 완료` + (failLines.length ? `\n실패:\n${failLines.join('\n')}` : '');
@@ -1794,11 +1850,10 @@ refreshAllList().catch(()=>{});
 setTimeout(() => {
   if (!_userRole) {
     _userRole = sessionStorage.getItem('_userRole') || '';
-    _userName = sessionStorage.getItem('_userName') || '';
     applyUserInfo();
     renderQuick();
     renderStats();
-    if (_allListLoaded) { renderAllList('al'); renderAllList('home'); }
+    if (_allListLoaded) renderAllList();
   }
 }, 400);
 </script>

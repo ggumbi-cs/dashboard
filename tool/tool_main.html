@@ -556,12 +556,44 @@ body.is-admin .admin-gear{display:flex;}
   </div>
 </div>
 
+<!-- 섹션: 창작마당 -->
+<div class="sec" style="margin-top:20px;">
+  <div class="sec-head">
+    <div class="sec-bar" style="background:var(--gold)"></div>
+    <div class="sec-label">창작마당</div>
+    <div class="sec-desc">· 팀원 자체 제작 툴</div>
+  </div>
+  <div class="slider-outer"><div class="slider-track" id="track-creative">
+
+    <!-- 클립매트 계산기 (장진영) -->
+    <div class="t-card" onclick="goTool('tool/창작마당/장진영/클립매트 계산기.html')">
+      <div class="admin-gear">⚙</div>
+      <div class="t-card-head">
+        <div class="t-icon ic-gold">🧮</div>
+        <div class="t-meta"><div class="t-name">퍼즐매트 계산기</div><div class="t-sub">시공 수량 · 클립 자동 계산</div></div>
+        <div class="t-badge bd-gold">장진영</div>
+      </div>
+      <div class="t-body">
+        <div class="m-select">가로 길이 입력 ▾</div>
+        <div class="m-select">세로 길이 입력 ▾</div>
+        <div style="font-size:8.5px;color:var(--text3);margin-top:4px;">매트 수량 · 클립 수량 자동 산출</div>
+      </div>
+    </div>
+
+  </div></div>
+  <div class="slider-controls">
+    <button class="sl-btn" id="btn-creative-prev" onclick="slide('creative',-1)">◀</button>
+    <div class="sl-dots" id="dots-creative"></div>
+    <button class="sl-btn" id="btn-creative-next" onclick="slide('creative',1)">▶</button>
+  </div>
+</div>
+
 <div class="sec-bottom"></div>
 
 <script>
 // ─── 상태 ───
 let _isAdmin = false;
-const sliderState = { work:{idx:0}, close:{idx:0}, return:{idx:0}, welfare:{idx:0}, knowledge:{idx:0} };
+const sliderState = { work:{idx:0}, close:{idx:0}, return:{idx:0}, welfare:{idx:0}, knowledge:{idx:0}, creative:{idx:0} };
 
 // ─── postMessage ───
 window.addEventListener('message', e => {
@@ -642,7 +674,7 @@ function slide(sec, dir) {
 }
 
 function initSliders() {
-  ['work','close','return','welfare','knowledge'].forEach(sec => {
+  ['work','close','return','welfare','knowledge','creative'].forEach(sec => {
     const track = document.getElementById('track-'+sec);
     const cards = track.querySelectorAll('.t-card');
     const outer = track.parentElement;
@@ -657,7 +689,7 @@ function initSliders() {
 }
 
 window.addEventListener('resize', () => {
-  ['work','close','return','welfare','knowledge'].forEach(sec => {
+  ['work','close','return','welfare','knowledge','creative'].forEach(sec => {
     sliderState[sec].idx = 0;
     const track = document.getElementById('track-'+sec);
     track.style.transform = 'translateX(0)';

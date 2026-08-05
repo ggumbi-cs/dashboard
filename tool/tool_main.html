@@ -412,6 +412,27 @@ body.is-admin .admin-gear{display:flex;}
       </div>
     </div>
 
+    <!-- 전표오류체크 -->
+    <div class="t-card" onclick="goTool('tool/전표오류체크.html')">
+      <div class="admin-gear">⚙</div>
+      <div class="t-card-head">
+        <div class="t-icon ic-red">🧾</div>
+        <div class="t-meta"><div class="t-name">전표오류체크</div><div class="t-sub">전표 엑셀 검증 · 오류 탐지</div></div>
+        <div class="t-badge bd-red">마감</div>
+      </div>
+      <div class="t-body">
+        <div class="m-file">
+          <div style="font-size:18px;margin-bottom:3px;">📊</div>
+          <div>전표 엑셀을 업로드하세요</div>
+          <div style="color:var(--text3);margin-top:2px;font-size:8px;">불일치 · 오류 항목 자동 검출</div>
+        </div>
+        <div class="m-stat-grid" style="margin-top:5px;">
+          <div class="m-stat-box"><div class="m-stat-val">0건</div><div class="m-stat-lbl">검증완료</div></div>
+          <div class="m-stat-box"><div class="m-stat-val" style="color:var(--orange);">0건</div><div class="m-stat-lbl">오류</div></div>
+        </div>
+      </div>
+    </div>
+
   </div></div>
   <div class="slider-controls">
     <button class="sl-btn" id="btn-close-prev" onclick="slide('close',-1)">◀</button>

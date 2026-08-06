@@ -636,6 +636,16 @@ body { background: var(--bg-base); font-family: 'Malgun Gothic', '맑은 고딕'
     </div>
   </div>
 
+  <!-- 오늘비서 (외부 링크, 전체 role 접근 가능) -->
+  <div class="nav-group" id="ng-today">
+    <div class="nav-parent" data-tab="오늘비서" onclick="switchTabDirect('오늘비서')" style="cursor:pointer; display:flex; align-items:center; gap:6px;">
+      <span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:#ffd6d6; flex-shrink:0;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="#ff7a8a"><path d="M12 21s-7.5-4.6-10.2-9.3C.3 9.1 1.2 5.7 4.3 4.6c2.1-.8 4.3.1 5.7 2 .6.8 1.1 1.6 2 2.9.9-1.3 1.4-2.1 2-2.9 1.4-1.9 3.6-2.8 5.7-2 3.1 1.1 4 4.5 2.5 7.1C19.5 16.4 12 21 12 21z"/></svg>
+      </span>
+      오늘비서
+    </div>
+  </div>
+
   <!-- 지식DB (하위메뉴 없는 단독탭) -->
   <div class="nav-group" id="ng-knowledge">
     <div class="nav-parent" data-tab="지식DB" onclick="switchTabDirect('지식DB')" style="cursor:pointer;">
@@ -839,6 +849,7 @@ const TAB_MAP = {
   'qc_main':    'qc/qc_main.html',
   'report_main': 'report/report_main.html',
   '통합마감허브': 'aggregated/aggregated.html',
+  '오늘비서':   'https://today-assistant.cs-ggumbi.chatgpt.site/use',
 };
 
 // ── login_id.xlsx의 로그인유형 → 내부 role 매핑 (계열사는 개인 계정이 없어 별도 처리) ──
@@ -875,9 +886,9 @@ const ROLE_LEVEL = { admin: 0, leader: 1, ggumbi: 2, affiliate: 3 };
 // ── 역할별 기본 허용 탭 (null = 전체허용) ──
 const ROLE_TABS = {
   'admin':     null,
-  'leader':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','qc_main','스마트스토어','채널톡현황','건별Issue','건별보고','report_main','팀Tool','개발자','주피미','월피미','통합마감허브','팀원교육','지식DB'],
-  'ggumbi':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','qc_main','스마트스토어','채널톡현황','건별Issue','건별보고','report_main','팀Tool','주피미','월피미','통합마감허브','팀원교육','지식DB'],
-  'affiliate': ['팀Tool','지식DB'],
+  'leader':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','qc_main','스마트스토어','채널톡현황','건별Issue','건별보고','report_main','팀Tool','개발자','주피미','월피미','통합마감허브','팀원교육','지식DB','오늘비서'],
+  'ggumbi':    ['AI보고','상담분석','주요kpi','상담실적','반품현황','처리현황','품질관리','qc_main','스마트스토어','채널톡현황','건별Issue','건별보고','report_main','팀Tool','주피미','월피미','통합마감허브','팀원교육','지식DB','오늘비서'],
+  'affiliate': ['팀Tool','지식DB','오늘비서'],
 };
 
 // ── 공개설정: 각 탭별로 어느 role까지 비공개 처리할지
@@ -1576,8 +1587,11 @@ function _applyTab(tabName, role) {
   const isMeetTab  = tabName === '주피미' || tabName === '월피미';
   const isTrainingTab = tabName === '팀원교육';
   const isKnowledgeTab = tabName === '지식DB';
+  const isTodayTab = tabName === '오늘비서';
 
-  if (isTrainingTab) {
+  if (isTodayTab) {
+    navFrame(TAB_MAP['오늘비서']);
+  } else if (isTrainingTab) {
     const frame = document.getElementById('mainFrame');
     frame.onload = () => {
       try {
@@ -1629,7 +1643,7 @@ function _applyTab(tabName, role) {
   }
 
   // 사이드바 기간 컨트롤 표시/숨김
-  if (isTrainingTab) return; // 사이드바 자체가 숨겨지므로 skip
+  if (isTrainingTab || isTodayTab) return; // 사이드바 자체가 숨겨지므로 skip
   const monthly = document.getElementById('monthlyList');
   const weekly  = document.getElementById('weeklyList');
   const calWrap = document.querySelector('.date-pick-wrap');
@@ -1665,9 +1679,10 @@ function _switchSidebar(tabName) {
   const isTrainingTab = tabName === '팀원교육';
   const isKnowledgeTab = tabName === '지식DB';
   const isHubTab = tabName === '통합마감허브';
+  const isTodayTab = tabName === '오늘비서';
 
-  // 팀원교육 / 지식DB / 품질관리(QC) / 보고서 / 통합마감허브: 사이드바 완전 숨김 → content(iframe)가 flex:1로 자동 확장
-  if (isTrainingTab || isKnowledgeTab || isQcTab || isReportTab || isHubTab) {
+  // 팀원교육 / 지식DB / 품질관리(QC) / 보고서 / 통합마감허브 / 오늘비서: 사이드바 완전 숨김 → content(iframe)가 flex:1로 자동 확장
+  if (isTrainingTab || isKnowledgeTab || isQcTab || isReportTab || isHubTab || isTodayTab) {
     if (sb) sb.style.display = 'none';
     return;
   }

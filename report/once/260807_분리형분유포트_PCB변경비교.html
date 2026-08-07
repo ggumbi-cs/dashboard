@@ -565,6 +565,27 @@
     .page { max-width: 100%; padding: 20px; }
   }
 
+  /* ── LANG BTN ── */
+  .lang-btn {
+    padding: 6px 13px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-sub);
+    transition: all .15s;
+  }
+  .lang-btn:hover { background: var(--bg); color: var(--text-main); }
+  .lang-btn.active {
+    background: var(--point);
+    color: #fff;
+    border-color: var(--point);
+    font-weight: 700;
+  }
+
   /* ── TAB NAV ── */
   .tab-nav {
     display: flex;
@@ -774,6 +795,9 @@
     </button>
     <button class="tab-btn" onclick="switchTab('parts', this)">
       <span class="tab-icon">🔩</span> 부품 추가 · 제거 상세
+    </button>
+    <button class="tab-btn" onclick="switchTab('mfr', this)">
+      <span class="tab-icon">📤</span> 제조사 발송용
     </button>
   </div>
 
@@ -1584,14 +1608,422 @@
   </div>
 
 </div>
+
+  <!-- ═══════════ TAB 4: 제조사 발송용 ═══════════ -->
+  <div id="tab-mfr" class="tab-panel">
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:11px;color:var(--text-sub);font-weight:700;margin-right:4px;">언어 / Language / 语言</span>
+        <button class="lang-btn active" id="lang-ko" onclick="setMfrLang('ko',this)">🇰🇷 한국어</button>
+        <button class="lang-btn" id="lang-en" onclick="setMfrLang('en',this)">🇺🇸 English</button>
+        <button class="lang-btn" id="lang-zh" onclick="setMfrLang('zh',this)">🇨🇳 中文</button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="saveMfrBlank()" style="background:var(--navy);color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">📤 발송용 저장 (빈 칸)</button>
+        <button onclick="saveMfrWithAnswers()" style="background:var(--point);color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">💾 답변 포함 저장</button>
+      </div>
+    </div>
+
+    <div id="mfr-doc-header"></div>
+    <div id="mfr-ai-note"></div>
+    <div id="mfr-checklist"></div>
+
+    <div style="background:var(--surface);border:2px solid var(--point);border-radius:var(--radius);padding:20px;margin-top:20px;text-align:center;">
+      <p id="mfr-save-hint" style="font-size:12px;color:var(--text-sub);margin-bottom:14px;"></p>
+      <button onclick="saveMfrWithAnswers()" style="background:var(--point);color:#fff;border:none;border-radius:8px;padding:12px 32px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">
+        💾 <span id="mfr-save-btn-label">답변 포함 HTML 저장</span>
+      </button>
+    </div>
+
+  </div><!-- /tab-mfr -->
+
 <script>
-  function switchTab(id, btn) {
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab-' + id).classList.add('active');
-    btn.classList.add('active');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
+// ── EXISTING TAB SWITCH ──────────────────────────────
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (id === 'mfr') renderMfrTab();
+}
+
+// ── MFR STATE ────────────────────────────────────────
+let _mL = 'ko';
+const _mA = {};
+
+// ── MFR DATA ─────────────────────────────────────────
+const MFR = {
+  title: {
+    ko: 'AI 분석 기반 PCB 변경 확인 요청서',
+    en: 'PCB Change Verification Request',
+    zh: '基于AI分析的PCB变更确认请求书'
+  },
+  subtitle: {
+    ko: '분리형 휴대용 분유포트 · 충전 PCB FS-NNQ-02A V3.0 변경 검토',
+    en: 'Portable Baby Formula Maker · Charging PCB FS-NNQ-02A V3.0 Review',
+    zh: '分离式便携婴儿奶粉冲泡器 · 充电板 FS-NNQ-02A V3.0变更审查'
+  },
+  date: '2026. 08. 07',
+  from: {
+    ko: '꿈비 엄마감동팀 · 심우승 PQ',
+    en: 'Ggumbi Mom Happy Team · Sim WooSeung PQ',
+    zh: 'Ggumbi 妈妈感动团队 · 沈宇承 PQ'
+  },
+  aiNote: {
+    ko: '본 요청서의 확인 항목들은 AI 회로 분석 도구를 통해 도출된 내용입니다. 실제 설계 의도와 다를 수 있으며, AI 분석 결과는 사실로 단정되지 않습니다. 각 항목에 대한 제조사의 공식 답변을 요청드립니다.',
+    en: 'The verification items herein were identified through AI-based circuit analysis and may differ from actual design intent. AI analysis results are not definitive facts. We kindly request official manufacturer responses for each item.',
+    zh: '本文件中的确认事项均通过AI电路分析工具得出，可能与实际设计意图有所不同，AI分析结果不作为事实认定。请贵司就各项内容提供官方答复。'
+  },
+  ansLabel: { ko: '📝 제조사 답변', en: '📝 Manufacturer Response', zh: '📝 制造商回复' },
+  ansPH: { ko: '답변을 입력해 주세요...', en: 'Please enter response here...', zh: '请在此处填写回复...' },
+  saveHint: {
+    ko: '모든 항목에 답변 입력 후 아래 저장 버튼을 눌러 HTML 파일로 저장해 회신해 주십시오.',
+    en: 'After completing all responses, click the button below to save as HTML and send it back.',
+    zh: '填写所有回复后，点击下方按钮保存为HTML文件并回传。'
+  },
+  saveBtnLabel: {
+    ko: '답변 완료 — HTML 저장 후 회신',
+    en: 'Save with Responses & Return',
+    zh: '保存含回复版本并回传'
+  },
+  categories: [
+    {
+      id: 'critical',
+      name: {
+        ko: '🔴 Critical — 안전·인증 (양산 승인 전 선확인 필수)',
+        en: '🔴 Critical — Safety & Certification (Must Confirm Before Production Approval)',
+        zh: '🔴 Critical — 安全与认证（量产审批前必须确认）'
+      },
+      items: [
+        {
+          id: 'esd', no: 1,
+          q: { ko: 'ESD 보호 회로 대체 수단 명시', en: 'ESD Protection Replacement Specification', zh: 'ESD防护电路替代方案说明' },
+          d: {
+            ko: '구형 ZD1/ZD2(ESD3Z20C, 양방향 20V TVS 다이오드)가 신형 회로도에서 확인되지 않습니다. USB 포트 ESD 보호 방안을 회로도 및 BOM에 명시해 주십시오. IEC 61000-4-2(KC 인증) 기준 통과 가능 여부 포함.',
+            en: 'ZD1/ZD2 (ESD3Z20C, bidirectional 20V TVS diodes) are not found in the new schematic. Please specify USB port ESD protection in schematic/BOM, including IEC 61000-4-2 compliance confirmation.',
+            zh: '旧款ZD1/ZD2（ESD3Z20C，双向20V TVS二极管）在新款原理图中未见。请在原理图及BOM中说明USB接口ESD防护方案，并确认是否符合IEC 61000-4-2标准。'
+          }
+        },
+        {
+          id: 'r35', no: 2,
+          q: { ko: 'R35 (EN 저항 10kΩ) 양산 BOM 포함 확인', en: 'R35 (EN Resistor 10kΩ) Inclusion in Production BOM', zh: 'R35（EN电阻10kΩ）列入量产BOM确认' },
+          d: {
+            ko: 'IP2363 EN 핀 활성화용 R35(10kΩ)가 양산 BOM에 반드시 포함되어야 합니다. 미실장 시 IC 비활성화로 충전이 전혀 동작하지 않습니다. 양산 BOM 및 어셈블리 도면에서 R35 실장 위치와 값을 확인해 주십시오.',
+            en: 'R35 (10kΩ) for IP2363 EN pin activation must be included in production BOM. Without it, IC is disabled and charging does not function at all. Please confirm R35 placement and value in production BOM and assembly drawing.',
+            zh: 'IP2363 EN引脚使能电阻R35（10kΩ）必须列入量产BOM。若未贴装，IC禁用，充电功能完全失效。请在量产BOM及装配图中确认R35贴装位置和阻值。'
+          }
+        }
+      ]
+    },
+    {
+      id: 'high',
+      name: {
+        ko: '🟠 High — 기능 정합성·설정값 검증',
+        en: '🟠 High — Functional Consistency & Settings Verification',
+        zh: '🟠 High — 功能一致性与参数设置验证'
+      },
+      items: [
+        {
+          id: 'batnum', no: 3,
+          q: { ko: 'BAT_NUM 설정값 확인 (배터리 직렬 셀 수)', en: 'BAT_NUM Setting Confirmation (Battery Cell Count)', zh: 'BAT_NUM设定值确认（电池串联节数）' },
+          d: {
+            ko: 'RBAT_NUM = 9.1kΩ → 4S(4직렬) 설정. 본 제품 배터리 직렬 셀 수가 4S가 맞는지 확인 부탁드립니다. 불일치 시 과충전·보호회로 오작동 위험이 있습니다.',
+            en: 'RBAT_NUM = 9.1kΩ → 4S (4-cell series). Please confirm the product battery is 4S. Mismatch may cause overcharging or protection circuit malfunction.',
+            zh: 'RBAT_NUM=9.1kΩ对应4S（4节串联）。请确认本产品电池为4节串联。不符可能导致过充或保护电路误动作。'
+          }
+        },
+        {
+          id: 'pset', no: 4,
+          q: { ko: 'PSET 설정값 확인 (최대 전력·만충 전압)', en: 'PSET Setting Confirmation (Max Power & Full Charge Voltage)', zh: 'PSET设定值确认（最大功率及满充电压）' },
+          d: {
+            ko: 'RPSET = 13kΩ → 최대 30W / 만충 전압 4.2V. 본 제품 배터리 만충 전압(Li-ion 4.2V 또는 LFP 3.65V)과 일치하는지 확인 부탁드립니다. 불일치 시 배터리 과충전 안전 문제 발생 가능.',
+            en: 'RPSET = 13kΩ → max 30W / full charge 4.2V. Please confirm this matches the product battery full charge voltage (Li-ion 4.2V or LFP 3.65V). Mismatch may cause overcharging safety issues.',
+            zh: 'RPSET=13kΩ对应最大30W/满充电压4.2V。请确认与本产品电池满充电压（锂离子4.2V或磷酸铁锂3.65V）一致。不符可能引发过充安全问题。'
+          }
+        },
+        {
+          id: 'ntc', no: 5,
+          q: { ko: 'NTC 탑재 여부 및 미사용 시 처리 방식', en: 'NTC Mounting Status & Handling When Unused', zh: 'NTC装配状态及未使用时处理方式' },
+          d: {
+            ko: '신형에 NTC 회로(R12 10kΩ@25°C, B=3380) 추가. 본 제품 NTC 서미스터 실장 여부 확인 요청. 미탑재 시 NTC 핀 → 10kΩ 고정 저항 GND 연결 필수. 미처리 시 IC가 과온 오인식으로 충전 차단. BOM 반영 여부 확인.',
+            en: 'NTC circuit (R12: 10kΩ@25°C, B=3380) added. Please confirm if NTC is mounted. If not, a 10kΩ fixed resistor must connect NTC pin to GND (otherwise IC may falsely cut off charging). Confirm BOM reflects this.',
+            zh: '新款新增NTC电路（R12: 10kΩ@25°C, B=3380）。请确认是否安装NTC。若未安装，NTC引脚需通过10kΩ固定电阻接GND（否则IC可能误切断充电）。请确认BOM已体现。'
+          }
+        },
+        {
+          id: 'h5vl', no: 6,
+          q: { ko: 'H5VL10B (D1, D2) 적용 목적 명시', en: 'H5VL10B (D1, D2) Purpose Specification', zh: 'H5VL10B（D1, D2）应用目的说明' },
+          d: {
+            ko: '신형에 H5VL10B 다이오드(D1, D2) 신규 추가. 회로도 내 역할 주석 없음. 적용 목적(프리휠링/역전압 보호/ESD 대체/기타)을 설계 노트 또는 회로도 주석으로 명시해 주십시오.',
+            en: 'H5VL10B diodes (D1, D2) newly added. No role annotation in schematic. Please specify purpose (freewheeling / reverse voltage protection / ESD replacement / other) in design notes or schematic.',
+            zh: '新款新增H5VL10B二极管（D1, D2），原理图无注释。请在设计说明或原理图中明确其用途（续流/反向电压保护/ESD替代/其他）。'
+          }
+        }
+      ]
+    },
+    {
+      id: 'medium',
+      name: {
+        ko: '🟡 Medium — 성능 검증 데이터 요청',
+        en: '🟡 Medium — Performance Verification Data',
+        zh: '🟡 Medium — 性能验证数据要求'
+      },
+      items: [
+        {
+          id: 'dual', no: 7,
+          q: { ko: '듀얼 페이즈(LX1+LX2) 동작 방식 확인', en: 'Dual Phase (LX1+LX2) Operation Mode Confirmation', zh: '双相（LX1+LX2）工作方式确认' },
+          d: {
+            ko: 'IP2363에 LX1, LX2 두 스위칭 노드 존재. 두 채널이 독립 인덕터로 각각 동작하는지, 단일 인덕터(L1 4.7µH) 병렬 공유인지 회로 설명 및 인덕터 배치도로 확인 부탁드립니다.',
+            en: 'IP2363 has two switching nodes LX1 and LX2. Please confirm via circuit description and inductor layout whether both channels use independent inductors or share a single inductor (L1: 4.7µH) in parallel.',
+            zh: 'IP2363具有LX1和LX2两个开关节点。请通过电路说明及电感布置图确认两通道是使用独立电感还是共用单一电感（L1: 4.7µH）并联工作。'
+          }
+        },
+        {
+          id: 'capwv', no: 8,
+          q: { ko: '출력 커패시터 감소 전압 안정성 파형 데이터', en: 'Output Capacitor Reduction — Voltage Stability Waveform Data', zh: '输出电容减少·电压稳定性波形数据' },
+          d: {
+            ko: '출력 커패시터 총 용량 구형 ~670µF → 신형 ~244µF (약 64% 감소). 30W 충전 조건 하 출력 전압 리플 파형 및 초기 돌입 전류 구간 측정 데이터 제출 요청.',
+            en: 'Output capacitance decreased ~670µF (old) to ~244µF (new), ~64% reduction. Please provide output voltage ripple waveforms and inrush current data under 30W charging conditions.',
+            zh: '总输出电容从旧款约670µF减至新款约244µF（降约64%）。请提供30W充电条件下的输出电压纹波波形及浪涌电流阶段测量数据。'
+          }
+        },
+        {
+          id: 'q5nc', no: 9,
+          q: { ko: 'Q5 (NC) 양산 실장 여부 및 활용 계획', en: 'Q5 (NC) Assembly Status & Use Plan', zh: 'Q5（NC）量产贴装状态及应用计划' },
+          d: {
+            ko: 'Q5가 신형 회로도에 추가되어 있으나 현재 NC. 양산 기본 구성에서 Q5 실장 여부, 납땜 패드 존재 여부, 커스텀 펌웨어 적용 계획을 공유해 주십시오.',
+            en: 'Q5 added in new schematic but currently NC. Please share whether Q5 is assembled in standard production, whether solder pads exist, and any custom firmware plans.',
+            zh: 'Q5已加入新款原理图，目前NC。请说明量产标配中Q5是否贴装、是否保留焊盘及定制固件应用计划。'
+          }
+        },
+        {
+          id: 'i2creg', no: 10,
+          q: { ko: 'IP2363 I2C 버전 출하 기본 레지스터 설정값', en: 'IP2363 I2C Default Register Settings at Shipment', zh: 'IP2363 I2C版本出厂默认寄存器设定值' },
+          d: {
+            ko: '공장 출하 시 IP2363 I2C 버전 기본 레지스터 설정값(최대 충전 전력, 만충 전압, 충전 전류 제한, 보호 임계값 등) 문서 제출 요청. 입고 검사 기준 설정에 활용됩니다.',
+            en: 'Please provide factory default register settings for IP2363 I2C version (max charging power, full charge voltage, current limits, protection thresholds) for incoming inspection criteria.',
+            zh: '请提交IP2363 I2C版本出厂默认寄存器设定值文件（最大充电功率、满充电压、电流限制、保护阈值等），用于制定来料检验标准。'
+          }
+        },
+        {
+          id: 'ecn', no: 11,
+          q: { ko: 'PCB 변경 이력 (ECN) 문서', en: 'PCB Change History (ECN) Document', zh: 'PCB变更履历（ECN）文件' },
+          d: {
+            ko: '"FS-NNQ-02A 20260425V3.0" 기준 V1.0, V2.0 대비 주요 변경 이력(ECN) 문서 제출 요청. 추후 유사 변경 발생 시 추적관리 기준 수립에 활용합니다.',
+            en: 'Please submit the ECN document for "FS-NNQ-02A 20260425V3.0" showing major changes vs V1.0 and V2.0, for future change traceability management.',
+            zh: '请提交"FS-NNQ-02A 20260425V3.0"相对于V1.0、V2.0的ECN文件，用于变更追溯管理。'
+          }
+        },
+        {
+          id: 'led2ext', no: 12,
+          q: { ko: 'LED 2개 구성 — 외관 LED 창 연계 확인', en: 'Dual LED — External Housing LED Window Confirmation', zh: '双LED配置——外壳LED窗口对应确认' },
+          d: {
+            ko: '신형에 LED1, LED2 두 개 실장. 제품 외관(케이스)의 LED 투광 창이 2개로 변경되었는지, 또는 LED1만 외부 노출 구조인지 확인 요청.',
+            en: 'Two LEDs (LED1, LED2) mounted in new design. Please confirm whether the product housing has 2 LED windows, or only LED1 is externally visible.',
+            zh: '新款安装LED1和LED2两颗LED。请确认产品外壳是否更新为2个LED透光窗，或仅LED1对外可见。'
+          }
+        }
+      ]
+    }
+  ]
+};
+
+// ── RENDER MFR TAB ───────────────────────────────────
+function renderMfrTab() {
+  renderMfrHeader();
+  renderMfrChecklist();
+  document.getElementById('mfr-save-hint').textContent = MFR.saveHint[_mL];
+  document.getElementById('mfr-save-btn-label').textContent = MFR.saveBtnLabel[_mL];
+}
+
+function renderMfrHeader() {
+  const L = _mL;
+  const rLabel = L === 'ko' ? '요청일' : L === 'en' ? 'Date' : '日期';
+  const fLabel = L === 'ko' ? '요청사' : L === 'en' ? 'From' : '请求方';
+  const aiLabel = L === 'ko' ? 'AI 분석 의견 안내' : L === 'en' ? 'AI Analysis Notice' : 'AI分析说明';
+  document.getElementById('mfr-doc-header').innerHTML =
+    '<div style="background:#1E3A5F;color:#fff;border-radius:10px;padding:24px 28px;margin-bottom:14px;">' +
+    '<div style="font-size:17px;font-weight:700;margin-bottom:4px;">' + MFR.title[L] + '</div>' +
+    '<div style="font-size:12px;opacity:.75;margin-bottom:10px;">' + MFR.subtitle[L] + '</div>' +
+    '<div style="display:flex;gap:20px;font-size:11px;opacity:.65;">' +
+    '<span>' + rLabel + ': ' + MFR.date + '</span>' +
+    '<span>' + fLabel + ': ' + MFR.from[L] + '</span></div></div>';
+  document.getElementById('mfr-ai-note').innerHTML =
+    '<div style="background:#F5F3FF;border:1px solid #DDD6FE;border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start;">' +
+    '<span style="font-size:22px;flex-shrink:0;">🤖</span>' +
+    '<div><div style="font-size:12px;font-weight:700;color:#7C3AED;margin-bottom:4px;">' + aiLabel + '</div>' +
+    '<div style="font-size:11px;color:#4A3D6B;line-height:1.6;">' + MFR.aiNote[L] + '</div></div></div>';
+}
+
+function saveMfrState() {
+  document.querySelectorAll('[data-ans-id]').forEach(function(ta) {
+    _mA[ta.dataset.ansId] = ta.value;
+  });
+}
+
+function renderMfrChecklist() {
+  const L = _mL;
+  const colors = { critical: '#DC2626', high: '#E8833A', medium: '#CA8A04' };
+  const bgs = { critical: '#FEF2F2', high: '#FEF3E9', medium: '#FEFCE8' };
+  const borders = { critical: '#FECACA', high: '#FED7AA', medium: '#FEF08A' };
+  let html = '';
+  MFR.categories.forEach(function(cat) {
+    html += '<div style="margin-bottom:20px;">';
+    html += '<div style="background:' + bgs[cat.id] + ';border:1px solid ' + borders[cat.id] + ';border-radius:7px;padding:9px 14px;font-size:12px;font-weight:700;color:' + colors[cat.id] + ';margin-bottom:8px;">' + cat.name[L] + '</div>';
+    cat.items.forEach(function(item) {
+      const saved = _mA['ans-' + item.id] || '';
+      html += '<div style="border:1px solid #E2E5EA;border-radius:9px;margin-bottom:10px;overflow:hidden;">';
+      html += '<div style="padding:10px 14px;background:#F8F9FA;border-bottom:1px solid #E2E5EA;display:flex;align-items:flex-start;gap:10px;">';
+      html += '<span style="background:' + colors[cat.id] + ';color:#fff;border-radius:50%;width:22px;height:22px;min-width:22px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px;">' + item.no + '</span>';
+      html += '<strong style="font-size:13px;flex:1;line-height:1.4;">' + item.q[L] + '</strong>';
+      html += '<span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;background:' + bgs[cat.id] + ';color:' + colors[cat.id] + ';white-space:nowrap;margin-top:2px;">' + cat.id.toUpperCase() + '</span>';
+      html += '</div>';
+      html += '<div style="padding:9px 14px;font-size:12px;color:#64748B;line-height:1.6;border-bottom:1px solid #E2E5EA;">' + item.d[L] + '</div>';
+      html += '<div style="padding:5px 14px;background:#EFF4FF;border-bottom:1px solid #C7D9F9;font-size:10px;font-weight:700;color:#2563EB;">' + MFR.ansLabel[L] + '</div>';
+      html += '<div style="padding:8px;">';
+      html += '<textarea data-ans-id="ans-' + item.id + '" placeholder="' + MFR.ansPH[L] + '" style="width:100%;min-height:72px;border:1px solid #E2E5EA;border-radius:6px;padding:8px;font-size:12px;font-family:\'Noto Sans KR\',sans-serif;resize:vertical;outline:none;background:#fff;transition:border-color .15s;">' + saved + '</textarea>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+  });
+  document.getElementById('mfr-checklist').innerHTML = html;
+}
+
+function setMfrLang(lang, btn) {
+  saveMfrState();
+  _mL = lang;
+  document.querySelectorAll('.lang-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderMfrTab();
+}
+
+// ── EXPORT FUNCTIONS ─────────────────────────────────
+function buildExportHTML(lang, answers) {
+  const L = lang;
+  const isBlank = !answers;
+  const colors = { critical: '#DC2626', high: '#E8833A', medium: '#CA8A04' };
+  const bgs = { critical: '#FEF2F2', high: '#FEF3E9', medium: '#FEFCE8' };
+  const brd = { critical: '#FECACA', high: '#FED7AA', medium: '#FEF08A' };
+
+  let itemsHtml = '';
+  MFR.categories.forEach(function(cat) {
+    itemsHtml += '<div style="margin-bottom:20px;">';
+    itemsHtml += '<div style="background:' + bgs[cat.id] + ';border:1px solid ' + brd[cat.id] + ';border-radius:7px;padding:9px 14px;font-size:12px;font-weight:700;color:' + colors[cat.id] + ';margin-bottom:8px;">' + cat.name[L] + '</div>';
+    cat.items.forEach(function(item) {
+      const ansVal = (answers && answers['ans-' + item.id]) ? answers['ans-' + item.id] : '';
+      const missingLabel = L === 'ko' ? '(미입력)' : L === 'en' ? '(No response)' : '（未填写）';
+      itemsHtml += '<div style="border:1px solid #E2E5EA;border-radius:9px;margin-bottom:10px;overflow:hidden;">';
+      itemsHtml += '<div style="padding:10px 14px;background:#F8F9FA;border-bottom:1px solid #E2E5EA;display:flex;align-items:flex-start;gap:10px;">';
+      itemsHtml += '<span style="background:' + colors[cat.id] + ';color:#fff;border-radius:50%;width:22px;height:22px;min-width:22px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">' + item.no + '</span>';
+      itemsHtml += '<strong style="font-size:13px;flex:1;line-height:1.4;">' + item.q[L] + '</strong>';
+      itemsHtml += '<span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;background:' + bgs[cat.id] + ';color:' + colors[cat.id] + ';white-space:nowrap;">' + cat.id.toUpperCase() + '</span>';
+      itemsHtml += '</div>';
+      itemsHtml += '<div style="padding:9px 14px;font-size:12px;color:#64748B;line-height:1.6;border-bottom:1px solid #E2E5EA;">' + item.d[L] + '</div>';
+      itemsHtml += '<div style="padding:5px 14px;background:#EFF4FF;border-bottom:1px solid #C7D9F9;font-size:10px;font-weight:700;color:#2563EB;">' + MFR.ansLabel[L] + '</div>';
+      if (isBlank) {
+        itemsHtml += '<div style="padding:8px;"><textarea data-ans-id="ans-' + item.id + '" placeholder="' + MFR.ansPH[L] + '" style="width:100%;min-height:72px;border:1px solid #E2E5EA;border-radius:6px;padding:8px;font-size:12px;font-family:inherit;resize:vertical;"></textarea></div>';
+      } else {
+        const hasAns = ansVal.trim() !== '';
+        itemsHtml += '<div style="padding:10px 14px;background:' + (hasAns ? '#F0FDF4' : '#F8F9FA') + ';border-left:3px solid ' + (hasAns ? '#16A34A' : '#E2E5EA') + ';font-size:12px;line-height:1.7;white-space:pre-wrap;color:' + (hasAns ? '#1A202C' : '#94A3B8') + ';">' + (hasAns ? ansVal : missingLabel) + '</div>';
+      }
+      itemsHtml += '</div>';
+    });
+    itemsHtml += '</div>';
+  });
+
+  const rLabel = L === 'ko' ? '요청일' : L === 'en' ? 'Date' : '日期';
+  const fLabel = L === 'ko' ? '요청사' : L === 'en' ? 'From' : '请求方';
+  const aiLabel = L === 'ko' ? 'AI 분석 의견 안내' : L === 'en' ? 'AI Analysis Notice' : 'AI分析说明';
+  const doneBadge = L === 'ko' ? '✅ 제조사 답변 포함 완료본' : L === 'en' ? '✅ Response Completed Version' : '✅ 含制造商回复完成版';
+  const saveBtnText = L === 'ko' ? '💾 답변 완료 — HTML 저장 후 회신' : L === 'en' ? '💾 Save Responses & Return' : '💾 保存含回复版本并回传';
+
+  const embeddedSaveScript = isBlank ? (
+    '<scr' + 'ipt>\n' +
+    'function saveWithResponses(){\n' +
+    '  var ans={};\n' +
+    '  document.querySelectorAll("[data-ans-id]").forEach(function(ta){ans[ta.dataset.ansId]=ta.value;});\n' +
+    '  document.querySelectorAll("[data-ans-id]").forEach(function(ta){\n' +
+    '    var d=document.createElement("div");\n' +
+    '    var v=ta.value.trim();\n' +
+    '    d.style.cssText="padding:10px 14px;font-size:12px;line-height:1.7;white-space:pre-wrap;"+(v?"background:#F0FDF4;border-left:3px solid #16A34A;color:#1A202C;":"background:#F8F9FA;border-left:3px solid #E2E5EA;color:#94A3B8;");\n' +
+    '    d.textContent=v||"--";\n' +
+    '    ta.closest("div").parentNode.replaceChild(d,ta.closest("div"));\n' +
+    '  });\n' +
+    '  var ss=document.getElementById("save-section");\n' +
+    '  if(ss){\n' +
+    '    var done=document.createElement("div");\n' +
+    '    done.style.cssText="background:#F0FDF4;border:2px solid #16A34A;border-radius:10px;padding:16px;margin-top:20px;text-align:center;font-weight:700;color:#16A34A;font-size:13px;";\n' +
+    '    done.innerHTML="\\u2705 Response Complete \\u00b7 Completed \\u00b7 \\u5b8c\\u6210 &nbsp;&mdash;&nbsp;<small style=\\"font-weight:400;color:#64748B;\\">"+new Date().toLocaleString()+"</small>";\n' +
+    '    ss.parentNode.replaceChild(done,ss);\n' +
+    '  }\n' +
+    '  var html="<!DOCTYPE html>\\n"+document.documentElement.outerHTML;\n' +
+    '  var b=new Blob([html],{type:"text/html;charset=utf-8"});\n' +
+    '  var u=URL.createObjectURL(b);\n' +
+    '  var a=document.createElement("a");\n' +
+    '  a.href=u;a.download="PCB_Verification_Response_"+new Date().toISOString().slice(0,10)+".html";\n' +
+    '  document.body.appendChild(a);a.click();document.body.removeChild(a);\n' +
+    '  setTimeout(function(){URL.revokeObjectURL(u);},2000);\n' +
+    '}\n' +
+    '<\/scr' + 'ipt>'
+  ) : '';
+
+  const saveSectionHtml = isBlank ? (
+    '<div id="save-section" style="background:#fff;border:2px solid #2563EB;border-radius:10px;padding:20px;margin-top:20px;text-align:center;">' +
+    '<p style="font-size:13px;color:#64748B;margin-bottom:14px;">' + MFR.saveHint[L] + '</p>' +
+    '<button onclick="saveWithResponses()" style="background:#2563EB;color:#fff;border:none;border-radius:8px;padding:12px 32px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">' + saveBtnText + '</button>' +
+    '</div>'
+  ) : (
+    '<div style="background:#F0FDF4;border:2px solid #16A34A;border-radius:10px;padding:14px;margin-top:20px;text-align:center;font-weight:700;color:#16A34A;font-size:13px;">' + doneBadge + '</div>'
+  );
+
+  return '<!DOCTYPE html>\n<html lang="' + L + '">\n<head>\n' +
+    '<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width,initial-scale=1.0">\n' +
+    '<title>' + MFR.title[L] + ' \u2014 FS-NNQ-02A V3.0</title>\n' +
+    '<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#F5F6F8;color:#1A202C;font-size:13px;line-height:1.6;}.page{max-width:860px;margin:0 auto;padding:28px 20px 60px;}</style>\n' +
+    '</head>\n<body>\n<div class="page">\n' +
+    '<div style="background:#1E3A5F;color:#fff;border-radius:10px;padding:24px 28px;margin-bottom:14px;">' +
+    '<div style="font-size:18px;font-weight:700;margin-bottom:4px;">' + MFR.title[L] + '</div>' +
+    '<div style="font-size:12px;opacity:.75;margin-bottom:10px;">' + MFR.subtitle[L] + '</div>' +
+    '<div style="display:flex;gap:20px;font-size:11px;opacity:.65;">' +
+    '<span>' + rLabel + ': ' + MFR.date + '</span>' +
+    '<span>' + fLabel + ': ' + MFR.from[L] + '</span></div></div>\n' +
+    '<div style="background:#F5F3FF;border:1px solid #DDD6FE;border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start;">' +
+    '<span style="font-size:22px;flex-shrink:0;">\uD83E\uDD16</span>' +
+    '<div><div style="font-size:12px;font-weight:700;color:#7C3AED;margin-bottom:4px;">' + aiLabel + '</div>' +
+    '<div style="font-size:11px;color:#4A3D6B;line-height:1.6;">' + MFR.aiNote[L] + '</div></div></div>\n' +
+    itemsHtml +
+    saveSectionHtml + '\n' +
+    '<div style="border-top:1px solid #E2E5EA;margin-top:28px;padding-top:14px;display:flex;justify-content:space-between;font-size:11px;color:#94A3B8;">' +
+    '<span>' + MFR.from[L] + '</span>' +
+    '<span>' + (L === 'ko' ? '\uAEFC\uBE44 \uC5C4\uB9C8\uAC10\uB3D9\uD300 \u00B7 \uD488\uC9C8\uAD00\uB9AC' : L === 'en' ? 'Ggumbi \u00B7 Quality Management' : 'Ggumbi \u54C1\u8D28\u7BA1\u7406') + '</span>' +
+    '</div>\n</div>\n' + embeddedSaveScript + '\n</body>\n</html>';
+}
+
+function downloadHTML(html, filename) {
+  var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(a.href); }, 1500);
+}
+
+function saveMfrBlank() {
+  saveMfrState();
+  var suffix = _mL === 'ko' ? 'KO' : _mL === 'en' ? 'EN' : 'ZH';
+  downloadHTML(buildExportHTML(_mL, null), '260807_PCB변경확인요청_발송용_' + suffix + '.html');
+}
+
+function saveMfrWithAnswers() {
+  saveMfrState();
+  var ans = Object.assign({}, _mA);
+  downloadHTML(buildExportHTML(_mL, ans), '260807_PCB변경확인_답변포함.html');
+}
 </script>
 </body>
 </html>
+

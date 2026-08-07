@@ -939,6 +939,53 @@ canvas { display: block; max-width: 100%; }
       </div>
     </div>
 
+    <!-- 추가 개선 사항 -->
+    <div class="section">
+      <div class="section-title">추가 개선 사항 — 2026.06.09 제조사 제안 포함</div>
+
+      <div style="background:var(--green-lt);border:1px solid var(--green-bd);border-left:4px solid var(--green);border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:flex-start;gap:12px;">
+        <span style="font-size:20px;flex-shrink:0;margin-top:1px;">✅</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text-1);margin-bottom:4px;">충전 중 동작 가능 — 회로 구성 추가 변경</div>
+          <div style="font-size:12px;color:var(--text-2);line-height:1.65;">
+            7V 모터 교체 제안(2026-06-09) 시 제조사가 함께 포함한 추가 변경 사항이다.
+            <strong>기존에는 충전기 연결 시 제품 작동이 불가</strong>했으나, 이번 회로 구성 변경으로
+            <strong>충전하면서 동시에 분유 쉐이킹이 가능</strong>해진다.
+            품질 개선 외에 사용성 측면의 부가적 향상이 동시에 이루어지는 것이다.
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px;">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px 18px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:8px;">BEFORE — 기존 동작</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="font-size:18px;">🔌</span>
+            <span style="font-size:13px;font-weight:600;color:var(--text-1);">충전 중 사용 불가</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-2);line-height:1.6;">
+            충전기 연결 시 회로 잠금 상태 → 모터 구동 차단. 충전을 완료한 후에만 사용 가능.
+            충전 중 급하게 분유를 조제해야 할 때 기다려야 하는 불편함이 있었다.
+          </div>
+        </div>
+        <div style="background:var(--green-lt);border:1px solid var(--green-bd);border-radius:9px;padding:16px 18px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--green);margin-bottom:8px;">AFTER — 개선 동작</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <span style="font-size:18px;">🔌⚡</span>
+            <span style="font-size:13px;font-weight:600;color:var(--green);">충전하면서 동시 사용 가능</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-2);line-height:1.6;">
+            충전기 연결 상태에서도 모터 구동 회로 활성화. 충전 중 즉시 사용 가능.
+            배터리 잔량과 무관하게 충전 연결만으로도 제품 사용이 가능해지는 구조다.
+          </div>
+        </div>
+      </div>
+      <div class="info-note" style="margin-top:0;">
+        이 기능은 <strong>소비자가 직접 인지 가능한 사용성 개선</strong>으로, 향후 제품 소개·CS 응대 시 개선 포인트로 활용할 수 있다.
+        단, 현재 샘플 PCB 불량 이슈로 충전 중 동작 가능 기능의 정상 작동 여부는 재시료 수령 후 재검증이 필요하다.
+      </div>
+    </div>
+
     <!-- 개선 진행 경과 -->
     <div class="section">
       <div class="section-title">개선 진행 경과</div>

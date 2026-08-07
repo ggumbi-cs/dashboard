@@ -800,16 +800,16 @@
   <!-- TAB NAV -->
   <div class="tab-nav">
     <button class="tab-btn active" onclick="switchTab('analysis', this)">
-      <span class="tab-icon">📋</span> 상세 분석 보고서
+      <span class="tab-icon">📋</span> <span data-tabn="analysis">상세 분석 보고서</span>
     </button>
     <button class="tab-btn" onclick="switchTab('easy', this)">
-      <span class="tab-icon">💡</span> 초급자용 요점 정리
+      <span class="tab-icon">💡</span> <span data-tabn="easy">초급자용 요점 정리</span>
     </button>
     <button class="tab-btn" onclick="switchTab('parts', this)">
-      <span class="tab-icon">🔩</span> 부품 추가 · 제거 상세
+      <span class="tab-icon">🔩</span> <span data-tabn="parts">부품 추가 · 제거 상세</span>
     </button>
     <button class="tab-btn" onclick="switchTab('mfr', this)">
-      <span class="tab-icon">📤</span> 제조사 발송용
+      <span class="tab-icon">📤</span> <span data-tabn="mfr">제조사 발송용</span>
     </button>
   </div>
 
@@ -1682,6 +1682,13 @@ function renderPartsTab() {
 // ══════════════════════════════════════════════════════
 //  GLOBAL LANGUAGE SWITCHER
 // ══════════════════════════════════════════════════════
+const TAB_LABELS = {
+  analysis: { ko: '상세 분석 보고서', en: 'Detailed Analysis', zh: '详细分析报告' },
+  easy:     { ko: '초급자용 요점 정리', en: 'Beginner Summary', zh: '初级要点整理' },
+  parts:    { ko: '부품 추가 · 제거 상세', en: 'Parts Added / Removed', zh: '零件新增·移除详情' },
+  mfr:      { ko: '제조사 발송용', en: 'Manufacturer Request', zh: '制造商发送用' }
+};
+
 function setGlobalLang(lang, btn) {
   GLANG = lang;
   _mL = lang; // sync MFR tab lang
@@ -1689,6 +1696,12 @@ function setGlobalLang(lang, btn) {
   // Update global lang buttons
   document.querySelectorAll('.glang-btn').forEach(function(b){ b.classList.remove('active'); });
   btn.classList.add('active');
+
+  // Update tab nav labels
+  document.querySelectorAll('[data-tabn]').forEach(function(el){
+    var key = el.getAttribute('data-tabn');
+    if (TAB_LABELS[key]) el.textContent = TAB_LABELS[key][lang];
+  });
 
   // Sync MFR tab lang buttons
   var mfrLangBtns = {'ko':'lang-ko','en':'lang-en','zh':'lang-zh'};
@@ -1730,7 +1743,9 @@ function switchTab(id, btn) {
   document.getElementById('tab-' + id).classList.add('active');
   btn.classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  if (id === 'mfr') renderMfrTab();
+  if (id === 'easy')  renderEasyTab();
+  if (id === 'parts') renderPartsTab();
+  if (id === 'mfr')   renderMfrTab();
 }
 
 // ── MFR STATE ────────────────────────────────────────

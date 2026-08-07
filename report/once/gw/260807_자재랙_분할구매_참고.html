@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<title>자재랙 구매 이력 — 분할구매 참고</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #F5F6F8;
+    font-family: 'Noto Sans KR', sans-serif;
+    color: #1E2433;
+    line-height: 1.6;
+    padding: 32px 20px 60px;
+  }
+
+  .doc {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  /* ── 헤더 ── */
+  .doc-header {
+    background: #fff;
+    border: 1px solid #E2E5EA;
+    border-radius: 10px;
+    padding: 24px 28px 20px;
+    margin-bottom: 24px;
+  }
+  .doc-header .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    background: #EFF3FF;
+    color: #2563EB;
+    border: 1px solid #C7D7FD;
+    border-radius: 4px;
+    padding: 3px 8px;
+    margin-bottom: 10px;
+  }
+  .doc-header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1E2433;
+    margin-bottom: 6px;
+  }
+  .doc-header .meta {
+    font-size: 12px;
+    color: #7A8299;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .doc-header .meta span strong {
+    color: #3D4966;
+    font-weight: 600;
+  }
+
+  /* ── 섹션 타이틀 공통 ── */
+  .section-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: #7A8299;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #E2E5EA;
+  }
+
+  /* ── 카드 공통 ── */
+  .card {
+    background: #fff;
+    border: 1px solid #E2E5EA;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+
+  /* ── 배경 강조 색 ── */
+  .card.blue { border-left: 4px solid #2563EB; }
+  .card.amber { border-left: 4px solid #F59E0B; }
+  .card.gray  { border-left: 4px solid #B0B8CC; }
+
+  /* ── 이번 구매 / 잔여 헤더 ── */
+  .split-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border-radius: 5px;
+    display: inline-block;
+    margin-bottom: 14px;
+  }
+  .split-label.now  { background: #EFF3FF; color: #2563EB; }
+  .split-label.rest { background: #FFF7ED; color: #D97706; }
+
+  /* ── 테이블 ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead th {
+    background: #F5F6F8;
+    border-bottom: 2px solid #E2E5EA;
+    color: #7A8299;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 8px 10px;
+    text-align: center;
+  }
+  thead th:first-child { text-align: left; }
+  tbody td {
+    padding: 9px 10px;
+    border-bottom: 1px solid #F0F1F4;
+    text-align: center;
+    vertical-align: middle;
+  }
+  tbody td:first-child { text-align: left; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .num.bold {
+    font-weight: 700;
+    color: #1E2433;
+  }
+
+  .subtotal-row td {
+    background: #EFF3FF !important;
+    border-top: 2px solid #C7D7FD;
+    font-weight: 700;
+    color: #1E4799;
+  }
+  .subtotal-row.rest td {
+    background: #FFF7ED !important;
+    border-top: 2px solid #FCD34D;
+    color: #92400E;
+  }
+
+  /* ── 설치비 노트 ── */
+  .install-note {
+    font-size: 12px;
+    color: #7A8299;
+    background: #F8F9FB;
+    border: 1px solid #E2E5EA;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-top: 12px;
+  }
+  .install-note strong { color: #3D4966; }
+
+  /* ── 총계 요약 카드 ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .summary-item {
+    background: #fff;
+    border: 1px solid #E2E5EA;
+    border-radius: 10px;
+    padding: 16px 18px;
+    text-align: center;
+  }
+  .summary-item .s-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: #7A8299;
+    margin-bottom: 6px;
+  }
+  .summary-item .s-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1E2433;
+    line-height: 1.1;
+  }
+  .summary-item .s-val span {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: #7A8299;
+    margin-left: 2px;
+  }
+  .summary-item .s-sub {
+    font-size: 11px;
+    color: #9AA3B8;
+    margin-top: 4px;
+  }
+  .summary-item.accent-blue { border-top: 3px solid #2563EB; }
+  .summary-item.accent-amber { border-top: 3px solid #F59E0B; }
+  .summary-item.accent-total { border-top: 3px solid #1E2433; }
+
+  /* ── 설치비 증가 하이라이트 ── */
+  .delta-note {
+    background: #FFFBEB;
+    border: 1px solid #FDE68A;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #92400E;
+    margin-bottom: 16px;
+  }
+  .delta-note strong { color: #78350F; }
+
+  /* ── 타임라인 ── */
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+    padding-left: 28px;
+    margin-top: 4px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: #E2E5EA;
+    border-radius: 2px;
+  }
+  .tl-item {
+    position: relative;
+    padding: 4px 0 16px 0;
+  }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-dot {
+    position: absolute;
+    left: -24px;
+    top: 6px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid;
+  }
+  .tl-dot.blue  { background: #2563EB; border-color: #2563EB; }
+  .tl-dot.amber { background: #F59E0B; border-color: #F59E0B; }
+  .tl-dot.gray  { background: #B0B8CC; border-color: #B0B8CC; box-shadow: none; }
+  .tl-step {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #7A8299;
+    margin-bottom: 2px;
+  }
+  .tl-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1E2433;
+    margin-bottom: 2px;
+  }
+  .tl-desc {
+    font-size: 12.5px;
+    color: #5A6480;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <!-- ── 헤더 ── -->
+  <div class="doc-header">
+    <div class="badge">구매요청서 첨부용 · 분할구매 참고</div>
+    <h1>자재랙 분할 구매 이력</h1>
+    <div class="meta">
+      <span><strong>원본 기안</strong> 260715 구매승인</span>
+      <span><strong>작성일</strong> 2026.08.07</span>
+      <span><strong>작성자</strong> 심우승 PQ · 엄마감동팀</span>
+      <span><strong>분할 사유</strong> 중앙방 온수탱크 철거 일정 미정</span>
+    </div>
+  </div>
+
+  <!-- ── 분할 사유 ── -->
+  <div class="delta-note">
+    <strong>분할 구매 배경</strong> — 중앙방 자재창고 내 온수탱크 철거 일정이 현재 미정 상태로,
+    중앙방 배치 분을 제외하고 우선 구매 가능한 품목을 1차로 진행함.
+    온수탱크 철거 확정 후 잔여분 추가 구매 예정.
+    분할 설치로 인해 설치비가 기존 약 150,000원 → 170,000원으로 <strong>약 20,000원 증가</strong>함.
+  </div>
+
+  <!-- ── 요약 카드 ── -->
+  <p class="section-title">전체 구매 요약</p>
+  <div class="summary-grid">
+    <div class="summary-item accent-blue">
+      <div class="s-label">이번 구매 (1차)</div>
+      <div class="s-val">931,500<span>원</span></div>
+      <div class="s-sub">본품 7개 + 선반 13장</div>
+    </div>
+    <div class="summary-item accent-amber">
+      <div class="s-label">잔여 구매 (2차)</div>
+      <div class="s-val">454,000<span>원</span></div>
+      <div class="s-sub">본품 4개 + 선반 4장</div>
+    </div>
+    <div class="summary-item accent-total">
+      <div class="s-label">전체 합계 (물품)</div>
+      <div class="s-val">1,385,500<span>원</span></div>
+      <div class="s-sub">기안 원본 동일 금액</div>
+    </div>
+  </div>
+
+  <!-- ── 이번 구매 ── -->
+  <p class="section-title">이번 구매 내역 (1차)</p>
+  <div class="card blue">
+    <div class="split-label now">1차 구매 · 즉시 진행</div>
+    <table>
+      <thead>
+        <tr>
+          <th>품목</th>
+          <th>규격</th>
+          <th>수량</th>
+          <th>단가</th>
+          <th>금액</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>자재랙 본품</td>
+          <td>1200×600×900 (2단)</td>
+          <td><span class="num bold">2</span></td>
+          <td><span class="num">96,500원</span></td>
+          <td><span class="num bold">193,000원</span></td>
+        </tr>
+        <tr>
+          <td>자재랙 본품</td>
+          <td>800×600×1800 (기본 2단 → 5단 증설)</td>
+          <td><span class="num bold">3</span></td>
+          <td><span class="num">103,500원</span></td>
+          <td><span class="num bold">310,500원</span></td>
+        </tr>
+        <tr>
+          <td>자재랙 본품</td>
+          <td>800×600×1800 (기본 2단 → 4단 증설)</td>
+          <td><span class="num bold">2</span></td>
+          <td><span class="num">103,500원</span></td>
+          <td><span class="num bold">207,000원</span></td>
+        </tr>
+        <tr>
+          <td>추가 선반 (단수 증설용)</td>
+          <td>800×600 경량 — 5단용 9장 + 4단용 4장</td>
+          <td><span class="num bold">13</span></td>
+          <td><span class="num">17,000원</span></td>
+          <td><span class="num bold">221,000원</span></td>
+        </tr>
+        <tr class="subtotal-row">
+          <td colspan="2">소계</td>
+          <td><span class="num bold">본품 7 + 선반 13</span></td>
+          <td>—</td>
+          <td><span class="num bold">931,500원</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="install-note">
+      설치비 (별도): 본품 <strong>7개</strong> 기준 → 캡처 기준 <strong>+100,000원</strong> (시공 설치 수도권 한정, 일정 별도 논의)
+    </div>
+  </div>
+
+  <!-- ── 잔여 구매 ── -->
+  <p class="section-title">잔여 구매 내역 (2차 · 온수탱크 철거 후)</p>
+  <div class="card amber">
+    <div class="split-label rest">2차 구매 · 온수탱크 철거 후 진행</div>
+    <table>
+      <thead>
+        <tr>
+          <th>품목</th>
+          <th>규격</th>
+          <th>수량</th>
+          <th>단가</th>
+          <th>금액</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>자재랙 본품</td>
+          <td>1000×600×900 (2단)</td>
+          <td><span class="num bold">2</span></td>
+          <td><span class="num">89,500원</span></td>
+          <td><span class="num bold">179,000원</span></td>
+        </tr>
+        <tr>
+          <td>자재랙 본품</td>
+          <td>800×600×1800 (기본 2단 → 4단 증설)</td>
+          <td><span class="num bold">2</span></td>
+          <td><span class="num">103,500원</span></td>
+          <td><span class="num bold">207,000원</span></td>
+        </tr>
+        <tr>
+          <td>추가 선반 (단수 증설용)</td>
+          <td>800×600 경량 — 4단용 4장</td>
+          <td><span class="num bold">4</span></td>
+          <td><span class="num">17,000원</span></td>
+          <td><span class="num bold">68,000원</span></td>
+        </tr>
+        <tr class="subtotal-row rest">
+          <td colspan="2">소계</td>
+          <td><span class="num bold">본품 4 + 선반 4</span></td>
+          <td>—</td>
+          <td><span class="num bold">454,000원</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="install-note">
+      설치비 (별도): 본품 <strong>4개</strong> 기준 → 캡처 기준 <strong>+70,000원</strong> (시공 설치 수도권 한정, 일정 별도 논의)
+    </div>
+  </div>
+
+  <!-- ── 설치비 합산 ── -->
+  <div class="card gray" style="margin-bottom:24px;">
+    <p class="section-title" style="margin-bottom:12px;">설치비 분할 합산</p>
+    <table>
+      <thead>
+        <tr>
+          <th>구분</th>
+          <th>본품 수량</th>
+          <th>설치비</th>
+          <th>비고</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1차 설치</td>
+          <td><span class="num bold">7개</span></td>
+          <td><span class="num bold">100,000원</span></td>
+          <td>이번 구매 시 동시 시공</td>
+        </tr>
+        <tr>
+          <td>2차 설치</td>
+          <td><span class="num bold">4개</span></td>
+          <td><span class="num bold">70,000원</span></td>
+          <td>온수탱크 철거 후 시공</td>
+        </tr>
+        <tr class="subtotal-row">
+          <td>합계 (분할)</td>
+          <td><span class="num bold">11개</span></td>
+          <td><span class="num bold">170,000원</span></td>
+          <td>기존 기안 약 150,000원 대비 +20,000원</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="install-note">
+      단일 일정으로 진행 시 7대(+100,000원) 또는 11대(+130,000원) 수준으로 줄일 수 있었으나,
+      온수탱크 철거 일정 미정으로 인한 분할 시공 불가피.
+      설치비 증가분 <strong>+20,000원</strong>은 분할 구매의 직접 비용으로 인식.
+    </div>
+  </div>
+
+  <!-- ── 구매 진행 타임라인 ── -->
+  <p class="section-title">구매 진행 현황</p>
+  <div class="card">
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot gray"></div>
+        <div class="tl-step">완료</div>
+        <div class="tl-title">260715 — 구매 사전승인 기안</div>
+        <div class="tl-desc">전체 자재랙 구매 계획 사전승인 획득. 온수탱크 철거 일정 미정으로 분할 구매 전환 결정.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot blue"></div>
+        <div class="tl-step">현재 · 이번 구매요청</div>
+        <div class="tl-title">260807 — 1차 구매요청 (본품 7개 + 선반 13장)</div>
+        <div class="tl-desc">우측방(검사실) 및 온수탱크 미점유 공간 배치분 선행 구매. 물품비 931,500원 + 설치비 100,000원.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot amber"></div>
+        <div class="tl-step">대기 · 온수탱크 철거 후</div>
+        <div class="tl-title">미정 — 2차 구매요청 (본품 4개 + 선반 4장)</div>
+        <div class="tl-desc">중앙방 자재창고 온수탱크 철거 확정 시점에 추가 구매 진행. 물품비 454,000원 + 설치비 70,000원.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 원본 기안 대비 ── -->
+  <p class="section-title">원본 기안 대비 변동 없는 항목</p>
+  <div class="card" style="font-size:13px; color:#5A6480; line-height:1.8;">
+    ✔ 전체 자재랙 본품 수량 동일 — 11개 (1200 2개 + 1000 2개 + 800 7개)<br>
+    ✔ 전체 추가 선반 수량 동일 — 17장 (800×600 경량)<br>
+    ✔ 전체 물품 금액 동일 — 1,385,500원 (기안서 원본 소계 일치)<br>
+    ✔ 기존 자재 6대 재사용 계획 유지 (검사실 배치, 약 579,000원 절감 효과)<br>
+    △ 설치비만 변동 — 약 150,000원 → 170,000원 (+20,000원 증가, 분할 시공 기인)
+  </div>
+
+</div>
+</body>
+</html>

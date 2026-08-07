@@ -87,6 +87,15 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
 .panel-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
 .panel-title .cnt { font-family: var(--mono); font-size: 10.5px; color: var(--text3); font-weight: 400; }
 
+.rank-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.rank-tab {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text2);
+  padding: 5px 13px; border-radius: 999px; font-size: 11.5px; cursor: pointer; font-family: inherit; font-weight: 500;
+  transition: background .15s, color .15s;
+}
+.rank-tab:hover { background: var(--border2); color: var(--text); }
+.rank-tab.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+
 .user-row {
   display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border2);
 }
@@ -97,6 +106,35 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
 .user-row .who .nm.exec { color: var(--yellow); }
 .user-row .who .top-page { font-size: 11px; color: var(--text2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .user-row .cnt-badge { font-family: var(--mono); font-size: 11px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 2px 9px; flex-shrink: 0; }
+
+.detail-btn {
+  background: var(--surface2); border: 1px solid var(--border); color: var(--text2);
+  padding: 4px 9px; border-radius: 6px; font-size: 10.5px; cursor: pointer; font-family: inherit;
+  flex-shrink: 0; white-space: nowrap; transition: background .15s, color .15s;
+}
+.detail-btn:hover { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+/* ── 세부현황 원형차트 팝업 ── */
+.pie-modal { display: none; position: fixed; inset: 0; z-index: 3100; background: rgba(10,14,22,0.45); align-items: center; justify-content: center; }
+.pie-modal.open { display: flex; }
+.pie-modal-box {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  width: 420px; max-width: 92vw; max-height: 82vh; display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.pie-modal-hd { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 16px 18px 4px; }
+.pie-modal-hd .ttl { font-size: 13.5px; font-weight: 700; line-height: 1.5; }
+.pie-modal-hd .sub { font-size: 11px; color: var(--text2); margin-top: 3px; }
+.pie-close-btn { background: none; border: none; color: var(--text2); font-size: 15px; cursor: pointer; line-height: 1; padding: 2px 4px; flex-shrink: 0; }
+.pie-close-btn:hover { color: var(--text); }
+.pie-modal-body { padding: 6px 18px 20px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+#pieChartWrap { display: flex; justify-content: center; padding-top: 6px; }
+#pieLegend { width: 100%; }
+.pie-legend-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border2); font-size: 12px; }
+.pie-legend-row:last-child { border-bottom: none; }
+.pie-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.pie-legend-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.pie-legend-val { font-family: var(--mono); font-size: 11px; color: var(--text2); flex-shrink: 0; }
 
 .page-row {
   display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border2);
@@ -222,8 +260,13 @@ td.page-cell { max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
 
   <div class="grid-2">
     <div class="panel">
-      <div class="panel-title">👤 사용자별 열람 순위 <span class="cnt" id="userCount"></span></div>
-      <div id="userRankList"><div class="empty-state">불러오는 중...</div></div>
+      <div class="panel-title">🏆 열람순위 <span class="cnt" id="rankCount"></span></div>
+      <div class="rank-tabs">
+        <button class="rank-tab active" data-tab="user" onclick="switchRankTab('user')">사용자</button>
+        <button class="rank-tab" data-tab="team" onclick="switchRankTab('team')">팀별</button>
+        <button class="rank-tab" data-tab="role" onclick="switchRankTab('role')">등급별</button>
+      </div>
+      <div id="rankList"><div class="empty-state">불러오는 중...</div></div>
     </div>
     <div class="panel">
       <div class="panel-title">📄 페이지별 열람 순위 <span class="cnt" id="pageCount"></span></div>
@@ -286,6 +329,22 @@ td.page-cell { max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
   </div>
 </div>
 
+<div id="pieModal" class="pie-modal">
+  <div class="pie-modal-box">
+    <div class="pie-modal-hd">
+      <div>
+        <div class="ttl" id="pieModalTitle"></div>
+        <div class="sub" id="pieModalSub"></div>
+      </div>
+      <button class="pie-close-btn" onclick="closePieModal()">✕</button>
+    </div>
+    <div class="pie-modal-body">
+      <div id="pieChartWrap"></div>
+      <div id="pieLegend"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbymKpZXyoAmsI978lOgGcJI8Z26J6UE8XesXb7haMJ6dRT16jAIFsJANMnK-Y9Wd35jNA/exec';
 const ROLE_LABEL_CLASS = { '관리자':'admin', '임원':'leader', '리더':'leader', '꿈비':'ggumbi', '계열사':'affiliate' };
@@ -331,29 +390,53 @@ async function loadLogs() {
     renderTable();
   } catch(e) {
     document.getElementById('logTbody').innerHTML = `<tr><td colspan="6" class="empty-state">불러오기 실패: ${e.message}<br><span style="font-size:11px;">GAS에 getViewLogs 액션이 배포되었는지 확인해주세요.</span></td></tr>`;
-    document.getElementById('userRankList').innerHTML = '<div class="empty-state">데이터 없음</div>';
+    document.getElementById('rankList').innerHTML = '<div class="empty-state">데이터 없음</div>';
     document.getElementById('pageRankList').innerHTML = '<div class="empty-state">데이터 없음</div>';
   } finally {
     btn.disabled = false;
   }
 }
 
+let currentRankTab = 'user';
+let currentRankList = [];
+let currentPageList = [];
+
+const RANK_TAB_CONF = {
+  user: { unit: '명', keyFn: r => identityOf(r).key,      labelFn: r => identityOf(r).label, isExecFn: r => identityOf(r).isExec },
+  team: { unit: '팀', keyFn: r => r.team || '(팀없음)',    labelFn: r => r.team || '(팀없음)', isExecFn: () => false },
+  role: { unit: '종', keyFn: r => r.loginType || '(알수없음)', labelFn: r => r.loginType || '(알수없음)', isExecFn: () => false },
+};
+
 function renderSummary() {
-  // 사용자별 집계 (필터에서 제외한 페이지는 집계에서 빠짐)
-  const byUser = {};
-  const byPage = {};
+  renderRankList();
+  renderPageList();
+}
+
+function aggregateBy(conf) {
+  const map = {};
   ALL_ROWS.filter(r => !EXCLUDED_PAGES.includes(r.page)).forEach(r => {
-    const id = identityOf(r);
-    if (!byUser[id.key]) byUser[id.key] = { label: id.label, isExec: id.isExec, count: 0, pages: {} };
-    byUser[id.key].count++;
-    byUser[id.key].pages[r.page] = (byUser[id.key].pages[r.page] || 0) + 1;
-
-    byPage[r.page] = (byPage[r.page] || 0) + 1;
+    const key = conf.keyFn(r);
+    if (!key) return;
+    if (!map[key]) map[key] = { label: conf.labelFn(r), isExec: false, count: 0, pages: {} };
+    map[key].count++;
+    map[key].pages[r.page] = (map[key].pages[r.page] || 0) + 1;
+    if (conf.isExecFn(r)) map[key].isExec = true;
   });
+  return Object.values(map).sort((a,b) => b.count - a.count);
+}
 
-  const userList = Object.values(byUser).sort((a,b) => b.count - a.count);
-  document.getElementById('userCount').textContent = `${userList.length}명`;
-  const userHtml = userList.slice(0, 15).map((u, i) => {
+function switchRankTab(tab) {
+  currentRankTab = tab;
+  document.querySelectorAll('.rank-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+  renderRankList();
+}
+
+function renderRankList() {
+  const conf = RANK_TAB_CONF[currentRankTab];
+  const list = aggregateBy(conf);
+  currentRankList = list;
+  document.getElementById('rankCount').textContent = `${list.length}${conf.unit}`;
+  const html = list.slice(0, 15).map((u, i) => {
     const topPage = Object.entries(u.pages).sort((a,b) => b[1]-a[1])[0];
     return `
     <div class="user-row">
@@ -363,25 +446,116 @@ function renderSummary() {
         <div class="top-page">주로 봄: ${topPage ? escapeHtml(topPage[0]) : '-'}</div>
       </div>
       <div class="cnt-badge">${u.count}회</div>
+      <button class="detail-btn" onclick="showRankDetail(${i})">세부현황 보기</button>
     </div>`;
   }).join('') || '<div class="empty-state">데이터 없음</div>';
-  document.getElementById('userRankList').innerHTML = userHtml;
+  document.getElementById('rankList').innerHTML = html;
+}
 
-  const pageList = Object.entries(byPage).sort((a,b) => b[1]-a[1]);
+function renderPageList() {
+  const byPage = {};
+  ALL_ROWS.filter(r => !EXCLUDED_PAGES.includes(r.page)).forEach(r => {
+    byPage[r.page] = (byPage[r.page] || 0) + 1;
+  });
+  const pageList = Object.entries(byPage).map(([page, count]) => ({ page, count })).sort((a,b) => b.count - a.count);
+  currentPageList = pageList;
   document.getElementById('pageCount').textContent = `${pageList.length}개`;
-  const maxCnt = pageList.length ? pageList[0][1] : 1;
-  const pageHtml = pageList.slice(0, 15).map(([page, cnt]) => {
-    const pct = Math.max(6, Math.round(cnt / maxCnt * 100));
+  const maxCnt = pageList.length ? pageList[0].count : 1;
+  const pageHtml = pageList.slice(0, 15).map((p, i) => {
+    const pct = Math.max(6, Math.round(p.count / maxCnt * 100));
     return `
     <div class="page-row">
       <div class="bar-wrap">
         <div class="bar" style="width:${pct}%;"></div>
-        <div class="bar-label">${escapeHtml(page)}</div>
+        <div class="bar-label">${escapeHtml(p.page)}</div>
       </div>
-      <div class="cnt-badge">${cnt}</div>
+      <div class="cnt-badge">${p.count}</div>
+      <button class="detail-btn" onclick="showPageDetail(${i})">세부현황 보기</button>
     </div>`;
   }).join('') || '<div class="empty-state">데이터 없음</div>';
   document.getElementById('pageRankList').innerHTML = pageHtml;
+}
+
+// ═══════════════════════════════════════════
+//  세부현황 원형차트 팝업 (순위 속의 순위)
+// ═══════════════════════════════════════════
+const PIE_COLORS = ['#1a6eb8','#1a7a44','#96690a','#c0392b','#7047c9','#0e9594','#d4622a','#4b5563','#a855f7','#059669','#dc2626','#2563eb'];
+
+function buildPieSVG(data) {
+  const total = data.reduce((s,d) => s + d.count, 0) || 1;
+  const cx = 90, cy = 90, r = 80;
+  if (data.length === 1) {
+    return `<svg viewBox="0 0 180 180" width="180" height="180"><circle cx="${cx}" cy="${cy}" r="${r}" fill="${PIE_COLORS[0]}"/></svg>`;
+  }
+  let angle = -90;
+  const slices = data.map((d, i) => {
+    const frac = d.count / total;
+    const startAngle = angle;
+    const endAngle = angle + frac * 360;
+    angle = endAngle;
+    const largeArc = (endAngle - startAngle) > 180 ? 1 : 0;
+    const x1 = cx + r * Math.cos(startAngle * Math.PI / 180);
+    const y1 = cy + r * Math.sin(startAngle * Math.PI / 180);
+    const x2 = cx + r * Math.cos(endAngle * Math.PI / 180);
+    const y2 = cy + r * Math.sin(endAngle * Math.PI / 180);
+    const color = PIE_COLORS[i % PIE_COLORS.length];
+    return `<path d="M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${largeArc} 1 ${x2.toFixed(2)},${y2.toFixed(2)} Z" fill="${color}"/>`;
+  }).join('');
+  return `<svg viewBox="0 0 180 180" width="180" height="180">${slices}</svg>`;
+}
+
+function buildPieLegend(data) {
+  const total = data.reduce((s,d) => s + d.count, 0) || 1;
+  return data.map((d, i) => {
+    const pct = ((d.count / total) * 100).toFixed(1);
+    const color = PIE_COLORS[i % PIE_COLORS.length];
+    return `<div class="pie-legend-row"><span class="pie-dot" style="background:${color}"></span><span class="pie-legend-label">${escapeHtml(d.label)}</span><span class="pie-legend-val">${d.count}회 · ${pct}%</span></div>`;
+  }).join('') || '<div class="empty-state">데이터 없음</div>';
+}
+
+function prepPieData(rawData) {
+  const sorted = rawData.slice().sort((a,b) => b.count - a.count);
+  if (sorted.length <= 12) return sorted;
+  const top = sorted.slice(0, 11);
+  const restCount = sorted.slice(11).reduce((s,d) => s + d.count, 0);
+  return top.concat([{ label: '기타', count: restCount }]);
+}
+
+function showDetailModal(title, subtitle, rawData) {
+  const data = prepPieData(rawData);
+  document.getElementById('pieModalTitle').textContent = title;
+  document.getElementById('pieModalSub').textContent = subtitle || '';
+  document.getElementById('pieChartWrap').innerHTML = buildPieSVG(data);
+  document.getElementById('pieLegend').innerHTML = buildPieLegend(data);
+  document.getElementById('pieModal').classList.add('open');
+}
+
+function closePieModal() {
+  document.getElementById('pieModal').classList.remove('open');
+}
+
+function showRankDetail(i) {
+  const item = currentRankList[i];
+  if (!item) return;
+  const data = Object.entries(item.pages).map(([page, count]) => ({ label: page, count }));
+  showDetailModal(`${item.label} · 페이지별 열람 비중`, `총 ${item.count}회 열람`, data);
+}
+
+function pageUserBreakdown(page) {
+  const map = {};
+  ALL_ROWS.filter(r => r.page === page).forEach(r => {
+    const id = identityOf(r);
+    if (!map[id.key]) map[id.key] = { label: id.label, count: 0 };
+    map[id.key].count++;
+  });
+  return Object.values(map);
+}
+
+function showPageDetail(i) {
+  const item = currentPageList[i];
+  if (!item) return;
+  const data = pageUserBreakdown(item.page);
+  showDetailModal(`${item.page} · 사용자별 열람 비중`, `총 ${item.count}회 열람`, data);
 }
 
 function escapeHtml(s) {
@@ -521,6 +695,10 @@ if (checkAdmin()) { loadFilterSettings().then(loadLogs); }
 
 document.getElementById('filterModal').addEventListener('click', function(e) {
   if (e.target === this) closeFilterModal();
+});
+
+document.getElementById('pieModal').addEventListener('click', function(e) {
+  if (e.target === this) closePieModal();
 });
 </script>
 </body>

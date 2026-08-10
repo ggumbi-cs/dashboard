@@ -1765,6 +1765,122 @@ function parseCsvToRecords(text) {
   return records;
 }
 
+// ── 섹션별 스키마 강제(화이트리스트) ──────────────────────────
+// 2026-08-10 사고: 노션 "내보내기" CSV를 그대로 올리면 화면에 보이는 컬럼
+// 20개 이상이 다 들어가고(고객명,주소,연락처,수리내용...), 확인불량/접수불량
+// 같은 다중선택은 배열이 아니라 "값1, 값2" 콤마 문자열로, 유/무상은 슬래시가
+// 낀 채로, 2025년 이전 데이터까지 필터 없이 그대로 들어가서 "가전" 섹션이
+// 통째로 깨졌었다(7,684건, 16MB). 아래 스키마는 3가지 업로드 경로(동기화 ·
+// 파일다운로드 · GitHub 직접쓰기) 전부가 공유하며, 알려진 섹션은 정확히
+// 대시보드가 기대하는 필드만 남기고 타입도 맞춰서 내보낸다.
+const SECTION_SCHEMAS = {
+  가전: {
+    fields: ['접수일','제품명','구분','확인불량','접수불량','유무상','과실','진행상황','업무단계'],
+    aliases: { 유무상: ['유/무상'] },
+    arrayFields: ['확인불량','접수불량'],
+    dateField: '접수일', minDate: '2026-01-01',
+    validValues: { 구분: ['자재출고','교환/환불','수리출고'] },
+    excludeValues: { 진행상황: ['수리제외','취소'] },
+  },
+  가전외AS: {
+    fields: ['상품명','상품구분','비용','유무상','접수일자','완료일자','수리방법','진행사항'],
+    aliases: { 유무상: ['유/무상'] },
+    arrayFields: ['수리방법'],
+    numberFields: ['비용'],
+    excludeValues: { 진행사항: ['취소'] },
+  },
+  반품마감: {
+    fields: ['구분','마감회차','사유','교환반품','주월','품목','건수','비고'],
+    aliases: { 교환반품: ['교환/반품'], 주월: ['주/월'] },
+    numberFields: ['건수'],
+  },
+  반품율: {
+    fields: ['구분','마감월','월간배송수량','월간교환반품수량','반품교환율','비고'],
+    aliases: {
+      월간배송수량: ['월간 배송수량'],
+      월간교환반품수량: ['월간 교환/반품 수량'],
+      반품교환율: ['반품/교환율'],
+    },
+    numberFields: ['월간배송수량','월간교환반품수량','반품교환율'],
+  },
+  반품검사: {
+    fields: ['제품명','반품유형','검사결과','이동처리','등록일자','리포트구분','리포트판정'],
+    aliases: { 이동처리: ['이동/처리'], 리포트구분: ['리포트 구분'], 리포트판정: ['리포트 판정'] },
+    dateField: '등록일자', minDate: '2026-01-01',
+  },
+  반품처리: {
+    fields: ['처리일','제품명','처리결과','처리수량','처리금액','비고'],
+    numberFields: ['처리수량','처리금액'],
+  },
+  // 처리현황: 드롭다운엔 없지만(가전 DB에서 파생) GAS 직접호출 등 다른 경로 대비 정의해둠
+  처리현황: {
+    fields: ['제품명','구분','처리일','입고입금일','유무상','접수불량','사용부품','소요일','유상AS비용','과실','진행상황'],
+    aliases: { 유무상: ['유/무상'], 입고입금일: ['입고(입금)일'] },
+    arrayFields: ['접수불량','사용부품'],
+    numberFields: ['유상AS비용'],
+    dateField: '처리일', minDate: '2026-01-01',
+    excludeValues: { 진행상황: ['수리제외','취소'] },
+  },
+  // 택배출고 · 휴가일정: 사람/날짜범위 속성이 얽혀있어 CSV 내보내기 형태가 불확실 →
+  // 잘못된 추측으로 덮어쓰는 것보다 낫다고 판단해 스키마 강제를 아직 넣지 않음(그대로 통과).
+};
+
+// records: parseCsvToRecords()가 만든 "헤더명 그대로 키"인 원시 배열.
+// 반환: { records, raw, kept, hasSchema } — records는 강제된 결과(스키마 없으면 원본 그대로).
+function normalizeSectionRecords(sectionKey, records) {
+  const schema = SECTION_SCHEMAS[sectionKey];
+  if (!schema) return { records, raw: records.length, kept: records.length, hasSchema: false };
+
+  function pick(row, field) {
+    if (row[field] !== undefined && row[field] !== '') return row[field];
+    const alts = (schema.aliases && schema.aliases[field]) || [];
+    for (const a of alts) { if (row[a] !== undefined && row[a] !== '') return row[a]; }
+    return row[field];
+  }
+
+  const out = [];
+  records.forEach(row => {
+    const rec = {};
+    schema.fields.forEach(f => {
+      let v = pick(row, f);
+      if (v === undefined) v = null;
+      if (schema.arrayFields && schema.arrayFields.includes(f)) {
+        if (Array.isArray(v)) { /* 이미 배열 */ }
+        else if (typeof v === 'string' && v.trim()) v = v.split(',').map(s => s.trim()).filter(Boolean);
+        else v = [];
+      } else if (schema.numberFields && schema.numberFields.includes(f)) {
+        const s = typeof v === 'string' ? v.replace(/,/g, '') : v;
+        const n = Number(s);
+        v = (s === '' || s === null || s === undefined || isNaN(n)) ? 0 : n;
+      } else if (typeof v === 'string') {
+        v = v.trim();
+        if (v === '') v = (f === '비고' ? '' : null);
+      }
+      rec[f] = v;
+    });
+    if (schema.dateField) {
+      const dv = rec[schema.dateField];
+      if (!dv || String(dv) < schema.minDate) return;
+    }
+    if (schema.validValues) {
+      const bad = Object.entries(schema.validValues).some(([f, allowed]) => !allowed.includes(rec[f]));
+      if (bad) return;
+    }
+    if (schema.excludeValues) {
+      const bad = Object.entries(schema.excludeValues).some(([f, banned]) => banned.includes(rec[f]));
+      if (bad) return;
+    }
+    out.push(rec);
+  });
+  return { records: out, raw: records.length, kept: out.length, hasSchema: true };
+}
+
+// CSV 텍스트 → (알려진 섹션이면) 스키마 강제까지 끝난 레코드. 3개 업로드 경로 공통 진입점.
+function getSectionRecords(sectionKey, csvText) {
+  const raw = parseCsvToRecords(csvText);
+  return normalizeSectionRecords(sectionKey, raw);
+}
+
 // zip(이중압축 포함) → 내부 csv 전부 추출, _all.csv 우선
 async function extractCsvFilesFromZip(file) {
   const results = [];
@@ -1848,7 +1964,7 @@ function base64ToUtf8(b64) { return decodeURIComponent(escape(atob(b64.replace(/
 // GAS(UrlFetchApp)를 전혀 거치지 않고, 브라우저에서 GitHub Contents API로
 // qc_data.json의 한 섹션만 직접 갱신한다. GitHub API 자체의 요청 한도(시간당 5000회, 인증 시)를
 // 쓰므로 GAS의 하루치 UrlFetch 할당량과는 완전히 무관하다.
-async function pushSectionDirectToGithub(sectionKey, records, statusEl) {
+async function pushSectionDirectToGithub(sectionKey, records, statusEl, note = '') {
   const token = getGhToken();
   if (!token) { showToast('⚠ 먼저 GitHub 토큰을 저장하세요'); return; }
 
@@ -1903,8 +2019,8 @@ async function pushSectionDirectToGithub(sectionKey, records, statusEl) {
       throw new Error(`업로드 실패 (HTTP ${putRes.status} ${putRes.statusText}): ${putJson.message || putText.slice(0,150)}`);
     }
 
-    statusEl.textContent = `✅ ${records.length}건 직접쓰기 완료 · ${new Date(now).toLocaleString('ko-KR')}`;
-    showToast(`✅ ${sectionKey} GitHub 직접쓰기 완료 (${records.length}건)`);
+    statusEl.textContent = `✅ ${records.length}건 직접쓰기 완료${note} · ${new Date(now).toLocaleString('ko-KR')}`;
+    showToast(`✅ ${sectionKey} GitHub 직접쓰기 완료 (${records.length}건)${note}`);
     _csvSyncTimes[sectionKey] = now;
     _csvActionedSections.add(sectionKey);
     renderCsvCoveragePanel();
@@ -1970,10 +2086,12 @@ async function handleCsvZipFiles(fileList) {
 
       row.querySelector(`#csvDlBtn_${rowId}`).addEventListener('click', () => {
         const sectionKey = sel.value;
-        const records = parseCsvToRecords(cf.text);
+        const norm = getSectionRecords(sectionKey, cf.text);
+        const records = norm.records;
+        const note = norm.hasSchema ? ` (원본 ${norm.raw}건 → 정제 ${norm.kept}건)` : '';
         downloadManualSyncJson(sectionKey, records);
-        statusEl.textContent = `⬇ ${sectionKey}.json 다운로드됨 · qc/수동동기화/ 폴더에 넣고 깃허브에 올려주세요`;
-        showToast(`⬇ ${sectionKey}.json 다운로드 완료`);
+        statusEl.textContent = `⬇ ${sectionKey}.json 다운로드됨${note} · qc/수동동기화/ 폴더에 넣고 깃허브에 올려주세요`;
+        showToast(`⬇ ${sectionKey}.json 다운로드 완료${note}`);
         _csvActionedSections.add(sectionKey);
         renderCsvCoveragePanel();
       });
@@ -1981,8 +2099,9 @@ async function handleCsvZipFiles(fileList) {
       row.querySelector(`#csvGhBtn_${rowId}`).addEventListener('click', async () => {
         if (!_isAdmin) { showToast('⚠ 관리자만 사용 가능합니다'); return; }
         const sectionKey = sel.value;
-        const records = parseCsvToRecords(cf.text);
-        await pushSectionDirectToGithub(sectionKey, records, statusEl);
+        const norm = getSectionRecords(sectionKey, cf.text);
+        const note = norm.hasSchema ? ` (원본 ${norm.raw}건 → 정제 ${norm.kept}건)` : '';
+        await pushSectionDirectToGithub(sectionKey, norm.records, statusEl, note);
       });
 
       row.querySelector(`#csvBtn_${rowId}`).addEventListener('click', async () => {
@@ -1992,7 +2111,9 @@ async function handleCsvZipFiles(fileList) {
         btn.disabled = true; btn.textContent = '⏳ 진행중';
         statusEl.textContent = '동기화 중...';
         try {
-          const records = parseCsvToRecords(cf.text);
+          const norm = getSectionRecords(sectionKey, cf.text);
+          const records = norm.records;
+          const note = norm.hasSchema ? ` (원본 ${norm.raw}건 → 정제 ${norm.kept}건)` : '';
           // POST 사용 이유: 레코드가 많은 CSV는 GET 쿼리스트링에 실으면
           // URL 길이 한계를 넘어 "Failed to fetch"가 발생할 수 있음.
           // Content-Type을 text/plain으로 둬야 CORS preflight(OPTIONS)를
@@ -2006,8 +2127,8 @@ async function handleCsvZipFiles(fileList) {
           const data = await res.json();
           if (data.ok) {
             _csvSyncTimes[sectionKey] = data.time;
-            statusEl.textContent = `✅ ${data.count}건 동기화 · ${new Date(data.time).toLocaleString('ko-KR')}`;
-            showToast(`✅ ${sectionKey} 동기화 완료 (${data.count}건)`);
+            statusEl.textContent = `✅ ${data.count}건 동기화${note} · ${new Date(data.time).toLocaleString('ko-KR')}`;
+            showToast(`✅ ${sectionKey} 동기화 완료 (${data.count}건)${note}`);
             _csvActionedSections.add(sectionKey);
             renderCsvCoveragePanel();
           } else {

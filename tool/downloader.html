@@ -222,7 +222,6 @@
       <span id="originStatus" style="font-size:11px;color:var(--text-muted);">기준점 미등록</span>
       <div style="flex:1;"></div>
       <button class="btn btn-secondary" style="height:28px;font-size:11px;padding:0 12px;" onclick="beginPatternRecording()">🖱 새 클릭패턴 등록</button>
-      <button class="btn btn-secondary" style="height:28px;font-size:11px;padding:0 12px;" onclick="togglePatternManage()">🛠 패턴 관리</button>
     </div>
 
     <div id="recordGuide" style="display:none;margin-top:8px;padding:10px 14px;background:#eef1fe;border:1px solid #a5b4fc;border-radius:7px;font-size:11px;line-height:1.9;color:#3b3fae;">
@@ -242,18 +241,26 @@
       </div>
     </div>
 
-    <!-- 패턴 관리 패널 -->
-    <div id="patternManagePanel" style="display:none;margin-top:10px;padding:10px 12px;background:#fff;border:1px solid var(--border);border-radius:7px;">
-      <div style="font-weight:700;font-size:11px;color:var(--text-sub);margin-bottom:8px;">등록된 클릭패턴 (이름 / 클릭별 딜레이 수정 가능)</div>
-      <div id="patternManageList"></div>
+    <!-- 패턴 관리 패널 (상시 펼침) -->
+    <div id="patternManagePanel" style="margin-top:10px;padding:10px 12px;background:#fff;border:1px solid var(--border);border-radius:7px;">
+      <div style="font-weight:700;font-size:11px;color:var(--text-sub);margin-bottom:8px;">🛠 클릭패턴 관리 — 이름 / 클릭별 딜레이 수정</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+        <span style="font-size:11px;color:var(--text-sub);">관리할 패턴:</span>
+        <select class="setting-select" id="patternManageSelect" style="flex:1;height:32px;font-size:12px;" onchange="renderPatternManageDetail()"></select>
+      </div>
+      <div id="patternManageDetail"></div>
     </div>
 
     <!-- 봇 실행 준비 안내 -->
     <div id="botGuide" style="margin-top:12px;padding:10px 14px;background:#fffbeb;border:1px solid #fcd34d;border-radius:7px;font-size:11px;line-height:1.9;color:#78350f;">
       <b style="font-size:12px;">📋 봇 사용 준비 안내</b><br>
       이 기능은 <b>PC에서 직접 실행되는 봇 프로그램(ggumbi_csv_bot.exe)</b>과 연동하여 동작합니다.<br>
-      ① 봇 파일을 더블클릭하여 실행 → ② 검은 창이 뜨면 <b>🔌 연결 확인</b> 클릭 → ③ <span style="color:var(--success);font-weight:700;">● 봇 연결됨</span>으로 바뀌면 준비 완료!<br>
+      ① 아래 버튼으로 봇 파일을 받은 뒤 더블클릭하여 실행 → ② 검은 창이 뜨면 <b>🔌 연결 확인</b> 클릭 → ③ <span style="color:var(--success);font-weight:700;">● 봇 연결됨</span>으로 바뀌면 준비 완료!<br>
       <div style="margin-top:6px;color:#92400e;">⚠️ 봇 창(검은 창)을 닫으면 연결이 끊깁니다. 작업 중에는 열어두세요.</div>
+      <a href="https://drive.google.com/file/d/1ABQTYE6U-4rlKloCwyO5rP9cEZioRYev/view?usp=drive_link" target="_blank" rel="noopener"
+        class="btn btn-secondary" style="height:28px;font-size:11px;padding:0 12px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-top:8px;">
+        ⬇ 봇 다운로드 (구글드라이브)
+      </a>
     </div>
 
     <!-- 봇 실행 로그 -->
@@ -301,6 +308,7 @@
           <tr>
             <th>#</th>
             <th>Notion 페이지 URL</th>
+            <th style="width:160px;">메모</th>
             <th style="width:170px;">클릭패턴</th>
           </tr>
         </thead>
@@ -371,6 +379,11 @@ function buildTable(){
           oninput="onUrlInput(${i}, this)">
       </td>
       <td>
+        <input type="text" class="url-input" id="memo_${i}"
+          placeholder="이 페이지 메모..."
+          oninput="onMemoInput(${i}, this)" style="color:var(--text);font-family:'Noto Sans KR',sans-serif;">
+      </td>
+      <td>
         <select class="setting-select" id="pattern_${i}" style="height:30px;width:100%;font-size:11px;" onchange="onPatternSelect(${i}, this)"></select>
       </td>
     `;
@@ -381,6 +394,10 @@ function buildTable(){
 function onUrlInput(i, el){
   el.classList.toggle('has-value', el.value.trim().length > 0);
   updateRowStatus(i, el.value.trim() ? 'idle' : null);
+  scheduleAutoSave();
+}
+
+function onMemoInput(i, el){
   scheduleAutoSave();
 }
 
@@ -414,6 +431,8 @@ function clearAll(){
   for(let i=0; i<ROW_COUNT; i++){
     const u = document.getElementById('url_'+i);
     if(u){ u.value=''; u.classList.remove('has-value'); }
+    const m = document.getElementById('memo_'+i);
+    if(m) m.value = '';
     const p = document.getElementById('pattern_'+i);
     if(p) p.value = '';
     updateRowStatus(i, null);
@@ -467,10 +486,11 @@ function updateProgress(done, total){
 // ★ 구글시트 연동 (URL 목록 저장/불러오기)
 // ================================================================
 async function saveToSheet(){
-  const urls = [], names = [], patterns = [];
+  const urls = [], names = [], memos = [], patterns = [];
   for(let i=0; i<ROW_COUNT; i++){
     urls.push(document.getElementById('url_'+i)?.value.trim() || '');
     names.push(urls[i] ? `항목_${i+1}` : ''); // 이름은 자동부여
+    memos.push(document.getElementById('memo_'+i)?.value.trim() || '');
     patterns.push(document.getElementById('pattern_'+i)?.value || '');
   }
   const filled = urls.filter(u=>u).length;
@@ -479,7 +499,7 @@ async function saveToSheet(){
   const btn = document.getElementById('sheetSaveBtn');
   btn.disabled = true; btn.textContent = '저장중...';
   try {
-    const payload = encodeURIComponent(JSON.stringify({ urls, names, patterns }));
+    const payload = encodeURIComponent(JSON.stringify({ urls, names, memos, patterns }));
     const res = await fetch(GAS_URL + '?action=saveCsvLinks&data=' + payload);
     const data = await res.json();
     if(data.ok){ addLog(`구글시트 저장 완료 — ${filled}개 항목`, 'success'); }
@@ -491,13 +511,14 @@ async function saveToSheet(){
 let _autoSaveTimer = null;
 let _lastSavedSnapshot = '';
 function getSnapshot(){
-  const urls = [], names = [], patterns = [];
+  const urls = [], names = [], memos = [], patterns = [];
   for(let i=0; i<ROW_COUNT; i++){
     urls.push(document.getElementById('url_'+i)?.value.trim() || '');
     names.push(urls[i] ? `항목_${i+1}` : '');
+    memos.push(document.getElementById('memo_'+i)?.value.trim() || '');
     patterns.push(document.getElementById('pattern_'+i)?.value || '');
   }
-  return JSON.stringify({urls, names, patterns});
+  return JSON.stringify({urls, names, memos, patterns});
 }
 function scheduleAutoSave(){
   clearTimeout(_autoSaveTimer);
@@ -521,6 +542,8 @@ function _applyLoadedLinks(data){
     if(i >= ROW_COUNT) return;
     const u = document.getElementById('url_'+i);
     if(u){ u.value = url||''; u.classList.toggle('has-value', !!url); updateRowStatus(i, url?'idle':null); }
+    const m = document.getElementById('memo_'+i);
+    if(m){ m.value = (data.memos && data.memos[i]) || ''; }
   });
   _pendingPatternValues = data.patterns || null;
   renderPatternSelects();
@@ -568,9 +591,7 @@ async function loadPatterns(){
     if(data.ok){
       CSV_PATTERNS = data.patterns || [];
       renderPatternSelects();
-      if(document.getElementById('patternManagePanel').style.display !== 'none'){
-        renderPatternManageList();
-      }
+      renderPatternManageSelect();
     }
   } catch(e){ console.warn('클릭패턴 불러오기 실패:', e.message); }
 }
@@ -675,45 +696,49 @@ async function deletePatternByName(name){
       body: JSON.stringify({ action:'deleteCsvPattern', name })
     });
     const data = await res.json();
-    if(data.ok){ addLog(`클릭패턴 "${name}" 삭제 완료`, 'success'); await loadPatterns(); renderPatternManageList(); }
+    if(data.ok){ addLog(`클릭패턴 "${name}" 삭제 완료`, 'success'); await loadPatterns(); }
     else { addLog('삭제 실패: ' + (data.msg||''), 'error'); }
   } catch(e){ addLog('삭제 오류: ' + e.message, 'error'); }
 }
 
-// ── 패턴 관리(이름/딜레이 수정) ──
-function togglePatternManage(){
-  const panel = document.getElementById('patternManagePanel');
-  const show = panel.style.display === 'none';
-  panel.style.display = show ? '' : 'none';
-  if(show) renderPatternManageList();
-}
-
-function renderPatternManageList(){
-  const list = document.getElementById('patternManageList');
+// ── 패턴 관리(이름/딜레이 수정) - 드롭다운으로 관리 대상 선택, 패널은 상시 펼침 ──
+function renderPatternManageSelect(){
+  const sel = document.getElementById('patternManageSelect');
+  const prevValue = sel.value;
   if(CSV_PATTERNS.length === 0){
-    list.innerHTML = '<div style="font-size:11px;color:var(--text-muted);">등록된 패턴이 없습니다.</div>';
+    sel.innerHTML = '<option value="">등록된 패턴 없음</option>';
+    document.getElementById('patternManageDetail').innerHTML = '<div style="font-size:11px;color:var(--text-muted);">등록된 패턴이 없습니다. [새 클릭패턴 등록]으로 먼저 만들어주세요.</div>';
     return;
   }
-  list.innerHTML = CSV_PATTERNS.map((p, pi) => {
-    const clicksHtml = p.points.map((pt, ci) => `
-      <div class="pm-click-row">
-        <span style="width:50px;">클릭 ${ci+1}</span>
-        <span style="width:110px;color:var(--text-muted);">(${pt.x}, ${pt.y})</span>
-        <span>후 딜레이(ms):</span>
-        <input type="number" min="0" step="50" value="${pt.delay!=null?pt.delay:300}" id="pm_delay_${pi}_${ci}">
+  sel.innerHTML = CSV_PATTERNS.map(p => `<option value="${p.name}">${p.name} (${p.points.length}클릭)</option>`).join('');
+  if(prevValue && CSV_PATTERNS.some(p => p.name === prevValue)) sel.value = prevValue;
+  renderPatternManageDetail();
+}
+
+function renderPatternManageDetail(){
+  const sel = document.getElementById('patternManageSelect');
+  const detail = document.getElementById('patternManageDetail');
+  const pi = CSV_PATTERNS.findIndex(p => p.name === sel.value);
+  if(pi < 0){ detail.innerHTML = ''; return; }
+  const p = CSV_PATTERNS[pi];
+  const clicksHtml = p.points.map((pt, ci) => `
+    <div class="pm-click-row">
+      <span style="width:50px;">클릭 ${ci+1}</span>
+      <span style="width:110px;color:var(--text-muted);">(${pt.x}, ${pt.y})</span>
+      <span>후 딜레이(ms):</span>
+      <input type="number" min="0" step="50" value="${pt.delay!=null?pt.delay:300}" id="pm_delay_${pi}_${ci}">
+    </div>
+  `).join('');
+  detail.innerHTML = `
+    <div class="pattern-manage-item">
+      <div class="pm-row">
+        <input type="text" class="pm-name-input" id="pm_name_${pi}" value="${p.name}">
+        <button class="btn btn-primary" style="height:32px;font-size:11px;padding:0 12px;" onclick="savePatternEdits(${pi})">저장</button>
+        <button class="btn btn-danger" style="height:32px;font-size:11px;padding:0 12px;" onclick="deletePatternByName('${p.name.replace(/'/g,"\\'")}')">삭제</button>
       </div>
-    `).join('');
-    return `
-      <div class="pattern-manage-item">
-        <div class="pm-row">
-          <input type="text" class="pm-name-input" id="pm_name_${pi}" value="${p.name}">
-          <button class="btn btn-primary" style="height:32px;font-size:11px;padding:0 12px;" onclick="savePatternEdits(${pi})">저장</button>
-          <button class="btn btn-danger" style="height:32px;font-size:11px;padding:0 12px;" onclick="deletePatternByName('${p.name.replace(/'/g,"\\'")}')">삭제</button>
-        </div>
-        ${clicksHtml}
-      </div>
-    `;
-  }).join('');
+      ${clicksHtml}
+    </div>
+  `;
 }
 
 async function savePatternEdits(pi){
@@ -741,7 +766,8 @@ async function savePatternEdits(pi){
       await savePatternToSheet(newName, newPoints);
     }
     await loadPatterns();
-    renderPatternManageList();
+    document.getElementById('patternManageSelect').value = newName;
+    renderPatternManageDetail();
   } catch(e){ addLog('패턴 수정 오류: ' + e.message, 'error'); }
 }
 

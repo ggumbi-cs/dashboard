@@ -500,14 +500,14 @@
         <div class="chart-title">🏆 긍정·부정 TOP 3</div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:8px;">
           <div>
-            <div style="font-size:12px; font-weight:700; color:var(--text2); margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--border);">📅 주간 (최근 7일)</div>
+            <div id="spotWeekTitle" style="font-size:12px; font-weight:700; color:var(--text2); margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--border);">📅 주간 (최근 7일)</div>
             <div style="font-size:11px; font-weight:600; color:var(--green); margin-bottom:4px;">👍 긍정 TOP 3</div>
             <div id="spotlightPosWeek"></div>
             <div style="font-size:11px; font-weight:600; color:var(--red); margin:12px 0 4px;">👎 부정 TOP 3</div>
             <div id="spotlightNegWeek"></div>
           </div>
           <div style="border-left:1px solid var(--border); padding-left:16px;">
-            <div style="font-size:12px; font-weight:700; color:var(--text2); margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--border);">🗓 월간 (최근 30일)</div>
+            <div id="spotMonthTitle" style="font-size:12px; font-weight:700; color:var(--text2); margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--border);">🗓 월간 (최근 30일)</div>
             <div style="font-size:11px; font-weight:600; color:var(--green); margin-bottom:4px;">👍 긍정 TOP 3</div>
             <div id="spotlightPosMonth"></div>
             <div style="font-size:11px; font-weight:600; color:var(--red); margin:12px 0 4px;">👎 부정 TOP 3</div>
@@ -1146,7 +1146,8 @@ function renderDashboard() {
       : '<div style="color:var(--text3);font-size:12px;padding:10px 0;">' + (isNeg ? '해당 없음 ✅' : '데이터 없음') + '</div>';
   };
 
-  const spotNow    = new Date();
+  // 기준일 = 실시간 현재가 아닌, 데이터 내 가장 최신 리뷰 날짜
+  const spotNow = allReviews.reduce((max, r) => (r.dateObj && r.dateObj > max) ? r.dateObj : max, new Date(0));
   const weekAgo    = new Date(spotNow.getTime() - 7  * 24*60*60*1000);
   const monthAgo   = new Date(spotNow.getTime() - 30 * 24*60*60*1000);
   const weekReviews  = allReviews.filter(r => r.dateObj && r.dateObj >= weekAgo);
@@ -1159,6 +1160,12 @@ function renderDashboard() {
   renderSpot('spotlightNegWeek',  weekSpot.neg,  true);
   renderSpot('spotlightPosMonth', monthSpot.pos, false);
   renderSpot('spotlightNegMonth', monthSpot.neg, true);
+
+  const baseDateStr = `${spotNow.getFullYear()}.${String(spotNow.getMonth()+1).padStart(2,'0')}.${String(spotNow.getDate()).padStart(2,'0')}`;
+  const wkTitleEl = document.getElementById('spotWeekTitle');
+  const moTitleEl = document.getElementById('spotMonthTitle');
+  if(wkTitleEl) wkTitleEl.textContent = `📅 주간 (최신자료 ${baseDateStr} 기준 최근 7일)`;
+  if(moTitleEl) moTitleEl.textContent = `🗓 월간 (최신자료 ${baseDateStr} 기준 최근 30일)`;
 }
 
 function filterByProduct(name) {

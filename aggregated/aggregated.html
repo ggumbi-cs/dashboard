@@ -643,7 +643,7 @@ const MODULES = {
     async loadData() {
       const res = await fetch(`${QC_GAS_URL}?action=getZaejaeData`, { redirect: 'follow' });
       const json = await res.json();
-      if (!json.ok || !json.records) throw new Error('자재발주 데이터 로드 실패');
+      if (!json.ok || !json.records) throw new Error('자재발주 데이터 로드 실패' + (json.msg ? ' - ' + json.msg : ' (응답: ' + JSON.stringify(json).slice(0,200) + ')'));
       return json.records; // 날짜 필터 없이 전체 건을 그대로 사용
     },
     buildSummary(rows) {

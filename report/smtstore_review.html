@@ -496,14 +496,23 @@
         <div class="chart-title">📦 리뷰 많은 상품 TOP 20</div>
         <div id="productBars" style="margin-top:8px;"></div>
       </div>
-      <div style="display:flex; flex-direction:column; gap:16px;">
-        <div class="chart-card">
-          <div class="chart-title" style="color:var(--green);">👍 긍정 TOP 3</div>
-          <div id="spotlightPos"></div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-title" style="color:var(--red);">👎 부정 TOP 3</div>
-          <div id="spotlightNeg"></div>
+      <div class="chart-card">
+        <div class="chart-title">🏆 긍정·부정 TOP 3</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:8px;">
+          <div>
+            <div style="font-size:12px; font-weight:700; color:var(--text2); margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--border);">📅 주간 (최근 7일)</div>
+            <div style="font-size:11px; font-weight:600; color:var(--green); margin-bottom:4px;">👍 긍정 TOP 3</div>
+            <div id="spotlightPosWeek"></div>
+            <div style="font-size:11px; font-weight:600; color:var(--red); margin:12px 0 4px;">👎 부정 TOP 3</div>
+            <div id="spotlightNegWeek"></div>
+          </div>
+          <div style="border-left:1px solid var(--border); padding-left:16px;">
+            <div style="font-size:12px; font-weight:700; color:var(--text2); margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--border);">🗓 월간 (최근 30일)</div>
+            <div style="font-size:11px; font-weight:600; color:var(--green); margin-bottom:4px;">👍 긍정 TOP 3</div>
+            <div id="spotlightPosMonth"></div>
+            <div style="font-size:11px; font-weight:600; color:var(--red); margin:12px 0 4px;">👎 부정 TOP 3</div>
+            <div id="spotlightNegMonth"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1099,19 +1108,23 @@ function renderDashboard() {
     </div>
   `).join('');
 
-  // ── 긍정 / 부정 TOP 3 ──
-  const prodStats = {};
-  allReviews.forEach(r => {
-    if(!prodStats[r.shortName]) prodStats[r.shortName] = {name:r.shortName, total:0, sum:0, low:0};
-    prodStats[r.shortName].total++;
-    prodStats[r.shortName].sum += r.rating;
-    if(r.rating <= 3) prodStats[r.shortName].low++;
-  });
-  const qualProd = Object.values(prodStats)
-    .filter(p => p.total >= 3)
-    .map(p => ({...p, avg: p.sum / p.total, lowRate: p.low / p.total}));
-  const top3pos = [...qualProd].sort((a,b) => b.avg - a.avg || b.total - a.total).slice(0,3);
-  const top3neg = [...qualProd].filter(p => p.low > 0).sort((a,b) => b.low - a.low || b.lowRate - a.lowRate).slice(0,3);
+  // ── 긍정 / 부정 TOP 3 (주간 최근 7일 / 월간 최근 30일) ──
+  const computeSpotlight = (reviewsSubset, minCount) => {
+    const stats = {};
+    reviewsSubset.forEach(r => {
+      if(!stats[r.shortName]) stats[r.shortName] = {name:r.shortName, total:0, sum:0, low:0};
+      stats[r.shortName].total++;
+      stats[r.shortName].sum += r.rating;
+      if(r.rating <= 3) stats[r.shortName].low++;
+    });
+    const qual = Object.values(stats)
+      .filter(p => p.total >= minCount)
+      .map(p => ({...p, avg: p.sum / p.total, lowRate: p.low / p.total}));
+    const pos = [...qual].sort((a,b) => b.avg - a.avg || b.total - a.total).slice(0,3);
+    const neg = [...qual].filter(p => p.low > 0).sort((a,b) => b.low - a.low || b.lowRate - a.lowRate).slice(0,3);
+    return {pos, neg};
+  };
+
   const makeSpotRow = (p, i, isNeg) => {
     const score = isNeg
       ? '저평점 ' + p.low + '건 · ' + Math.round(p.lowRate*100) + '%'
@@ -1125,10 +1138,27 @@ function renderDashboard() {
       + '<div style="font-size:11px;color:' + color + ';margin-top:3px;">' + score + '</div>'
       + '</div></div>';
   };
-  const elPos = document.getElementById('spotlightPos');
-  const elNeg = document.getElementById('spotlightNeg');
-  if(elPos) elPos.innerHTML = top3pos.length ? top3pos.map((p,i)=>makeSpotRow(p,i,false)).join('') : '<div style="color:var(--text3);font-size:12px;padding:10px 0;">데이터 없음</div>';
-  if(elNeg) elNeg.innerHTML = top3neg.length ? top3neg.map((p,i)=>makeSpotRow(p,i,true)).join('') : '<div style="color:var(--text3);font-size:12px;padding:10px 0;">해당 없음 ✅</div>';
+  const renderSpot = (id, arr, isNeg) => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.innerHTML = arr.length
+      ? arr.map((p,i)=>makeSpotRow(p,i,isNeg)).join('')
+      : '<div style="color:var(--text3);font-size:12px;padding:10px 0;">' + (isNeg ? '해당 없음 ✅' : '데이터 없음') + '</div>';
+  };
+
+  const spotNow    = new Date();
+  const weekAgo    = new Date(spotNow.getTime() - 7  * 24*60*60*1000);
+  const monthAgo   = new Date(spotNow.getTime() - 30 * 24*60*60*1000);
+  const weekReviews  = allReviews.filter(r => r.dateObj && r.dateObj >= weekAgo);
+  const monthReviews = allReviews.filter(r => r.dateObj && r.dateObj >= monthAgo);
+
+  const weekSpot  = computeSpotlight(weekReviews, 2);   // 표본이 적은 주간은 최소 2건 기준
+  const monthSpot = computeSpotlight(monthReviews, 3);
+
+  renderSpot('spotlightPosWeek',  weekSpot.pos,  false);
+  renderSpot('spotlightNegWeek',  weekSpot.neg,  true);
+  renderSpot('spotlightPosMonth', monthSpot.pos, false);
+  renderSpot('spotlightNegMonth', monthSpot.neg, true);
 }
 
 function filterByProduct(name) {

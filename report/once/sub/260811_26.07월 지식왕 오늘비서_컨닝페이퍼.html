@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>오늘비서 — 발표 컨닝페이퍼</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F6F8;
+    --surface:#FFFFFF;
+    --accent:#2563EB;
+    --ink:#12161C;
+    --ink-soft:#5B6472;
+    --ink-faint:#8A93A3;
+    --border:#E2E5EA;
+    --sage:#4F7E76;
+    --blue-tint:#EAF1FE;   --blue-ac:#2563EB;
+    --pink-tint:#FDEEF2;   --pink-ac:#DD4E77;
+    --green-tint:#E9F6EF;  --green-ac:#2A9C68;
+    --amber-tint:#FBF3DE;  --amber-ac:#B9822A;
+    --radius:10px;
+    --shadow-sm:0 1px 2px rgba(18,22,28,.05), 0 1px 1px rgba(18,22,28,.03);
+    --shadow-md:0 12px 28px rgba(18,22,28,.09), 0 3px 8px rgba(18,22,28,.05);
+    --font-kr:'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+    --font-en:'Inter', 'Noto Sans KR', sans-serif;
+    --font-mono:'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-kr); -webkit-font-smoothing:antialiased; }
+
+  .page{ max-width:860px; margin:0 auto; padding:44px 24px 120px; }
+
+  /* ---------- top header ---------- */
+  .head{
+    background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow-sm);
+    padding:28px 30px; margin-bottom:22px;
+  }
+  .head-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+  .head-eyebrow{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .head-eyebrow em{ font-style:normal; font-family:var(--font-en); font-weight:700; font-size:11.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--sage); }
+  .head-eyebrow .line{ flex:1; height:1px; background:var(--border); max-width:140px; }
+  .head h1{ font-size:26px; font-weight:800; letter-spacing:-.01em; margin-bottom:8px; }
+  .head p.sub{ font-size:14px; color:var(--ink-soft); line-height:1.6; max-width:520px; }
+  .head-stats{ display:flex; gap:10px; flex-wrap:wrap; }
+  .stat{ background:#FAFBFC; border:1px solid var(--border); border-radius:10px; padding:10px 16px; text-align:center; min-width:88px; }
+  .stat b{ display:block; font-family:var(--font-mono); font-size:18px; color:var(--ink); font-weight:700; }
+  .stat span{ font-size:10.5px; color:var(--ink-faint); font-weight:600; }
+  .print-btn{
+    font-family:var(--font-en); font-weight:700; font-size:12.5px; color:#fff; background:var(--ink);
+    border:none; border-radius:99px; padding:10px 18px; cursor:pointer; display:inline-flex; align-items:center; gap:7px;
+    box-shadow:var(--shadow-sm); margin-top:14px;
+  }
+  .print-btn:hover{ background:var(--accent); }
+
+  /* ---------- jump strip ---------- */
+  .jump{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:26px; }
+  .jump a{
+    font-family:var(--font-mono); font-size:11.5px; font-weight:600; color:var(--ink-soft); background:var(--surface);
+    border:1px solid var(--border); border-radius:99px; padding:7px 12px; text-decoration:none; transition:all .15s ease;
+  }
+  .jump a:hover{ border-color:var(--accent); color:var(--accent); }
+  .jump a b{ color:var(--ink-faint); font-weight:600; margin-right:5px; }
+
+  /* ---------- section cards ---------- */
+  .sec{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow-sm);
+    padding:26px 28px; margin-bottom:16px; scroll-margin-top:20px;
+  }
+  .sec-top{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:16px; flex-wrap:wrap; }
+  .sec-id{ display:flex; align-items:center; gap:12px; }
+  .sec-num{ font-family:var(--font-mono); font-weight:700; font-size:13px; color:#fff; background:var(--ink); width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex:none; }
+  .sec-id h2{ font-size:17.5px; font-weight:700; }
+  .sec-id .kicker{ display:block; font-family:var(--font-en); font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--sage); margin-bottom:2px; }
+  .time-badge{ font-family:var(--font-mono); font-size:12px; font-weight:600; color:var(--ink-soft); background:#F0F2F5; border-radius:99px; padding:6px 13px; white-space:nowrap; }
+
+  .onscreen{ display:flex; gap:8px; align-items:flex-start; font-size:12.5px; color:var(--ink-faint); background:#FAFBFC; border:1px dashed var(--border); border-radius:8px; padding:10px 13px; margin-bottom:16px; }
+  .onscreen svg{ flex:none; margin-top:1px; }
+
+  .script{ font-size:14.5px; line-height:1.85; color:var(--ink); }
+  .script p{ margin-bottom:10px; }
+  .script p:last-child{ margin-bottom:0; }
+  .script mark{ background:linear-gradient(to bottom, transparent 60%, #DCE7FD 60%); color:var(--ink); font-weight:700; padding:0 1px; }
+
+  .tip{ margin-top:16px; display:flex; gap:10px; background:var(--blue-tint); border-radius:10px; padding:12px 15px; font-size:12.5px; color:#1E3A8A; line-height:1.6; }
+  .tip b{ font-weight:800; }
+
+  /* ---------- demo checklist ---------- */
+  .demo-steps{ display:flex; flex-direction:column; gap:10px; }
+  .step{ display:flex; gap:14px; border:1px solid var(--border); border-radius:12px; padding:14px 16px; align-items:flex-start; }
+  .step input[type=checkbox]{ width:19px; height:19px; margin-top:2px; accent-color:var(--accent); flex:none; cursor:pointer; }
+  .step .snum{ font-family:var(--font-mono); font-weight:700; font-size:11px; color:var(--ink-faint); background:#F0F2F5; border-radius:6px; padding:3px 7px; flex:none; margin-top:1px; }
+  .step .body b.h{ display:block; font-size:14px; font-weight:700; margin-bottom:4px; }
+  .step .body p{ font-size:13px; color:var(--ink-soft); line-height:1.65; }
+  .step .body p mark{ background:linear-gradient(to bottom, transparent 60%, #DCE7FD 60%); font-weight:700; color:var(--ink); }
+  label.step{ cursor:pointer; }
+  .step:has(input:checked){ background:#FAFBFC; opacity:.55; }
+  .step:has(input:checked) .body p{ text-decoration:none; }
+
+  .demo-total{ display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:12px; color:var(--ink-faint); margin-top:14px; }
+
+  /* ---------- closing note ---------- */
+  .foot-note{ text-align:center; font-size:12px; color:var(--ink-faint); margin-top:30px; line-height:1.8; }
+
+  @media (max-width:640px){
+    .page{ padding:26px 14px 100px; }
+    .head{ padding:22px 20px; }
+    .sec{ padding:20px 18px; }
+    .head h1{ font-size:22px; }
+  }
+
+  /* ---------- print ---------- */
+  @media print{
+    body{ background:#fff; }
+    .jump, .print-btn{ display:none !important; }
+    .page{ max-width:100%; padding:0 8mm; }
+    .sec, .head{ box-shadow:none; border:1px solid #ddd; break-inside:avoid; page-break-inside:avoid; }
+    .sec{ margin-bottom:10px; }
+    a{ color:inherit; text-decoration:none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="head">
+    <div class="head-row">
+      <div>
+        <div class="head-eyebrow"><em>Speaker Cheat Sheet</em><span class="line"></span></div>
+        <h1>오늘비서 발표 컨닝페이퍼</h1>
+        <p class="sub">발표자료(오늘비서_발표자료.html)와 같은 순서로 구성했습니다. 슬라이드를 넘기며 이 페이지를 함께 띄워두고 참고하세요.</p>
+        <button class="print-btn" onclick="window.print()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+          인쇄 / PDF로 저장
+        </button>
+      </div>
+      <div class="head-stats">
+        <div class="stat"><b>~5분</b><span>총 발표시간</span></div>
+        <div class="stat"><b>2–3분</b><span>재현 비중</span></div>
+        <div class="stat"><b>8</b><span>슬라이드</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="jump">
+    <a href="#s1"><b>01</b>표지</a>
+    <a href="#s2"><b>02</b>아이디어의 시작</a>
+    <a href="#s3"><b>03</b>후속 업무의 딜레마</a>
+    <a href="#s4"><b>04</b>초기 버전</a>
+    <a href="#s5"><b>05</b>Workflow Update</a>
+    <a href="#s6"><b>06</b>Core Features</a>
+    <a href="#s7"><b>07</b>Live Demo</a>
+    <a href="#s8"><b>08</b>마무리</a>
+  </div>
+
+  <!-- 1 -->
+  <div class="sec" id="s1">
+    <div class="sec-top">
+      <div class="sec-id"><div class="sec-num">01</div><div><span class="kicker">Cover</span><h2>표지</h2></div></div>
+      <div class="time-badge">0:00 – 0:15</div>
+    </div>
+    <div class="onscreen">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      화면 : "오늘비서" 타이틀 + 엄마감동팀 · 조승연 AP
+    </div>
+    <div class="script">
+      <p>"안녕하세요. 엄마감동팀 조승연입니다."</p>
+      <p>"오늘은 제가 실제 CS 업무를 하면서 <mark>필요하다고 느껴 직접 만들어 본 개인 업무 알림 프로그램</mark>, 오늘비서에 대해 간단히 발표드리겠습니다."</p>
+    </div>
+    <div class="tip"><b>TIP ·</b>&nbsp;첫 문장은 여유 있게. 시선은 화면이 아니라 청중에게.</div>
+  </div>
+
+  <!-- 2 -->
+  <div class="sec" id="s2">
+    <div class="sec-top">
+      <div class="sec-id"><div class="sec-num">02</div><div><span class="kicker">Origin</span><h2>아이디어의 시작</h2></div></div>
+      <div class="time-badge">0:15 – 0:45</div>
+    </div>
+    <div class="onscreen">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      화면 : GPT 프롬프트 → 구조화 결과 변환 카드
+    </div>
+    <div class="script">
+      <p>"처음 시작은 <mark>6월에 냈던 아이디어</mark>였습니다."</p>
+      <p>"CS 업무는 상담만 처리하는 게 아니라, 상담 이후 다시 확인해야 하는 업무가 계속 생깁니다. 환불 진행 확인, 교환 회수 확인, 구매확정 확인, 주간·월간 마감 업무 같은 것들이죠."</p>
+      <p>"이런 업무는 몇 시간 뒤, 며칠 뒤에 다시 챙겨야 하는데, 기존에는 개인 기억이나 메모장에 적어두고 확인했습니다."</p>
+      <p>"이 부분을 <mark>AI로 좀 더 체계적으로 관리할 수 없을까</mark> 생각했고, GPT에게 '이런 프로그램을 만들 수 있을까' 요청하면서 시작했습니다."</p>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="sec" id="s3">
+    <div class="sec-top">
+      <div class="sec-id"><div class="sec-num">03</div><div><span class="kicker">Problem</span><h2>후속 업무의 딜레마</h2></div></div>
+      <div class="time-badge">0:45 – 1:10</div>
+    </div>
+    <div class="onscreen">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      화면 : 흩어진 확인 목록 카드 (다시 찾기 어려움)
+    </div>
+    <div class="script">
+      <p>"상담량이 많아지면 적어둔 내용을 다시 확인하지 못하거나, <mark>어디에 기록했는지 찾기 어려운</mark> 경우가 생깁니다."</p>
+      <p>"이 부분을 좀 더 체계적으로 관리하고 싶었던 것이 오늘비서의 출발점입니다."</p>
+    </div>
+    <div class="tip"><b>TIP ·</b>&nbsp;짧게 넘어가는 슬라이드입니다. 앞 슬라이드와 톤을 이어서 담백하게.</div>
+  </div>
+
+  <!-- 4 -->
+  <div class="sec" id="s4">
+    <div class="sec-top">
+      <div class="sec-id"><div class="sec-num">04</div><div><span class="kicker">First Version</span><h2>초기 오늘비서 프로그램</h2></div></div>
+      <div class="time-badge">1:10 – 1:35</div>
+    </div>
+    <div class="onscreen">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      화면 : 초기 웹 프로그램 목업 (자연어 입력 / 등록된 알림)
+    </div>
+    <div class="script">
+      <p>"처음에는 아주 단순하게, 업무 내용을 입력하면 지정한 시간에 알려주는 알림 프로그램을 목표로 했습니다. GPT 사이트 기반으로 웹 프로그램을 만들었고요."</p>
+      <p>"예를 들어 <mark>'내일 오전 10시에 구매확정 확인 알림 줘'</mark>처럼 자연어로 입력하면, 일정으로 등록되고 알림을 받을 수 있게 구성했습니다."</p>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="sec" id="s5">
+    <div class="sec-top">
+      <div class="sec-id"><div class="sec-num">05</div><div><span class="kicker">Workflow Update</span><h2>웹 알림 → PC 팝업 알림</h2></div></div>
+      <div class="time-badge">1:35 – 2:05</div>
+    </div>
+    <div class="onscreen">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      화면 : 01 처음 구성 · 02 발견한 한계 · 03 Windows 알림 연동
+    </div>
+    <div class="script">
+      <p>"다만 실제로 사용해 보니, CS 업무 특성상 <mark>웹사이트 창을 계속 켜놓고 있기 어렵다</mark>는 문제가 있었습니다. 상담창, 이지어드민, 엑셀 등 여러 화면을 동시에 봐야 하니까요."</p>
+      <p>"그래서 오토핫키라는 Windows 매크로 프로그램을 함께 사용하도록 수정했습니다. 등록된 알림 시간이 되면 컴퓨터에서 <mark>별도 알림창</mark>이 뜨도록 만든 거죠. 이후로는 사이트를 계속 보고 있지 않아도 알림을 받을 수 있게 됐습니다."</p>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="sec" id="s6">
+    <div class="sec-top">
+      <div class="sec-id"><div class="sec-num">06</div><div><span class="kicker">Core Features</span><h2>추가된 핵심 기능</h2></div></div>
+      <div class="time-badge">2:05 – 2:35</div>
+    </div>
+    <div class="onscreen">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      화면 : 업무알림 · 공지사항 · 개인메시지 · 브리핑 4개 카드
+    </div>
+    <div class="script">
+      <p>"이후 단순한 알림 프로그램에서 좀 더 실제 비서처럼 쓸 수 있도록 기능을 계속 추가했습니다."</p>
+      <p>"출퇴근 시간을 설정하면 오늘 할 업무·잔여 업무·완료 업무를 <mark>브리핑</mark> 받을 수 있고요. 팀 전체가 알아야 하는 내용은 <mark>공지사항</mark>으로 등록해 반드시 확인 버튼을 눌러야 꺼지도록 했습니다. 즉각 대응이 필요한 건은 담당자에게 바로 <mark>개인메시지</mark>로 전달할 수 있습니다."</p>
+      <p>"지금부터는 이 기능들을 실제로 직접 보여드리겠습니다."</p>
+    </div>
+    <div class="tip"><b>TIP ·</b>&nbsp;마지막 문장에서 자연스럽게 다음 화면(실제 데모)으로 넘어가며 시선을 데모 창으로 이동하세요.</div>
+  </div>
+
+  <!-- 7 : LIVE DEMO -->
+  <div class="sec" id="s7">
+    <div class="sec-top">
+      <div class="sec-id"><div class="sec-num">07</div><div><span class="kicker">Live Demo</span><h2>재현 — 직접 보여드리기</h2></div></div>
+      <div class="time-badge">2:35 – 5:05</div>
+    </div>
+    <div class="onscreen">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      화면 : 실제 오늘비서 사이트 (발표자료에 iframe 내장 · 새 창에서 열기도 가능)
+    </div>
+
+    <div class="demo-steps">
+      <label class="step">
+        <input type="checkbox">
+        <span class="snum">1</span>
+        <div class="body">
+          <b class="h">오늘의 운세 (아이스브레이킹)</b>
+          <p>"바로 알림을 등록하기 전에, 분위기를 풀 겸 <mark>오늘의 운세</mark>를 한번 뽑아보겠습니다. 운세가 안 좋으면 비서가 기분을 맞춰줄 수도 있겠죠?"</p>
+        </div>
+      </label>
+      <label class="step">
+        <input type="checkbox">
+        <span class="snum">2</span>
+        <div class="body">
+          <b class="h">알림 등록 (자연어 입력)</b>
+          <p>"이제 실제 알림을 등록해보겠습니다. <mark>'1분 뒤 발표 테스트 알림'</mark>처럼 입력하면 일정이 등록됩니다. 실제 업무에서는 '내일 오전 10시에 구매확정 확인'처럼 사용합니다."</p>
+        </div>
+      </label>
+      <label class="step">
+        <input type="checkbox">
+        <span class="snum">3</span>
+        <div class="body">
+          <b class="h">알림창 확인 · 보류</b>
+          <p>"등록된 일정은 리스트에서 확인할 수 있고, 시간이 되면 이렇게 <mark>별도 알림창</mark>이 뜹니다. 처리했으면 확인, 어려우면 10분·30분·1시간 뒤로 보류할 수 있습니다."</p>
+        </div>
+      </label>
+      <label class="step">
+        <input type="checkbox">
+        <span class="snum">4</span>
+        <div class="body">
+          <b class="h">주문번호 분할 등록</b>
+          <p>"주문번호가 여러 개 있는 경우, 한 번에 입력해도 <mark>주문번호별로 나뉘어</mark> 각각 일정이 등록됩니다."</p>
+        </div>
+      </label>
+      <label class="step">
+        <input type="checkbox">
+        <span class="snum">5</span>
+        <div class="body">
+          <b class="h">공지사항</b>
+          <p>"팀 전체가 확인해야 하는 공지는 별도 영역에 등록합니다. 알림은 <mark>반드시 확인 버튼</mark>을 눌러야 꺼지도록 해서, 중요한 내용이 그냥 지나가지 않도록 했습니다."</p>
+        </div>
+      </label>
+      <label class="step">
+        <input type="checkbox">
+        <span class="snum">6</span>
+        <div class="body">
+          <b class="h">개인메시지</b>
+          <p>"특정 담당자에게 개별 메시지도 보낼 수 있어, 전체 공지와 개인 업무가 섞이지 않게 관리할 수 있습니다."</p>
+        </div>
+      </label>
+      <label class="step">
+        <input type="checkbox">
+        <span class="snum">7</span>
+        <div class="body">
+          <b class="h">브리핑</b>
+          <p>"출퇴근 시간을 기준으로 오늘 할 업무, 완료한 업무, 퇴근 전 남은 업무를 확인할 수 있고, <mark>지난 기록도 다시 볼 수 있습니다.</mark>"</p>
+        </div>
+      </label>
+      <label class="step">
+        <input type="checkbox">
+        <span class="snum">8</span>
+        <div class="body">
+          <b class="h">테마 설정</b>
+          <p>"마지막으로 설정에서 원하는 테마를 선택할 수 있도록, 여러 테마를 준비 중입니다."</p>
+        </div>
+      </label>
+    </div>
+    <div class="demo-total">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      8개 항목 · 시간이 빠듯하면 4(주문번호 분할)·8(테마)은 생략 가능
+    </div>
+    <div class="tip"><b>TIP ·</b>&nbsp;인터넷 연결을 사전에 확인하세요. 화면이 보이지 않으면 상단의 "새 창에서 열기"로 바로 전환하면 됩니다.</div>
+  </div>
+
+  <!-- 8 -->
+  <div class="sec" id="s8">
+    <div class="sec-top">
+      <div class="sec-id"><div class="sec-num">08</div><div><span class="kicker">Summary</span><h2>마무리</h2></div></div>
+      <div class="time-badge">5:05 – 5:25</div>
+    </div>
+    <div class="onscreen">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      화면 : 요약 3카드 + 감사합니다
+    </div>
+    <div class="script">
+      <p>"오늘비서는 <mark>'반복 업무를 잊지 않기 위한 알림'</mark>에서 시작했지만, 실제 사용하면서 CS 업무 흐름에 맞춰 계속 수정한 프로그램입니다."</p>
+      <p>"가장 큰 장점은 개인 기억에 의존하던 후속 업무를 <mark>시스템으로 관리</mark>할 수 있다는 점, 그리고 자연어로 등록할 수 있어 별도 교육 없이 사용할 수 있다는 점입니다."</p>
+      <p>"앞으로도 사용하면서 발견되는 개선점을 계속 반영해 나가겠습니다. 감사합니다."</p>
+    </div>
+  </div>
+
+  <p class="foot-note">오늘비서_발표자료.html 과 함께 사용하세요 · 시간은 참고용이며 호흡에 맞춰 자유롭게 조정하세요</p>
+
+</div>
+</body>
+</html>

@@ -149,6 +149,16 @@
   }
   .btn-reset:hover { border-color: var(--accent); color: var(--accent); }
 
+  /* ── 더보기 ── */
+  .load-more-wrap { display:none; flex-direction: column; align-items: center; gap: 8px; margin-top: 22px; }
+  .btn-load-more {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 32px; color: var(--text2); cursor: pointer;
+    font-family: var(--font); font-size: 13px; font-weight: 600; transition: all .2s;
+  }
+  .btn-load-more:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-low); }
+  .load-more-count { font-size: 11px; color: var(--text3); }
+
   /* ── 리뷰 카드 ── */
   .review-grid {
     display: grid;
@@ -559,6 +569,10 @@
       <div class="filter-count" id="filterCount"></div>
     </div>
     <div id="reviewGrid" class="review-grid"></div>
+    <div id="feedLoadMoreWrap" class="load-more-wrap">
+      <button class="btn-load-more" id="feedLoadMoreBtn" onclick="loadMoreFeed()">더보기 ⌄</button>
+      <div class="load-more-count" id="feedLoadMoreCount"></div>
+    </div>
     <div id="feedEmpty" class="empty-state" style="display:none;">
       <div class="icon">🔍</div>
       <div>검색 결과가 없습니다</div>
@@ -1300,15 +1314,78 @@ function applyFilters() {
 
   filtered = sortReviews(filtered, sort);
   document.getElementById('filterCount').textContent = `${filtered.length.toLocaleString()} / ${allReviews.length.toLocaleString()}건`;
-  
+
+  // 리뷰 피드 - 5행 단위 페이지네이션으로 전환 (전체를 한번에 렌더링하면 느려짐)
+  feedFilteredReviews = filtered;
+  feedRenderedCount = 0;
+
   const grid = document.getElementById('reviewGrid');
   const empty = document.getElementById('feedEmpty');
+  grid.innerHTML = '';
+
   if(filtered.length === 0) {
-    grid.innerHTML = ''; empty.style.display = 'block';
+    empty.style.display = 'block';
+    updateFeedLoadMoreUI();
   } else {
-    grid.innerHTML = filtered.map(makeReviewCard).join('');
     empty.style.display = 'none';
+    renderFeedBatch();
   }
+}
+
+// ============================================================
+// 리뷰 피드 - 더보기 페이지네이션 (5행 단위)
+// ============================================================
+const FEED_ROWS_PER_PAGE = 5;      // 클릭(또는 최초 로드) 시 추가로 표시할 행 수
+const FEED_CARD_MIN_WIDTH = 360;   // .review-grid의 minmax(360px, 1fr)와 반드시 동일하게 유지
+const FEED_CARD_GAP = 14;          // .review-grid의 gap과 반드시 동일하게 유지
+
+let feedFilteredReviews = [];
+let feedRenderedCount = 0;
+
+// 현재 화면 너비에서 review-grid가 실제로 몇 열로 표시되는지 계산 (반응형 auto-fill 대응)
+function getFeedColumnsCount() {
+  const grid = document.getElementById('reviewGrid');
+  let width = grid.clientWidth;
+  if(!width) {
+    // 피드 탭이 비활성 상태(display:none)라 폭을 잴 수 없을 때의 대체 계산
+    const content = document.querySelector('.content');
+    width = (content ? content.clientWidth : window.innerWidth) - 48; // .content 좌우 패딩 보정
+  }
+  if(!width || width < 0) width = window.innerWidth - 48;
+  const cols = Math.floor((width + FEED_CARD_GAP) / (FEED_CARD_MIN_WIDTH + FEED_CARD_GAP));
+  return Math.max(1, cols);
+}
+
+// 다음 5행 분량을 이어서 렌더링
+function renderFeedBatch() {
+  const grid = document.getElementById('reviewGrid');
+  const cols = getFeedColumnsCount();
+  const batchSize = cols * FEED_ROWS_PER_PAGE;
+  const nextItems = feedFilteredReviews.slice(feedRenderedCount, feedRenderedCount + batchSize);
+
+  if(nextItems.length > 0) {
+    grid.insertAdjacentHTML('beforeend', nextItems.map(makeReviewCard).join(''));
+    feedRenderedCount += nextItems.length;
+  }
+
+  updateFeedLoadMoreUI();
+}
+
+function updateFeedLoadMoreUI() {
+  const wrap = document.getElementById('feedLoadMoreWrap');
+  const countEl = document.getElementById('feedLoadMoreCount');
+  const total = feedFilteredReviews.length;
+
+  if(total === 0 || feedRenderedCount >= total) {
+    wrap.style.display = 'none';
+  } else {
+    wrap.style.display = 'flex';
+    countEl.textContent = `${feedRenderedCount.toLocaleString()} / ${total.toLocaleString()}건 표시 중`;
+  }
+}
+
+function loadMoreFeed() {
+  renderFeedBatch();
 }
 
 function resetFilters() {

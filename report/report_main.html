@@ -69,26 +69,6 @@ html, body { width:100%; height:100vh; overflow:hidden; background:var(--bg); co
 .nav-home-item.active { background: var(--cyan-dim); color: var(--cyan); border: 1px solid var(--border2); }
 .nav-home-icon { font-size: 16px; flex-shrink:0; }
 
-.nav-category {
-  font-size: 9.5px; font-weight: 700; font-family: var(--font-en);
-  color: var(--text3); text-transform: uppercase; letter-spacing: 1.5px;
-  padding: 14px 16px 6px;
-  display: flex; align-items: center; gap: 8px;
-}
-.nav-category::before { content:''; display:inline-block; width:12px; height:1px; background:var(--border2); flex-shrink:0; }
-
-.nav-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 16px 8px 22px;
-  cursor: pointer; transition: all 0.15s;
-  font-size: 12px; color: var(--text2);
-  position: relative; border-left: 2px solid transparent;
-  margin-right: 8px; border-radius: 0 8px 8px 0;
-}
-.nav-item:hover { background: var(--bg3); color: var(--text); border-left-color: var(--border2); }
-.nav-item.active { background: var(--cyan-dim); color: var(--cyan); border-left-color: var(--cyan); font-weight: 500; }
-.nav-item-label { flex:1; line-height:1.3; }
-
 .rps-footer {
   padding: 12px 16px; border-top: 1px solid var(--border);
   font-size: 10px; color: var(--text3); flex-shrink: 0;
@@ -136,25 +116,6 @@ html, body { width:100%; height:100vh; overflow:hidden; background:var(--bg); co
 .wb-stat-val .unit { font-size:12px; font-weight:400; color:var(--text2); margin-left:3px; }
 .wb-stat-label { font-size:10px; color:var(--text3); margin-top:3px; letter-spacing:0.5px; }
 .wb-divider-v { width:1px; height:48px; background:var(--border); }
-
-/* 빠른 바로가기 */
-#quickSection { margin-bottom:32px; }
-#quickGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); gap:10px; }
-.q-item { position:relative; display:flex; flex-direction:column; align-items:center; padding:16px 8px 12px; background:var(--bg2); border:1px solid var(--border); border-radius:14px; cursor:pointer; transition:all 0.2s ease; gap:9px; }
-.q-item:hover { border-color:var(--border2); background:var(--bg3); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
-.q-item.locked { cursor:not-allowed; opacity:0.55; }
-.q-item.locked:hover { transform:none; box-shadow:none; }
-.q-icon { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:21px; flex-shrink:0; }
-.q-label { font-size:10px; font-weight:500; color:var(--text2); text-align:center; line-height:1.3; word-break:keep-all; }
-.q-item:hover .q-label { color:var(--text); }
-
-.qi-cyan   { background:rgba(0,200,255,0.12); }
-.qi-green  { background:rgba(0,229,160,0.12); }
-.qi-gold   { background:rgba(240,192,96,0.12); }
-.qi-purple { background:rgba(160,128,255,0.12); }
-.qi-red    { background:rgba(255,90,110,0.12); }
-.qi-orange { background:rgba(255,144,64,0.12); }
-.qi-blue   { background:rgba(64,144,255,0.12); }
 
 /* 집계 섹션 */
 #statsSection { margin-bottom:32px; }
@@ -206,10 +167,6 @@ html, body { width:100%; height:100vh; overflow:hidden; background:var(--bg); co
 }
 .search-input-wrap input:focus { border-color:var(--border2); }
 .search-input-wrap .si-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:13px; color:var(--text3); }
-.search-filter {
-  height:38px; background:var(--bg2); border:1px solid var(--border); border-radius:10px;
-  padding:0 12px; font-size:12px; color:var(--text2); font-family:var(--font-kr); cursor:pointer; outline:none;
-}
 .search-btn {
   height:38px; padding:0 18px; background:var(--cyan-dim); border:1px solid var(--border2);
   border-radius:10px; color:var(--cyan); font-size:12.5px; font-weight:600; cursor:pointer;
@@ -402,13 +359,13 @@ body.is-admin #bannerAdminGear { display:flex; }
 .notice-admin-gear:hover { background:rgba(240,192,96,0.3); }
 body.is-admin .notice-admin-gear { display:flex; }
 
-.q-item .item-gear, .stat-card .item-gear {
+.stat-card .item-gear {
   display:none; position:absolute; top:6px; right:6px; width:20px; height:20px;
   background:rgba(240,192,96,0.18); border:1px solid rgba(240,192,96,0.35); border-radius:5px;
   align-items:center; justify-content:center; font-size:10px; color:var(--gold); cursor:pointer; z-index:10;
 }
-.q-item .item-gear:hover, .stat-card .item-gear:hover { background:rgba(240,192,96,0.35); }
-body.is-admin .q-item .item-gear, body.is-admin .stat-card .item-gear { display:flex; }
+.stat-card .item-gear:hover { background:rgba(240,192,96,0.35); }
+body.is-admin .stat-card .item-gear { display:flex; }
 
 /* 설정 모달 */
 .cfg-modal { width:640px; max-width:94vw; max-height:88vh; overflow-y:auto; }
@@ -506,13 +463,12 @@ body.is-admin .q-item .item-gear, body.is-admin .stat-card .item-gear { display:
     <nav class="rps-nav">
       <div class="nav-home-item active" data-tab="home" onclick="goTab('home')">
         <span class="nav-home-icon">🏠</span>
-        <span>보고서홈(계획)</span>
+        <span>보고서 홈</span>
       </div>
 
-      <div class="nav-category">건별 보고</div>
-      <div class="nav-item" data-tab="all_list" onclick="goTab('all_list')">
-        <span style="font-size:15px;">📋</span>
-        <span class="nav-item-label">전체 리스트</span>
+      <div class="nav-home-item" data-tab="all_list" onclick="goTab('all_list')">
+        <span class="nav-home-icon">📚</span>
+        <span>보고서 저장소</span>
       </div>
     </nav>
 
@@ -564,18 +520,10 @@ body.is-admin .q-item .item-gear, body.is-admin .stat-card .item-gear { display:
             </div>
           </div>
 
-          <!-- 빠른 바로가기 -->
-          <div id="quickSection">
-            <div class="sec-title">Quick Access <span class="sec-count" id="qCount"></span>
-              <span class="sec-gear" onclick="openSettingModal('quick')" title="퀵액세스 편집">⚙</span>
-            </div>
-            <div id="quickGrid"></div>
-          </div>
-
           <!-- 집계 -->
           <div id="statsSection">
-            <div class="sec-title">Report Statistics <span class="sec-count" id="statTotal"></span>
-              <span class="sec-gear" onclick="openSettingModal('stat')" title="집계카드 편집">⚙</span>
+            <div class="sec-title">Quick Access <span class="sec-count" id="statTotal"></span>
+              <span class="sec-gear" onclick="openSettingModal()" title="집계카드 편집">⚙</span>
             </div>
             <div id="statsGrid"></div>
           </div>
@@ -588,21 +536,13 @@ body.is-admin .q-item .item-gear, body.is-admin .stat-card .item-gear { display:
                 <span class="si-icon">🔎</span>
                 <input type="text" id="searchInput" placeholder="제품명·주제·작성자·파일명으로 검색..." oninput="runSearch()">
               </div>
-              <select class="search-filter" id="searchTypeFilter" onchange="runSearch()">
-                <option value="">전체 구분</option>
-                <option value="regular">정기</option>
-                <option value="once">건별</option>
-                <option value="sub">Sub</option>
-                <option value="issue">Issue</option>
-                <option value="gw">기안서</option>
-              </select>
-              <select class="search-filter" id="searchPeriodFilter" onchange="runSearch()">
-                <option value="">전체 기간</option>
-                <option value="7">최근 7일</option>
-                <option value="30">최근 30일</option>
-                <option value="90">최근 90일</option>
-                <option value="365">최근 1년</option>
-              </select>
+            </div>
+            <div class="al-cat-tabs" id="searchPeriodTabs" style="margin-bottom:14px;">
+              <button class="al-cat-tab active" data-period="0" onclick="onSearchPeriodClick(0)">전체</button>
+              <button class="al-cat-tab" data-period="7" onclick="onSearchPeriodClick(7)">최근 7일</button>
+              <button class="al-cat-tab" data-period="30" onclick="onSearchPeriodClick(30)">최근 1개월</button>
+              <button class="al-cat-tab" data-period="90" onclick="onSearchPeriodClick(90)">최근 3개월</button>
+              <button class="al-cat-tab" data-period="365" onclick="onSearchPeriodClick(365)">최근 1년</button>
             </div>
             <div id="searchResultWrap">
               <table class="result-table" id="searchResultTable" style="display:none;">
@@ -611,7 +551,7 @@ body.is-admin .q-item .item-gear, body.is-admin .stat-card .item-gear { display:
                 </thead>
                 <tbody id="searchResultBody"></tbody>
               </table>
-              <div id="searchEmpty">검색어를 입력하거나 구분·기간을 선택해 보고서를 찾아보세요.</div>
+              <div id="searchEmpty">검색어를 입력하거나 등록일 기준 기간을 선택해 보고서를 찾아보세요.</div>
             </div>
           </div>
 
@@ -640,7 +580,7 @@ body.is-admin .q-item .item-gear, body.is-admin .stat-card .item-gear { display:
         <div class="al-page-col">
           <div class="al-header">
             <div>
-              <div class="sec-title" style="margin-bottom:4px;">전체 리스트 <span class="sec-count" id="alCount"></span></div>
+              <div class="sec-title" style="margin-bottom:4px;">보고서 저장소 <span class="sec-count" id="alCount"></span></div>
               <div class="al-sub">"+ 추가"로 파일명과 구분을 입력하면 자동으로 목록에 등록됩니다 (파일명 패턴: yymmdd_제품명_주제.html)</div>
             </div>
             <div class="al-actions">
@@ -757,15 +697,9 @@ body.is-admin .q-item .item-gear, body.is-admin .stat-card .item-gear { display:
           <div class="ar-modal-title">⚙ 홈 화면 설정 <span class="bulk-sub">아이콘 · 라벨 · 대상 · 열람권한을 설정합니다</span></div>
 
           <div class="cfg-section">
-            <div class="cfg-section-title">Quick Access</div>
-            <div id="cfgQuickList"></div>
-            <button class="cfg-add-btn" onclick="addCfgItem('quick')">+ 항목 추가</button>
-          </div>
-
-          <div class="cfg-section">
-            <div class="cfg-section-title">집계 카드 (Report Statistics)</div>
+            <div class="cfg-section-title">집계 카드 (Quick Access)</div>
             <div id="cfgStatList"></div>
-            <button class="cfg-add-btn" onclick="addCfgItem('stat')">+ 항목 추가</button>
+            <button class="cfg-add-btn" onclick="addCfgItem()">+ 항목 추가</button>
           </div>
 
           <div id="cfgResult" class="bulk-result" style="display:none;"></div>
@@ -843,17 +777,9 @@ const ROLE_LABEL = { admin:'관리자', leader:'리더급', ggumbi:'꿈비', aff
 let _userRole = '';
 
 // ─────────────────────────────────────────────
-// Quick Access — 클릭하면 전체 리스트로 이동 + 해당 구분 필터 적용
+// Quick Access (구 Report Statistics) — 클릭하면 전체 리스트로 이동 + 해당 구분 필터 적용
 // (관리자는 ⚙로 수정/추가 가능, 설정은 GAS에 저장됨)
 // ─────────────────────────────────────────────
-const DEFAULT_QUICK = [
-  { icon:'📅', label:'정기',   cat:'regular', color:'qi-green',  minRole:null },
-  { icon:'📝', label:'건별',   cat:'once',    color:'qi-cyan',   minRole:null },
-  { icon:'📎', label:'Sub',    cat:'sub',     color:'qi-purple', minRole:null },
-  { icon:'🚨', label:'Issue',  cat:'issue',   color:'qi-red',    minRole:null },
-  { icon:'📄', label:'기안서', cat:'gw',      color:'qi-gold',   minRole:null }
-];
-
 const DEFAULT_STATS = [
   { cat:'regular', label:'정기',   sub:'월간 · 주간 마감',      icon:'📅', cls:'st-green',  minRole:null },
   { cat:'once',    label:'건별',   sub:'개별 케이스 보고',      icon:'📝', cls:'st-cyan',   minRole:null },
@@ -868,10 +794,9 @@ const DEFAULT_BANNER = {
   roleNames: { admin:'관리자', leader:'리더급', ggumbi:'꿈비', affiliate:'계열사', visitor:'방문자' }
 };
 const DEFAULT_NOTICE_UPDATE = [{ text:'report_main 홈 화면 설정 기능 추가', date:'v0.4' }];
-const DEFAULT_NOTICE_OPS    = [{ text:'보고서 등록은 전체 리스트의 "추가" 또는 "간편 업로드"를 이용해주세요.', date:'안내' }];
+const DEFAULT_NOTICE_OPS    = [{ text:'보고서 등록은 보고서 저장소의 "추가" 또는 "간편 업로드"를 이용해주세요.', date:'안내' }];
 
 // 실제 사용 중인 상태 (GAS 설정으로 덮어써짐)
-let _quickItems   = JSON.parse(JSON.stringify(DEFAULT_QUICK));
 let _statItems    = JSON.parse(JSON.stringify(DEFAULT_STATS));
 let _bannerCfg    = JSON.parse(JSON.stringify(DEFAULT_BANNER));
 let _noticeUpdate = JSON.parse(JSON.stringify(DEFAULT_NOTICE_UPDATE));
@@ -880,13 +805,11 @@ let _noticeOps    = JSON.parse(JSON.stringify(DEFAULT_NOTICE_OPS));
 // 아이콘 / 색상 후보
 const ICON_OPTIONS = ['📅','📝','📎','🚨','📄','📊','📈','📉','📋','📑','🗂️','📁','📦','🔎','🔔','⚠️','✅','🧾','💡','🛠️','⚙️','🔑','🏷️','⭐','🎯','🚀','💬','🖥️','📌','🗓️','🧭','🔥'];
 const COLOR_OPTIONS = [
-  { cls:'qi-cyan',   stat:'st-cyan',   hex:'rgba(0,200,255,0.18)' },
-  { cls:'qi-green',  stat:'st-green',  hex:'rgba(0,229,160,0.18)' },
-  { cls:'qi-purple', stat:'st-purple', hex:'rgba(160,128,255,0.18)' },
-  { cls:'qi-red',    stat:'st-red',    hex:'rgba(255,90,110,0.18)' },
-  { cls:'qi-gold',   stat:'st-gold',   hex:'rgba(240,192,96,0.18)' },
-  { cls:'qi-orange', stat:'st-gold',   hex:'rgba(255,144,64,0.18)' },
-  { cls:'qi-blue',   stat:'st-cyan',   hex:'rgba(64,144,255,0.18)' }
+  { cls:'st-cyan',   hex:'rgba(0,200,255,0.18)' },
+  { cls:'st-green',  hex:'rgba(0,229,160,0.18)' },
+  { cls:'st-purple', hex:'rgba(160,128,255,0.18)' },
+  { cls:'st-red',    hex:'rgba(255,90,110,0.18)' },
+  { cls:'st-gold',   hex:'rgba(240,192,96,0.18)' }
 ];
 
 // ─────────────────────────────────────────────
@@ -904,7 +827,6 @@ window.addEventListener('message', e => {
     _userRole = e.data.userRole || '';
     if (_userRole) sessionStorage.setItem('_userRole', _userRole);
     applyUserInfo();
-    renderQuick();
     renderStats();
     if (_allListLoaded) renderAllList();
     sendRoleToSubFrame();
@@ -992,27 +914,9 @@ function loadSubPage(url) {
   setActiveNav(url);
 }
 function setActiveNav(tab) {
-  document.querySelectorAll('.nav-home-item, .nav-item').forEach(el => {
+  document.querySelectorAll('.nav-home-item').forEach(el => {
     el.classList.toggle('active', el.dataset.tab === tab);
   });
-}
-
-// ─────────────────────────────────────────────
-// 렌더링: 퀵액세스 (클릭 시 전체 리스트 + 구분 필터)
-// ─────────────────────────────────────────────
-function renderQuick() {
-  const grid = document.getElementById('quickGrid');
-  document.getElementById('qCount').textContent = _quickItems.length+' items';
-  grid.innerHTML = _quickItems.map((it, i) => {
-    const locked = !canAccess(it.minRole);
-    return `
-    <div class="q-item${locked?' locked':''}" onclick="${locked?'':`goListWithFilter('${it.cat}')`}">
-      <div class="item-gear" onclick="event.stopPropagation(); openSettingModal('quick')">⚙</div>
-      <div class="q-icon ${it.color}">${it.icon}${locked?' 🔒':''}</div>
-      <div class="q-label">${it.label}</div>
-    </div>
-  `;
-  }).join('');
 }
 
 // 전체 리스트로 이동하면서 해당 구분 필터를 적용
@@ -1043,7 +947,7 @@ function renderStats() {
     const latest = items.map(f => f.regDate || '').filter(Boolean).sort().pop() || '-';
     return `
     <div class="stat-card ${d.cls}${locked?' locked':''}" onclick="${locked?'':`goListWithFilter('${d.cat}')`}">
-      <div class="item-gear" onclick="event.stopPropagation(); openSettingModal('stat')">⚙</div>
+      <div class="item-gear" onclick="event.stopPropagation(); openSettingModal()">⚙</div>
       <div class="stat-top">
         <span class="stat-icon">${d.icon}${locked?' 🔒':''}</span>
         <div class="stat-names">
@@ -1096,10 +1000,18 @@ async function ensureListLoadedForSearch() {
   }
 }
 
+let _searchPeriod = 0; // 0 = 전체 기간, 그 외엔 등록일 기준 최근 N일
+
+function onSearchPeriodClick(days) {
+  _searchPeriod = days;
+  document.querySelectorAll('#searchPeriodTabs .al-cat-tab').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.period) === days);
+  });
+  runSearch();
+}
+
 function runSearch() {
   const q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
-  const typeFilter = document.getElementById('searchTypeFilter').value;
-  const periodFilter = parseInt(document.getElementById('searchPeriodFilter').value || '0');
 
   const table = document.getElementById('searchResultTable');
   const body  = document.getElementById('searchResultBody');
@@ -1113,19 +1025,14 @@ function runSearch() {
     return;
   }
 
-  // 열람권한 필터 → 구분 → 기간 → 검색어
+  // 열람권한 필터 → 등록일 기준 기간 → 검색어
   let results = _allListRaw.filter(f => canAccess(f.visRole || 'affiliate'));
 
-  if (typeFilter) {
-    const allowed = CAT_TAB_GROUP[typeFilter] || [typeFilter];
-    results = results.filter(f => allowed.includes(f.category));
-  }
-
-  if (periodFilter) {
+  if (_searchPeriod) {
     results = results.filter(f => {
       if (!f.regDate) return false;
       const diffDays = (Date.now() - new Date(f.regDate).getTime()) / 86400000;
-      return diffDays <= periodFilter;
+      return diffDays <= _searchPeriod;
     });
   }
 
@@ -1611,7 +1518,6 @@ async function loadHomeSettings() {
     const data = await res.json();
     if (data.ok && data.settings) {
       const s = data.settings;
-      if (Array.isArray(s.quick)  && s.quick.length)  _quickItems   = s.quick;
       if (Array.isArray(s.stats)  && s.stats.length)  _statItems    = s.stats;
       if (s.banner && typeof s.banner === 'object')   _bannerCfg    = s.banner;
       if (Array.isArray(s.noticeUpdate))              _noticeUpdate = s.noticeUpdate;
@@ -1621,7 +1527,6 @@ async function loadHomeSettings() {
   renderBanner();
   applyUserInfo(); // 저장된 로그인 유형별 표시 이름 반영
   renderNotices();
-  renderQuick();
   renderStats();
 }
 
@@ -1644,10 +1549,9 @@ async function pushSettingsToGas(partial, resultElId) {
 }
 
 // ── 설정 모달 ──
-function openSettingModal(focus) {
+function openSettingModal() {
   if (_userRole !== 'admin') return;
-  renderCfgList('quick');
-  renderCfgList('stat');
+  renderCfgList();
   document.getElementById('cfgResult').style.display = 'none';
   document.getElementById('settingModal').style.display = 'flex';
 }
@@ -1671,36 +1575,33 @@ const PERM_ROLES = [
   { value:'admin',     label:'관리자' }
 ];
 
-function cfgArr(type) { return type === 'quick' ? _quickItems : _statItems; }
-
-function renderCfgList(type) {
-  const container = document.getElementById(type === 'quick' ? 'cfgQuickList' : 'cfgStatList');
-  const items = cfgArr(type);
-  container.innerHTML = items.map((it, i) => {
-    const colorCls = type === 'quick' ? (it.color||'qi-cyan') : (it.cls||'st-cyan');
-    const found = COLOR_OPTIONS.find(c => c.cls === colorCls || c.stat === colorCls);
+function renderCfgList() {
+  const container = document.getElementById('cfgStatList');
+  container.innerHTML = _statItems.map((it, i) => {
+    const colorCls = it.cls || 'st-cyan';
+    const found = COLOR_OPTIONS.find(c => c.cls === colorCls);
     const colorBg = found ? found.hex : 'rgba(0,200,255,0.18)';
     const minRole = it.minRole || '';
     const permBtns = PERM_ROLES.map(r =>
-      `<button class="perm-btn${minRole===r.value?' active-perm':''}" onclick="setCfgMinRole('${type}',${i},'${r.value}')">${r.label}</button>`
+      `<button class="perm-btn${minRole===r.value?' active-perm':''}" onclick="setCfgMinRole(${i},'${r.value}')">${r.label}</button>`
     ).join('');
     const catOpts = CAT_OPTIONS.map(c => `<option value="${c.value}"${it.cat===c.value?' selected':''}>${c.label}</option>`).join('');
     return `
     <div class="cfg-item">
       <div class="cfg-item-top">
         <div class="cfg-move">
-          <button onclick="moveCfgItem('${type}',${i},-1)" title="위로">▲</button>
-          <button onclick="moveCfgItem('${type}',${i},1)" title="아래로">▼</button>
+          <button onclick="moveCfgItem(${i},-1)" title="위로">▲</button>
+          <button onclick="moveCfgItem(${i},1)" title="아래로">▼</button>
         </div>
-        <div class="cfg-icon-preview ${colorCls}" style="background:${colorBg}" onclick="openIconPicker('${type}',${i},this)">${it.icon||'📄'}</div>
+        <div class="cfg-icon-preview ${colorCls}" style="background:${colorBg}" onclick="openIconPicker(${i},this)">${it.icon||'📄'}</div>
         <div class="cfg-fields">
-          <input class="cfg-input" value="${(it.label||'').replace(/"/g,'&quot;')}" placeholder="라벨" oninput="updateCfgItem('${type}',${i},'label',this.value)">
+          <input class="cfg-input" value="${(it.label||'').replace(/"/g,'&quot;')}" placeholder="라벨" oninput="updateCfgItem(${i},'label',this.value)">
           <div class="cfg-row2">
-            ${type==='stat' ? `<input class="cfg-input" value="${(it.sub||'').replace(/"/g,'&quot;')}" placeholder="설명" oninput="updateCfgItem('stat',${i},'sub',this.value)">` : ''}
-            <select class="cfg-select" onchange="updateCfgItem('${type}',${i},'cat',this.value)">${catOpts}</select>
+            <input class="cfg-input" value="${(it.sub||'').replace(/"/g,'&quot;')}" placeholder="설명" oninput="updateCfgItem(${i},'sub',this.value)">
+            <select class="cfg-select" onchange="updateCfgItem(${i},'cat',this.value)">${catOpts}</select>
           </div>
         </div>
-        <button class="cfg-del" onclick="removeCfgItem('${type}',${i})">✕</button>
+        <button class="cfg-del" onclick="removeCfgItem(${i})">✕</button>
       </div>
       <div class="cfg-item-bottom">
         <span class="cfg-perm-label">🔑 최소권한</span>
@@ -1710,38 +1611,36 @@ function renderCfgList(type) {
   }).join('') || `<div style="font-size:11px;color:var(--text3);">항목이 없습니다. 아래 버튼으로 추가하세요.</div>`;
 }
 
-function updateCfgItem(type, i, key, val) { cfgArr(type)[i][key] = val; }
-function setCfgMinRole(type, i, role) { cfgArr(type)[i].minRole = role || null; renderCfgList(type); }
-function removeCfgItem(type, i) { cfgArr(type).splice(i,1); renderCfgList(type); }
-function moveCfgItem(type, i, dir) {
-  const arr = cfgArr(type);
+function updateCfgItem(i, key, val) { _statItems[i][key] = val; }
+function setCfgMinRole(i, role) { _statItems[i].minRole = role || null; renderCfgList(); }
+function removeCfgItem(i) { _statItems.splice(i,1); renderCfgList(); }
+function moveCfgItem(i, dir) {
   const j = i + dir;
-  if (j < 0 || j >= arr.length) return;
-  [arr[i], arr[j]] = [arr[j], arr[i]];
-  renderCfgList(type);
+  if (j < 0 || j >= _statItems.length) return;
+  [_statItems[i], _statItems[j]] = [_statItems[j], _statItems[i]];
+  renderCfgList();
 }
-function addCfgItem(type) {
-  if (type === 'quick') _quickItems.push({ icon:'📄', label:'새 항목', cat:'all', color:'qi-cyan', minRole:null });
-  else _statItems.push({ icon:'📄', label:'새 항목', sub:'', cat:'all', cls:'st-cyan', minRole:null });
-  renderCfgList(type);
+function addCfgItem() {
+  _statItems.push({ icon:'📄', label:'새 항목', sub:'', cat:'all', cls:'st-cyan', minRole:null });
+  renderCfgList();
 }
 
 async function saveHomeSettings() {
   const btn = document.getElementById('cfgSaveBtn');
   btn.disabled = true; btn.textContent = '저장 중...';
-  const ok = await pushSettingsToGas({ quick:_quickItems, stats:_statItems }, 'cfgResult');
+  const ok = await pushSettingsToGas({ stats:_statItems }, 'cfgResult');
   btn.disabled = false; btn.textContent = '💾 저장';
-  if (ok) { renderQuick(); renderStats(); }
+  if (ok) { renderStats(); }
 }
 
 // ── 아이콘 / 색상 선택 ──
 let _iconTarget = null;
-function openIconPicker(type, i, anchorEl) {
-  _iconTarget = { type, i };
+function openIconPicker(i, anchorEl) {
+  _iconTarget = { i };
   const picker = document.getElementById('iconPicker');
   document.getElementById('iconGrid').innerHTML = ICON_OPTIONS.map(ic => `<span onclick="pickIcon('${ic}')">${ic}</span>`).join('');
   document.getElementById('colorGrid').innerHTML = COLOR_OPTIONS.map(c =>
-    `<span style="background:${c.hex}" onclick="pickColor('${c.cls}','${c.stat}')"></span>`
+    `<span style="background:${c.hex}" onclick="pickColor('${c.cls}')"></span>`
   ).join('');
   const r = anchorEl.getBoundingClientRect();
   picker.classList.add('open');
@@ -1755,16 +1654,14 @@ function openIconPicker(type, i, anchorEl) {
 function closeIconPicker() { document.getElementById('iconPicker').classList.remove('open'); _iconTarget = null; }
 function pickIcon(ic) {
   if (!_iconTarget) return;
-  cfgArr(_iconTarget.type)[_iconTarget.i].icon = ic;
-  renderCfgList(_iconTarget.type);
+  _statItems[_iconTarget.i].icon = ic;
+  renderCfgList();
   closeIconPicker();
 }
-function pickColor(quickCls, statCls) {
+function pickColor(statCls) {
   if (!_iconTarget) return;
-  const { type, i } = _iconTarget;
-  if (type === 'quick') cfgArr(type)[i].color = quickCls;
-  else cfgArr(type)[i].cls = statCls;
-  renderCfgList(type);
+  _statItems[_iconTarget.i].cls = statCls;
+  renderCfgList();
   closeIconPicker();
 }
 document.addEventListener('click', e => {
@@ -1839,7 +1736,6 @@ async function saveNoticeEdit() {
 
 renderBanner();
 renderNotices();
-renderQuick();
 renderStats();
 
 // 홈의 집계·검색이 바로 동작하도록 시작 시 목록/설정을 미리 불러옴
@@ -1851,7 +1747,6 @@ setTimeout(() => {
   if (!_userRole) {
     _userRole = sessionStorage.getItem('_userRole') || '';
     applyUserInfo();
-    renderQuick();
     renderStats();
     if (_allListLoaded) renderAllList();
   }

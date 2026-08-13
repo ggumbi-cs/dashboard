@@ -174,13 +174,25 @@ if((_urlTheme||sessionStorage.getItem('_theme')||'light')==='light')document.bod
 
 document.getElementById('nw제품명').innerHTML='<option value="">선택</option>'+PROD_OPTS.map(p=>`<option value="${p}">${p}</option>`).join('');
 
+async function fetchAllRows(table) {
+  const PAGE = 1000;
+  let from = 0, all = [];
+  while (true) {
+    const { data, error } = await sb.from(table).select('*').range(from, from + PAGE - 1);
+    if (error) throw error;
+    all = all.concat(data || []);
+    if (!data || data.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
+
 async function loadData(){
   document.getElementById('loadState').style.display='';
   document.getElementById('mainWrap').style.display='none';
   document.getElementById('refreshBtn').classList.add('spin');
   try{
-    const { data, error } = await sb.from('qc_유상단가').select('*');
-    if (error) throw error;
+    const data = await fetchAllRows('qc_유상단가');
     _all=(data||[]).map(r=>({...r, id:r.notion_page_id, url:r.notion_url}));
     _allProds=[...new Set(_all.map(r=>r.제품명).filter(Boolean))].sort();
     _checkedProds=new Set(_allProds);

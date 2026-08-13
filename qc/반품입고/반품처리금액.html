@@ -290,6 +290,18 @@ function applyFilter() {
 }
 
 // ── 데이터 로드 (Supabase qc_반품처리 테이블 직접 조회) ──
+async function fetchAllRows(table) {
+  const PAGE = 1000;
+  let from = 0, all = [];
+  while (true) {
+    const { data, error } = await sb.from(table).select('*').range(from, from + PAGE - 1);
+    if (error) throw error;
+    all = all.concat(data || []);
+    if (!data || data.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
 
 async function loadData() {
   document.getElementById('loadState').style.display='';
@@ -297,9 +309,7 @@ async function loadData() {
   const btn=document.getElementById('refreshBtn');
   btn.classList.add('spin');
   try {
-    const { data, error } = await sb.from('qc_반품처리').select('*');
-    if (error) throw error;
-    _all = data || [];
+    _all = await fetchAllRows('qc_반품처리');
     try {
       const { data: cursor } = await sb.from('qc_sync_cursor').select('last_synced_at').eq('section','반품처리').maybeSingle();
       if (cursor?.last_synced_at) document.querySelector('.hd-title').title = `최근 동기화: ${new Date(cursor.last_synced_at).toLocaleString('ko-KR')}`;

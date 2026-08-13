@@ -364,14 +364,28 @@ function acKeyDown(e) {
 }
 document.addEventListener('click',e=>{ const w=document.getElementById('acWrap'); if(w&&!w.contains(e.target))document.getElementById('acDrop').classList.remove('open'); });
 
+// Supabase는 기본적으로 한 번에 최대 1000건까지만 반환하므로,
+// 1000건 넘는 큰 표는 range()로 나눠서 전부 가져와야 함
+async function fetchAllRows(table) {
+  const PAGE = 1000;
+  let from = 0, all = [];
+  while (true) {
+    const { data, error } = await sb.from(table).select('*').range(from, from + PAGE - 1);
+    if (error) throw error;
+    all = all.concat(data || []);
+    if (!data || data.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
+
 async function loadData(){
   showLoading();
   document.getElementById('refreshBtn').classList.add('spin');
 
   try{
-    const { data, error } = await sb.from('qc_택배출고').select('*');
-    if (error) throw error;
-    const all = (data || []).map(r => ({ ...r, id: r.notion_page_id, url: r.notion_url }));
+    const rows = await fetchAllRows('qc_택배출고');
+    const all = (rows || []).map(r => ({ ...r, id: r.notion_page_id, url: r.notion_url }));
     // 출력일이 풀 타임스탬프로 들어오는 경우 대비 — yyyy-MM-dd만 남김
     all.forEach(r=>{ if(r.출력일) r.출력일 = String(r.출력일).slice(0,10); });
     _realtime = all.filter(r=>r.상태==='출력요청');

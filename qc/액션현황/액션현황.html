@@ -264,17 +264,29 @@ if (sessionStorage.getItem('_theme') === 'light') document.body.classList.add('l
 // ─────────────────────────────────────────────
 // 데이터 로드
 // ─────────────────────────────────────────────
+async function fetchAllRows(table) {
+  const PAGE = 1000;
+  let from = 0, all = [];
+  while (true) {
+    const { data, error } = await sb.from(table).select('*').range(from, from + PAGE - 1);
+    if (error) throw error;
+    all = all.concat(data || []);
+    if (!data || data.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
+
 async function loadData() {
   showLoading();
   const btn = document.getElementById('refreshBtn');
   btn.classList.add('spin');
   try {
-    const [dataRes, prioRes] = await Promise.all([
-      sb.from('qc_액션현황').select('*'),
+    const [actionData, prioRes] = await Promise.all([
+      fetchAllRows('qc_액션현황'),
       fetch(SETTINGS_API_URL, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'getProductPriority'})})
     ]);
-    if (dataRes.error) throw dataRes.error;
-    _records = (dataRes.data || []).map(r => ({ ...r, id: r.notion_page_id, url: r.notion_url }));
+    _records = (actionData || []).map(r => ({ ...r, id: r.notion_page_id, url: r.notion_url }));
     const prio = await prioRes.json();
     if (prio.ok) _productPrio = prio.priority || [];
   } catch(e) { _records = []; }

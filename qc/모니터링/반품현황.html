@@ -401,24 +401,38 @@ function movePeriod(dir) {
   render();
 }
 
+// Supabase는 기본적으로 한 번에 최대 1000건까지만 반환하므로,
+// 1000건 넘는 큰 표는 range()로 나눠서 전부 가져와야 함
+async function fetchAllRows(table) {
+  const PAGE = 1000;
+  let from = 0, all = [];
+  while (true) {
+    const { data, error } = await sb.from(table).select('*').range(from, from + PAGE - 1);
+    if (error) throw error;
+    all = all.concat(data || []);
+    if (!data || data.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
+
 // ─────────────────────────────────────────────
 // 데이터 로드 (Supabase 4개 테이블 직접 조회)
 // ─────────────────────────────────────────────
 async function loadData() {
   showLoading();
   try {
-    const [magamRes, rateRes, inspectRes, restoreRes] = await Promise.all([
-      sb.from('qc_반품마감').select('*'),
-      sb.from('qc_반품율').select('*'),
-      sb.from('qc_반품검사').select('*'),
-      sb.from('qc_반품처리').select('*'),
+    const [magamData, rateData, inspectData, restoreData] = await Promise.all([
+      fetchAllRows('qc_반품마감'),
+      fetchAllRows('qc_반품율'),
+      fetchAllRows('qc_반품검사'),
+      fetchAllRows('qc_반품처리'),
     ]);
-    if (magamRes.error) throw magamRes.error;
 
-    _magam   = magamRes.data   || [];
-    _rate    = rateRes.data    || [];
-    _inspect = inspectRes.data || [];
-    _restore = restoreRes.data || [];
+    _magam   = magamData   || [];
+    _rate    = rateData    || [];
+    _inspect = inspectData || [];
+    _restore = restoreData || [];
 
     if (!_magam.length) { showEmpty(); return; }
 

@@ -425,14 +425,28 @@ function movePeriod(dir) {
   render();
 }
 
+// Supabase는 기본적으로 한 번에 최대 1000건까지만 반환하므로,
+// 1000건 넘는 큰 표는 range()로 나눠서 전부 가져와야 함
+async function fetchAllRows(table) {
+  const PAGE = 1000;
+  let from = 0, all = [];
+  while (true) {
+    const { data, error } = await sb.from(table).select('*').range(from, from + PAGE - 1);
+    if (error) throw error;
+    all = all.concat(data || []);
+    if (!data || data.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
+
 // ─────────────────────────────────────────────
 // 데이터 로드 (Supabase qc_가전 테이블에서 직접 조회)
 // ─────────────────────────────────────────────
 async function loadData() {
   showLoading();
   try {
-    const { data, error } = await sb.from('qc_가전').select('*');
-    if (error) throw error;
+    const data = await fetchAllRows('qc_가전');
 
     // 불량현황은 접수일 기준 + 특정 구분만 (기존 GAS notionPageToRecord와 동일한 필터)
     _records = (data || []).filter(r =>

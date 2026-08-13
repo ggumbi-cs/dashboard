@@ -112,12 +112,24 @@ function daysSince(dateStr) {
   return Math.max(0, Math.floor((n - d) / 86400000));
 }
 
+async function fetchAllRows(table) {
+  const PAGE = 1000;
+  let from = 0, all = [];
+  while (true) {
+    const { data, error } = await sb.from(table).select('*').range(from, from + PAGE - 1);
+    if (error) throw error;
+    all = all.concat(data || []);
+    if (!data || data.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
+
 async function loadData(){
   showLoading();
   document.getElementById('refreshBtn').classList.add('spin');
   try{
-    const { data, error } = await sb.from('qc_자재발주').select('*');
-    if (error) throw error;
+    const data = await fetchAllRows('qc_자재발주');
     _all = (data || []).map(r => ({ ...r, id: r.notion_page_id, url: r.notion_url }));
     updateCounts(); render();
   }catch(e){showEmpty();}

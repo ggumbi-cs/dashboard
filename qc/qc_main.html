@@ -637,7 +637,7 @@ body.is-admin .notice-admin-gear { display:flex; }
           <!-- 메인 동기화 카드 -->
           <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px 32px;margin-bottom:16px;">
             <p style="font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.7;">
-              매일 <strong style="color:var(--cyan);">새벽 1시</strong> 자동으로 노션과 동기화됩니다.<br>
+              <strong style="color:var(--cyan);">10분마다</strong> 자동으로 노션과 동기화됩니다.<br>
               필요 시 수동 동기화도 가능합니다.
             </p>
 
@@ -659,31 +659,31 @@ body.is-admin .notice-admin-gear { display:flex; }
               <div class="sync-scope-row" data-key="defect">
                 <span class="sync-scope-icon">📊</span>
                 <span class="sync-scope-name">불량현황</span>
-                <span class="sync-scope-path">qc/qc_data.json → 불량 섹션</span>
-                <span class="sync-scope-badge">정적 JSON</span>
+                <span class="sync-scope-path">Supabase qc_가전 테이블</span>
+                <span class="sync-scope-badge live">자동(10분)</span>
               </div>
               <div class="sync-scope-row" data-key="cheori">
                 <span class="sync-scope-icon">📦</span>
                 <span class="sync-scope-name">처리현황</span>
-                <span class="sync-scope-path">qc/qc_data.json → 처리현황 · 가전외AS 섹션</span>
-                <span class="sync-scope-badge">정적 JSON</span>
+                <span class="sync-scope-path">Supabase qc_가전 · qc_가전외as 테이블</span>
+                <span class="sync-scope-badge live">자동(10분)</span>
               </div>
               <div class="sync-scope-row" data-key="banpumStatus">
                 <span class="sync-scope-icon">↩️</span>
                 <span class="sync-scope-name">반품현황</span>
-                <span class="sync-scope-path">qc/qc_data.json → 반품마감 · 반품율 · 반품검사 섹션</span>
-                <span class="sync-scope-badge">정적 JSON</span>
+                <span class="sync-scope-path">Supabase qc_반품마감 · qc_반품율 · qc_반품검사 테이블</span>
+                <span class="sync-scope-badge live">자동(10분)</span>
               </div>
               <div class="sync-scope-row" data-key="returnCost">
                 <span class="sync-scope-icon">↩️</span>
                 <span class="sync-scope-name">반품입고 비용현황</span>
-                <span class="sync-scope-path">qc/qc_data.json → 반품처리 섹션</span>
-                <span class="sync-scope-badge">정적 JSON</span>
+                <span class="sync-scope-path">Supabase qc_반품처리 테이블</span>
+                <span class="sync-scope-badge live">자동(10분)</span>
               </div>
               <div class="sync-scope-row" data-key="action">
                 <span class="sync-scope-icon">⚡</span>
                 <span class="sync-scope-name">액션현황 (S1~S5)</span>
-                <span class="sync-scope-path">노션 직접 연동</span>
+                <span class="sync-scope-path">노션 직접 연동 (쓰기 즉시 반영)</span>
                 <span class="sync-scope-badge live">실시간</span>
               </div>
               <div class="sync-scope-row" data-key="return">
@@ -695,48 +695,8 @@ body.is-admin .notice-admin-gear { display:flex; }
               <div class="sync-scope-row" data-key="vacation">
                 <span class="sync-scope-icon">🏖️</span>
                 <span class="sync-scope-name">휴가일정</span>
-                <span class="sync-scope-path">qc/qc_data.json → 휴가일정 섹션</span>
-                <span class="sync-scope-badge">정적 JSON</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- CSV 개별 수동 동기화 -->
-          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:22px 28px;margin-bottom:16px;">
-            <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">CSV 개별 수동 동기화</div>
-            <p style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.7;">
-              노션에서 내보낸 zip(이중압축 포함, 여러 개 동시 가능)을 드래그하면 자동으로 압축을 풀고
-              <strong style="color:var(--cyan);">_all.csv</strong> 위주로 찾아 항목별 개별 동기화를 진행합니다.
-              (노션 API 미사용 · GitHub qc_data.json 해당 섹션만 교체)<br>
-              <strong style="color:var(--gold);">동기화</strong> 버튼은 GAS를 거쳐 바로 GitHub에 올립니다 (UrlFetch 할당량 소모).
-              <strong style="color:var(--gold);">파일로 다운로드</strong> 버튼은 서버를 전혀 거치지 않고 {섹션}.json 파일만 내려받으니,
-              그 파일을 <strong style="color:var(--cyan);">qc/수동동기화/</strong> 폴더에 넣고 깃허브에 올리면 됩니다 (할당량 초과로 자동/기존 수동 동기화가 막혔을 때 사용).
-              <strong style="color:var(--gold);">🔗 직접쓰기</strong> 버튼(관리자 전용)은 GAS도 안 거치고 브라우저에서 GitHub API로 바로 씁니다 — 아래 GitHub 직접 연동에서 토큰을 먼저 저장해야 보입니다.
-            </p>
-            <div id="csvDropZone" style="border:2px dashed var(--border);border-radius:12px;padding:26px;text-align:center;font-size:12px;color:var(--text3);cursor:pointer;transition:border-color .15s;">
-              📂 zip 파일을 여기로 드래그 (여러 개 가능) · 클릭해서 선택도 가능
-              <input type="file" id="csvFileInput" accept=".zip" multiple style="display:none;">
-            </div>
-            <div id="csvFileList" style="margin-top:14px;display:flex;flex-direction:column;gap:10px;"></div>
-
-            <div style="margin-top:16px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px 18px;">
-              <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📋 마감 데이터 충족 현황 (현재 올라온 파일 기준)</div>
-              <div id="csvCoveragePanel" style="display:flex;flex-direction:column;gap:4px;"></div>
-            </div>
-
-            <!-- GitHub 직접 연동: 관리자(_isAdmin)에게만 노출. 일반 팀원 화면엔 이 블록 자체가 렌더링되지 않음 -->
-            <div class="admin-only-block" style="margin-top:16px;background:rgba(240,192,96,0.06);border:1px solid rgba(240,192,96,0.25);border-radius:12px;padding:14px 18px;">
-              <div style="font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">🔗 GitHub 직접 연동 (관리자 전용)</div>
-              <p style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.6;">
-                여기 입력한 토큰은 <strong style="color:var(--gold);">이 브라우저에만</strong> 저장되고 어떤 파일에도 기록되지 않습니다.
-                저장하면 각 CSV 행에 "🔗 직접쓰기" 버튼이 생기고, GAS를 거치지 않고 브라우저에서 GitHub API로 바로 씁니다 (UrlFetch 할당량과 무관).
-                이 저장소(qc/qc_data.json)에만 쓰기 권한이 있는 fine-grained PAT 사용을 추천합니다.
-              </p>
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                <input type="password" id="ghTokenInput" placeholder="ghp_... 또는 github_pat_..." style="flex:1;min-width:220px;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:12px;">
-                <button onclick="saveGhToken()" style="padding:7px 14px;background:var(--gold);color:#000;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">저장</button>
-                <button onclick="clearGhToken()" style="padding:7px 14px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;cursor:pointer;">삭제</button>
-                <span id="ghTokenStatus" style="font-size:11px;color:var(--text3);"></span>
+                <span class="sync-scope-path">Supabase qc_휴가일정 테이블</span>
+                <span class="sync-scope-badge live">자동(10분)</span>
               </div>
             </div>
           </div>
@@ -746,7 +706,7 @@ body.is-admin .notice-admin-gear { display:flex; }
             <div style="font-size:11px;font-weight:600;color:var(--gold);margin-bottom:8px;">⚠ 동기화 주의사항</div>
             <div style="font-size:12px;color:var(--text2);line-height:1.8;">
               동기화 시 노션의 주제 · 등록일 · 생성자 등 <strong>원본 속성은 절대 덮어쓰지 않습니다.</strong><br>
-              대시보드에서 노션으로 반영되는 항목은 <span style="color:var(--gold);">개선진행 여부 선택값</span> 에 한합니다.
+              대시보드에서 노션으로 반영되는 항목은 <span style="color:var(--gold);">개선진행 여부 선택값</span> 및 액션현황·자재발주·택배출고·유상단가의 <span style="color:var(--gold);">쓰기 항목</span>에 한합니다.
             </div>
           </div>
 
@@ -856,6 +816,7 @@ body.is-admin .notice-admin-gear { display:flex; }
 
 <div id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // ─────────────────────────────────────────────
 // 상수
@@ -933,10 +894,22 @@ const DEFAULT_BANNER = {
 // ─────────────────────────────────────────────
 // 상태
 // ─────────────────────────────────────────────
-// GAS URL 직접 내장 — 인덱스 없이도 독립 동작
-const QC_GAS_URL = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
+// Supabase 이전 (2026-08) — GAS URL 완전 폐기
+const SUPABASE_URL      = 'https://myentgydxvnviubjxqin.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_agE17x89UHxC-UPIZY5fdg_QlN3biTu';
+const SETTINGS_API_URL  = `${SUPABASE_URL}/functions/v1/settings-api`;
+const NOTION_SYNC_URL   = `${SUPABASE_URL}/functions/v1/notion-sync`;
+const SYNC_SECRET       = 'nVtAAUKKdQpl8XVq5PRHX24DdkiX8X_b';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let _scriptUrl      = QC_GAS_URL;
+async function settingsApiCall(action, payload) {
+  const res = await fetch(SETTINGS_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, ...(payload || {}) }),
+  });
+  return res.json();
+}
 let _userRole       = '';
 let _userName       = '';
 let _isAdmin        = false;
@@ -1012,10 +985,8 @@ function canAccess(minRole) {
 // 설정 불러오기
 // ─────────────────────────────────────────────
 async function loadSettings() {
-  if (!_scriptUrl) { useDefaults(); return; }
   try {
-    const res  = await fetch(`${_scriptUrl}?action=getQcSettings`, { redirect:'follow' });
-    const data = await res.json();
+    const data = await settingsApiCall('getQcSettings');
     if (data.ok && data.settings && (data.settings.quick || data.settings.cards)) {
       _quickItems = data.settings.quick?.length ? data.settings.quick : JSON.parse(JSON.stringify(DEFAULT_QUICK));
       _cardItems  = data.settings.cards?.length ? data.settings.cards : JSON.parse(JSON.stringify(DEFAULT_CARDS));
@@ -1220,11 +1191,8 @@ async function saveNoticeEdit() {
   if (_noticeEditType==='update') DEFAULT_NOTICES_UPDATE=cleaned;
   else DEFAULT_NOTICES_OPS=cleaned;
   renderNotices();
-  if (!_scriptUrl) { showToast('⚠ GAS URL 없음'); closeNoticeEdit(); return; }
   try {
-    const payload = encodeURIComponent(JSON.stringify({noticeUpdate:DEFAULT_NOTICES_UPDATE,noticeOps:DEFAULT_NOTICES_OPS}));
-    const res  = await fetch(`${_scriptUrl}?action=saveQcNoticeSettings&data=${payload}`,{redirect:'follow'});
-    const data = await res.json();
+    const data = await settingsApiCall('saveQcNoticeSettings', { noticeUpdate: DEFAULT_NOTICES_UPDATE, noticeOps: DEFAULT_NOTICES_OPS });
     showToast(data.ok ? '✅ 공지 저장 완료' : '⚠ 저장 실패');
   } catch(e) { showToast('⚠ 저장 오류'); }
   closeNoticeEdit();
@@ -1260,11 +1228,8 @@ async function saveBannerEdit() {
     }
   };
   applyUserInfo();
-  if (!_scriptUrl) { showToast('⚠ GAS URL 없음'); closeBannerEdit(); return; }
   try {
-    const payload = encodeURIComponent(JSON.stringify({banner:_bannerSettings}));
-    const res  = await fetch(`${_scriptUrl}?action=saveQcBannerSettings&data=${payload}`,{redirect:'follow'});
-    const data = await res.json();
+    const data = await settingsApiCall('saveQcBannerSettings', { banner: _bannerSettings });
     showToast(data.ok ? '✅ 배너 설정 저장 완료' : '⚠ 저장 실패');
   } catch(e) { showToast('⚠ 저장 오류'); }
   closeBannerEdit();
@@ -1469,11 +1434,8 @@ function bindDragEvents(container,dataArr,rerender) {
 // ─────────────────────────────────────────────
 async function saveSettings() {
   renderAll();
-  if (!_scriptUrl) { showToast('⚠ GAS URL 없음'); closeModal(); return; }
   try {
-    const payload=encodeURIComponent(JSON.stringify({quick:_quickItems,cards:_cardItems,banner:_bannerSettings}));
-    const res  = await fetch(`${_scriptUrl}?action=saveQcSettings&data=${payload}`,{redirect:'follow'});
-    const data = await res.json();
+    const data = await settingsApiCall('saveQcSettings', { quick: _quickItems, cards: _cardItems, banner: _bannerSettings });
     showToast(data.ok?'✅ 설정 저장 완료':'⚠ 저장 실패: '+(data.msg||''));
   } catch(e) { showToast('⚠ 저장 오류'); }
   closeModal();
@@ -1491,21 +1453,19 @@ function loadSyncStatus() {
     if (saved) updateSyncUI(JSON.parse(saved));
   } catch(e) {}
 
-  // GAS Script Properties에서 자동 동기화 시간 읽기 (더 최신이면 덮어씀)
-  if (_scriptUrl) {
-    fetch(`${_scriptUrl}?action=getLastSyncTime`, {redirect:'follow'})
-      .then(r=>r.json())
-      .then(d=>{
-        if (!d.ok || !d.time) return;
-        const gasTime   = new Date(d.time).getTime();
-        const savedRaw  = localStorage.getItem(SYNC_STORAGE_KEY);
-        const localTime = savedRaw ? new Date(JSON.parse(savedRaw).time||0).getTime() : 0;
-        if (gasTime > localTime) {
-          const info = { ok:true, time:d.time, result:'성공', detail:`✅ 자동 동기화 완료 · ${new Date(d.time).toLocaleString('ko-KR')}<br>${d.summary||''}` };
-          updateSyncUI(info);
-        }
-      }).catch(()=>{});
-  }
+  // Supabase qc_sync_cursor에서 자동 동기화 시간 읽기 (더 최신이면 덮어씀)
+  sb.from('qc_sync_cursor').select('section,last_synced_at,last_summary').order('last_synced_at', { ascending:false })
+    .then(({ data }) => {
+      if (!data || !data.length) return;
+      const latest    = data[0];
+      const remoteTime = latest.last_synced_at ? new Date(latest.last_synced_at).getTime() : 0;
+      const savedRaw  = localStorage.getItem(SYNC_STORAGE_KEY);
+      const localTime = savedRaw ? new Date(JSON.parse(savedRaw).time||0).getTime() : 0;
+      if (remoteTime > localTime) {
+        const detailLines = data.map(d => `${d.section}: ${d.last_summary||'-'} · ${d.last_synced_at ? new Date(d.last_synced_at).toLocaleString('ko-KR') : '-'}`).join('<br>');
+        updateSyncUI({ ok:true, time: latest.last_synced_at, result:'자동 동기화(10분 주기)', detail: detailLines });
+      }
+    }).catch(()=>{});
 }
 
 function updateSyncUI(info) {
@@ -1539,35 +1499,43 @@ function formatSyncTime(timeStr) {
   } catch(e) { return timeStr; }
 }
 
+const SYNC_SECTIONS = ['가전','반품처리','택배출고','가전외AS','반품마감','반품율','반품검사','휴가일정','액션현황','자재발주','유상단가','직원목록'];
+
 async function runManualSync() {
-  if (!_scriptUrl) { showToast('⚠ GAS URL 없음'); return; }
   const btn = document.getElementById('syncNowBtn');
   const dot = document.getElementById('syncStatusDot');
   btn.disabled = true;
   btn.textContent = '⏳ 동기화 중...';
   dot.className = 'sync-status-dot running';
-  try {
-    const res  = await fetch(`${_scriptUrl}?action=syncQcData`, {redirect:'follow'});
-    const data = await res.json();
-    const iso  = new Date().toISOString(); // ISO 형식으로 저장 → formatSyncTime 파싱 가능
-    const info = {
-      ok:     data.ok,
-      time:   iso,
-      result: data.ok ? '성공' : '실패',
-      detail: data.ok
-        ? `✅ 동기화 완료 · ${new Date(iso).toLocaleString('ko-KR')}<br>${data.summary||'데이터 최신화 완료'}`
-        : `⚠ 동기화 실패: ${data.msg||'오류'}`
-    };
-    localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(info));
-    updateSyncUI(info);
-    showToast(data.ok ? '✅ 동기화 완료' : '⚠ 동기화 실패');
-  } catch(e) {
-    const iso  = new Date().toISOString();
-    const info = {ok:false, time:iso, result:'오류', detail:`⚠ 연결 오류: ${e.message}`};
-    localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(info));
-    updateSyncUI(info);
-    showToast('⚠ 동기화 오류');
+
+  let okCount = 0, failCount = 0;
+  const details = [];
+  // 자원 한도 문제로 섹션별로 하나씩 순서대로 호출 (동시에 다 부르면 무료 요금제 한도 초과)
+  for (const section of SYNC_SECTIONS) {
+    try {
+      const res = await fetch(`${NOTION_SYNC_URL}?section=${encodeURIComponent(section)}`, {
+        method: 'POST',
+        headers: { 'x-sync-secret': SYNC_SECRET },
+      });
+      const data = await res.json();
+      if (data.ok) { okCount++; details.push(`✅ ${section}: ${JSON.stringify(data.results)}`); }
+      else { failCount++; details.push(`⚠ ${section}: ${(data.errors||[]).join(', ')||'실패'}`); }
+    } catch(e) {
+      failCount++; details.push(`⚠ ${section}: 연결 오류(${e.message})`);
+    }
   }
+
+  const iso  = new Date().toISOString();
+  const info = {
+    ok:     failCount === 0,
+    time:   iso,
+    result: failCount === 0 ? '성공' : `${okCount}개 성공 · ${failCount}개 실패`,
+    detail: details.join('<br>'),
+  };
+  localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(info));
+  updateSyncUI(info);
+  showToast(failCount === 0 ? '✅ 동기화 완료' : '⚠ 일부 섹션 실패');
+
   btn.disabled = false;
   btn.innerHTML = '🔄 지금 수동 동기화';
 }
@@ -1600,581 +1568,6 @@ setTimeout(()=>{
   }
   loadSyncStatus();
 },400);
-// ─────────────────────────────────────────────
-// CSV(zip) 개별 수동 동기화
-// ─────────────────────────────────────────────
-const CSV_SECTION_OPTIONS = [
-  { key:'가전',     label:'불량현황 (가전)' },
-  { key:'가전외AS', label:'처리현황 (가전외AS)' },
-  { key:'반품마감', label:'반품현황 - 반품마감' },
-  { key:'반품율',   label:'반품현황 - 반품율' },
-  { key:'반품검사', label:'반품현황 - 반품검사' },
-  { key:'반품처리', label:'반품입고 비용현황' },
-  { key:'휴가일정', label:'휴가일정' },
-  { key:'택배출고', label:'택배출고' }
-];
-
-let _csvSyncTimes = {}; // { sectionKey: isoTime }
-
-// ── 마감 데이터 충족 현황: 어떤 대시보드 페이지가 어떤 섹션(들)을 필요로 하는지 ──
-const PAGE_SECTION_MAP = [
-  { page: '불량현황 (모니터링)',           sections: ['가전'] },
-  { page: '처리현황 (모니터링 · 가전외AS)', sections: ['가전외AS'] },
-  { page: '반품현황 (모니터링)',           sections: ['반품마감', '반품율', '반품검사', '반품처리'] },
-  { page: '반품처리금액 (반품입고)',       sections: ['반품처리'] },
-  { page: '휴가일정 (기타)',               sections: ['휴가일정'] },
-  { page: '택배출고 (기타)',               sections: ['택배출고'] },
-];
-let _csvRowSections = {};              // { rowId: sectionKey } - 현재 목록에 올라온 각 행이 선택된 섹션
-let _csvActionedSections = new Set();  // 이번 세션에서 실제로 동기화(GAS) 또는 다운로드까지 완료한 섹션
-
-function renderCsvCoveragePanel() {
-  const panel = document.getElementById('csvCoveragePanel');
-  if (!panel) return;
-  const present = new Set(Object.values(_csvRowSections));
-  panel.innerHTML = PAGE_SECTION_MAP.map(p => {
-    const missing = p.sections.filter(s => !present.has(s));
-    let icon, label, color;
-    if (missing.length) {
-      icon = '⬜'; color = 'var(--text3)';
-      label = `없음 (${missing.join(', ')} 미확인)`;
-    } else if (p.sections.every(s => _csvActionedSections.has(s))) {
-      icon = '✅'; color = 'var(--green)';
-      label = '충족 완료';
-    } else {
-      icon = '🟡'; color = 'var(--gold)';
-      label = '파일 인식됨 · 동기화/다운로드 대기';
-    }
-    return `<div style="display:flex;align-items:center;gap:8px;font-size:12px;">
-      <span>${icon}</span><span style="flex:1;color:var(--text);">${p.page}</span>
-      <span style="color:${color};">${label}</span>
-    </div>`;
-  }).join('');
-}
-
-function guessCsvSection(koreanLabel) {
-  const t = koreanLabel;
-  if (/반품/.test(t) && /마감/.test(t)) return '반품마감';
-  if (/반품/.test(t) && /율/.test(t))   return '반품율';
-  if (/반품/.test(t) && /검사/.test(t)) return '반품검사';
-  if (/반품|교환/.test(t) && /처리|비용|입고/.test(t)) return '반품처리';
-  if (/불량/.test(t))   return '가전';
-  if (/AS|as/.test(t))  return '가전외AS';
-  if (/휴가/.test(t))   return '휴가일정';
-  if (/택배|출고/.test(t)) return '택배출고';
-  return CSV_SECTION_OPTIONS[0].key;
-}
-
-// 헤더(컬럼명) 기준 섹션 판별 — 파일명이 "2025년 07월~_all.csv"처럼 힌트가 없어도
-// 노션 CSV의 헤더는 그 DB의 속성명 그대로 나오므로, 섹션별로 나오는 속성명 조합을
-// 보면 코드만으로(AI 없이) 어떤 섹션인지 판별할 수 있다. 파일명 기반 guessCsvSection보다
-// 우선 적용되고, 확신도가 낮으면(2개 미만 일치) null을 반환해 파일명 추측으로 넘긴다.
-const CSV_HEADER_SIGNATURES = {
-  가전:     ['확인불량', '접수불량', '업무단계', '접수일'],
-  가전외AS: ['상품명', '상품구분', '수리방법', '진행사항'],
-  반품마감: ['마감회차', '교환/반품', '주/월', '품목'],
-  반품율:   ['마감월', '월간 배송수량', '월간 교환/반품 수량', '반품/교환율'],
-  반품검사: ['반품유형', '이동/처리', '리포트 구분', '리포트 판정'],
-  반품처리: ['처리결과', '처리수량', '처리금액', '처리일'],
-  휴가일정: ['휴가사유', '휴가유형', '휴가시작/종료', '휴가일수', '팀장/파트장'],
-  택배출고: ['모델명', '출고품', '송장번호', '주문번호', '택배사']
-};
-
-function getCsvHeaders(text) {
-  const t = text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
-  const rows = parseCsvRows(t);
-  return (rows[0] || []).map(h => h.trim());
-}
-
-function guessCsvSectionByHeaders(headers) {
-  const set = new Set(headers);
-  let best = null, bestScore = 0;
-  Object.entries(CSV_HEADER_SIGNATURES).forEach(([key, sig]) => {
-    const score = sig.filter(h => set.has(h)).length;
-    if (score > bestScore) { bestScore = score; best = key; }
-  });
-  return bestScore >= 2 ? best : null;
-}
-
-// 파일명에서 마지막 한글 문자 기준으로 왼쪽 전체를 한글 라벨로 추출
-// 예: "꿈비 소브 반품,교환 월마감 3038bca2d21980d8a918ee2a4c8adf7e_all.csv" → "꿈비 소브 반품,교환 월마감"
-function extractKoreanLabel(filename) {
-  const base = filename.replace(/_all\.csv$/i, '').replace(/\.csv$/i, '');
-  let lastKorIdx = -1;
-  for (let i = 0; i < base.length; i++) {
-    if (/[가-힣]/.test(base[i])) lastKorIdx = i;
-  }
-  if (lastKorIdx < 0) return base.trim();
-  return base.slice(0, lastKorIdx + 1).trim();
-}
-
-// 따옴표로 감싼 셀 안의 줄바꿈(멀티라인 텍스트)·쉼표까지 올바르게 처리하는 완전한 CSV 파서.
-// (예전엔 텍스트를 줄바꿈 기준으로 먼저 나눈 뒤 각 줄을 파싱했는데, 노션의
-// 멀티라인 텍스트 속성이 셀 안에 실제 줄바꿈을 포함하면 그 지점에서 행이 둘로 쪼개져 데이터가
-// 밀리는 문제가 있었다. 전체 텍스트를 문자 단위로 훑으면서 따옴표 안/밖을 추적해야 안전하다.)
-function parseCsvRows(text) {
-  const rows = []; let row = []; let cur = ''; let inQuotes = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (inQuotes) {
-      if (c === '"') {
-        if (text[i+1] === '"') { cur += '"'; i++; }
-        else inQuotes = false;
-      } else {
-        cur += c;
-      }
-    } else if (c === '"') {
-      inQuotes = true;
-    } else if (c === ',') {
-      row.push(cur); cur = '';
-    } else if (c === '\r') {
-      // \n에서 행을 종료하므로 무시
-    } else if (c === '\n') {
-      row.push(cur); cur = ''; rows.push(row); row = [];
-    } else {
-      cur += c;
-    }
-  }
-  if (cur.length > 0 || row.length > 0) { row.push(cur); rows.push(row); }
-  return rows.filter(r => !(r.length === 1 && r[0].trim() === ''));
-}
-
-// 노션 CSV는 날짜를 "2025년 7월 14일" 같은 한글 형식으로 내보내는데, 대시보드 페이지들은
-// 전부 접수일/처리일 등을 "YYYY-MM-DD" ISO 문자열 비교로 기간을 필터링한다 (노션 API로 받으면
-// 원래 ISO 형식이라 그동안 문제가 없었음). CSV로 들어온 값은 여기서 ISO로 맞춰준다.
-function normalizeCsvValue(v) {
-  const m = /^(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/.exec(v);
-  if (!m) return v;
-  return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
-}
-
-// 헤더명 기준 매칭 (순서 바뀌어도 무관)
-function parseCsvToRecords(text) {
-  text = text.replace(/^\uFEFF/, '');
-  const rows = parseCsvRows(text);
-  if (!rows.length) return [];
-  const headers = rows[0].map(h => h.trim());
-  const records = [];
-  for (let i = 1; i < rows.length; i++) {
-    const cols = rows[i];
-    if (cols.length === 1 && cols[0].trim() === '') continue;
-    const obj = {};
-    headers.forEach((h, idx) => { obj[h] = normalizeCsvValue((cols[idx] !== undefined ? cols[idx] : '').trim()); });
-    records.push(obj);
-  }
-  return records;
-}
-
-// ── 섹션별 스키마 강제(화이트리스트) ──────────────────────────
-// 2026-08-10 사고: 노션 "내보내기" CSV를 그대로 올리면 화면에 보이는 컬럼
-// 20개 이상이 다 들어가고(고객명,주소,연락처,수리내용...), 확인불량/접수불량
-// 같은 다중선택은 배열이 아니라 "값1, 값2" 콤마 문자열로, 유/무상은 슬래시가
-// 낀 채로, 2025년 이전 데이터까지 필터 없이 그대로 들어가서 "가전" 섹션이
-// 통째로 깨졌었다(7,684건, 16MB). 아래 스키마는 3가지 업로드 경로(동기화 ·
-// 파일다운로드 · GitHub 직접쓰기) 전부가 공유하며, 알려진 섹션은 정확히
-// 대시보드가 기대하는 필드만 남기고 타입도 맞춰서 내보낸다.
-const SECTION_SCHEMAS = {
-  가전: {
-    fields: ['접수일','제품명','구분','확인불량','접수불량','유무상','과실','진행상황','업무단계'],
-    aliases: { 유무상: ['유/무상'] },
-    arrayFields: ['확인불량','접수불량'],
-    dateField: '접수일', minDate: '2026-01-01',
-    validValues: { 구분: ['자재출고','교환/환불','수리출고'] },
-    excludeValues: { 진행상황: ['수리제외','취소'] },
-  },
-  가전외AS: {
-    fields: ['상품명','상품구분','비용','유무상','접수일자','완료일자','수리방법','진행사항'],
-    aliases: { 유무상: ['유/무상'] },
-    arrayFields: ['수리방법'],
-    numberFields: ['비용'],
-    excludeValues: { 진행사항: ['취소'] },
-  },
-  반품마감: {
-    fields: ['구분','마감회차','사유','교환반품','주월','품목','건수','비고'],
-    aliases: { 교환반품: ['교환/반품'], 주월: ['주/월'] },
-    numberFields: ['건수'],
-  },
-  반품율: {
-    fields: ['구분','마감월','월간배송수량','월간교환반품수량','반품교환율','비고'],
-    aliases: {
-      월간배송수량: ['월간 배송수량'],
-      월간교환반품수량: ['월간 교환/반품 수량'],
-      반품교환율: ['반품/교환율'],
-    },
-    numberFields: ['월간배송수량','월간교환반품수량','반품교환율'],
-  },
-  반품검사: {
-    fields: ['제품명','반품유형','검사결과','이동처리','등록일자','리포트구분','리포트판정'],
-    aliases: { 이동처리: ['이동/처리'], 리포트구분: ['리포트 구분'], 리포트판정: ['리포트 판정'] },
-    dateField: '등록일자', minDate: '2026-01-01',
-  },
-  반품처리: {
-    fields: ['처리일','제품명','처리결과','처리수량','처리금액','비고'],
-    numberFields: ['처리수량','처리금액'],
-  },
-  // 처리현황: 드롭다운엔 없지만(가전 DB에서 파생) GAS 직접호출 등 다른 경로 대비 정의해둠
-  처리현황: {
-    fields: ['제품명','구분','처리일','입고입금일','유무상','접수불량','사용부품','소요일','유상AS비용','과실','진행상황'],
-    aliases: { 유무상: ['유/무상'], 입고입금일: ['입고(입금)일'] },
-    arrayFields: ['접수불량','사용부품'],
-    numberFields: ['유상AS비용'],
-    dateField: '처리일', minDate: '2026-01-01',
-    excludeValues: { 진행상황: ['수리제외','취소'] },
-  },
-  // 택배출고 · 휴가일정: 사람/날짜범위 속성이 얽혀있어 CSV 내보내기 형태가 불확실 →
-  // 잘못된 추측으로 덮어쓰는 것보다 낫다고 판단해 스키마 강제를 아직 넣지 않음(그대로 통과).
-};
-
-// records: parseCsvToRecords()가 만든 "헤더명 그대로 키"인 원시 배열.
-// 반환: { records, raw, kept, hasSchema } — records는 강제된 결과(스키마 없으면 원본 그대로).
-function normalizeSectionRecords(sectionKey, records) {
-  const schema = SECTION_SCHEMAS[sectionKey];
-  if (!schema) return { records, raw: records.length, kept: records.length, hasSchema: false };
-
-  function pick(row, field) {
-    if (row[field] !== undefined && row[field] !== '') return row[field];
-    const alts = (schema.aliases && schema.aliases[field]) || [];
-    for (const a of alts) { if (row[a] !== undefined && row[a] !== '') return row[a]; }
-    return row[field];
-  }
-
-  const out = [];
-  records.forEach(row => {
-    const rec = {};
-    schema.fields.forEach(f => {
-      let v = pick(row, f);
-      if (v === undefined) v = null;
-      if (schema.arrayFields && schema.arrayFields.includes(f)) {
-        if (Array.isArray(v)) { /* 이미 배열 */ }
-        else if (typeof v === 'string' && v.trim()) v = v.split(',').map(s => s.trim()).filter(Boolean);
-        else v = [];
-      } else if (schema.numberFields && schema.numberFields.includes(f)) {
-        const s = typeof v === 'string' ? v.replace(/,/g, '') : v;
-        const n = Number(s);
-        v = (s === '' || s === null || s === undefined || isNaN(n)) ? 0 : n;
-      } else if (typeof v === 'string') {
-        v = v.trim();
-        if (v === '') v = (f === '비고' ? '' : null);
-      }
-      rec[f] = v;
-    });
-    if (schema.dateField) {
-      const dv = rec[schema.dateField];
-      if (!dv || String(dv) < schema.minDate) return;
-    }
-    if (schema.validValues) {
-      const bad = Object.entries(schema.validValues).some(([f, allowed]) => !allowed.includes(rec[f]));
-      if (bad) return;
-    }
-    if (schema.excludeValues) {
-      const bad = Object.entries(schema.excludeValues).some(([f, banned]) => banned.includes(rec[f]));
-      if (bad) return;
-    }
-    out.push(rec);
-  });
-  return { records: out, raw: records.length, kept: out.length, hasSchema: true };
-}
-
-// CSV 텍스트 → (알려진 섹션이면) 스키마 강제까지 끝난 레코드. 3개 업로드 경로 공통 진입점.
-function getSectionRecords(sectionKey, csvText) {
-  const raw = parseCsvToRecords(csvText);
-  return normalizeSectionRecords(sectionKey, raw);
-}
-
-// zip(이중압축 포함) → 내부 csv 전부 추출, _all.csv 우선
-async function extractCsvFilesFromZip(file) {
-  const results = [];
-  async function walk(zipObj) {
-    const entries = Object.keys(zipObj.files);
-    for (const relPath of entries) {
-      const entry = zipObj.files[relPath];
-      if (entry.dir) continue;
-      const name = relPath.split('/').pop();
-      if (/\.zip$/i.test(name)) {
-        const buf = await entry.async('arraybuffer');
-        const nested = await JSZip.loadAsync(buf);
-        await walk(nested);
-      } else if (/\.csv$/i.test(name)) {
-        const text = await entry.async('string');
-        results.push({ name, text });
-      }
-    }
-  }
-  const zip = await JSZip.loadAsync(file);
-  await walk(zip);
-  const allOnly = results.filter(r => /_all\.csv$/i.test(r.name));
-  return allOnly.length ? allOnly : results;
-}
-
-function csvSectionSelectHtml(rowId, defaultKey) {
-  const opts = CSV_SECTION_OPTIONS.map(o =>
-    `<option value="${o.key}" ${o.key === defaultKey ? 'selected' : ''}>${o.label}</option>`
-  ).join('');
-  return `<select id="csvSel_${rowId}" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 10px;font-size:12px;">${opts}</select>`;
-}
-
-function renderCsvSyncTime(sectionKey) {
-  const t = _csvSyncTimes[sectionKey];
-  return t ? `최근 동기화: ${new Date(t).toLocaleString('ko-KR')}` : '아직 동기화 이력 없음';
-}
-
-// UrlFetch(GAS)를 전혀 거치지 않는 수동동기화: CSV → {sectionKey}.json 파일 다운로드.
-// 다운로드한 파일을 qc/수동동기화/ 폴더에 넣고 깃허브에 올리면, 각 대시보드 페이지가
-// 자동동기화(qc_data.json)보다 이 파일이 최신일 때 이걸 우선 사용한다 (withManualOverride 참고).
-function downloadManualSyncJson(sectionKey, records) {
-  const payload = { records, lastSynced: new Date().toISOString(), source: '수동(파일다운로드)' };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${sectionKey}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-// ── GitHub 직접 연동 (관리자 전용) ──────────────────────────
-// 토큰은 이 브라우저의 localStorage에만 저장되고 어떤 파일에도 기록되지 않는다.
-// _isAdmin은 클라이언트 자체 판단이 아니라 상위 index 페이지의 실제 로그인/권한
-// 시스템에서 postMessage로 내려오는 값이라(위 window.addEventListener('message',...) 참고),
-// 이 UI/버튼은 관리자로 로그인한 사람에게만 보인다.
-function getGhToken() { return localStorage.getItem('qc_gh_token') || ''; }
-
-function saveGhToken() {
-  const input = document.getElementById('ghTokenInput');
-  const v = input.value.trim();
-  if (!v) return;
-  localStorage.setItem('qc_gh_token', v);
-  input.value = '';
-  document.getElementById('ghTokenStatus').textContent = '✅ 이 브라우저에 저장됨';
-  showToast('✅ GitHub 토큰 저장 (이 브라우저에만)');
-}
-
-function clearGhToken() {
-  localStorage.removeItem('qc_gh_token');
-  document.getElementById('ghTokenStatus').textContent = '삭제됨';
-  showToast('🗑 GitHub 토큰 삭제');
-}
-
-// UTF-8 안전 base64 인코딩/디코딩 (GAS의 Utilities.base64Encode(...,Charset.UTF_8)와 동일 결과)
-function utf8ToBase64(str) { return btoa(unescape(encodeURIComponent(str))); }
-function base64ToUtf8(b64) { return decodeURIComponent(escape(atob(b64.replace(/\n/g, '')))); }
-
-// GAS(UrlFetchApp)를 전혀 거치지 않고, 브라우저에서 GitHub Contents API로
-// qc_data.json의 한 섹션만 직접 갱신한다. GitHub API 자체의 요청 한도(시간당 5000회, 인증 시)를
-// 쓰므로 GAS의 하루치 UrlFetch 할당량과는 완전히 무관하다.
-async function pushSectionDirectToGithub(sectionKey, records, statusEl, note = '') {
-  const token = getGhToken();
-  if (!token) { showToast('⚠ 먼저 GitHub 토큰을 저장하세요'); return; }
-
-  const apiUrl = 'https://api.github.com/repos/ggumbi-cs/dashboard/contents/qc/qc_data.json';
-  statusEl.textContent = 'GitHub 조회 중...';
-  try {
-    const getRes  = await fetch(apiUrl, { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github+json' } });
-    const getText = await getRes.text();
-    let getJson;
-    try { getJson = JSON.parse(getText); }
-    catch (e) { throw new Error(`GitHub 응답이 JSON이 아님 (HTTP ${getRes.status}): ${getText.slice(0,150)}`); }
-    if (!getRes.ok || !getJson.sha) {
-      throw new Error(`조회 실패 (HTTP ${getRes.status} ${getRes.statusText}): ${getJson.message || getText.slice(0,150)}`);
-    }
-
-    // qc_data.json은 1MB가 넘어서(Contents API는 1MB 초과 파일은 GET 응답에 content를 안 실어줌),
-    // sha로 Git Blob API에서 직접 content를 받아온다. 1MB 이하일 땐 getJson.content가 이미 있으므로 생략.
-    let base64Content = getJson.content;
-    if (!base64Content) {
-      const blobUrl = `https://api.github.com/repos/ggumbi-cs/dashboard/git/blobs/${getJson.sha}`;
-      const blobRes  = await fetch(blobUrl, { headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github+json' } });
-      const blobText = await blobRes.text();
-      let blobJson;
-      try { blobJson = JSON.parse(blobText); }
-      catch (e) { throw new Error(`blob 응답이 JSON이 아님 (HTTP ${blobRes.status}): ${blobText.slice(0,150)}`); }
-      if (!blobRes.ok || !blobJson.content) {
-        throw new Error(`blob 조회 실패 (HTTP ${blobRes.status} ${blobRes.statusText}): ${blobJson.message || blobText.slice(0,150)}`);
-      }
-      base64Content = blobJson.content;
-    }
-
-    const payload = JSON.parse(base64ToUtf8(base64Content));
-    const now = new Date().toISOString();
-    payload[sectionKey] = { records, lastSynced: now, source: '수동(브라우저직접)' };
-    payload.lastSynced = now;
-
-    statusEl.textContent = 'GitHub 업로드 중...';
-    const putRes = await fetch(apiUrl, {
-      method:  'PUT',
-      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message: `manual-direct-sync: ${sectionKey} ${records.length}건 (${new Date().toLocaleString('ko-KR')})`,
-        content: utf8ToBase64(JSON.stringify(payload, null, 2)),
-        sha:     getJson.sha
-      })
-    });
-    const putText = await putRes.text();
-    let putJson;
-    try { putJson = JSON.parse(putText); }
-    catch (e) { throw new Error(`GitHub 응답이 JSON이 아님 (HTTP ${putRes.status}): ${putText.slice(0,150)}`); }
-    if (!putRes.ok || !putJson.content) {
-      throw new Error(`업로드 실패 (HTTP ${putRes.status} ${putRes.statusText}): ${putJson.message || putText.slice(0,150)}`);
-    }
-
-    statusEl.textContent = `✅ ${records.length}건 직접쓰기 완료${note} · ${new Date(now).toLocaleString('ko-KR')}`;
-    showToast(`✅ ${sectionKey} GitHub 직접쓰기 완료 (${records.length}건)${note}`);
-    _csvSyncTimes[sectionKey] = now;
-    _csvActionedSections.add(sectionKey);
-    renderCsvCoveragePanel();
-  } catch (e) {
-    statusEl.textContent = `⚠ 오류: ${e.message}`;
-    showToast('⚠ GitHub 직접쓰기 실패');
-  }
-}
-
-let _csvRowSeq = 0;
-
-async function handleCsvZipFiles(fileList) {
-  const listEl = document.getElementById('csvFileList');
-  for (const file of fileList) {
-    if (!/\.zip$/i.test(file.name)) continue;
-    const outerRowId = 'outer_' + (_csvRowSeq++);
-    const outerRow = document.createElement('div');
-    outerRow.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;';
-    outerRow.innerHTML = `<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">📦 ${file.name}</div><div id="csvInner_${outerRowId}" style="display:flex;flex-direction:column;gap:8px;"></div>`;
-    listEl.appendChild(outerRow);
-
-    let csvFiles;
-    try {
-      csvFiles = await extractCsvFilesFromZip(file);
-    } catch (e) {
-      document.getElementById(`csvInner_${outerRowId}`).innerHTML = `<div style="color:var(--danger,#ff5c5c);font-size:12px;">⚠ 압축 해제 실패: ${e.message}</div>`;
-      continue;
-    }
-    if (!csvFiles.length) {
-      document.getElementById(`csvInner_${outerRowId}`).innerHTML = `<div style="font-size:12px;color:var(--text3);">CSV를 찾지 못했습니다.</div>`;
-      continue;
-    }
-
-    const innerWrap = document.getElementById(`csvInner_${outerRowId}`);
-    csvFiles.forEach(cf => {
-      const rowId = 'row_' + (_csvRowSeq++);
-      const koreanLabel = extractKoreanLabel(cf.name);
-      const guessKey = guessCsvSectionByHeaders(getCsvHeaders(cf.text)) || guessCsvSection(koreanLabel);
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;';
-      row.innerHTML = `
-        <div style="flex:1;min-width:180px;">
-          <div style="font-size:12px;font-weight:600;color:var(--text);">${koreanLabel}</div>
-          <div style="font-size:10px;color:var(--text3);font-family:monospace;">${cf.name}</div>
-        </div>
-        ${csvSectionSelectHtml(rowId, guessKey)}
-        <button id="csvBtn_${rowId}" style="padding:6px 14px;background:var(--green);color:#000;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">동기화</button>
-        <button id="csvDlBtn_${rowId}" style="padding:6px 14px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">⬇ 파일로 다운로드</button>
-        <button id="csvGhBtn_${rowId}" class="admin-only-inline" style="padding:6px 14px;background:var(--gold);color:#000;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">🔗 직접쓰기</button>
-        <div id="csvStatus_${rowId}" style="font-size:11px;color:var(--text3);min-width:160px;">${renderCsvSyncTime(guessKey)}</div>
-      `;
-      innerWrap.appendChild(row);
-      _csvRowSections[rowId] = guessKey;
-      renderCsvCoveragePanel();
-
-      const sel = row.querySelector(`#csvSel_${rowId}`);
-      const statusEl = row.querySelector(`#csvStatus_${rowId}`);
-      sel.addEventListener('change', () => {
-        statusEl.textContent = renderCsvSyncTime(sel.value);
-        _csvRowSections[rowId] = sel.value;
-        renderCsvCoveragePanel();
-      });
-
-      row.querySelector(`#csvDlBtn_${rowId}`).addEventListener('click', () => {
-        const sectionKey = sel.value;
-        const norm = getSectionRecords(sectionKey, cf.text);
-        const records = norm.records;
-        const note = norm.hasSchema ? ` (원본 ${norm.raw}건 → 정제 ${norm.kept}건)` : '';
-        downloadManualSyncJson(sectionKey, records);
-        statusEl.textContent = `⬇ ${sectionKey}.json 다운로드됨${note} · qc/수동동기화/ 폴더에 넣고 깃허브에 올려주세요`;
-        showToast(`⬇ ${sectionKey}.json 다운로드 완료${note}`);
-        _csvActionedSections.add(sectionKey);
-        renderCsvCoveragePanel();
-      });
-
-      row.querySelector(`#csvGhBtn_${rowId}`).addEventListener('click', async () => {
-        if (!_isAdmin) { showToast('⚠ 관리자만 사용 가능합니다'); return; }
-        const sectionKey = sel.value;
-        const norm = getSectionRecords(sectionKey, cf.text);
-        const note = norm.hasSchema ? ` (원본 ${norm.raw}건 → 정제 ${norm.kept}건)` : '';
-        await pushSectionDirectToGithub(sectionKey, norm.records, statusEl, note);
-      });
-
-      row.querySelector(`#csvBtn_${rowId}`).addEventListener('click', async () => {
-        if (!_scriptUrl) { showToast('⚠ GAS URL 없음'); return; }
-        const btn = row.querySelector(`#csvBtn_${rowId}`);
-        const sectionKey = sel.value;
-        btn.disabled = true; btn.textContent = '⏳ 진행중';
-        statusEl.textContent = '동기화 중...';
-        try {
-          const norm = getSectionRecords(sectionKey, cf.text);
-          const records = norm.records;
-          const note = norm.hasSchema ? ` (원본 ${norm.raw}건 → 정제 ${norm.kept}건)` : '';
-          // POST 사용 이유: 레코드가 많은 CSV는 GET 쿼리스트링에 실으면
-          // URL 길이 한계를 넘어 "Failed to fetch"가 발생할 수 있음.
-          // Content-Type을 text/plain으로 둬야 CORS preflight(OPTIONS)를
-          // 피할 수 있음 (GAS 웹앱은 OPTIONS를 처리하지 못함).
-          const res = await fetch(_scriptUrl, {
-            method:  'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body:    JSON.stringify({ action:'csvManualSync', sectionKey, records }),
-            redirect:'follow'
-          });
-          const data = await res.json();
-          if (data.ok) {
-            _csvSyncTimes[sectionKey] = data.time;
-            statusEl.textContent = `✅ ${data.count}건 동기화${note} · ${new Date(data.time).toLocaleString('ko-KR')}`;
-            showToast(`✅ ${sectionKey} 동기화 완료 (${data.count}건)${note}`);
-            _csvActionedSections.add(sectionKey);
-            renderCsvCoveragePanel();
-          } else {
-            statusEl.textContent = `⚠ 실패: ${data.msg || '오류'}`;
-            showToast('⚠ CSV 동기화 실패');
-          }
-        } catch (e) {
-          statusEl.textContent = `⚠ 오류: ${e.message}`;
-          showToast('⚠ CSV 동기화 오류');
-        }
-        btn.disabled = false; btn.textContent = '동기화';
-      });
-    });
-  }
-}
-
-function initCsvDropZone() {
-  const zone = document.getElementById('csvDropZone');
-  const input = document.getElementById('csvFileInput');
-  if (!zone || !input) return;
-
-  zone.addEventListener('click', () => input.click());
-  input.addEventListener('change', (e) => { handleCsvZipFiles(e.target.files); input.value = ''; });
-
-  zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.style.borderColor = 'var(--cyan)'; });
-  zone.addEventListener('dragleave', () => { zone.style.borderColor = 'var(--border)'; });
-  zone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    zone.style.borderColor = 'var(--border)';
-    handleCsvZipFiles(e.dataTransfer.files);
-  });
-
-  if (_scriptUrl) {
-    fetch(`${_scriptUrl}?action=getCsvSyncTimes`, { redirect:'follow' })
-      .then(r => r.json())
-      .then(d => { if (d.ok) _csvSyncTimes = d.times || {}; })
-      .catch(() => {});
-  }
-
-  renderCsvCoveragePanel();
-
-  const ghStatusEl = document.getElementById('ghTokenStatus');
-  if (ghStatusEl) ghStatusEl.textContent = getGhToken() ? '✅ 이 브라우저에 저장됨' : '아직 저장된 토큰 없음';
-}
-document.addEventListener('DOMContentLoaded', initCsvDropZone);
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </body>
 </html>

@@ -283,12 +283,14 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // ─────────────────────────────────────────────
 // 설정
 // ─────────────────────────────────────────────
-const QC_GAS_URL = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
-const DATA_PATH  = '../qc_data.json';
+const SUPABASE_URL      = 'https://myentgydxvnviubjxqin.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_agE17x89UHxC-UPIZY5fdg_QlN3biTu';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const RANK_COLORS = ['#4a9eff','#00e5a0','#f0c060','#ff5a6e','#a080ff','#4a9eff','#00e5a0','#f0c060','#ff5a6e','#a080ff'];
 
@@ -384,40 +386,28 @@ function movePeriod(dir) {
 }
 
 // ─────────────────────────────────────────────
-// 수동동기화 오버레이: qc/수동동기화/{key}.json 이 자동동기화보다 최신이면 그걸 사용
-// (처리현황 섹션은 CSV 수동동기화 대상이 아니라 가전외AS만 대상)
-// ─────────────────────────────────────────────
-async function withManualOverride(relPath, sectionKey, autoSection) {
-  try {
-    const res = await fetch(`${relPath}${encodeURIComponent(sectionKey)}.json?t=${Date.now()}`);
-    if (res.ok) {
-      const manual = await res.json();
-      if (manual && Array.isArray(manual.records)) {
-        const mTime = manual.lastSynced ? new Date(manual.lastSynced).getTime() : 0;
-        const aTime = (autoSection && autoSection.lastSynced) ? new Date(autoSection.lastSynced).getTime() : 0;
-        if (mTime > aTime) return manual.records;
-      }
-    }
-  } catch (e) {}
-  return (autoSection && autoSection.records) || [];
-}
-
-// ─────────────────────────────────────────────
-// 데이터 로드
+// 데이터 로드 (Supabase qc_가전 · qc_가전외as 테이블 직접 조회)
 // ─────────────────────────────────────────────
 async function loadData() {
   showLoading();
   try {
-    const res  = await fetch(DATA_PATH + '?t=' + Date.now());
-    const data = await res.json();
+    const [gajeonRes, matRes] = await Promise.all([
+      sb.from('qc_가전').select('*'),
+      sb.from('qc_가전외as').select('*'),
+    ]);
+    if (gajeonRes.error) throw gajeonRes.error;
 
-    _cheori = (data.처리현황 && data.처리현황.records) || [];
-    _mat    = await withManualOverride('../수동동기화/', '가전외AS', data.가전외AS);
+    // 처리현황은 처리일이 있는 건만 (기존 GAS cheoriPageToRecord와 동일 필터)
+    _cheori = (gajeonRes.data || []).filter(r => r.처리일);
+    _mat    = matRes.data || [];
 
     if (!_cheori.length) { showEmpty(); return; }
 
-    document.getElementById('syncInfo').textContent =
-      data.lastSynced ? `최근 동기화: ${new Date(data.lastSynced).toLocaleString('ko-KR')}` : '-';
+    try {
+      const { data: cursor } = await sb.from('qc_sync_cursor').select('last_synced_at').eq('section','가전').maybeSingle();
+      document.getElementById('syncInfo').textContent =
+        cursor?.last_synced_at ? `최근 동기화: ${new Date(cursor.last_synced_at).toLocaleString('ko-KR')}` : '-';
+    } catch(e) {}
 
     document.getElementById('loadingState').style.display = 'none';
     document.getElementById('mainContent').style.display  = '';

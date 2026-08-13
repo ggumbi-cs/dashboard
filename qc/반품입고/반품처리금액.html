@@ -223,8 +223,11 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-const QC_GAS_URL = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
+const SUPABASE_URL      = 'https://myentgydxvnviubjxqin.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_agE17x89UHxC-UPIZY5fdg_QlN3biTu';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let _all        = [];
 let _records    = [];
@@ -286,22 +289,7 @@ function applyFilter() {
   }
 }
 
-// ── 데이터 로드 (정적 JSON 우선, GAS 폴백) ──
-// 수동동기화 오버레이: qc/수동동기화/{key}.json 이 자동동기화보다 최신이면 그걸 사용
-async function withManualOverride(relPath, sectionKey, autoSection) {
-  try {
-    const res = await fetch(`${relPath}${encodeURIComponent(sectionKey)}.json?t=${Date.now()}`);
-    if (res.ok) {
-      const manual = await res.json();
-      if (manual && Array.isArray(manual.records)) {
-        const mTime = manual.lastSynced ? new Date(manual.lastSynced).getTime() : 0;
-        const aTime = (autoSection && autoSection.lastSynced) ? new Date(autoSection.lastSynced).getTime() : 0;
-        if (mTime > aTime) return manual.records;
-      }
-    }
-  } catch (e) {}
-  return (autoSection && autoSection.records) || [];
-}
+// ── 데이터 로드 (Supabase qc_반품처리 테이블 직접 조회) ──
 
 async function loadData() {
   document.getElementById('loadState').style.display='';
@@ -309,29 +297,17 @@ async function loadData() {
   const btn=document.getElementById('refreshBtn');
   btn.classList.add('spin');
   try {
-    // ① 정적 JSON + 수동동기화 오버레이
-    const res=await fetch('../qc_data.json?t=' + Date.now());
-    if (res.ok) {
-      const json=await res.json();
-      const 반품처리Records = await withManualOverride('../수동동기화/', '반품처리', json.반품처리);
-      if (반품처리Records.length) {
-        _all=반품처리Records;
-        if (json.lastSynced)
-          document.querySelector('.hd-title').title=`최근 동기화: ${new Date(json.lastSynced).toLocaleString('ko-KR')}`;
-        applyFilter(); renderAll();
-        btn.classList.remove('spin');
-        return;
-      }
-    }
-  } catch(e) {}
-  try {
-    // ② GAS 실시간 폴백
-    const res=await fetch(`${QC_GAS_URL}?action=getReturnCostData`,{redirect:'follow'});
-    const data=await res.json();
-    if (data.ok&&data.records) { _all=data.records; applyFilter(); renderAll(); }
+    const { data, error } = await sb.from('qc_반품처리').select('*');
+    if (error) throw error;
+    _all = data || [];
+    try {
+      const { data: cursor } = await sb.from('qc_sync_cursor').select('last_synced_at').eq('section','반품처리').maybeSingle();
+      if (cursor?.last_synced_at) document.querySelector('.hd-title').title = `최근 동기화: ${new Date(cursor.last_synced_at).toLocaleString('ko-KR')}`;
+    } catch(e) {}
+    applyFilter(); renderAll();
   } catch(e) {
     document.getElementById('loadState').innerHTML=
-      '<div style="font-size:36px;margin-bottom:12px;">⚠️</div><div style="color:var(--text3);font-size:12px;">데이터 로드 실패. 동기화를 먼저 실행해 주세요.</div>';
+      '<div style="font-size:36px;margin-bottom:12px;">⚠️</div><div style="color:var(--text3);font-size:12px;">데이터 로드 실패. 잠시 후 다시 시도해 주세요.</div>';
   }
   btn.classList.remove('spin');
 }

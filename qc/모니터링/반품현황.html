@@ -276,12 +276,14 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // ─────────────────────────────────────────────
 // 설정
 // ─────────────────────────────────────────────
-const QC_GAS_URL = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
-const DATA_PATH  = '../qc_data.json';
+const SUPABASE_URL      = 'https://myentgydxvnviubjxqin.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_agE17x89UHxC-UPIZY5fdg_QlN3biTu';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const RANK_COLORS = ['#4a9eff','#00e5a0','#f0c060','#ff5a6e','#a080ff','#4a9eff','#00e5a0','#f0c060'];
 const TYPE_COLORS = { '일반반품':'#4a9eff','변심반품':'#a080ff','불량반품':'#ff5a6e','불량교환':'#ff9040','AS':'#00e5a0','검수':'#6a8faa' };
@@ -400,42 +402,31 @@ function movePeriod(dir) {
 }
 
 // ─────────────────────────────────────────────
-// 수동동기화 오버레이: qc/수동동기화/{key}.json 이 자동동기화보다 최신이면 그걸 사용
-// (UrlFetch 할당량 초과 등으로 자동동기화가 막혔을 때 대비한 파일 기반 수동동기화)
-// ─────────────────────────────────────────────
-async function withManualOverride(relPath, sectionKey, autoSection) {
-  try {
-    const res = await fetch(`${relPath}${encodeURIComponent(sectionKey)}.json?t=${Date.now()}`);
-    if (res.ok) {
-      const manual = await res.json();
-      if (manual && Array.isArray(manual.records)) {
-        const mTime = manual.lastSynced ? new Date(manual.lastSynced).getTime() : 0;
-        const aTime = (autoSection && autoSection.lastSynced) ? new Date(autoSection.lastSynced).getTime() : 0;
-        if (mTime > aTime) return manual.records;
-      }
-    }
-  } catch (e) {}
-  return (autoSection && autoSection.records) || [];
-}
-
-// ─────────────────────────────────────────────
-// 데이터 로드
+// 데이터 로드 (Supabase 4개 테이블 직접 조회)
 // ─────────────────────────────────────────────
 async function loadData() {
   showLoading();
   try {
-    const res  = await fetch(DATA_PATH + '?t=' + Date.now());
-    const data = await res.json();
+    const [magamRes, rateRes, inspectRes, restoreRes] = await Promise.all([
+      sb.from('qc_반품마감').select('*'),
+      sb.from('qc_반품율').select('*'),
+      sb.from('qc_반품검사').select('*'),
+      sb.from('qc_반품처리').select('*'),
+    ]);
+    if (magamRes.error) throw magamRes.error;
 
-    _magam   = await withManualOverride('../수동동기화/', '반품마감', data.반품마감);
-    _rate    = await withManualOverride('../수동동기화/', '반품율', data.반품율);
-    _inspect = await withManualOverride('../수동동기화/', '반품검사', data.반품검사);
-    _restore = await withManualOverride('../수동동기화/', '반품처리', data.반품처리);
+    _magam   = magamRes.data   || [];
+    _rate    = rateRes.data    || [];
+    _inspect = inspectRes.data || [];
+    _restore = restoreRes.data || [];
 
     if (!_magam.length) { showEmpty(); return; }
 
-    document.getElementById('syncInfo').textContent =
-      data.lastSynced ? `최근 동기화: ${new Date(data.lastSynced).toLocaleString('ko-KR')}` : '-';
+    try {
+      const { data: cursor } = await sb.from('qc_sync_cursor').select('last_synced_at').eq('section','반품마감').maybeSingle();
+      document.getElementById('syncInfo').textContent =
+        cursor?.last_synced_at ? `최근 동기화: ${new Date(cursor.last_synced_at).toLocaleString('ko-KR')}` : '-';
+    } catch(e) {}
 
     document.getElementById('loadingState').style.display = 'none';
     document.getElementById('mainContent').style.display  = '';

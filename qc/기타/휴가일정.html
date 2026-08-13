@@ -206,10 +206,11 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-// ── GAS 연동 ──
-const SCRIPT_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
-let SCRIPT_URL = SCRIPT_URL_DEFAULT;
+const SUPABASE_URL      = 'https://myentgydxvnviubjxqin.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_agE17x89UHxC-UPIZY5fdg_QlN3biTu';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let userRole = null;
 
 // 인덱스 iframe 테마/설정 신호 수신 (직접 최상위로 로드된 경우 대비)
@@ -222,7 +223,6 @@ window.addEventListener('message', function(e){
     sessionStorage.setItem('_theme', mode === 'light' ? 'light' : 'dark');
   }
   if(e.data.type === 'SCRIPT_URL'){
-    if(e.data.url) SCRIPT_URL = e.data.url;
     if(e.data.userRole) userRole = e.data.userRole;
   }
 });
@@ -267,28 +267,15 @@ function fmtDate(s){
   return s.slice(0,10).replace(/-/g,'.');
 }
 
-// 수동동기화 오버레이: qc/수동동기화/{key}.json 이 자동동기화보다 최신이면 그걸 사용
-async function withManualOverride(relPath, sectionKey, autoSection) {
-  try {
-    const res = await fetch(`${relPath}${encodeURIComponent(sectionKey)}.json?t=${Date.now()}`);
-    if (res.ok) {
-      const manual = await res.json();
-      if (manual && Array.isArray(manual.records)) {
-        const mTime = manual.lastSynced ? new Date(manual.lastSynced).getTime() : 0;
-        const aTime = (autoSection && autoSection.lastSynced) ? new Date(autoSection.lastSynced).getTime() : 0;
-        if (mTime > aTime) return manual.records;
-      }
-    }
-  } catch (e) {}
-  return (autoSection && autoSection.records) || [];
-}
-
 async function loadData(bust){
-  const url = '../qc_data.json' + (bust ? ('?t=' + Date.now()) : '');
   try {
-    const data = await fetch(url).then(r=>r.json());
-    RAW = await withManualOverride('../수동동기화/', '휴가일정', data.휴가일정);
-    if(data.lastSynced) document.getElementById('lastSync').textContent = '최근 동기화: ' + fmtDateTime(data.lastSynced);
+    const { data, error } = await sb.from('qc_휴가일정').select('*');
+    if (error) throw error;
+    RAW = data || [];
+    try {
+      const { data: cursor } = await sb.from('qc_sync_cursor').select('last_synced_at').eq('section','휴가일정').maybeSingle();
+      if (cursor?.last_synced_at) document.getElementById('lastSync').textContent = '최근 동기화: ' + fmtDateTime(cursor.last_synced_at);
+    } catch(e) {}
     buildFilters();
     render();
   } catch(err){

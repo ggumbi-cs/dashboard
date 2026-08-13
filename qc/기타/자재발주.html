@@ -91,8 +91,12 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
 <div id="loadState"><div class="ld-dots"><span></span><span></span><span></span></div><div style="font-size:12px;color:var(--text3);">데이터 불러오는 중...</div></div>
 <div id="emptyState" style="display:none;"><div style="font-size:36px;margin-bottom:12px;">📭</div><div style="font-size:13px;color:var(--text);">항목이 없어요</div></div>
 <div id="cardList" style="display:none;"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-const GAS = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
+const SUPABASE_URL      = 'https://myentgydxvnviubjxqin.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_agE17x89UHxC-UPIZY5fdg_QlN3biTu';
+const NOTION_WRITE_URL  = `${SUPABASE_URL}/functions/v1/notion-write`;
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const STATUS_OPTS = ['사전체크','기안진행','결재대기','입고대기','미입고','중단'];
 const STATUS_COLOR = {미입고:'var(--gold)',입고대기:'var(--green)',기안진행:'var(--text3)',결재대기:'var(--purple)',사전체크:'var(--red)',중단:'var(--red)'};
 let _all=[],_curStatus='all',_query='';
@@ -112,10 +116,10 @@ async function loadData(){
   showLoading();
   document.getElementById('refreshBtn').classList.add('spin');
   try{
-    const res=await fetch(`${GAS}?action=getZaejaeData`,{redirect:'follow'});
-    const d=await res.json();
-    if(d.ok&&d.records){_all=d.records; updateCounts(); render();}
-    else showEmpty();
+    const { data, error } = await sb.from('qc_자재발주').select('*');
+    if (error) throw error;
+    _all = (data || []).map(r => ({ ...r, id: r.notion_page_id, url: r.notion_url }));
+    updateCounts(); render();
   }catch(e){showEmpty();}
   document.getElementById('refreshBtn').classList.remove('spin');
 }
@@ -178,7 +182,9 @@ function openNotion(url,id){if(!url&&id)url=`https://notion.so/${id.replace(/-/g
 async function updateStatus(pageId,sel){
   sel.disabled=true;
   const rec=_all.find(r=>r.id===pageId); if(rec)rec.진행상태=sel.value;
-  try{const p=encodeURIComponent(JSON.stringify({pageId,property:'진행상태',value:sel.value})); await fetch(`${GAS}?action=updateZaejaeItem&data=${p}`,{redirect:'follow'});}catch(e){}
+  try{
+    await fetch(NOTION_WRITE_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'updateZaejaeItem',pageId,property:'진행상태',value:sel.value})});
+  }catch(e){}
   sel.disabled=false; updateCounts(); render();
 }
 function showLoading(){document.getElementById('loadState').style.display='';document.getElementById('emptyState').style.display='none';document.getElementById('cardList').style.display='none';}

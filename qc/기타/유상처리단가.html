@@ -156,8 +156,12 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-const GAS = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
+const SUPABASE_URL      = 'https://myentgydxvnviubjxqin.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_agE17x89UHxC-UPIZY5fdg_QlN3biTu';
+const NOTION_WRITE_URL  = `${SUPABASE_URL}/functions/v1/notion-write`;
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const PROD_OPTS=['젖병살균세척기','분유쉐이커','젖병세척기 스팀플러스','출수형 분유포트','버블리스 분유포트','센서 휴지통','휴대용 분유포트','웜라이너','장난감 살균기','전동 젖병세척솔','UV LED살균기','퀵폴딩샤워가드','(분리형) 휴대용 분유포트'];
 const DEFAULT_OPEN = '젖병살균세척기'; // 기본 펼침 제품
 
@@ -175,16 +179,14 @@ async function loadData(){
   document.getElementById('mainWrap').style.display='none';
   document.getElementById('refreshBtn').classList.add('spin');
   try{
-    const res=await fetch(`${GAS}?action=getDangaData`,{redirect:'follow'});
-    const d=await res.json();
-    if(d.ok&&d.records){
-      _all=d.records;
-      _allProds=[...new Set(_all.map(r=>r.제품명).filter(Boolean))].sort();
-      _checkedProds=new Set(_allProds);
-      buildFilterList();
-      updateBadge();
-      render();
-    }else{document.getElementById('loadState').style.display='none';document.getElementById('emptyState').style.display='';}
+    const { data, error } = await sb.from('qc_유상단가').select('*');
+    if (error) throw error;
+    _all=(data||[]).map(r=>({...r, id:r.notion_page_id, url:r.notion_url}));
+    _allProds=[...new Set(_all.map(r=>r.제품명).filter(Boolean))].sort();
+    _checkedProds=new Set(_allProds);
+    buildFilterList();
+    updateBadge();
+    render();
   }catch(e){document.getElementById('loadState').style.display='none';document.getElementById('emptyState').style.display='';}
   document.getElementById('refreshBtn').classList.remove('spin');
 }
@@ -316,8 +318,7 @@ async function saveNew(){
   btn.disabled=true; btn.textContent='등록 중...';
   const data={접수증상,제품명:document.getElementById('nw제품명').value,예상부품:document.getElementById('nw예상부품').value.trim(),공임:parseInt(document.getElementById('nw공임').value)||0,소비자단가:parseInt(document.getElementById('nw소비자단가').value)||0,예상작업:document.getElementById('nw예상작업').value.trim(),비고:document.getElementById('nw비고').value.trim()};
   try{
-    const p=encodeURIComponent(JSON.stringify(data));
-    const res=await fetch(`${GAS}?action=createDangaItem&data=${p}`,{redirect:'follow'});
+    const res=await fetch(NOTION_WRITE_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'createDangaItem',...data})});
     const d=await res.json();
     if(d.ok){closeNew(); await loadData();}
     else alert('등록 실패: '+(d.msg||'오류'));

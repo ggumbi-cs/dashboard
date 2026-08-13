@@ -210,11 +210,16 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // ─────────────────────────────────────────────
 // 설정
 // ─────────────────────────────────────────────
-const QC_GAS_URL = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
+const SUPABASE_URL      = 'https://myentgydxvnviubjxqin.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_agE17x89UHxC-UPIZY5fdg_QlN3biTu';
+const NOTION_WRITE_URL  = `${SUPABASE_URL}/functions/v1/notion-write`;
+const SETTINGS_API_URL  = `${SUPABASE_URL}/functions/v1/settings-api`;
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const STEP_MAP = {
   1:'1.런칭전검사', 2:'2.분석(검사)', 3:'3.개선진행',
@@ -265,12 +270,12 @@ async function loadData() {
   btn.classList.add('spin');
   try {
     const [dataRes, prioRes] = await Promise.all([
-      fetch(`${QC_GAS_URL}?action=getActionItems`, {redirect:'follow'}),
-      fetch(`${QC_GAS_URL}?action=getProductPriority`, {redirect:'follow'})
+      sb.from('qc_액션현황').select('*'),
+      fetch(SETTINGS_API_URL, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'getProductPriority'})})
     ]);
-    const data = await dataRes.json();
+    if (dataRes.error) throw dataRes.error;
+    _records = (dataRes.data || []).map(r => ({ ...r, id: r.notion_page_id, url: r.notion_url }));
     const prio = await prioRes.json();
-    if (data.ok) _records = data.records || [];
     if (prio.ok) _productPrio = prio.priority || [];
   } catch(e) { _records = []; }
   btn.classList.remove('spin');
@@ -446,8 +451,7 @@ async function updateStep(pageId, selEl) {
   const rec = _records.find(r=>r.id===pageId);
   if (rec) rec.step = selEl.value;
   try {
-    const payload = encodeURIComponent(JSON.stringify({pageId, property:'Step.', value:selEl.value}));
-    await fetch(`${QC_GAS_URL}?action=updateActionItem&data=${payload}`,{redirect:'follow'});
+    await fetch(NOTION_WRITE_URL, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'updateActionItem',pageId,property:'Step.',value:selEl.value,type:'select'})});
   } catch(e){}
   selEl.disabled = false;
   updateCounts();
@@ -461,8 +465,7 @@ async function updateStage(pageId, selEl) {
   const rec = _records.find(r=>r.id===pageId);
   if (rec) rec.진행단계 = selEl.value;
   try {
-    const payload = encodeURIComponent(JSON.stringify({pageId, property:'진행단계', value:selEl.value}));
-    await fetch(`${QC_GAS_URL}?action=updateActionItem&data=${payload}`,{redirect:'follow'});
+    await fetch(NOTION_WRITE_URL, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'updateActionItem',pageId,property:'진행단계',value:selEl.value,type:'select'})});
   } catch(e){}
   selEl.disabled = false;
 }
@@ -515,8 +518,7 @@ async function savePrio() {
   closePrioModal();
   if(_sortMode==='prio') render();
   try {
-    const payload = encodeURIComponent(JSON.stringify({priority:_productPrio}));
-    await fetch(`${QC_GAS_URL}?action=saveProductPriority&data=${payload}`,{redirect:'follow'});
+    await fetch(SETTINGS_API_URL, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'saveProductPriority',priority:_productPrio})});
   } catch(e){}
 }
 

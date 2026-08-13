@@ -297,10 +297,12 @@ html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);fon
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-const GAS = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
-const DATA_PATH  = '../qc_data.json';
-const USERS_PATH = '../users.json';
+const SUPABASE_URL      = 'https://myentgydxvnviubjxqin.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_agE17x89UHxC-UPIZY5fdg_QlN3biTu';
+const NOTION_WRITE_URL  = `${SUPABASE_URL}/functions/v1/notion-write`;
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const STATUS_OPTS=['출력요청','출고완료(취합대기)','출고완료(취합완료)','미출고(실물X)','출고보류(예약)'];
 const PAGE_SIZE = 50;
 let _static=[], _realtime=[], _curStatus='출력요청', _query='';
@@ -310,17 +312,8 @@ window.addEventListener('message',e=>{if(e.data&&e.data.type==='THEME')document.
 const _urlTheme=new URLSearchParams(location.search).get('theme');
 if((_urlTheme||sessionStorage.getItem('_theme')||'light')==='light')document.body.classList.add('light');
 
-// ── 모델명 목록 로드 (신규등록 콤보박스 자동완성) ──
-async function loadModels() {
-  try {
-    const res = await fetch(`${GAS}?action=getTaekbaeModels`, {redirect:'follow'});
-    const d = await res.json();
-    if (d.ok && d.models) {
-      _models = d.models;
-      document.getElementById('modelDatalist').innerHTML = _models.map(m=>`<option value="${m.replace(/"/g,'&quot;')}">`).join('');
-    }
-  } catch(e) {}
-}
+// ── 모델명 목록은 이제 loadData()에서 실제 데이터 기준으로 채움 ──
+function loadModels() {} // 하위호환용 빈 함수 (init에서 여전히 호출됨)
 
 // ── 모델명+출고품 조합 미리보기 (수식(내용조합) = 모델명 + "_" + 출고품, 실제 값은 Notion 저장 후 자동 계산됨) ──
 function updateComboPreview() {
@@ -332,8 +325,9 @@ function updateComboPreview() {
 // ── 직원 목록 로드 ──
 async function loadUsers() {
   try {
-    const res = await fetch(USERS_PATH);
-    if (res.ok) { const j = await res.json(); _users = j.users || []; }
+    const { data, error } = await sb.from('qc_users').select('*');
+    if (error) throw error;
+    _users = (data || []).map(u => ({ id: u.notion_user_id, name: u.name }));
   } catch(e) {}
 }
 
@@ -370,45 +364,23 @@ function acKeyDown(e) {
 }
 document.addEventListener('click',e=>{ const w=document.getElementById('acWrap'); if(w&&!w.contains(e.target))document.getElementById('acDrop').classList.remove('open'); });
 
-// 수동동기화 오버레이: qc/수동동기화/{key}.json 이 자동동기화보다 최신이면 그걸 사용
-// (UrlFetch 할당량 초과 등으로 자동동기화가 막혔을 때 대비한 파일 기반 수동동기화)
-async function withManualOverride(relPath, sectionKey, autoSection) {
-  try {
-    const res = await fetch(`${relPath}${encodeURIComponent(sectionKey)}.json?t=${Date.now()}`);
-    if (res.ok) {
-      const manual = await res.json();
-      if (manual && Array.isArray(manual.records)) {
-        const mTime = manual.lastSynced ? new Date(manual.lastSynced).getTime() : 0;
-        const aTime = (autoSection && autoSection.lastSynced) ? new Date(autoSection.lastSynced).getTime() : 0;
-        if (mTime > aTime) return manual.records;
-      }
-    }
-  } catch (e) {}
-  return (autoSection && autoSection.records) || [];
-}
-
 async function loadData(){
   showLoading();
   document.getElementById('refreshBtn').classList.add('spin');
 
-  // ① 정적 JSON (출력요청 외 전체) + 수동동기화 오버레이
   try{
-    const res=await fetch(DATA_PATH + '?t=' + Date.now());
-    if(res.ok){
-      const json=await res.json();
-      const 택배Records = await withManualOverride('../수동동기화/', '택배출고', json.택배출고);
-      // 출력일이 풀 타임스탬프("...T15:00:00.000Z")로 들어오는 경우 대비 — yyyy-MM-dd만 남김
-      택배Records.forEach(r=>{ if(r.출력일) r.출력일 = String(r.출력일).slice(0,10); });
-      _static = 택배Records.filter(r=>r.상태!=='출력요청');
-    }
-  }catch(e){}
+    const { data, error } = await sb.from('qc_택배출고').select('*');
+    if (error) throw error;
+    const all = (data || []).map(r => ({ ...r, id: r.notion_page_id, url: r.notion_url }));
+    // 출력일이 풀 타임스탬프로 들어오는 경우 대비 — yyyy-MM-dd만 남김
+    all.forEach(r=>{ if(r.출력일) r.출력일 = String(r.출력일).slice(0,10); });
+    _realtime = all.filter(r=>r.상태==='출력요청');
+    _static   = all.filter(r=>r.상태!=='출력요청');
 
-  // ② 출력요청만 실시간 GAS
-  try{
-    const res=await fetch(`${GAS}?action=getTaekbaeRealtime`,{redirect:'follow'});
-    const d=await res.json();
-    if(d.ok&&d.records)_realtime=d.records;
-  }catch(e){_realtime=[];}
+    // 모델명 자동완성 목록: 실제 데이터에 등장한 값들 기준
+    _models = [...new Set(all.map(r=>r.모델명).filter(Boolean))].sort();
+    document.getElementById('modelDatalist').innerHTML = _models.map(m=>`<option value="${m.replace(/"/g,'&quot;')}">`).join('');
+  }catch(e){ _realtime=[]; _static=[]; }
 
   updateCounts();
   if(_curStatus==='__dashboard') renderDashboard(); else render();
@@ -551,16 +523,25 @@ function gotoPage(p){_page=p; render();}
 
 function openNotion(url,id){if(!url&&id)url=`https://notion.so/${id.replace(/-/g,'')}`; if(url)window.open(url,'_blank');}
 
+async function notionWriteCall(action, payload) {
+  const res = await fetch(NOTION_WRITE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, ...payload }),
+  });
+  return res.json();
+}
+
 async function updateStatus(pageId,sel){
   sel.disabled=true;
   const rec=[..._realtime,..._static].find(r=>r.id===pageId);
   if(rec)rec.상태=sel.value;
-  try{const p=encodeURIComponent(JSON.stringify({pageId,property:'상태',value:sel.value})); await fetch(`${GAS}?action=updateTaekbaeItem&data=${p}`,{redirect:'follow'});}catch(e){}
+  try{ await notionWriteCall('updateTaekbaeItem', {pageId,property:'상태',value:sel.value,type:'select'}); }catch(e){}
   sel.disabled=false; updateCounts(); render();
 }
 
 async function updateWaybill(pageId,val){
-  try{const p=encodeURIComponent(JSON.stringify({pageId,property:'송장번호',value:val,type:'text'})); await fetch(`${GAS}?action=updateTaekbaeItem&data=${p}`,{redirect:'follow'});}catch(e){}
+  try{ await notionWriteCall('updateTaekbaeItem', {pageId,property:'송장번호',value:val,type:'text'}); }catch(e){}
 }
 
 // 신규등록 · 수정
@@ -623,11 +604,9 @@ async function saveNew(){
   };
 
   try{
-    const p=encodeURIComponent(JSON.stringify(data));
-    const res=await fetch(`${GAS}?action=createTaekbaeItem&data=${p}`,{redirect:'follow'});
-    const d=await res.json();
+    const d = await notionWriteCall('createTaekbaeItem', data);
     if(d.ok){
-      // GAS 재호출 없이 로컬로 즉시 추가 (새로고침 없이 바로 표시). 요청일은 서버가 오늘 날짜로 자동 설정.
+      // 재호출 없이 로컬로 즉시 추가 (새로고침 없이 바로 표시). 요청일은 서버가 오늘 날짜로 자동 설정.
       const 오늘=d.요청일||new Date().toISOString().slice(0,10);
       const newRec={
         id:'tmp-'+Date.now(), url:'',
@@ -695,10 +674,9 @@ async function saveEdit(){
   if (요청자Id) calls.push({ property:'요청자', value:요청자Id, type:'people' });
 
   try {
-    await Promise.all(calls.map(c=>{
-      const p = encodeURIComponent(JSON.stringify({ pageId, property:c.property, value:c.value, type:c.type }));
-      return fetch(`${GAS}?action=updateTaekbaeItem&data=${p}`,{redirect:'follow'});
-    }));
+    await Promise.all(calls.map(c=>
+      notionWriteCall('updateTaekbaeItem', { pageId, property:c.property, value:c.value, type:c.type })
+    ));
 
     // 로컬 레코드 즉시 패치 (재조회 없이 화면 바로 반영)
     Object.assign(rec, {
@@ -721,8 +699,7 @@ async function saveEdit(){
 
 async function updatePrintDate(pageId, val) {
   try {
-    const p = encodeURIComponent(JSON.stringify({pageId, property:'출력일', value:val||null, type:'date'}));
-    await fetch(`${GAS}?action=updateTaekbaeItem&data=${p}`, {redirect:'follow'});
+    await notionWriteCall('updateTaekbaeItem', { pageId, property:'출력일', value: val||null, type:'date' });
   } catch(e) {}
 }
 

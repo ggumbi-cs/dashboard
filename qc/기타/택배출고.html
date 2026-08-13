@@ -397,6 +397,8 @@ async function loadData(){
     if(res.ok){
       const json=await res.json();
       const 택배Records = await withManualOverride('../수동동기화/', '택배출고', json.택배출고);
+      // 출력일이 풀 타임스탬프("...T15:00:00.000Z")로 들어오는 경우 대비 — yyyy-MM-dd만 남김
+      택배Records.forEach(r=>{ if(r.출력일) r.출력일 = String(r.출력일).slice(0,10); });
       _static = 택배Records.filter(r=>r.상태!=='출력요청');
     }
   }catch(e){}

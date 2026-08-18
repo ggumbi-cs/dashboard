@@ -200,9 +200,27 @@
     <span class="global-bar-label">🚀 전체 일괄 마감전송</span>
     <button class="btn-global-send" onclick="sendAllReady('monthly')">이번 달치 전체 전송</button>
     <button class="btn-global-send" onclick="sendAllReady('weekly')">이번 주치(최근 마감주) 전체 전송</button>
-    <div class="global-bar-note">연동 완료된(⏳ 아닌) 항목들만 대상으로 각자 해당 기간을 집계해서 한 번에 전송합니다.</div>
+    <button class="btn-global-send" style="background:var(--accent2);" onclick="startBulkAll()">전체(ALL) 한방에 전송</button>
+    <div class="global-bar-note">연동 완료된(⏳ 아닌) 항목들만 대상으로 각자 해당 기간을 집계해서 한 번에 전송합니다. <strong>전체(ALL)</strong>은 최근 12개월 + 최근 12주 전부를 서버에서 백그라운드로 전송합니다 (페이지를 닫아도 계속 진행됨).</div>
   </div>
   <div id="content"></div>
+</div>
+
+<div class="modal-overlay" id="bulkModalOverlay">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span>🚀 전체(ALL) 백그라운드 전송</span>
+      <button class="modal-close" onclick="closeBulkModal()">✕</button>
+    </div>
+    <div id="bulkProgressText" style="font-size:12px;color:var(--text2);margin-bottom:8px;">준비 중...</div>
+    <div style="background:var(--surface2);border-radius:8px;height:10px;overflow:hidden;margin-bottom:14px;">
+      <div id="bulkProgressBar" style="background:var(--accent);height:100%;width:0%;transition:width .3s;"></div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">
+      이 창을 닫거나 페이지를 나가도 서버에서 계속 진행됩니다. 나중에 다시 열면 이어서 볼 수 있어요.
+    </div>
+    <div class="modal-result panel-log" id="bulkLog" style="display:block;max-height:280px;overflow-y:auto;"></div>
+  </div>
 </div>
 
 <div class="modal-overlay" id="copyModalOverlay">
@@ -232,15 +250,32 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // ================================================================
 // 공통 설정
 // ================================================================
 const GAS_URL = 'https://script.google.com/macros/s/AKfycby5wfJy4LMghTp4ILrdQ_hMLblDtV8gTigOEnpcJQT0dB1Xk-7XUyWbaryP9mrbFLrrCg/exec';
 
-// 품질관리/처리관리 원본 프로젝트들이 공용으로 쓰는 데이터 소스 GAS (읽기 전용, report_hub와는 별개)
-const QC_GAS_URL  = 'https://script.google.com/macros/s/AKfycbx0xkRz1H4eb79Me3R0ESDsvKYoIKoXcQTp2zuIkZPeDKy8_ZYVeXEF71rPK_0u_3M0LQ/exec';
-const QC_DATA_PATH = '../qc/qc_data.json'; // qc/기타/ 폴더 기준 원본의 '../qc_data.json' = qc/qc_data.json (aggregated/ 폴더 기준 보정)
+// 품질관리 데이터 원본은 Supabase로 이전됨 (2026-08). GAS_URL(리포트 허브)은 별개 시스템이라 그대로 유지.
+const SUPABASE_URL      = 'https://myentgydxvnviubjxqin.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_agE17x89UHxC-UPIZY5fdg_QlN3biTu';
+const BULK_SEND_URL     = `${SUPABASE_URL}/functions/v1/report-hub-bulk-send`;
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Supabase는 한 번에 최대 1000건까지만 반환하므로 range()로 나눠서 전부 가져옴
+async function fetchAllRows(table) {
+  const PAGE = 1000;
+  let from = 0, all = [];
+  while (true) {
+    const { data, error } = await sb.from(table).select('*').range(from, from + PAGE - 1);
+    if (error) throw error;
+    all = all.concat(data || []);
+    if (!data || data.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
 
 // ── 공용: 'YYYY-MM-DD' 또는 유사 날짜 문자열 파싱 ──
 function parseYmd(str) {
@@ -280,38 +315,7 @@ function faultsOf(r) {
   return j.length > 0 ? j : valid(cfFaults);
 }
 
-// ── 수동동기화 오버레이: qc/수동동기화/{key}.json 이 자동동기화보다 최신이면 그걸 사용 ──
-// (UrlFetch 할당량 초과 등으로 자동동기화가 막혔을 때 대비한 파일 기반 수동동기화)
-const QC_MANUAL_SYNC_PATH = '../qc/수동동기화/';
-async function withManualOverride(sectionKey, autoSection) {
-  try {
-    const res = await fetch(`${QC_MANUAL_SYNC_PATH}${encodeURIComponent(sectionKey)}.json?t=${Date.now()}`);
-    if (res.ok) {
-      const manual = await res.json();
-      if (manual && Array.isArray(manual.records)) {
-        const mTime = manual.lastSynced ? new Date(manual.lastSynced).getTime() : 0;
-        const aTime = (autoSection && autoSection.lastSynced) ? new Date(autoSection.lastSynced).getTime() : 0;
-        if (mTime > aTime) return manual.records;
-      }
-    }
-  } catch (e) {}
-  return (autoSection && autoSection.records) || [];
-}
-
-// ── 공용: 정적 JSON(키) 우선 → 실패 시 GAS action 폴백 ──
-async function loadQcData(jsonKey, gasAction) {
-  try {
-    const res = await fetch(QC_DATA_PATH + '?t=' + Date.now());
-    if (res.ok) {
-      const json = await res.json();
-      if (json[jsonKey] && json[jsonKey].records) return await withManualOverride(jsonKey, json[jsonKey]);
-    }
-  } catch (e) {}
-  const res2 = await fetch(`${QC_GAS_URL}?action=${gasAction}`, { redirect: 'follow' });
-  const json2 = await res2.json();
-  if (json2.ok && json2.records) return json2.records;
-  throw new Error('데이터 로드 실패 (' + jsonKey + ')');
-}
+// (수동동기화 오버레이·qc_data.json 폴백 로직은 Supabase 이전으로 더 이상 필요 없어져서 제거함)
 
 // ── 스마트스토어 브랜드명 매핑 (원본 로직 이식) ──
 function ssShortName(orig) {
@@ -359,7 +363,8 @@ const MODULES = {
     ready: true,
     project: '불량현황',
     async loadData() {
-      const records = await loadQcData('가전', 'getQcDefectData');
+      const raw = await fetchAllRows('qc_가전');
+      const records = raw.filter(r => r.접수일 && ['자재출고', '교환/환불', '수리출고'].includes(r.구분));
       const rows = records.map(r => ({ ...r, dateObj: parseYmd(r.접수일) }));
       rows._raw = true; // computeSummary가 ctx 기반으로 처리하도록 표시 (전기간 비교가 필요해서)
       return rows;
@@ -434,15 +439,12 @@ const MODULES = {
     // DB1·DB2는 원본 자체의 '마감회차' 주기(월요일 기준 주간)로 이미 집계되어 있어
     // 우리 허브의 금~토 주간 주기와 안 맞음 → 월간 전송에서만 DB1·DB2 포함, 주간 전송은 DB3·DB4만 사용
     async loadData() {
-      let data = {};
-      try {
-        const res = await fetch('../qc/qc_data.json?t=' + Date.now());
-        if (res.ok) data = await res.json();
-      } catch (e) {}
-      const magam      = await withManualOverride('반품마감', data.반품마감);
-      const rate       = await withManualOverride('반품율', data.반품율);
-      const inspectRaw = await withManualOverride('반품검사', data.반품검사);
-      const restoreRaw = await withManualOverride('반품처리', data.반품처리);
+      const [magam, rate, inspectRaw, restoreRaw] = await Promise.all([
+        fetchAllRows('qc_반품마감'),
+        fetchAllRows('qc_반품율'),
+        fetchAllRows('qc_반품검사'),
+        fetchAllRows('qc_반품처리'),
+      ]);
       const inspect = inspectRaw.map(r => ({ ...r, dateObj: parseYmd(r.등록일자), _src: 'inspect' }));
       const restore = restoreRaw.map(r => ({ ...r, dateObj: parseYmd(r.처리일),   _src: 'restore' }));
       // magam/rate는 날짜별 원본 레코드가 아니라 마감회차별 사전집계라 dateObj가 없음 - buildSummary에서 periodType에 따라 별도 매칭
@@ -515,13 +517,11 @@ const MODULES = {
     ready: true,
     project: '처리현황',
     async loadData() {
-      let data = {};
-      try {
-        const res = await fetch('../qc/qc_data.json?t=' + Date.now());
-        if (res.ok) data = await res.json();
-      } catch (e) {}
-      const matRaw = await withManualOverride('가전외AS', data.가전외AS);
-      const cheori = ((data.처리현황 && data.처리현황.records) || []).map(r => ({ ...r, dateObj: parseYmd(r.처리일),   _src: 'cheori' }));
+      const [gajeon, matRaw] = await Promise.all([
+        fetchAllRows('qc_가전'),
+        fetchAllRows('qc_가전외as'),
+      ]);
+      const cheori = gajeon.filter(r => r.처리일).map(r => ({ ...r, dateObj: parseYmd(r.처리일), _src: 'cheori' }));
       const mat    = matRaw.map(r => ({ ...r, dateObj: parseYmd(r.완료일자), _src: 'mat' }));
       return [...cheori, ...mat];
     },
@@ -576,24 +576,7 @@ const MODULES = {
     ready: true,
     project: '택배출고 현황',
     async loadData() {
-      // 원본 파일(qc/기타/택배출고.html) 기준 '../qc_data.json' = qc/qc_data.json
-      // aggregated.html은 aggregated/ 폴더에 있으므로 경로를 '../qc/qc_data.json'로 보정
-      let staticRows = [];
-      try {
-        const res = await fetch('../qc/qc_data.json');
-        if (res.ok) {
-          const json = await res.json();
-          const 택배Records = await withManualOverride('택배출고', json.택배출고);
-          staticRows = 택배Records.filter(r => r.상태 !== '출력요청');
-        }
-      } catch (e) {}
-      let realtimeRows = [];
-      try {
-        const res2 = await fetch(`${QC_GAS_URL}?action=getTaekbaeRealtime`, { redirect: 'follow' });
-        const json2 = await res2.json();
-        if (json2.ok && json2.records) realtimeRows = json2.records;
-      } catch (e) {}
-      const all = [...realtimeRows, ...staticRows];
+      const all = await fetchAllRows('qc_택배출고');
       // '현황보기' 탭 원본 로직: 출력일이 기록된 건만 대상, 기간 필터도 출력일 기준
       return all.filter(r => r.출력일).map(r => ({ ...r, dateObj: parseYmd(r.출력일) }));
     },
@@ -641,10 +624,7 @@ const MODULES = {
     //   예) 7/1 기안, 7/21 입고 예정 건 → 7/17 마감엔 '미입고' 상태로, 7/24 마감엔 '입고완료' 상태로 각각 기록됨
     snapshotMode: true,
     async loadData() {
-      const res = await fetch(`${QC_GAS_URL}?action=getZaejaeData`, { redirect: 'follow' });
-      const json = await res.json();
-      if (!json.ok || !json.records) throw new Error('자재발주 데이터 로드 실패' + (json.msg ? ' - ' + json.msg : ' (응답: ' + JSON.stringify(json).slice(0,200) + ')'));
-      return json.records; // 날짜 필터 없이 전체 건을 그대로 사용
+      return await fetchAllRows('qc_자재발주'); // 날짜 필터 없이 전체 건을 그대로 사용
     },
     buildSummary(rows) {
       const total = rows.length;
@@ -1036,6 +1016,86 @@ async function sendAllReady(periodType) {
     }
   }
 }
+
+// ================================================================
+// 🚀 전체(ALL) 백그라운드 전송 — Edge Function에서 실행되고 페이지를 닫아도 계속 진행됨
+// ================================================================
+const BULK_JOB_KEY = 'reportHubBulkJobId';
+let bulkPollTimer = null;
+
+async function startBulkAll() {
+  if (!confirm('최근 12개월 + 최근 12주, 연동된 모든 항목을 전부 다시 전송합니다.\n서버에서 몇 분 정도 걸릴 수 있어요. 계속할까요?')) return;
+
+  document.getElementById('bulkModalOverlay').classList.add('open');
+  document.getElementById('bulkProgressText').textContent = '작업 시작하는 중...';
+  document.getElementById('bulkProgressBar').style.width = '0%';
+  document.getElementById('bulkLog').innerHTML = '';
+
+  try {
+    const res = await fetch(BULK_SEND_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ periodType: 'all' }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.msg || '작업 시작 실패');
+    localStorage.setItem(BULK_JOB_KEY, data.jobId);
+    pollBulkJob(data.jobId);
+  } catch (e) {
+    document.getElementById('bulkProgressText').textContent = '❌ 작업 시작 실패: ' + e.message;
+  }
+}
+
+function closeBulkModal() {
+  document.getElementById('bulkModalOverlay').classList.remove('open');
+  if (bulkPollTimer) { clearInterval(bulkPollTimer); bulkPollTimer = null; }
+}
+
+async function pollBulkJob(jobId) {
+  if (bulkPollTimer) clearInterval(bulkPollTimer);
+
+  const tick = async () => {
+    const { data: job, error } = await sb.from('qc_report_hub_jobs').select('*').eq('id', jobId).maybeSingle();
+    if (error || !job) return;
+
+    const pct = job.total_steps ? Math.round((job.done_steps / job.total_steps) * 100) : 0;
+    document.getElementById('bulkProgressBar').style.width = pct + '%';
+    document.getElementById('bulkProgressText').textContent =
+      job.status === 'running' ? `진행 중... ${job.done_steps}/${job.total_steps} (${pct}%)`
+      : job.status === 'done'  ? `✅ 완료! (${job.done_steps}/${job.total_steps})`
+      : `❌ 오류 발생 (${job.done_steps}/${job.total_steps}까지 진행됨)`;
+
+    const log = job.log || [];
+    document.getElementById('bulkLog').innerHTML = log.slice(-100).map(l =>
+      `<div class="${l.msg.startsWith('❌') ? 'err' : l.msg.startsWith('⏭') ? '' : 'ok'}">${l.msg}</div>`
+    ).join('');
+    document.getElementById('bulkLog').scrollTop = document.getElementById('bulkLog').scrollHeight;
+
+    if (job.status !== 'running') {
+      clearInterval(bulkPollTimer);
+      bulkPollTimer = null;
+      localStorage.removeItem(BULK_JOB_KEY);
+    }
+  };
+
+  await tick();
+  bulkPollTimer = setInterval(tick, 3000);
+}
+
+// 페이지를 새로 열었을 때, 이전에 닫지 않고 진행 중이던 작업이 있으면 자동으로 팝업 다시 띄움
+(async function resumeBulkJobIfAny() {
+  const savedId = localStorage.getItem(BULK_JOB_KEY);
+  if (!savedId) return;
+  try {
+    const { data: job } = await sb.from('qc_report_hub_jobs').select('*').eq('id', savedId).maybeSingle();
+    if (job && job.status === 'running') {
+      document.getElementById('bulkModalOverlay').classList.add('open');
+      pollBulkJob(savedId);
+    } else {
+      localStorage.removeItem(BULK_JOB_KEY);
+    }
+  } catch (e) {}
+})();
 
 // ================================================================
 // 📋 클로드 전송데이터 복사 모달

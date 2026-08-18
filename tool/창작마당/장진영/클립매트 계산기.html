@@ -3,553 +3,354 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>퍼즐매트 수량 & 클립 계산기</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Google Fonts: Noto Sans KR -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <title>퍼즐매트 시공 및 메모 통합 계산기</title>
     <style>
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-            background-color: #f8fafc;
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
         }
-
-        /* Custom Scrollbar */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-
-        /* Cream White Mat Tile Base */
-        .mat-tile {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            background-color: #faf7f2 !important; /* Soft Cream White Tone */
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        .mat-tile:hover {
-            transform: translateY(-3px) scale(1.04);
-            z-index: 30;
-            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.12);
-        }
-
-        /* Flat Outer Edge Thick Solid Highlights */
-        .edge-top { border-top: 5px solid currentColor !important; }
-        .edge-bottom { border-bottom: 5px solid currentColor !important; }
-        .edge-left { border-left: 5px solid currentColor !important; }
-        .edge-right { border-right: 5px solid currentColor !important; }
-
-        /* Internal Joint Lines */
-        .joint-dashed {
-            border-style: dashed;
-            border-color: #cbd5e1;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-dark); padding: 16px; }
+        .container { max-width: 100%; margin: 0 auto; }
+        header { margin-bottom: 16px; text-align: center; }
+        header h1 { font-size: 1.5rem; color: var(--text-dark); margin-bottom: 4px; }
+        header p { color: var(--text-muted); font-size: 0.85rem; }
+        
+        .main-grid { display: grid; grid-template-columns: 340px 1fr; gap: 16px; }
+        @media (max-width: 768px) { .main-grid { grid-template-columns: 1fr; } }
+        
+        .card { background: var(--card-bg); border-radius: 12px; padding: 16px; border: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.04); margin-bottom: 12px; }
+        .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+        
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 4px; color: #334155; }
+        .form-control { width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; outline: none; }
+        .form-control:focus { border-color: var(--primary); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        
+        .btn-submit { width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; transition: 0.2s; margin-top: 4px; font-size: 0.9rem; }
+        .btn-submit:hover { background: var(--primary-hover); }
+        
+        .instruction-box { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 10px 12px; border-radius: 6px; font-size: 0.82rem; margin-bottom: 12px; line-height: 1.4; }
+        .legend { display: flex; gap: 12px; margin-bottom: 12px; font-size: 0.8rem; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .color-box { width: 12px; height: 12px; border-radius: 2px; }
+        
+        .mat-grid-container { overflow-x: auto; padding: 12px; background: #f1f5f9; border-radius: 8px; display: flex; justify-content: center; }
+        .mat-grid { display: grid; gap: 4px; }
+        
+        .mat-tile { background: white; border: 2px dashed #94a3b8; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; cursor: pointer; user-select: none; transition: all 0.2s; position: relative; min-width: 56px; min-height: 56px; text-align: center; }
+        .mat-tile:hover { transform: scale(1.03); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .tile-num { font-size: 0.85rem; font-weight: 800; margin-top: 1px; }
+        
+        .mat-tile.corner { border-color: #f97316; background: #fff7ed; color: #c2410c; }
+        .mat-tile.side { border-color: #10b981; background: #ecfdf5; color: #047857; }
+        .mat-tile.center { border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; }
+        .mat-tile.excluded { background: #cbd5e1 !important; border-color: #64748b !important; color: #475569 !important; opacity: 0.75; }
+        
+        .result-box { background: #f8fafc; border-radius: 6px; padding: 12px; margin-top: 8px; }
+        .result-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.85rem; }
+        .result-row.clip { font-weight: 700; color: #0284c7; background: #e0f2fe; padding: 6px 8px; border-radius: 4px; margin-top: 4px; }
+        .result-row.highlight { background: #f1f5f9; padding: 6px 8px; border-radius: 4px; font-weight: 600; margin-top: 4px; }
+        .result-row.total { font-weight: 800; font-size: 1rem; border-top: 2px solid var(--border-color); padding-top: 6px; margin-top: 6px; color: var(--primary); }
+        
+        textarea.memo-box { width: 100%; height: 80px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; resize: vertical; font-size: 0.85rem; outline: none; line-height: 1.4; }
+        textarea.memo-box:focus { border-color: var(--primary); }
     </style>
 </head>
-<body class="min-h-screen text-slate-800 pb-12">
+<body>
 
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-indigo-200">
-                    <i class="fa-solid fa-shapes"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold text-slate-900 leading-tight">퍼즐매트 시공 계산기</h1>
-                    <p class="text-xs text-slate-500">규격별 표준 배치도 산출 및 링크 공유 기능</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <button type="button" onclick="copyShareLink()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-sm hover:bg-amber-100 transition active:scale-95">
-                    <i class="fa-solid fa-share-nodes text-amber-600"></i> <span id="shareBtnText">배치 공유 링크 복사</span>
-                </button>
-                <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-sm">
-                    <i class="fa-solid fa-ruler-combined text-indigo-500"></i> <span id="headerMatBadge">60 × 60 cm</span>
-                </span>
-            </div>
-        </div>
+<div class="container">
+    <header>
+        <h1>🧩 퍼즐매트 시공 및 메모 통합 계산기</h1>
+        <p>재단 시공(최대) 및 재단 없이 설치(최소) 수량 비교 계산기</p>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-        
-        <!-- Custom Browser Address Bar & Bookmark Component -->
-        <div class="bg-slate-900 text-slate-200 p-3.5 rounded-2xl mb-8 shadow-lg border border-slate-800 flex flex-col sm:flex-row items-center gap-3">
-            <div class="flex items-center gap-2 text-slate-300 text-xs font-bold whitespace-nowrap">
-                <i class="fa-solid fa-globe text-indigo-400 text-sm"></i>
-                <span>실시간 웹 주소창:</span>
-            </div>
-            <div class="relative w-full flex-grow flex items-center">
-                <div class="absolute left-3 text-emerald-400 text-xs flex items-center gap-1">
-                    <i class="fa-solid fa-lock"></i>
-                    <span class="text-[10px] text-emerald-500 font-mono hidden md:inline">HTTPS</span>
-                </div>
-                <input type="text" id="customUrlDisplay" readonly value="https://puzzle-mat-calc.com/?w=360&l=300&size=60&clip=1"
-                    class="w-full pl-16 pr-24 py-2 bg-slate-950 text-emerald-300 font-mono text-xs rounded-xl border border-slate-800 focus:outline-none select-all shadow-inner">
-                <button type="button" onclick="copyShareLink()" class="absolute right-1 px-3 py-1 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-bold text-xs rounded-lg transition flex items-center gap-1 shadow">
-                    <i class="fa-solid fa-copy text-xs"></i> 복사
-                </button>
-            </div>
-            <button type="button" onclick="showBookmarkGuide()" class="w-full sm:w-auto px-3.5 py-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-800 text-amber-300 font-bold text-xs rounded-xl border border-slate-700 transition flex items-center justify-center gap-1.5 whitespace-nowrap">
-                <i class="fa-solid fa-star text-amber-400"></i> 즐겨찾기 안내
-            </button>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            <div class="lg:col-span-5 space-y-6">
+    <div class="main-grid">
+        <!-- 왼쪽 입력 폼 -->
+        <div class="left-panel">
+            <div class="card">
+                <div class="card-title">📏 치수 및 시공 방식</div>
                 
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-pen-to-square text-indigo-600"></i> 설치 공간 크기 입력
-                    </h2>
-                    
-                    <div class="space-y-4">
-                        <!-- Mat Size Selector -->
-                        <div>
-                            <label for="matSize" class="block text-xs font-semibold text-slate-600 mb-1">퍼즐매트 규격 (1장 크기)</label>
-                            <select id="matSize" onchange="calculate()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition">
-                                <option value="60">60 × 60 cm (표준 규격)</option>
-                                <option value="120">120 × 120 cm (대형 규격)</option>
-                            </select>
-                        </div>
+                <!-- 1. 매트 규격 -->
+                <div class="form-group">
+                    <label>퍼즐매트 규격</label>
+                    <select id="matSize" class="form-control" onchange="calculate()">
+                        <option value="60">60 × 60 cm (표준)</option>
+                        <option value="120">120 × 120 cm (대형)</option>
+                    </select>
+                </div>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label for="width" class="block text-xs font-semibold text-slate-600 mb-1">가로 공간 (cm)</label>
-                                <div class="relative">
-                                    <input type="number" id="width" value="360" min="10" step="10" oninput="calculate()"
-                                        class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none transition">
-                                    <span class="absolute right-3 top-2.5 text-xs font-medium text-slate-400">cm</span>
-                                </div>
-                            </div>
-                            <div>
-                                <label for="length" class="block text-xs font-semibold text-slate-600 mb-1">세로 공간 (cm)</label>
-                                <div class="relative">
-                                    <input type="number" id="length" value="300" min="10" step="10" oninput="calculate()"
-                                        class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none transition">
-                                    <span class="absolute right-3 top-2.5 text-xs font-medium text-slate-400">cm</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Clip Option -->
-                        <div class="pt-3 border-t border-slate-100">
-                            <label for="clipPerJoint" class="block text-xs font-semibold text-slate-600 mb-1">
-                                이음새(접합부)당 필요 클립 수
-                            </label>
-                            <select id="clipPerJoint" onchange="calculate()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition">
-                                <option value="1">접합부 1개당 클립 1개 (기본 권장)</option>
-                                <option value="2">접합부 1개당 클립 2개 (고강도 시공)</option>
-                            </select>
-                        </div>
-
-                        <div class="grid grid-cols-5 gap-2 pt-1">
-                            <button type="button" onclick="calculate()" class="col-span-4 py-3 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold rounded-xl shadow-md shadow-indigo-200 transition flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-calculator"></i> 수량 계산 및 배치도 갱신
-                            </button>
-                            <button type="button" onclick="copyShareLink()" title="결과 공유 URL 복사" class="col-span-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl border border-slate-300 transition flex items-center justify-center">
-                                <i class="fa-solid fa-link text-indigo-600"></i>
-                            </button>
-                        </div>
+                <!-- 2. 치수 입력 -->
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>가로 공간 (cm)</label>
+                        <input type="number" id="roomWidth" class="form-control" value="150" step="10" oninput="calculate()">
+                    </div>
+                    <div class="form-group">
+                        <label>세로 공간 (cm)</label>
+                        <input type="number" id="roomLength" class="form-control" value="150" step="10" oninput="calculate()">
                     </div>
                 </div>
 
-                <!-- Toast Notification for Link Copy -->
-                <div id="toast" class="hidden fixed bottom-6 right-6 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 z-50 flex items-center gap-2 text-xs font-semibold transition-all">
-                    <i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
-                    <span id="toastMsg">공유 가능한 페이지 링크가 복사되었습니다!</span>
+                <!-- 3. 시공 방식 선택 -->
+                <div class="form-group">
+                    <label>✂️ 시공 배치 방식</label>
+                    <select id="calcMode" class="form-control" onchange="calculate()">
+                        <option value="min">여유 공간 남김 (재단 안함 / 최소 수량)</option>
+                        <option value="max">공간 꽉 채움 (재단 시공 / 최대 수량)</option>
+                    </select>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-                    <h2 class="text-lg font-bold text-slate-900 flex items-center justify-between">
-                        <span><i class="fa-solid fa-list-check text-indigo-600 mr-2"></i>계산 결과 요약</span>
-                        <span id="areaInfo" class="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md">
-                            총 0.00㎡ (0.0평)
-                        </span>
-                    </h2>
-
-                    <!-- Total Mats & Dimensions -->
-                    <div class="bg-indigo-50/80 border border-indigo-100 rounded-xl p-4 flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-indigo-600 font-bold">총 필요 매트 수량</p>
-                            <p class="text-3xl font-black text-indigo-950 mt-0.5"><span id="totalMats">0</span><span class="text-lg font-bold ml-1">장</span></p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-xs text-indigo-500 font-semibold">배치 격자</p>
-                            <p class="text-sm font-bold text-indigo-900 mt-1" id="gridDimensions">가로 0장 × 세로 0장</p>
-                        </div>
-                    </div>
-
-                    <!-- Mat Type Cards -->
-                    <div class="grid grid-cols-3 gap-3">
-                        <!-- Corner -->
-                        <div class="p-3.5 rounded-xl border-2 border-orange-200 bg-orange-50/60 text-center relative overflow-hidden">
-                            <div class="w-full h-1 bg-orange-500 absolute top-0 left-0"></div>
-                            <span class="text-xs font-extrabold text-orange-900 block mt-1">코너 (Corner)</span>
-                            <span class="text-2xl font-black text-orange-600 block my-1" id="cornerCount">0</span>
-                            <span class="text-[10px] text-orange-700 font-semibold">외곽 2면 마감</span>
-                        </div>
-                        <!-- Side -->
-                        <div class="p-3.5 rounded-xl border-2 border-emerald-200 bg-emerald-50/60 text-center relative overflow-hidden">
-                            <div class="w-full h-1 bg-emerald-500 absolute top-0 left-0"></div>
-                            <span class="text-xs font-extrabold text-emerald-900 block mt-1">사이드 (Side)</span>
-                            <span class="text-2xl font-black text-emerald-600 block my-1" id="sideCount">0</span>
-                            <span class="text-[10px] text-emerald-700 font-semibold">외곽 1면 마감</span>
-                        </div>
-                        <!-- Center -->
-                        <div class="p-3.5 rounded-xl border-2 border-sky-200 bg-sky-50/60 text-center relative overflow-hidden">
-                            <div class="w-full h-1 bg-sky-500 absolute top-0 left-0"></div>
-                            <span class="text-xs font-extrabold text-sky-900 block mt-1">센터 (Center)</span>
-                            <span class="text-2xl font-black text-sky-600 block my-1" id="centerCount">0</span>
-                            <span class="text-[10px] text-sky-700 font-semibold">내부 전면 연결</span>
-                        </div>
-                    </div>
-
-                    <!-- Clip Calculation Card -->
-                    <div class="bg-slate-900 text-white p-4 rounded-xl flex items-center justify-between shadow-md">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-indigo-400">
-                                <i class="fa-solid fa-paperclip text-lg"></i>
-                            </div>
-                            <div>
-                                <p class="text-xs text-slate-400 font-medium">최종 필요 클립 수 (중복 차감 반영)</p>
-                                <p class="text-xl font-bold text-white"><span id="clipCount" class="text-indigo-400 font-black text-2xl">0</span> 개</p>
-                            </div>
-                        </div>
-                        <button type="button" onclick="toggleClipHelp()" class="text-xs text-slate-400 hover:text-white underline underline-offset-2 transition">
-                            계산 기준
-                        </button>
-                    </div>
-
-                    <!-- Clip Logic Info Modal -->
-                    <div id="clipHelpBox" class="hidden p-3.5 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-700 leading-relaxed space-y-1.5">
-                        <p class="font-bold text-slate-900"><i class="fa-solid fa-circle-info text-indigo-600 mr-1"></i>클립 산출 기준 안내</p>
-                        <p>• 퍼즐매트가 서로 마주보는 **접합 변(Internal Edge)** 하나당 설정한 클립 수량이 들어갑니다.</p>
-                        <p>• 가로 이음새 (<span id="horizJoints" class="font-bold">0</span>개) + 세로 이음새 (<span id="vertJoints" class="font-bold">0</span>개) = 총 <span id="totalJoints" class="font-bold">0</span>개 접합 구역</p>
-                        <p class="text-indigo-700 font-semibold">※ 매트 단독 계산 시 발생하는 중복 손실을 차감한 실제 필요 개수입니다.</p>
-                    </div>
-
+                <!-- 4. 메모 작성 -->
+                <div class="form-group">
+                    <label>📝 시공 및 특이사항 메모</label>
+                    <textarea id="memoInput" class="memo-box" placeholder="예: 150x150 설치예정, 좌측하단 소파, 사이드 센터 변환" oninput="calculate()"></textarea>
                 </div>
+
+                <!-- 5. 클립 옵션 -->
+                <div class="form-group">
+                    <label>접합부당 필요 클립 수</label>
+                    <select id="clipPerJoint" class="form-control" onchange="calculate()">
+                        <option value="1">이음새 1개당 1개 (기본 권장)</option>
+                        <option value="2">이음새 1개당 2개 (보강 시공)</option>
+                    </select>
+                </div>
+
+                <button class="btn-submit" onclick="calculate()">⚡ 계산하기</button>
             </div>
 
-            <div class="lg:col-span-7">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-full flex flex-col">
-                    
-                    <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
-                        <div>
-                            <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-                                <i class="fa-solid fa-border-all text-indigo-600"></i> 매트 배치 시각화
-                            </h2>
-                            <p class="text-xs text-slate-500 mt-0.5">굵은 실선은 잘라내지 않는 <strong>외곽 마감 테두리면</strong>을 나타냅니다.</p>
-                        </div>
-
-                        <!-- Legend -->
-                        <div class="flex items-center gap-3 text-xs font-bold">
-                            <div class="flex items-center gap-1.5" title="모서리 2개 변 굵은 마감선">
-                                <span class="w-4 h-4 rounded bg-[#faf7f2] border-t-2 border-l-2 border-orange-600 inline-block shadow-xs"></span>
-                                <span class="text-slate-700">코너 (2면)</span>
-                            </div>
-                            <div class="flex items-center gap-1.5" title="테두리 1개 변 굵은 마감선">
-                                <span class="w-4 h-4 rounded bg-[#faf7f2] border-t-2 border-emerald-600 inline-block shadow-xs"></span>
-                                <span class="text-slate-700">사이드 (1면)</span>
-                            </div>
-                            <div class="flex items-center gap-1.5" title="전체 점선 이음새">
-                                <span class="w-4 h-4 rounded bg-[#faf7f2] border border-dashed border-sky-400 inline-block shadow-xs"></span>
-                                <span class="text-slate-700">센터 (내부)</span>
-                            </div>
-                        </div>
+            <!-- 요약 결과 카드 -->
+            <div class="card">
+                <div class="card-title">📊 수량 산출 결과</div>
+                <div class="result-box">
+                    <div class="result-row highlight">
+                        <span>재단 안함 (최소):</span>
+                        <strong id="summaryMin">0 장</strong>
                     </div>
-
-                    <!-- Dynamic Visual Canvas -->
-                    <div class="flex-grow flex items-center justify-center bg-slate-100/70 border border-slate-200 rounded-xl p-4 overflow-auto custom-scrollbar min-h-[420px]">
-                        <div id="gridContainer" class="p-2 transition-all duration-300">
-                            <!-- Dynamic Tiles Rendered Here -->
-                        </div>
+                    <div class="result-row highlight">
+                        <span>재단 시공 (최대):</span>
+                        <strong id="summaryMax">0 장</strong>
                     </div>
-
-                    <!-- Footer Legend Note -->
-                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                        <span class="flex items-center gap-1.5">
-                            <i class="fa-solid fa-square text-[#faf7f2] border border-slate-300 rounded shadow-xs"></i>
-                            <strong>크림화이트 바탕</strong> + <strong>색상 굵은선</strong>: 평평한 테두리 마감면
-                        </span>
-                        <span class="font-semibold text-slate-700" id="footerMatSize">60 × 60 cm</span>
-                    </div>
-
+                    <hr style="margin: 6px 0; border: none; border-top: 1px dashed var(--border-color);">
+                    <div class="result-row"><span>코너 매트:</span><span id="countCorner">0 장</span></div>
+                    <div class="result-row"><span>사이드 매트:</span><span id="countSide">0 장</span></div>
+                    <div class="result-row"><span>센터 매트:</span><span id="countCenter">0 장</span></div>
+                    <div class="result-row" style="color:#ef4444;"><span>블락/제외(가구):</span><span id="countExcluded">0 장</span></div>
+                    <div class="result-row total"><span>현재 적용 수량:</span><span id="countTotal">0 장</span></div>
+                    <div class="result-row clip"><span>📎 필요 클립 수량:</span><span id="countClip">0 개</span></div>
                 </div>
             </div>
-
         </div>
-    </main>
 
-    <script>
-        /**
-         * Core Calculation Function
-         */
-        function calculate() {
-            const widthInput = document.getElementById('width');
-            const lengthInput = document.getElementById('length');
-            const matSizeInput = document.getElementById('matSize');
-            const clipSelect = document.getElementById('clipPerJoint');
+        <!-- 오른쪽 배치도 시각화 -->
+        <div class="right-panel">
+            <div class="card">
+                <div class="card-title">🗺️ 매트 배치 시각화</div>
+                <div class="instruction-box" id="modeInfoBox">
+                    💡 **최소 수량 모드:** 재단하지 않고 설치 가능한 공간 범위 내에서 배치합니다.
+                </div>
+                
+                <div class="legend">
+                    <div class="legend-item"><div class="color-box" style="background:#fff7ed; border:1px solid #f97316;"></div> 코너</div>
+                    <div class="legend-item"><div class="color-box" style="background:#ecfdf5; border:1px solid #10b981;"></div> 사이드</div>
+                    <div class="legend-item"><div class="color-box" style="background:#eff6ff; border:1px solid #3b82f6;"></div> 센터</div>
+                    <div class="legend-item"><div class="color-box" style="background:#cbd5e1; border:1px solid #64748b;"></div> 블락(가구)</div>
+                </div>
 
-            let width = parseFloat(widthInput.value) || 0;
-            let length = parseFloat(lengthInput.value) || 0;
-            const matSize = parseInt(matSizeInput.value) || 60;
-            const clipPerJoint = parseInt(clipSelect.value) || 1;
+                <div class="mat-grid-container">
+                    <div id="matGrid" class="mat-grid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-            if (width < 10) width = 10;
-            if (length < 10) length = 10;
+<script>
+    let manualExcludedSet = new Set();
 
-            const cols = Math.max(1, Math.ceil(width / matSize));
-            const rows = Math.max(1, Math.ceil(length / matSize));
-            const totalMats = cols * rows;
+    function toggleTile(c, r) {
+        const key = `${c},${r}`;
+        if (manualExcludedSet.has(key)) {
+            manualExcludedSet.delete(key);
+        } else {
+            manualExcludedSet.add(key);
+        }
+        calculate(true);
+    }
 
-            let corner = 0;
-            let side = 0;
-            let center = 0;
+    function calculate(isManualClick = false) {
+        const matSize = parseInt(document.getElementById('matSize').value);
+        let w = parseInt(document.getElementById('roomWidth').value) || 150;
+        let l = parseInt(document.getElementById('roomLength').value) || 150;
+        const calcMode = document.getElementById('calcMode').value;
+        const memoText = document.getElementById('memoInput').value.trim();
+        const clipPerJoint = parseInt(document.getElementById('clipPerJoint').value);
 
-            if (cols === 1 && rows === 1) {
-                corner = 1;
-                side = 0;
-                center = 0;
-            } else if (cols === 1) {
-                corner = 2;
-                side = rows - 2;
-                center = 0;
-            } else if (rows === 1) {
-                corner = 2;
-                side = cols - 2;
-                center = 0;
-            } else {
-                corner = 4;
-                side = (cols - 2) * 2 + (rows - 2) * 2;
-                center = (cols - 2) * (rows - 2);
+        if (!isManualClick && memoText) {
+            const matches = [...memoText.matchAll(/(\d{3,4})\s*[*xX×x\s]\s*(\d{3,4})/g)];
+            if (matches.length > 0) {
+                w = parseInt(matches[0][1]);
+                l = parseInt(matches[0][2]);
+                document.getElementById('roomWidth').value = w;
+                document.getElementById('roomLength').value = l;
             }
-
-            // Joints Calculation
-            const horizJoints = cols * (rows - 1);
-            const vertJoints = (cols - 1) * rows;
-            const totalJoints = horizJoints + vertJoints;
-            const totalClips = totalJoints * clipPerJoint;
-
-            // Covered Area
-            const areaSqM = (cols * (matSize / 100)) * (rows * (matSize / 100));
-            const pyeong = areaSqM / 3.30578;
-
-            // Header & Footer Mat Size Display Update
-            document.getElementById('headerMatBadge').innerText = `${matSize} × ${matSize} cm`;
-            document.getElementById('footerMatSize').innerText = `${matSize} × ${matSize} cm`;
-
-            // Update UI Numbers
-            document.getElementById('totalMats').innerText = totalMats;
-            document.getElementById('gridDimensions').innerText = `가로 ${cols}장 × 세로 ${rows}장`;
-            document.getElementById('cornerCount').innerText = corner;
-            document.getElementById('sideCount').innerText = side;
-            document.getElementById('centerCount').innerText = center;
-            document.getElementById('clipCount').innerText = totalClips;
-
-            document.getElementById('horizJoints').innerText = horizJoints;
-            document.getElementById('vertJoints').innerText = vertJoints;
-            document.getElementById('totalJoints').innerText = totalJoints;
-
-            document.getElementById('areaInfo').innerText = `총 ${areaSqM.toFixed(2)}㎡ (${pyeong.toFixed(1)}평)`;
-
-            updateAddressBar(width, length, matSize, clipPerJoint);
-
-            renderGrid(cols, rows);
         }
 
-        function updateAddressBar(w, l, size, clip) {
-            const urlInput = document.getElementById('customUrlDisplay');
-            if (!urlInput) return;
+        const minCols = Math.floor(w / matSize);
+        const minRows = Math.floor(l / matSize);
+        const maxCols = Math.ceil(w / matSize);
+        const maxRows = Math.ceil(l / matSize);
 
-            let baseUrl = window.location.origin + window.location.pathname;
-            if (baseUrl === 'null' || baseUrl.startsWith('file:') || !window.location.host) {
-                baseUrl = 'https://puzzle-mat-calc.com/';
-            }
+        document.getElementById('summaryMin').innerText = `${minCols * minRows} 장 (${minCols}x${minRows})`;
+        document.getElementById('summaryMax').innerText = `${maxCols * maxRows} 장 (${maxCols}x${maxRows})`;
 
-            urlInput.value = `${baseUrl}?w=${w}&l=${l}&size=${size}&clip=${clip}`;
+        const cols = (calcMode === 'min') ? minCols : maxCols;
+        const rows = (calcMode === 'min') ? minRows : maxRows;
+
+        const infoBox = document.getElementById('modeInfoBox');
+        if (calcMode === 'min') {
+            infoBox.innerHTML = `💡 <b>여유 공간 남김 (최소 수량):</b> 자르지 않고 딱 들어가는 <b>${cols}x${rows} (총 ${cols*rows}장)</b>으로 시각화합니다.`;
+        } else {
+            infoBox.innerHTML = `✂️ <b>공간 꽉 채움 (최대 수량):</b> 남는 부위를 재단 시공하는 <b>${cols}x${rows} (총 ${cols*rows}장)</b>으로 시각화합니다.`;
         }
 
-        function renderGrid(cols, rows) {
-            const container = document.getElementById('gridContainer');
-            container.innerHTML = '';
+        if (cols === 0 || rows === 0) {
+            document.getElementById('matGrid').innerHTML = '<div style="padding: 20px; color: #ef4444; font-weight: bold;">⚠️ 공간 크기가 매트 1장 규격보다 작습니다.</div>';
+            return;
+        }
 
-            container.style.display = 'grid';
-            container.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-            container.style.gap = '6px';
+        const isSideToCenterReq = (memoText.includes("사이드") && memoText.includes("센터")) && 
+                                  (memoText.includes("변환") || memoText.includes("교체") || memoText.includes("변경") || memoText.includes("요청"));
 
-            let tileSize = 'w-16 h-16 text-xs';
-            if (cols > 10 || rows > 10) {
-                tileSize = 'w-10 h-10 text-[9px]';
-            } else if (cols > 6 || rows > 6) {
-                tileSize = 'w-12 h-12 text-[10px]';
+        let autoExcludedSet = new Set();
+        
+        if (memoText.includes("소파") || memoText.includes("가구") || memoText.includes("제외") || memoText.includes("블락")) {
+            const matches = [...memoText.matchAll(/(\d{2,4})\s*[*xX×x\s]\s*(\d{2,4})/g)];
+            
+            let furnitureW = 60;
+            let furnitureL = 60;
+
+            if (matches.length >= 2) {
+                furnitureW = parseInt(matches[1][1]);
+                furnitureL = parseInt(matches[1][2]);
+            } else if (matches.length === 1) {
+                const targetText = memoText.substring(memoText.search(/소파|가구/));
+                const furnMatch = targetText.match(/(\d{2,4})\s*[*xX×x\s]\s*(\d{2,4})/);
+                if (furnMatch) {
+                    furnitureW = parseInt(furnMatch[1]);
+                    furnitureL = parseInt(furnMatch[2]);
+                }
             }
 
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    const tile = document.createElement('div');
+            const furnCols = Math.ceil(furnitureW / matSize);
+            const furnRows = Math.ceil(furnitureL / matSize);
 
-                    const isTop = (r === 0);
-                    const isBottom = (r === rows - 1);
-                    const isLeft = (c === 0);
-                    const isRight = (c === cols - 1);
+            let isRight = memoText.includes("우측") || memoText.includes("오른쪽");
+            let isTop = memoText.includes("상단") || memoText.includes("위");
+            let isLeft = memoText.includes("좌측") || memoText.includes("왼쪽");
+            let isBottom = memoText.includes("하단") || memoText.includes("아래");
 
-                    let type = 'center';
-                    let label = '센터';
-                    const outerEdges = [];
+            let startC = 0;
+            let startR = rows - furnRows;
 
-                    if (cols === 1 && rows === 1) {
-                        type = 'corner'; label = '코너';
-                        outerEdges.push('top', 'bottom', 'left', 'right');
-                    } else if (cols === 1) {
-                        if (isTop || isBottom) {
-                            type = 'corner'; label = '코너';
-                            if (isTop) outerEdges.push('top', 'left', 'right');
-                            if (isBottom) outerEdges.push('bottom', 'left', 'right');
-                        } else {
-                            type = 'side'; label = '사이드';
-                            outerEdges.push('left', 'right');
-                        }
-                    } else if (rows === 1) {
-                        if (isLeft || isRight) {
-                            type = 'corner'; label = '코너';
-                            if (isLeft) outerEdges.push('top', 'bottom', 'left');
-                            if (isRight) outerEdges.push('top', 'bottom', 'right');
-                        } else {
-                            type = 'side'; label = '사이드';
-                            outerEdges.push('top', 'bottom');
-                        }
-                    } else {
-                        if ((isTop || isBottom) && (isLeft || isRight)) {
-                            type = 'corner'; label = '코너';
-                            if (isTop) outerEdges.push('top');
-                            if (isBottom) outerEdges.push('bottom');
-                            if (isLeft) outerEdges.push('left');
-                            if (isRight) outerEdges.push('right');
-                        } else if (isTop || isBottom || isLeft || isRight) {
-                            type = 'side'; label = '사이드';
-                            if (isTop) outerEdges.push('top');
-                            if (isBottom) outerEdges.push('bottom');
-                            if (isLeft) outerEdges.push('left');
-                            if (isRight) outerEdges.push('right');
-                        } else {
-                            type = 'center'; label = '센터';
-                        }
+            if (isRight && isBottom) {
+                startC = cols - furnCols;
+                startR = rows - furnRows;
+            } else if (isRight && isTop) {
+                startC = cols - furnCols;
+                startR = 0;
+            } else if (isLeft && isTop) {
+                startC = 0;
+                startR = 0;
+            } else if (isLeft && isBottom) {
+                startC = 0;
+                startR = rows - furnRows;
+            }
+
+            for (let r = startR; r < startR + furnRows; r++) {
+                for (let c = startC; c < startC + furnCols; c++) {
+                    if (r >= 0 && r < rows && c >= 0 && c < cols) {
+                        autoExcludedSet.add(`${c},${r}`);
                     }
-
-                    let borderClasses = 'border joint-dashed ';
-                    let colorStyles = '';
-
-                    if (type === 'corner') {
-                        colorStyles = 'font-bold hover:brightness-95 text-orange-600';
-                        outerEdges.forEach(edge => {
-                            if (edge === 'top') borderClasses += 'edge-top border-t-orange-500 ';
-                            if (edge === 'bottom') borderClasses += 'edge-bottom border-b-orange-500 ';
-                            if (edge === 'left') borderClasses += 'edge-left border-l-orange-500 ';
-                            if (edge === 'right') borderClasses += 'edge-right border-r-orange-500 ';
-                        });
-                    } else if (type === 'side') {
-                        colorStyles = 'font-bold hover:brightness-95 text-emerald-600';
-                        outerEdges.forEach(edge => {
-                            if (edge === 'top') borderClasses += 'edge-top border-t-emerald-500 ';
-                            if (edge === 'bottom') borderClasses += 'edge-bottom border-b-emerald-500 ';
-                            if (edge === 'left') borderClasses += 'edge-left border-l-emerald-500 ';
-                            if (edge === 'right') borderClasses += 'edge-right border-r-emerald-500 ';
-                        });
-                    } else {
-                        colorStyles = 'font-semibold hover:brightness-95 text-sky-600';
-                    }
-
-                    tile.className = `mat-tile ${tileSize} rounded-md flex flex-col items-center justify-center select-none cursor-pointer ${colorStyles} ${borderClasses}`;
-                    tile.title = `위치: (${c + 1}, ${r + 1})\n타입: ${label} 매트\n외곽 마감면: ${outerEdges.length}개`;
-
-                    tile.innerHTML = `
-                        <span class="leading-none font-black text-[11px]">${label}</span>
-                        <span class="text-[9px] opacity-70 font-bold mt-0.5">${c+1},${r+1}</span>
-                    `;
-
-                    container.appendChild(tile);
                 }
             }
         }
 
-        function copyShareLink() {
-            const width = document.getElementById('width').value;
-            const length = document.getElementById('length').value;
-            const size = document.getElementById('matSize').value;
-            const clip = document.getElementById('clipPerJoint').value;
+        const finalExcludedSet = new Set([...manualExcludedSet, ...autoExcludedSet]);
 
-            const url = new URL(window.location.href);
-            url.searchParams.set('w', width);
-            url.searchParams.set('l', length);
-            url.searchParams.set('size', size);
-            url.searchParams.set('clip', clip);
+        const gridEl = document.getElementById('matGrid');
+        gridEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        gridEl.innerHTML = '';
 
-            const dummy = document.createElement('input');
-            document.body.appendChild(dummy);
-            dummy.value = url.href;
-            dummy.select();
-            document.execCommand('copy');
-            document.body.removeChild(dummy);
+        let cornerCount = 0;
+        let sideCount = 0;
+        let centerCount = 0;
+        let excludedCount = 0;
+        let internalJoints = 0;
 
-            showToast("공유 가능한 배치 링크가 복사되었습니다!");
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const key = `${c},${r}`;
+                const isExcluded = finalExcludedSet.has(key);
+
+                const tile = document.createElement('div');
+                tile.className = 'mat-tile';
+                tile.onclick = () => toggleTile(c, r);
+
+                if (isExcluded) {
+                    excludedCount++;
+                    tile.classList.add('excluded');
+                    tile.innerHTML = `블락<div class="tile-num">${excludedCount}</div>`;
+                } else {
+                    if (c < cols - 1 && !finalExcludedSet.has(`${c+1},${r}`)) internalJoints++;
+                    if (r < rows - 1 && !finalExcludedSet.has(`${c},${r+1}`)) internalJoints++;
+
+                    const top = r === 0 || finalExcludedSet.has(`${c},${r-1}`);
+                    const bottom = r === rows - 1 || finalExcludedSet.has(`${c},${r+1}`);
+                    const left = c === 0 || finalExcludedSet.has(`${c-1},${r}`);
+                    const right = c === cols - 1 || finalExcludedSet.has(`${c+1},${r}`);
+
+                    const borders = [top, bottom, left, right].filter(Boolean).length;
+
+                    if (borders >= 2) {
+                        cornerCount++;
+                        tile.classList.add('corner');
+                        tile.innerHTML = `코너<div class="tile-num">${cornerCount}</div>`;
+                    } else if (borders === 1) {
+                        if (isSideToCenterReq) {
+                            centerCount++;
+                            tile.classList.add('center');
+                            tile.innerHTML = `센터<div class="tile-num">${centerCount}</div>`;
+                        } else {
+                            sideCount++;
+                            tile.classList.add('side');
+                            tile.innerHTML = `사이드<div class="tile-num">${sideCount}</div>`;
+                        }
+                    } else {
+                        centerCount++;
+                        tile.classList.add('center');
+                        tile.innerHTML = `센터<div class="tile-num">${centerCount}</div>`;
+                    }
+                }
+                gridEl.appendChild(tile);
+            }
         }
 
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toastMsg');
-            toastMsg.innerText = message;
-            toast.classList.remove('hidden');
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 3000);
-        }
+        document.getElementById('countCorner').innerText = `${cornerCount} 장`;
+        document.getElementById('countSide').innerText = `${sideCount} 장`;
+        document.getElementById('countCenter').innerText = `${centerCount} 장`;
+        document.getElementById('countExcluded').innerText = `${excludedCount} 장`;
+        document.getElementById('countTotal').innerText = `${cornerCount + sideCount + centerCount} 장`;
+        document.getElementById('countClip').innerText = `${internalJoints * clipPerJoint} 개`;
+    }
 
-        function loadFromURLParams() {
-            const params = new URLSearchParams(window.location.search);
-            if (params.has('w')) document.getElementById('width').value = params.get('w');
-            if (params.has('l')) document.getElementById('length').value = params.get('l');
-            if (params.has('size')) document.getElementById('matSize').value = params.get('size');
-            if (params.has('clip')) document.getElementById('clipPerJoint').value = params.get('clip');
-        }
-
-        function toggleClipHelp() {
-            const helpBox = document.getElementById('clipHelpBox');
-            helpBox.classList.toggle('hidden');
-        }
-
-        function showBookmarkGuide() {
-            showToast("현재 페이지에서 Keyboard [Ctrl + D] 를 누르시면 즐겨찾기에 즉시 등록됩니다!");
-        }
-
-        // Globally attach handlers
-        window.calculate = calculate;
-        window.toggleClipHelp = toggleClipHelp;
-        window.copyShareLink = copyShareLink;
-        window.showBookmarkGuide = showBookmarkGuide;
-
-        // Auto calculate on DOM ready
-        window.addEventListener('DOMContentLoaded', () => {
-            loadFromURLParams();
-            calculate();
-        });
-    </script>
+    calculate();
+</script>
 </body>
 </html>

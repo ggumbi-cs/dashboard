@@ -253,14 +253,12 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // ================================================================
-// 공통 설정
+// 공통 설정 — GAS 완전히 제거, Supabase 하나로 통일 (2026-08)
 // ================================================================
-const GAS_URL = 'https://script.google.com/macros/s/AKfycby5wfJy4LMghTp4ILrdQ_hMLblDtV8gTigOEnpcJQT0dB1Xk-7XUyWbaryP9mrbFLrrCg/exec';
-
-// 품질관리 데이터 원본은 Supabase로 이전됨 (2026-08). GAS_URL(리포트 허브)은 별개 시스템이라 그대로 유지.
 const SUPABASE_URL      = 'https://myentgydxvnviubjxqin.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_agE17x89UHxC-UPIZY5fdg_QlN3biTu';
 const BULK_SEND_URL     = `${SUPABASE_URL}/functions/v1/report-hub-bulk-send`;
+const REPORT_SAVE_URL   = `${SUPABASE_URL}/functions/v1/report-summary-save`;
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Supabase는 한 번에 최대 1000건까지만 반환하므로 range()로 나눠서 전부 가져옴
@@ -747,12 +745,12 @@ async function refreshStatus(id) {
 }
 
 async function fetchSummary(project, periodType) {
-  const url = `${GAS_URL}?action=getSummary&project=${encodeURIComponent(project)}&periodType=${periodType}`;
-  const res = await fetch(url);
-  const json = await res.json();
-  if (!json.ok) return [];
-  // period 내림차순 정렬 (최신 우선)
-  return (json.rows || []).sort((a,b) => String(b.period).localeCompare(String(a.period)));
+  const { data, error } = await sb.from('qc_report_summaries')
+    .select('period, data, saved_at')
+    .eq('project', project).eq('period_type', periodType)
+    .order('period', { ascending: false });
+  if (error) return [];
+  return (data || []).map(r => ({ period: r.period, savedAt: r.saved_at, ...r.data }));
 }
 
 // ================================================================
@@ -928,14 +926,13 @@ function computeSummary(m, rows, periodType, p) {
 }
 
 async function postSummary(project, periodType, period, summary) {
-  await fetch(GAS_URL, {
-    method: 'POST', mode: 'no-cors',
+  const res = await fetch(REPORT_SAVE_URL, {
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      action: 'saveSummary', project, periodType, period,
-      data: { periodType, period, ...summary }
-    })
+    body: JSON.stringify({ project, periodType, period, data: { periodType, period, ...summary } }),
   });
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.msg || '저장 실패');
 }
 
 async function sendSelected(id) {
@@ -1196,12 +1193,13 @@ async function cmGenerateAndCopy() {
   status.className = 'modal-status';
 
   try {
-    const url = `${GAS_URL}?action=getAllForPeriod&periodType=${cmPeriodType}&period=${encodeURIComponent(p.period)}`;
-    const res = await fetch(url);
-    const json = await res.json();
-    if (!json.ok) throw new Error(json.msg || '조회 실패');
+    const { data: rows, error } = await sb.from('qc_report_summaries')
+      .select('project, data, saved_at')
+      .eq('period_type', cmPeriodType).eq('period', p.period);
+    if (error) throw error;
 
-    const projects = json.projects || {};
+    const projects = {};
+    (rows || []).forEach(r => { projects[r.project] = { savedAt: r.saved_at, data: r.data }; });
     const periodTypeLabel = cmPeriodType === 'monthly' ? '월간' : '주간';
     const lines = [];
     lines.push(`=== 통합 마감 데이터 (${periodTypeLabel} · ${p.label} · 회차코드 ${p.period}) ===`);

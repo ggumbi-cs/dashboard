@@ -861,7 +861,7 @@ async function runBotSequence(){
     if(!url) continue;
     const patternName = document.getElementById('pattern_'+i)?.value || '';
     const pattern = CSV_PATTERNS.find(p => p.name === patternName);
-    rows.push({ name: `${i+1}번째 페이지`, points: pattern ? pattern.points : [] });
+    rows.push({ name: `${i+1}번째 페이지`, url, points: pattern ? pattern.points : [] });
   }
   if(rows.length === 0){ alert('처리할 Notion URL을 입력해주세요.'); return; }
 
@@ -919,6 +919,7 @@ function startBotPolling(){
         setBotStatus("connected", s.error ? "오류 발생 — 로그 확인" : "완료 ✓");
         if(s.error){
           addLog("오류: " + s.error, "error");
+          alert("⛔ 작업이 중단되었습니다.\n\n" + s.error);
         } else {
           addLog("🎉 전체 작업 완료", "success");
           alert("✅ 전체 작업이 완료되었습니다!");

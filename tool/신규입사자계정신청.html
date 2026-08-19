@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>신규입사자 전자결재 문서 생성기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F6F8; --surface:#FFFFFF; --accent:#2563EB; --accent-dim:#EAF0FE;
+    --line:#E2E5EA; --text:#1B2027; --sub:#6B7280; --danger:#DC2626; --ok:#16A34A;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px;}
+  header.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+  header.top h1{font-size:19px;font-weight:900;margin:0;letter-spacing:-.01em;}
+  header.top .badge{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);background:var(--accent-dim);padding:5px 10px;border-radius:6px;}
+  .layout{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;}
+  @media (max-width:960px){.layout{grid-template-columns:1fr;}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:16px;}
+  .sec-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+  .sec-title::after{content:'';flex:1;height:1px;background:var(--line);}
+  label.f{display:block;font-size:12.5px;font-weight:500;color:var(--sub);margin:12px 0 5px;}
+  label.f:first-child{margin-top:0;}
+  input[type=text],input[type=date],select,textarea{
+    width:100%;border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:13.5px;
+    font-family:'Noto Sans KR',sans-serif;background:#FCFCFD;color:var(--text);
+  }
+  textarea{resize:vertical;min-height:70px;line-height:1.55;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);background:#fff;}
+  .row{display:flex;gap:8px;}
+  .row > *{flex:1;}
+  button{cursor:pointer;font-family:'Noto Sans KR',sans-serif;border:none;border-radius:7px;font-weight:500;font-size:13px;}
+  .btn-main{background:var(--accent);color:#fff;padding:10px 16px;}
+  .btn-main:hover{background:#1d4ed8;}
+  .btn-ghost{background:#fff;border:1px solid var(--line);color:var(--text);padding:8px 13px;}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-mini{background:var(--accent-dim);color:var(--accent);padding:4px 9px;font-size:11.5px;border-radius:5px;}
+  .btn-mini.danger{background:#FEECEC;color:var(--danger);}
+  .btn-mini:hover{filter:brightness(0.95);}
+  .hire-row{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px;background:#FAFBFC;position:relative;}
+  .hire-row .row{margin-bottom:6px;}
+  .hire-row .rm{position:absolute;top:8px;right:8px;}
+
+  /* 필드 그룹 — 색상으로 시각 구분 */
+  .field-group{border:1px solid var(--line);border-left:4px solid var(--fg-color, var(--accent));border-radius:8px;padding:12px 14px 12px 16px;margin-bottom:10px;background:#FCFCFD;}
+  .field-group-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .field-group-head .lbl{font-weight:700;font-size:13.5px;color:var(--fg-color, var(--text));}
+  .field-group .badge-count{font-size:10.5px;background:var(--fg-tint,var(--accent-dim));color:var(--fg-color,var(--accent));padding:2px 7px;border-radius:20px;font-weight:700;}
+  .chk-line{display:flex;align-items:flex-start;gap:8px;font-size:13px;padding:4px 0;}
+  .chk-line input[type=checkbox]{margin-top:3px;width:15px;height:15px;flex-shrink:0;accent-color:var(--fg-color, var(--accent));}
+  .chk-line.sub{margin-left:20px;gap:6px;}
+  .chk-group-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;}
+  @media (max-width:520px){.chk-group-grid{grid-template-columns:1fr;}}
+  .side-input{margin-left:2px;flex:1;max-width:240px;}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+  .status{font-size:12px;color:var(--sub);margin-top:8px;min-height:16px;}
+  .status.ok{color:var(--ok);} .status.err{color:var(--danger);}
+  .rm-field{margin-left:auto;}
+  .rw-header{display:grid;grid-template-columns:1fr 60px 60px;font-size:11px;color:var(--sub);font-weight:700;padding:2px 4px;margin-bottom:2px;}
+  .rw-row{display:grid;grid-template-columns:1fr 60px 60px;align-items:center;padding:5px 4px;font-size:12.8px;border-top:1px solid #EEF0F3;}
+  .rw-row:first-of-type{border-top:none;}
+  .rw-label{color:var(--text);}
+  .rw-chk{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--sub);}
+  .rw-chk input{accent-color:var(--fg-color,var(--accent));width:14px;height:14px;}
+
+  /* preview / 출력 — 내용만, 색감 있는 카드형 */
+  #previewHost{background:#fff;border:1px solid var(--line);border-radius:10px;padding:4px;}
+  .doc-body{padding:20px 22px;font-size:13.5px;line-height:1.8;}
+  .doc-body .intro{white-space:pre-wrap;margin-bottom:16px;padding:12px 14px;background:#F7F9FC;border-left:3px solid var(--accent);border-radius:6px;color:#333;}
+  .doc-body .rule{text-align:center;font-weight:700;margin:16px 0;letter-spacing:.15em;color:var(--sub);font-size:12px;}
+  .doc-body .h1-num{font-weight:900;margin:16px 0 6px;font-size:13.5px;color:var(--text);display:flex;align-items:center;gap:8px;}
+  .doc-body .h1-num::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+  .doc-body .out-item{margin:8px 0;padding:9px 12px;border-radius:7px;border-left:3px solid var(--item-color, var(--accent));background:var(--item-tint, #F5F8FF);}
+  .doc-body .out-item .h2-num{font-weight:700;color:var(--item-color, var(--accent));}
+  .doc-body .plain-item{margin:3px 0 0 4px;color:#444;font-size:12.8px;}
+  .doc-body .assignee{color:#8a8a8a;font-weight:400;font-size:12px;}
+  .doc-body .closing{margin-top:20px;color:#555;}
+
+  .admin-toggle{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--sub);margin-bottom:8px;}
+  .admin-panel{display:none;}
+  .admin-panel.on{display:block;}
+  .fld-editor-row{display:flex;gap:6px;align-items:center;border:1px dashed var(--line);border-radius:7px;padding:7px 9px;margin-bottom:6px;font-size:12.5px;}
+  .fld-editor-row select{flex:0 0 100px;}
+  .fld-editor-row input{flex:1;}
+  small.hint{color:var(--sub);font-size:11.5px;display:block;margin-top:4px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>신규입사자 전자결재 문서 생성기</h1>
+    <span class="badge">엄마감동팀 · CS/품질관리</span>
+  </header>
+
+  <div class="layout">
+
+    <!-- ── LEFT: 입력 폼 ── -->
+    <div>
+
+      <div class="card">
+        <div class="sec-title">입사자 정보</div>
+        <div id="hireList"></div>
+        <button class="btn-ghost" id="addHireBtn">+ 입사자 추가</button>
+      </div>
+
+      <div class="card">
+        <div class="sec-title">시작 문구</div>
+        <textarea id="introText"></textarea>
+      </div>
+
+      <div class="card" id="fieldsCard">
+        <div class="sec-title">권한 요청 항목 (필요한 것만 체크)</div>
+        <div id="fieldsHost"></div>
+
+        <div class="admin-toggle" style="margin-top:12px;">
+          <label><input type="checkbox" id="adminModeChk"> 항목 추가/삭제 편집</label>
+        </div>
+        <div class="admin-panel" id="adminPanel"></div>
+      </div>
+
+      <div class="card">
+        <div class="sec-title">설정 저장 / 불러오기</div>
+        <label class="f">이 구성을 이름 지정해 저장</label>
+        <div class="row">
+          <input type="text" id="saveNameInput" placeholder="예: ㅇㅇㅇ팀 AP, ㅇㅇㅇ팀 SQ...">
+          <button class="btn-main" id="saveConfigBtn" style="flex:0 0 auto;">저장</button>
+        </div>
+        <label class="f">저장된 설정 불러오기</label>
+        <div class="row">
+          <select id="loadSelect" style="flex:1;"><option value="">-- 저장된 설정 선택 --</option></select>
+          <button class="btn-ghost" id="loadConfigBtn" style="flex:0 0 auto;">불러오기</button>
+          <button class="btn-mini danger" id="deleteConfigBtn" style="flex:0 0 auto;">삭제</button>
+        </div>
+        <div class="status" id="gasStatus"></div>
+      </div>
+
+    </div>
+
+    <!-- ── RIGHT: 미리보기 & 출력 ── -->
+    <div style="position:sticky;top:20px;">
+      <div class="card">
+        <div class="sec-title">미리보기 (내용만 출력됩니다)</div>
+        <div id="previewHost"></div>
+        <div class="toolbar">
+          <button class="btn-main" id="exportBtn">HTML 파일로 출력</button>
+          <button class="btn-ghost" id="copyHtmlBtn">HTML 소스 복사</button>
+        </div>
+        <div class="status" id="exportStatus"></div>
+        <small class="hint">출력된 HTML은 다우오피스 전자결재 본문에 내용만 그대로 붙여넣으면 됩니다.</small>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   설정
+   ============================================================ */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbw_zRPrNid5yiXXfdYcoh_CmziBwFxMhAZxiS0eK33X8Gfe6fgI30_0CXz9g25U28mhbQ/exec';
+const POSITIONS = ['스텝','AP','JP','SP','PP','VP','AQ','JQ','SQ','PQ','VQ','파트장','팀장'];
+const DEFAULT_INTRO = '아래와 같이 신규 입사자에 대한 시스템 접근 권한 요청 및 계정생성 요청 드리오니 확인 후 재가하여 주시기 바랍니다.';
+
+// 색상 팔레트 (필드 그룹별 시각 구분용)
+const PALETTE = [
+  { c:'#2563EB', t:'#EAF0FE' }, // blue
+  { c:'#0891B2', t:'#E3F6FA' }, // teal
+  { c:'#059669', t:'#E4F5EE' }, // green
+  { c:'#D97706', t:'#FDF1E1' }, // amber
+  { c:'#7C3AED', t:'#F1EAFE' }, // violet
+  { c:'#DB2777', t:'#FCE7F3' }  // pink
+];
+
+/* ── 기본 항목 (두 캡처 통합, 팀 구분 없이 전체 나열) ── */
+const DEFAULT_FIELDS = [
+  { type:'check', id:'erp', label:'영림원ERP 사용자 추가', tagAssignees:true, default:false },
+  { type:'check', id:'band', label:'밴드 가입', tagAssignees:true, default:false,
+    sub:[
+      { id:'band_note', placeholder:'밴드명', default:'꿈비문화 - 감사,칭찬,행사사진 등' },
+      { id:'band_id', placeholder:'초대용 ID / 연락처', default:'' }
+    ] },
+  { type:'rwgroup', id:'nas', label:'NAS 접근권한', tagAssignees:true,
+    options:[
+      { id:'nas_00', label:'ggumbi_d0 > 00_공통업무', defaultRead:false, defaultWrite:false },
+      { id:'nas_02', label:'ggumbi_d0 > 02_브랜드디자인', defaultRead:false, defaultWrite:false },
+      { id:'nas_03', label:'ggumbi_d0 > 03_국내사업', defaultRead:false, defaultWrite:false },
+      { id:'nas_04', label:'ggumbi_d0 > 04_해외사업', defaultRead:false, defaultWrite:false },
+      { id:'nas_05', label:'ggumbi_d0 > 05_마케팅', defaultRead:false, defaultWrite:false },
+      { id:'nas_06', label:'ggumbi_d0 > 06_엄마감동팀', defaultRead:false, defaultWrite:false },
+      { id:'nas_09', label:'ggumbi_d0 > 09_구매팀', defaultRead:false, defaultWrite:false },
+      { id:'nas_10', label:'ggumbi_d0 > 10_품질혁신팀', defaultRead:false, defaultWrite:false },
+      { id:'nas_11', label:'ggumbi_d0 > 11_물류팀', defaultRead:false, defaultWrite:false },
+      { id:'nas_14', label:'ggumbi_d0 > 14_상품기획소싱팀', defaultRead:false, defaultWrite:false },
+      { id:'nas_1000', label:'ggumbi_d0 > 1000_소브', defaultRead:false, defaultWrite:false }
+    ] },
+  { type:'checkgroup', id:'ezadmin', label:'이지어드민 계정 생성 및 권한부여', tagAssignees:true, columns:2, selectAll:true,
+    options:[
+      { id:'ez_basic', label:'기본정보관리', default:false },
+      { id:'ez_seller_only', label:'판매처관리-전용', default:false },
+      { id:'ez_supplier_only', label:'공급처관리-전용', default:false },
+      { id:'ez_product', label:'상품관리', default:false },
+      { id:'ez_cost_deny', label:'원가조회불가(정산/통계 메뉴 제외)', default:false },
+      { id:'ez_bulk_deny', label:'선택상품일괄처리불가', default:false },
+      { id:'ez_order', label:'주문배송관리', default:false },
+      { id:'ez_cs', label:'C/S관리', default:false },
+      { id:'ez_order_del_deny', label:'주문삭제불가', default:false },
+      { id:'ez_order_create_deny', label:'주문생성불가', default:false },
+      { id:'ez_order_copy_deny', label:'주문복사불가', default:false },
+      { id:'ez_option_exchange', label:'옵션교환가능 & 상품추가불가', default:false },
+      { id:'ez_cspop_only', label:'CS팝업전용', default:false },
+      { id:'ez_other_cs_del_deny', label:'타계정 CS내역삭제불가', default:false },
+      { id:'ez_stock', label:'재고관리', default:false },
+      { id:'ez_stock_view_only', label:'재고관리-조회전용', default:false },
+      { id:'ez_stock_current_view_only', label:'현재고조회-조회전용', default:false },
+      { id:'ez_stock_login', label:'재고실사 로그인 가능', default:false },
+      { id:'ez_settlement', label:'정산/통계', default:false },
+      { id:'ez_sales_only', label:'매출관리-전용', default:false },
+      { id:'ez_product_sales_only', label:'상품매출통계-전용', default:false },
+      { id:'ez_cc', label:'고객센터', default:false }
+    ] },
+  { type:'check', id:'cafe24', label:'카페24 계정 생성 및 권한부여', tagAssignees:true, default:false },
+  { type:'check', id:'douoffice', label:'다우오피스 가입 / ID 생성 (가입 요청)', tagAssignees:true, default:false,
+    sub:[ { id:'douoffice_id', placeholder:'ID (예: wssim231)', default:'' } ] },
+  { type:'check', id:'notion', label:'노션(Notion) 가입 / 접속 권한요청', tagAssignees:true, default:false,
+    sub:[ { id:'notion_id', placeholder:'ID 또는 이메일 (예: wsshim627@naver.com)', default:'' } ] }
+];
+
+/* ============================================================
+   상태
+   ============================================================ */
+let state = {
+  fields: JSON.parse(JSON.stringify(DEFAULT_FIELDS)),
+  values: {},
+  hires: [ { name:'', position:'SQ', date:'' } ],
+  intro: DEFAULT_INTRO,
+  savedConfigs: [] // { name, savedAt, fields, values, intro }
+};
+
+function ensureValues(){
+  state.fields.forEach(f=>{
+    if(f.type==='check' && !(f.id in state.values)) state.values[f.id] = !!f.default;
+    if(f.type==='checkgroup') f.options.forEach(o=>{ if(!((f.id+'.'+o.id) in state.values)) state.values[f.id+'.'+o.id] = !!o.default; });
+    if(f.type==='rwgroup') f.options.forEach(o=>{
+      if(!((f.id+'.'+o.id+'.read') in state.values)) state.values[f.id+'.'+o.id+'.read'] = !!o.defaultRead;
+      if(!((f.id+'.'+o.id+'.write') in state.values)) state.values[f.id+'.'+o.id+'.write'] = !!o.defaultWrite;
+    });
+    if(f.sub) f.sub.forEach(s=>{ if(!(s.id in state.values)) state.values[s.id] = s.default || ''; });
+  });
+}
+
+/* ============================================================
+   렌더링 — 입사자 목록
+   ============================================================ */
+function renderHires(){
+  const host = document.getElementById('hireList');
+  host.innerHTML = state.hires.map((h,i)=>`
+    <div class="hire-row" data-i="${i}">
+      ${state.hires.length>1?`<button class="btn-mini danger rm" onclick="removeHire(${i})">삭제</button>`:''}
+      <div class="row">
+        <div>
+          <label class="f">이름</label>
+          <input type="text" value="${escapeAttr(h.name)}" oninput="updateHire(${i},'name',this.value)" placeholder="예: 이대훈">
+        </div>
+        <div>
+          <label class="f">직급</label>
+          <select onchange="updateHire(${i},'position',this.value)">
+            ${POSITIONS.map(p=>`<option value="${p}" ${p===h.position?'selected':''}>${p}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label class="f">입사일</label>
+          <input type="date" value="${escapeAttr(h.date)}" oninput="updateHire(${i},'date',this.value)">
+        </div>
+      </div>
+    </div>
+  `).join('');
+  renderPreview();
+}
+function updateHire(i,key,val){ state.hires[i][key]=val; renderPreview(); }
+function removeHire(i){ state.hires.splice(i,1); renderHires(); }
+document.getElementById('addHireBtn').onclick=()=>{
+  state.hires.push({name:'',position:'SQ',date:''});
+  renderHires();
+};
+
+/* ============================================================
+   렌더링 — 필드(권한 요청 항목)
+   ============================================================ */
+function colorFor(i){ return PALETTE[i % PALETTE.length]; }
+
+function renderFields(){
+  ensureValues();
+  const host = document.getElementById('fieldsHost');
+  host.innerHTML = state.fields.map((f,i)=>{
+    const col = colorFor(i);
+    const style = `--fg-color:${col.c};--fg-tint:${col.t};`;
+    if(f.type==='check'){
+      let subHtml = '';
+      if(f.sub){
+        subHtml = f.sub.map(s=>`<div class="chk-line sub"><input type="text" class="side-input" value="${escapeAttr(state.values[s.id]||'')}"
+          placeholder="${escapeAttr(s.placeholder||'')}" oninput="setVal('${s.id}',this.value)"></div>`).join('');
+      }
+      return `<div class="field-group" style="${style}">
+        <label class="chk-line"><input type="checkbox" ${state.values[f.id]?'checked':''} onchange="setVal('${f.id}',this.checked)"><span>${escapeHtml(f.label)}</span>
+        <button class="btn-mini danger rm-field" style="display:none;" data-idx="${i}" onclick="removeField(${i})">삭제</button></label>
+        ${subHtml}
+      </div>`;
+    }
+    if(f.type==='checkgroup'){
+      const checkedCount = f.options.filter(o=>state.values[f.id+'.'+o.id]).length;
+      const opts = f.options.map(o=>`
+        <label class="chk-line"><input type="checkbox" ${state.values[f.id+'.'+o.id]?'checked':''} onchange="setVal('${f.id+'.'+o.id}',this.checked)"><span>${escapeHtml(o.label)}</span></label>
+      `).join('');
+      const selectAllBtns = f.selectAll ? `<span>
+          <button class="btn-mini" onclick="toggleAllCheckgroup('${f.id}',true)">전체 선택</button>
+          <button class="btn-mini danger" onclick="toggleAllCheckgroup('${f.id}',false)">전체 해제</button>
+        </span>` : '';
+      return `<div class="field-group" style="${style}">
+        <div class="field-group-head"><span class="lbl">${escapeHtml(f.label)}</span>
+          <span style="display:flex;align-items:center;gap:8px;">${selectAllBtns}<span class="badge-count">${checkedCount}/${f.options.length}</span></span>
+        </div>
+        <div class="${f.columns===2?'chk-group-grid':''}">${opts}</div>
+      </div>`;
+    }
+    if(f.type==='rwgroup'){
+      const checkedCount = f.options.filter(o=>state.values[f.id+'.'+o.id+'.read']||state.values[f.id+'.'+o.id+'.write']).length;
+      const rows = f.options.map(o=>`
+        <div class="rw-row">
+          <span class="rw-label">${escapeHtml(o.label)}</span>
+          <label class="rw-chk"><input type="checkbox" ${state.values[f.id+'.'+o.id+'.read']?'checked':''} onchange="setVal('${f.id+'.'+o.id}.read',this.checked)"> Read</label>
+          <label class="rw-chk"><input type="checkbox" ${state.values[f.id+'.'+o.id+'.write']?'checked':''} onchange="setVal('${f.id+'.'+o.id}.write',this.checked)"> Write</label>
+        </div>
+      `).join('');
+      return `<div class="field-group" style="${style}">
+        <div class="field-group-head"><span class="lbl">${escapeHtml(f.label)}</span>
+          <span style="display:flex;align-items:center;gap:8px;">
+            <button class="btn-mini" onclick="toggleAllRw('${f.id}','read',true)">읽기 전체</button>
+            <button class="btn-mini" onclick="toggleAllRw('${f.id}','write',true)">쓰기 전체</button>
+            <button class="btn-mini danger" onclick="toggleAllRw('${f.id}','both',false)">전체 해제</button>
+            <span class="badge-count">${checkedCount}/${f.options.length}</span>
+          </span>
+        </div>
+        <div class="rw-header"><span></span><span>Read</span><span>Write</span></div>
+        ${rows}
+      </div>`;
+    }
+    if(f.type==='text'){
+      return `<div class="field-group" style="${style}">
+        <label class="f" style="margin-top:0;">${escapeHtml(f.label)}</label>
+        <input type="text" value="${escapeAttr(state.values[f.id]||'')}" placeholder="${escapeAttr(f.placeholder||'')}" oninput="setVal('${f.id}',this.value)">
+      </div>`;
+    }
+    return '';
+  }).join('');
+  renderAdminFieldButtons();
+}
+function setVal(id,val){ state.values[id]=val; renderPreview(); }
+function toggleAllCheckgroup(fieldId,val){
+  const f = state.fields.find(x=>x.id===fieldId);
+  if(!f) return;
+  f.options.forEach(o=>{ state.values[fieldId+'.'+o.id] = val; });
+  renderFields(); renderPreview();
+}
+function toggleAllRw(fieldId,which,val){
+  const f = state.fields.find(x=>x.id===fieldId);
+  if(!f) return;
+  f.options.forEach(o=>{
+    if(which==='read'||which==='both') state.values[fieldId+'.'+o.id+'.read'] = val;
+    if(which==='write'||which==='both') state.values[fieldId+'.'+o.id+'.write'] = val;
+  });
+  renderFields(); renderPreview();
+}
+
+/* ============================================================
+   항목 추가/삭제 편집
+   ============================================================ */
+document.getElementById('adminModeChk').addEventListener('change',e=>{
+  document.getElementById('adminPanel').classList.toggle('on', e.target.checked);
+  document.querySelectorAll('.rm-field').forEach(b=>b.style.display = e.target.checked ? 'inline-block' : 'none');
+  renderAdminPanel();
+});
+function renderAdminFieldButtons(){
+  const on = document.getElementById('adminModeChk').checked;
+  document.querySelectorAll('.rm-field').forEach(b=>b.style.display = on ? 'inline-block' : 'none');
+}
+function renderAdminPanel(){
+  const host = document.getElementById('adminPanel');
+  if(!host.classList.contains('on')){ host.innerHTML=''; return; }
+  host.innerHTML = `
+    <small class="hint">새 항목을 추가합니다. 체크박스(단일) / 체크그룹(여러 옵션, 콤마로 구분) / 텍스트입력 중 선택하세요.</small>
+    <div class="fld-editor-row" style="margin-top:8px;">
+      <select id="newFldType"><option value="check">체크박스</option><option value="checkgroup">체크그룹</option><option value="text">텍스트</option></select>
+      <input type="text" id="newFldLabel" placeholder="라벨">
+      <button class="btn-mini" onclick="addField()">추가</button>
+    </div>
+    <input type="text" id="newFldOptions" placeholder="체크그룹인 경우: 옵션명을 콤마로 구분해 입력 (예: 옵션A, 옵션B)" style="margin-top:6px;">
+  `;
+}
+function addField(){
+  const type = document.getElementById('newFldType').value;
+  const label = document.getElementById('newFldLabel').value.trim();
+  if(!label){ alert('라벨을 입력하세요.'); return; }
+  const id = 'f_'+Date.now();
+  if(type==='checkgroup'){
+    const raw = document.getElementById('newFldOptions').value;
+    const opts = raw.split(',').map(s=>s.trim()).filter(Boolean).map((l,idx)=>({id:'o'+idx+'_'+Date.now(),label:l,default:false}));
+    if(!opts.length){ alert('옵션을 콤마로 구분해 입력하세요.'); return; }
+    state.fields.push({ type:'checkgroup', id, label, tagAssignees:true, columns:2, options:opts });
+  } else if(type==='check'){
+    state.fields.push({ type:'check', id, label, tagAssignees:true, default:false });
+  } else {
+    state.fields.push({ type:'text', id, label, placeholder:'' });
+  }
+  document.getElementById('newFldLabel').value='';
+  document.getElementById('newFldOptions').value='';
+  renderAdminPanel(); renderFields(); renderPreview();
+}
+function removeField(i){
+  state.fields.splice(i,1);
+  renderFields(); renderPreview();
+}
+
+/* ============================================================
+   시작문구
+   ============================================================ */
+document.getElementById('introText').value = state.intro;
+document.getElementById('introText').addEventListener('input',e=>{ state.intro = e.target.value; renderPreview(); });
+
+/* ============================================================
+   미리보기 / 최종 HTML 생성 (내용만)
+   ============================================================ */
+function buildDocInnerHtml(){
+  const names = state.hires.filter(h=>h.name.trim());
+  const intro = document.getElementById('introText').value || '';
+
+  const hireLines = names.map(h=>{
+    let line = `${escapeHtml(h.name)} ${escapeHtml(h.position)}`;
+    if(h.date) line += ` (입사일 : ${formatDateKr(h.date)})`;
+    return line;
+  }).join('<br>');
+
+  let itemHtml = '';
+  let n = 1;
+  state.fields.forEach((f,i)=>{
+    const col = colorFor(i);
+    const istyle = `--item-color:${col.c};--item-tint:${col.t};`;
+    const assigneeTag = f.tagAssignees && names.length ? `<span class="assignee"> _ ${names.map(h=>`${escapeHtml(h.name)} ${escapeHtml(h.position)}`).join(', ')}</span>` : '';
+    if(f.type==='check'){
+      if(!state.values[f.id]) return;
+      let subLines = '';
+      if(f.sub){
+        f.sub.forEach(s=>{
+          if(state.values[s.id]) subLines += `<div class="plain-item">- ${escapeHtml(state.values[s.id])}</div>`;
+        });
+      }
+      itemHtml += `<div class="out-item" style="${istyle}"><span class="h2-num">${n}) ${escapeHtml(f.label)}</span>${assigneeTag}${subLines}</div>`;
+      n++;
+    } else if(f.type==='checkgroup'){
+      const checked = f.options.filter(o=>state.values[f.id+'.'+o.id]);
+      if(!checked.length) return;
+      const lines = checked.map(o=>`<div class="plain-item">- ${escapeHtml(o.label)}</div>`).join('');
+      itemHtml += `<div class="out-item" style="${istyle}"><span class="h2-num">${n}) ${escapeHtml(f.label)}</span>${assigneeTag}${lines}</div>`;
+      n++;
+    } else if(f.type==='rwgroup'){
+      const checked = f.options.filter(o=>state.values[f.id+'.'+o.id+'.read']||state.values[f.id+'.'+o.id+'.write']);
+      if(!checked.length) return;
+      const lines = checked.map(o=>{
+        const r = state.values[f.id+'.'+o.id+'.read'] ? 'O' : 'X';
+        const w = state.values[f.id+'.'+o.id+'.write'] ? 'O' : 'X';
+        return `<div class="plain-item">- ${escapeHtml(o.label)} : Read(${r}), Write(${w})</div>`;
+      }).join('');
+      itemHtml += `<div class="out-item" style="${istyle}"><span class="h2-num">${n}) ${escapeHtml(f.label)}</span>${assigneeTag}${lines}</div>`;
+      n++;
+    } else if(f.type==='text'){
+      if(!state.values[f.id]) return;
+      itemHtml += `<div class="out-item" style="${istyle}"><span class="h2-num">${n}) ${escapeHtml(f.label)} : ${escapeHtml(state.values[f.id])}</span></div>`;
+      n++;
+    }
+  });
+  if(!itemHtml) itemHtml = '<div class="plain-item" style="margin-left:0;color:#999;">(선택된 권한 요청 항목이 없습니다)</div>';
+
+  return `<div class="doc-body">
+    <div class="intro">${escapeHtml(intro)}</div>
+    <div class="rule">━━━━━━━━━━ 아　래 ━━━━━━━━━━</div>
+    <div class="h1-num">1. 입사자</div>
+    <div class="plain-item">${hireLines || '<span style="color:#999;">입사자 정보를 입력하세요</span>'}</div>
+    <div class="h1-num" style="margin-top:16px;">2. 권한요청</div>
+    ${itemHtml}
+    <div class="closing">이상입니다.</div>
+  </div>`;
+}
+function renderPreview(){ document.getElementById('previewHost').innerHTML = buildDocInnerHtml(); }
+
+function buildFullHtmlDocument(){
+  const inner = buildDocInnerHtml();
+  return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>신규입사자 권한요청</title>
+<style>
+  body{margin:0;background:#fff;font-family:'Malgun Gothic','Noto Sans KR',sans-serif;color:#1B2027;}
+  .doc-wrap{max-width:820px;margin:0 auto;padding:8px;}
+  .doc-body{padding:6px 4px;font-size:13.5px;line-height:1.8;}
+  .doc-body .intro{white-space:pre-wrap;margin-bottom:16px;padding:12px 14px;background:#F7F9FC;border-left:3px solid #2563EB;border-radius:6px;color:#333;}
+  .doc-body .rule{text-align:center;font-weight:700;margin:16px 0;letter-spacing:.15em;color:#6B7280;font-size:12px;}
+  .doc-body .h1-num{font-weight:900;margin:16px 0 6px;font-size:13.5px;color:#1B2027;}
+  .doc-body .out-item{margin:8px 0;padding:9px 12px;border-radius:7px;border-left:3px solid var(--item-color, #2563EB);background:var(--item-tint, #F5F8FF);}
+  .doc-body .h2-num{font-weight:700;color:var(--item-color, #2563EB);}
+  .doc-body .plain-item{margin:3px 0 0 4px;color:#444;font-size:12.8px;}
+  .doc-body .assignee{color:#8a8a8a;font-weight:400;font-size:12px;}
+  .doc-body .closing{margin-top:20px;color:#555;}
+</style>
+</head>
+<body>
+<div class="doc-wrap">
+${inner}
+</div>
+</body>
+</html>`;
+}
+
+document.getElementById('exportBtn').onclick=()=>{
+  const html = buildFullHtmlDocument();
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const nameSlug = state.hires.filter(h=>h.name.trim()).map(h=>h.name).join('_') || '신규입사자';
+  a.href = url;
+  a.download = `전자결재_${nameSlug}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+  const st = document.getElementById('exportStatus');
+  st.textContent = 'HTML 파일이 다운로드되었습니다.'; st.className='status ok';
+};
+document.getElementById('copyHtmlBtn').onclick=async ()=>{
+  const html = buildFullHtmlDocument();
+  try{
+    await navigator.clipboard.writeText(html);
+    const st = document.getElementById('exportStatus');
+    st.textContent = 'HTML 소스가 클립보드에 복사되었습니다.'; st.className='status ok';
+  }catch(e){
+    const st = document.getElementById('exportStatus');
+    st.textContent = '복사 실패 — 브라우저 권한을 확인하세요.'; st.className='status err';
+  }
+};
+
+/* ============================================================
+   GAS 연동 — 이름 지정 저장 / 드롭다운 불러오기
+   ============================================================ */
+function renderLoadSelect(){
+  const sel = document.getElementById('loadSelect');
+  sel.innerHTML = '<option value="">-- 저장된 설정 선택 --</option>' +
+    state.savedConfigs.map(c=>`<option value="${escapeAttr(c.name)}">${escapeHtml(c.name)}</option>`).join('');
+}
+
+document.getElementById('saveConfigBtn').onclick=async ()=>{
+  const name = document.getElementById('saveNameInput').value.trim();
+  const st = document.getElementById('gasStatus');
+  if(!name){ st.textContent='저장할 이름을 입력하세요.'; st.className='status err'; return; }
+  const entry = { name, savedAt: new Date().toISOString(), fields: state.fields, values: state.values, intro: state.intro };
+  const idx = state.savedConfigs.findIndex(c=>c.name===name);
+  if(idx>=0) state.savedConfigs[idx] = entry; else state.savedConfigs.push(entry);
+
+  st.textContent = '저장 중...'; st.className='status';
+  try{
+    const res = await fetch(GAS_URL, { method:'POST', body: JSON.stringify({ action:'saveConfig', config:{ savedConfigs: state.savedConfigs } }) });
+    const data = await res.json();
+    if(data.ok){ st.textContent = `"${name}" 저장 완료 (${new Date().toLocaleTimeString('ko-KR')})`; st.className='status ok'; renderLoadSelect(); document.getElementById('saveNameInput').value=''; }
+    else { st.textContent = '저장 실패: ' + (data.error||'unknown'); st.className='status err'; }
+  }catch(e){
+    st.textContent = '저장 실패: ' + e.message + ' (Code.gs의 SHEET_ID 설정 및 웹앱 배포 상태를 확인하세요)';
+    st.className='status err';
+  }
+};
+
+document.getElementById('loadConfigBtn').onclick=()=>{
+  const name = document.getElementById('loadSelect').value;
+  const st = document.getElementById('gasStatus');
+  if(!name){ st.textContent='불러올 설정을 선택하세요.'; st.className='status err'; return; }
+  const entry = state.savedConfigs.find(c=>c.name===name);
+  if(!entry){ st.textContent='해당 설정을 찾을 수 없습니다.'; st.className='status err'; return; }
+  state.fields = JSON.parse(JSON.stringify(entry.fields));
+  state.values = JSON.parse(JSON.stringify(entry.values));
+  state.intro = entry.intro || DEFAULT_INTRO;
+  document.getElementById('introText').value = state.intro;
+  renderFields(); renderPreview();
+  st.textContent = `"${name}" 불러오기 완료`; st.className='status ok';
+};
+
+document.getElementById('deleteConfigBtn').onclick=async ()=>{
+  const name = document.getElementById('loadSelect').value;
+  const st = document.getElementById('gasStatus');
+  if(!name){ st.textContent='삭제할 설정을 선택하세요.'; st.className='status err'; return; }
+  if(!confirm(`"${name}" 설정을 삭제할까요?`)) return;
+  state.savedConfigs = state.savedConfigs.filter(c=>c.name!==name);
+  try{
+    const res = await fetch(GAS_URL, { method:'POST', body: JSON.stringify({ action:'saveConfig', config:{ savedConfigs: state.savedConfigs } }) });
+    const data = await res.json();
+    if(data.ok){ st.textContent = `"${name}" 삭제 완료`; st.className='status ok'; renderLoadSelect(); }
+    else { st.textContent = '삭제 실패: ' + (data.error||'unknown'); st.className='status err'; }
+  }catch(e){
+    st.textContent = '삭제 실패: ' + e.message; st.className='status err';
+  }
+};
+
+async function loadFromGasOnStart(){
+  const st = document.getElementById('gasStatus');
+  try{
+    const res = await fetch(GAS_URL + '?action=getConfig');
+    const data = await res.json();
+    if(data.ok && data.config && data.config.savedConfigs){
+      state.savedConfigs = data.config.savedConfigs;
+      renderLoadSelect();
+      st.textContent = `저장된 설정 ${state.savedConfigs.length}개 불러옴`; st.className='status';
+    }
+  }catch(e){
+    st.textContent = '(GAS 연동 대기 중 — Code.gs 배포 후 저장/불러오기가 가능합니다)'; st.className='status';
+  }
+}
+
+/* ============================================================
+   유틸
+   ============================================================ */
+function escapeHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s){ return escapeHtml(s); }
+function formatDateKr(d){
+  const dt = new Date(d);
+  if(isNaN(dt)) return d;
+  return `${dt.getFullYear()}. ${dt.getMonth()+1}. ${dt.getDate()}`;
+}
+
+/* ============================================================
+   초기화
+   ============================================================ */
+function init(){
+  renderHires();
+  renderFields();
+  renderPreview();
+  loadFromGasOnStart();
+}
+init();
+</script>
+</body>
+</html>

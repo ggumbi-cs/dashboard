@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>2607 월간 보고 · 엄마감동팀</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f0f4f8; --card:#fff; --card2:#f8fafc; --card3:#f1f5f9;
+  --border:#dde3ea; --border2:#e8ecf0;
+  --navy:#0c1e3c; --blue:#1a56db; --blue2:#2563eb; --blue3:#3b82f6;
+  --teal:#0d9488; --teal2:#0f766e;
+  --red:#c81e1e; --red2:#b91c1c; --red3:#ef4444;
+  --redbg:rgba(200,30,30,0.05); --redborder:rgba(200,30,30,0.18);
+  --amber:#b45309; --amber2:#d97706; --amberbg:rgba(180,83,9,0.05);
+  --green:#166534; --green2:#15803d; --greenbg:rgba(22,101,52,0.05);
+  --purple:#5b21b6; --purplebg:rgba(91,33,182,0.05);
+  --text:#0f172a; --text2:#334155; --text3:#64748b; --text4:#94a3b8;
+  --ai1:#4338ca; --ai2:#0f766e;
+  --ch:#0090cc;
+}
+html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Noto Sans KR',sans-serif;color:var(--text);font-size:13px;line-height:1.5;}
+
+.header{background:linear-gradient(118deg,#0c1e3c 0%,#1a3a6c 45%,#0d4f6e 100%);padding:24px 32px 20px;position:relative;overflow:hidden;}
+.header::after{content:'';position:absolute;right:-60px;top:-60px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(26,86,219,0.22) 0%,transparent 70%);pointer-events:none;}
+.header::before{content:'';position:absolute;left:0;bottom:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);}
+.hdr-row{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;position:relative;z-index:1;}
+.hdr-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:10px;}
+.hdr-eyebrow::before{content:'';width:20px;height:1px;background:rgba(255,255,255,0.3);}
+.hdr-title{font-size:28px;font-weight:900;color:#fff;letter-spacing:-0.8px;line-height:1.1;}
+.hdr-title em{font-style:normal;color:#7dd3fc;}
+.hdr-range{font-size:12px;color:rgba(255,255,255,0.5);margin-top:6px;}
+.hdr-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+.hdr-chip{font-size:10px;color:rgba(255,255,255,0.72);background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);padding:3px 10px;border-radius:20px;display:flex;align-items:center;gap:4px;}
+.hdr-chip b{color:#fff;}
+.hdr-chip.warn{background:rgba(239,68,68,0.18);border-color:rgba(239,68,68,0.4);color:#fca5a5;}
+.hdr-chip.warn b{color:#fca5a5;}
+.hdr-chip.good{background:rgba(34,197,94,0.16);border-color:rgba(34,197,94,0.35);color:#bbf7d0;}
+.hdr-chip.good b{color:#bbf7d0;}
+
+.note-banner{padding:14px 32px;background:rgba(180,83,9,0.06);border-bottom:1px solid rgba(180,83,9,0.18);display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--amber);}
+
+.body{padding:22px 28px;display:grid;gap:22px;}
+
+.sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.sec-acc{width:3px;border-radius:2px;flex-shrink:0;}
+.sec-ttl{font-size:14px;font-weight:800;color:var(--text);}
+.sec-num{font-size:12px;font-weight:700;color:var(--text3);background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.07);padding:2px 9px;border-radius:3px;margin-left:auto;}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}
+.card-ttl{font-size:9.5px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px;}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:14px 16px;min-width:0;}
+.kpi-lbl{font-size:9.5px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.kpi-val{font-size:22px;font-weight:900;font-family:'Inter',sans-serif;color:var(--text);line-height:1.1;margin-bottom:4px;}
+.kpi-val.sm{font-size:17px;}
+.kpi-cmp{font-size:10.5px;color:var(--text3);}
+.kpi-cmp b{font-weight:700;}
+.kpi-cmp .up{color:var(--green2);}
+.kpi-cmp .dn{color:var(--red2);}
+.kpi-cmp .neu{color:var(--text3);}
+.kpi-bar{height:3px;border-radius:2px;margin-top:8px;background:var(--border2);}
+.kpi-bar-fill{height:100%;border-radius:2px;}
+
+.cmp-table{width:100%;border-collapse:collapse;font-size:12px;}
+.cmp-table th{background:var(--card3);font-size:10px;font-weight:700;color:var(--text3);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border2);}
+.cmp-table th:not(:first-child){text-align:right;}
+.cmp-table td{padding:9px 12px;border-bottom:1px solid var(--border2);vertical-align:middle;}
+.cmp-table td:not(:first-child){text-align:right;font-family:'Inter',sans-serif;font-weight:600;}
+.cmp-table tr:last-child td{border-bottom:none;}
+.cmp-table .row-lbl{font-size:11.5px;font-weight:600;color:var(--text2);}
+.cmp-table .val-jul{color:var(--blue2);font-weight:700;}
+.cmp-table .delta-up{color:var(--green2);font-size:10px;}
+.cmp-table .delta-dn{color:var(--red2);font-size:10px;}
+.cmp-table .delta-neu{color:var(--text3);font-size:10px;}
+
+.bar-list{display:grid;gap:7px;}
+.bar-row{display:flex;align-items:center;gap:8px;}
+.bar-lbl{font-size:11px;color:var(--text2);width:130px;flex-shrink:0;line-height:1.3;}
+.bar-lbl.narrow{width:90px;}
+.bar-lbl.wide{width:170px;}
+.bar-track{flex:1;height:8px;background:rgba(0,0,0,0.07);border-radius:4px;overflow:hidden;min-width:0;}
+.bar-fill{height:100%;border-radius:4px;transition:width .4s;}
+.bar-val{font-size:11px;font-weight:700;font-family:'Inter',sans-serif;color:var(--text);width:44px;text-align:right;flex-shrink:0;}
+.bar-pct{font-size:10px;color:var(--text3);width:38px;text-align:right;flex-shrink:0;}
+
+.topic-table{width:100%;border-collapse:collapse;font-size:11.5px;}
+.topic-table th{background:var(--card3);font-size:10px;font-weight:700;color:var(--text3);padding:7px 10px;text-align:left;border-bottom:1px solid var(--border2);}
+.topic-table th:not(:first-child){text-align:right;}
+.topic-table td{padding:7px 10px;border-bottom:1px solid var(--border2);}
+.topic-table td:not(:first-child){text-align:right;font-family:'Inter',sans-serif;}
+.topic-table tr:last-child td{border-bottom:none;}
+.topic-table .tp-name{font-weight:600;color:var(--text2);}
+.topic-table .cx{font-family:'Inter',sans-serif;color:var(--text3);font-size:10px;}
+
+.bdg{display:inline-flex;align-items:center;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;}
+.bdg-r{background:var(--redbg);color:var(--red2);border:1px solid var(--redborder);}
+.bdg-a{background:var(--amberbg);color:var(--amber);border:1px solid rgba(180,83,9,0.2);}
+.bdg-b{background:rgba(26,86,219,0.07);color:var(--blue2);border:1px solid rgba(26,86,219,0.2);}
+.bdg-g{background:var(--greenbg);color:var(--green2);border:1px solid rgba(22,101,52,0.2);}
+
+.comment-box{display:flex;gap:8px;align-items:flex-start;padding:9px 12px;border-radius:7px;margin-top:8px;}
+.comment-box.info{background:rgba(67,56,202,0.04);border:1px solid rgba(67,56,202,0.15);}
+.comment-ai{flex-shrink:0;width:20px;height:20px;border-radius:6px;background:linear-gradient(135deg,var(--ai1),var(--ai2));display:flex;align-items:center;justify-content:center;font-size:10px;margin-top:1px;}
+.comment-txt{font-size:11.5px;color:var(--text2);line-height:1.65;min-width:0;}
+.comment-txt strong{color:var(--text);font-weight:700;}
+
+.qc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.qc-card{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:13px 15px;min-width:0;}
+.qc-name{font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;line-height:1.4;}
+.qc-cnt{font-size:18px;font-weight:900;font-family:'Inter',sans-serif;color:var(--navy);}
+.qc-pct{font-size:10px;color:var(--text3);margin-left:4px;}
+.qc-top{font-size:10.5px;color:var(--text3);margin-top:6px;line-height:1.6;}
+.qc-top b{color:var(--red2);font-weight:600;}
+
+.footer{text-align:center;padding:20px;font-size:10px;color:var(--text4);border-top:1px solid var(--border);background:var(--card2);}
+
+@media(max-width:860px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .qc-grid{grid-template-columns:1fr 1fr;}
+  .body{padding:16px;}
+}
+</style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<div class="header">
+  <div class="hdr-row">
+    <div>
+      <div class="hdr-eyebrow">Monthly Report · 엄마감동팀</div>
+      <div class="hdr-title">2026년 <em>7월</em> 월간 보고</div>
+      <div class="hdr-range">2026.07.01 ~ 2026.07.31 &nbsp;·&nbsp; 전월(6월) 대비 분석 포함 (실적 데이터)</div>
+      <div class="hdr-chips">
+        <div class="hdr-chip">💬 <b>총 상담 인입</b> · 8,784건 (▼1,444)</div>
+        <div class="hdr-chip good">📞 <b>전화 응답률</b> · 83.2% (▲10.3%p)</div>
+        <div class="hdr-chip good">🔧 <b>불량 접수</b> · 948건 (▼183)</div>
+        <div class="hdr-chip warn">📦 <b>반품교환율</b> · 5.24% (▲0.66%p)</div>
+        <div class="hdr-chip">⭐ <b>스토어 리뷰</b> · 3,865건 / 4.81점</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="note-banner">
+  ⓘ 이번 회차는 실적 데이터 중심으로 작성되었습니다. 품질개선·이슈 관련 서술(발생·원인·개선요청)은 별도 확정 후 추가 예정입니다.
+</div>
+
+<div class="body">
+
+  <!-- ① 상담 현황 종합 -->
+  <div>
+    <div class="sec-hdr">
+      <div class="sec-acc" style="background:var(--blue);height:20px;"></div>
+      <div class="sec-ttl">① 상담 현황 종합</div>
+      <div class="sec-num">채널톡 직접 집계 기준 · 7월</div>
+    </div>
+
+    <!-- KPI 1행 -->
+    <div class="kpi-grid" style="margin-bottom:10px;">
+      <div class="kpi-card">
+        <div class="kpi-lbl">총 상담 인입</div>
+        <div class="kpi-val">8,784</div>
+        <div class="kpi-cmp">전월 대비 &nbsp;<b class="up">▼ -1,444건</b></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">첫 응답까지</div>
+        <div class="kpi-val sm">12분 44초</div>
+        <div class="kpi-cmp">전월 대비 &nbsp;<b class="up">▼ -13분 47초 개선</b></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">평균 응답 시간</div>
+        <div class="kpi-val sm">15분 25초</div>
+        <div class="kpi-cmp">전월 대비 &nbsp;<b class="up">▼ -20분 54초 개선</b></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">상담 종료까지</div>
+        <div class="kpi-val sm">6시간 35분</div>
+        <div class="kpi-cmp">전월 대비 &nbsp;<b class="up">▼ -18분 17초 개선</b></div>
+      </div>
+    </div>
+
+    <!-- KPI 2행 -->
+    <div class="kpi-grid" style="margin-bottom:10px;">
+      <div class="kpi-card">
+        <div class="kpi-lbl">담당자 이관율</div>
+        <div class="kpi-val">0.6<span style="font-size:14px;">%</span></div>
+        <div class="kpi-cmp">전월 대비 &nbsp;<b class="up">▼ -1.8%p 개선</b></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">전체 방문자</div>
+        <div class="kpi-val">78,891</div>
+        <div class="kpi-cmp">전월 대비 &nbsp;<b class="dn">▼ -9,045</b></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">긍정 요인 상담 <span style="font-size:9px;color:var(--text4);">4~5점</span></div>
+        <div class="kpi-val" style="color:var(--green2);">59.7<span style="font-size:14px;">%</span></div>
+        <div class="kpi-cmp">3,846건</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">부정 요인 상담 <span style="font-size:9px;color:var(--text4);">1~2점</span></div>
+        <div class="kpi-val" style="color:var(--red2);">13.5<span style="font-size:14px;">%</span></div>
+        <div class="kpi-cmp">866건</div>
+      </div>
+    </div>
+
+    <!-- 경로별 인입 + 긍부정요인 2분할 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="card">
+        <div class="card-ttl">경로별 인입 (7월)</div>
+        <div class="bar-list">
+          <div class="bar-row">
+            <div class="bar-lbl">전화</div>
+            <div class="bar-track"><div class="bar-fill" style="width:100%;background:#0d9488;"></div></div>
+            <div class="bar-val">3,144</div>
+            <div class="bar-pct">35.8%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-lbl">워크플로우</div>
+            <div class="bar-track"><div class="bar-fill" style="width:98%;background:#3b82f6;"></div></div>
+            <div class="bar-val">3,097</div>
+            <div class="bar-pct">35.3%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-lbl">카카오</div>
+            <div class="bar-track"><div class="bar-fill" style="width:41%;background:#f59e0b;"></div></div>
+            <div class="bar-val">1,283</div>
+            <div class="bar-pct">14.6%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-lbl">네이버 톡톡</div>
+            <div class="bar-track"><div class="bar-fill" style="width:40%;background:#8b5cf6;"></div></div>
+            <div class="bar-val">1,260</div>
+            <div class="bar-pct">14.3%</div>
+          </div>
+        </div>
+        <div class="comment-box info">
+          <div class="comment-ai">🤖</div>
+          <div class="comment-txt"><strong>AI 분석 의견</strong> — 전화(▼596)·워크플로우(▼502)·네이버(▼259) 경로 인입이 모두 전월 대비 감소했고 카카오만 소폭 증가(▲87)했습니다. 총 인입 감소와 응답 지표 개선이 동시에 나타난 회차입니다.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-ttl">긍·부정 요인 분석</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--green2);margin-bottom:6px;">긍정 요인 (59.7%)</div>
+            <div class="bar-list">
+              <div class="bar-row"><div class="bar-lbl narrow">고객 노력도</div><div class="bar-track"><div class="bar-fill" style="width:100%;background:#22c55e;"></div></div><div class="bar-pct" style="width:30px;">27%</div></div>
+              <div class="bar-row"><div class="bar-lbl narrow">응대 품질</div><div class="bar-track"><div class="bar-fill" style="width:85%;background:#22c55e;"></div></div><div class="bar-pct" style="width:30px;">23%</div></div>
+              <div class="bar-row"><div class="bar-lbl narrow">공감 및 배려</div><div class="bar-track"><div class="bar-fill" style="width:78%;background:#22c55e;"></div></div><div class="bar-pct" style="width:30px;">21%</div></div>
+              <div class="bar-row"><div class="bar-lbl narrow">응대 정확도</div><div class="bar-track"><div class="bar-fill" style="width:70%;background:#22c55e;"></div></div><div class="bar-pct" style="width:30px;">19%</div></div>
+              <div class="bar-row"><div class="bar-lbl narrow">고객 감정</div><div class="bar-track"><div class="bar-fill" style="width:41%;background:#22c55e;"></div></div><div class="bar-pct" style="width:30px;">11%</div></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--red2);margin-bottom:6px;">부정 요인 (13.5%)</div>
+            <div class="bar-list">
+              <div class="bar-row"><div class="bar-lbl narrow">고객 노력도</div><div class="bar-track"><div class="bar-fill" style="width:100%;background:#ef4444;"></div></div><div class="bar-pct" style="width:30px;">33%</div></div>
+              <div class="bar-row"><div class="bar-lbl narrow">응대 품질</div><div class="bar-track"><div class="bar-fill" style="width:58%;background:#ef4444;"></div></div><div class="bar-pct" style="width:30px;">19%</div></div>
+              <div class="bar-row"><div class="bar-lbl narrow">고객 감정</div><div class="bar-track"><div class="bar-fill" style="width:55%;background:#ef4444;"></div></div><div class="bar-pct" style="width:30px;">18%</div></div>
+              <div class="bar-row"><div class="bar-lbl narrow">공감 및 배려</div><div class="bar-track"><div class="bar-fill" style="width:48%;background:#ef4444;"></div></div><div class="bar-pct" style="width:30px;">16%</div></div>
+              <div class="bar-row"><div class="bar-lbl narrow">응대 정확도</div><div class="bar-track"><div class="bar-fill" style="width:39%;background:#ef4444;"></div></div><div class="bar-pct" style="width:30px;">13%</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="comment-box info">
+          <div class="comment-ai">🤖</div>
+          <div class="comment-txt"><strong>AI 분석 의견</strong> — 긍정·부정 평가 모두 '고객 노력도'가 가장 큰 비중(각 27%, 33%)을 차지합니다. 부정 평가에서 특히 두드러져(33%), 고객이 문제 해결까지 들이는 수고가 만족도에 가장 큰 영향을 준 것으로 나타납니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 토픽 TOP 10 -->
+    <div class="card" style="margin-top:12px;padding:0;overflow:hidden;">
+      <div style="padding:14px 18px 0;">
+        <div class="card-ttl" style="margin-bottom:8px;">상담 토픽 TOP 10 (7월 · 상담 수 기준)</div>
+      </div>
+      <table class="topic-table">
+        <thead>
+          <tr><th>토픽</th><th>상담 수</th><th>부정 비율</th><th>전월 대비</th><th>CX</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><div class="tp-name">교환·반품·AS 제품 수거 일정 및 포장 안내</div></td><td>1,447</td><td>8%</td><td class="delta-up">▼ -2.3%p</td><td class="cx">3.9</td></tr>
+          <tr><td><div class="tp-name">부속품 및 소모품 별도 구매 문의</div></td><td>676</td><td>13%</td><td class="delta-up">▼ -8.5%p</td><td class="cx">3.8</td></tr>
+          <tr><td><div class="tp-name">휴대용 분유포트 충전 및 전원 작동 불량</div></td><td>634</td><td>13%</td><td class="delta-up">▼ -4.4%p</td><td class="cx">3.7</td></tr>
+          <tr><td><div class="tp-name">분유쉐이커 회전 및 모터 작동 오류</div></td><td>439</td><td>12%</td><td class="delta-dn">▲ +0.5%p</td><td class="cx">3.7</td></tr>
+          <tr><td><div class="tp-name">주문 배송 상태 및 운송장 번호 조회</div></td><td>411</td><td>13%</td><td class="delta-up">▼ -5.8%p</td><td class="cx">3.8</td></tr>
+          <tr><td><div class="tp-name">라이브 방송 및 리뷰 사은품 혜택 확인</div></td><td>388</td><td>15%</td><td class="delta-up">▼ -3.6%p</td><td class="cx">3.8</td></tr>
+          <tr><td><div class="tp-name">분유쉐이커 충전 및 전원 고장</div></td><td>386</td><td>12%</td><td class="delta-up">▼ -4.9%p</td><td class="cx">3.7</td></tr>
+          <tr><td><div class="tp-name">소독기 및 홈카메라 등 기타 가전 제품 고장</div></td><td>283</td><td style="color:var(--amber);font-weight:700;">23%</td><td class="delta-dn">▲ +5.4%p</td><td class="cx">3.5</td></tr>
+          <tr><td><div class="tp-name">유상 A·S 접수 및 수리 비용 문의</div></td><td>264</td><td>13%</td><td class="delta-up">▼ -2.0%p</td><td class="cx">3.7</td></tr>
+          <tr><td><div class="tp-name">구성품 누락 및 상품 오배송 해결</div></td><td>254</td><td>16%</td><td class="delta-up">▼ -2.6%p</td><td class="cx">3.6</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ② 전월 비교표 -->
+  <div>
+    <div class="sec-hdr">
+      <div class="sec-acc" style="background:var(--teal);height:20px;"></div>
+      <div class="sec-ttl">② 6월 · 7월 전월 비교</div>
+      <div class="sec-num">GAS 집계 기준 지표</div>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table class="cmp-table">
+        <thead>
+          <tr>
+            <th style="width:200px;">지표</th>
+            <th>6월</th>
+            <th>7월</th>
+            <th>증감</th>
+            <th>비고</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background:rgba(22,101,52,0.03);">
+            <td><div class="row-lbl">🔧 불량 접수 총계</div></td>
+            <td>1,131건</td>
+            <td class="val-jul">948건</td>
+            <td><span class="delta-up">▼ -183건</span></td>
+            <td style="font-size:10px;color:var(--green2);">감소</td>
+          </tr>
+          <tr>
+            <td><div class="row-lbl">📦 반품교환 합계</div></td>
+            <td>2,033건</td>
+            <td class="val-jul">1,911건</td>
+            <td><span class="delta-up">▼ -122건</span></td>
+            <td style="font-size:10px;color:var(--text3);">출고량도 동반 감소</td>
+          </tr>
+          <tr style="background:rgba(180,83,9,0.03);">
+            <td><div class="row-lbl">📦 반품교환율</div></td>
+            <td>4.58%</td>
+            <td class="val-jul" style="color:var(--amber);">5.24%</td>
+            <td><span class="delta-dn">▲ +0.66%p</span></td>
+            <td style="font-size:10px;color:var(--amber);">출고량 감소 폭이 더 커 율 상승</td>
+          </tr>
+          <tr>
+            <td><div class="row-lbl">📋 처리 총 건수</div></td>
+            <td>1,141건</td>
+            <td class="val-jul">939건</td>
+            <td><span class="delta-up">▼ -202건</span></td>
+            <td style="font-size:10px;color:var(--text3);">평균 처리일 1.2일 동일</td>
+          </tr>
+          <tr>
+            <td><div class="row-lbl">💰 유상 / 무상 처리</div></td>
+            <td>134 / 1,007</td>
+            <td class="val-jul">107 / 831</td>
+            <td><span class="delta-up">▼ -27 / -176</span></td>
+            <td style="font-size:10px;color:var(--text3);">유상매출은 긍정 지표</td>
+          </tr>
+          <tr>
+            <td><div class="row-lbl">💰 처리 비용 총계</div></td>
+            <td>900.4만원</td>
+            <td class="val-jul">631.1만원</td>
+            <td><span class="delta-up">▼ -269.3만원</span></td>
+            <td style="font-size:10px;color:var(--text3);">처리건수 감소 연동</td>
+          </tr>
+          <tr>
+            <td><div class="row-lbl">⭐ 스마트스토어 리뷰</div></td>
+            <td>3,189건 / 4.82점</td>
+            <td class="val-jul">3,865건 / 4.81점</td>
+            <td><span class="delta-dn">▲ +676건 / ▼ -0.01점</span></td>
+            <td style="font-size:10px;color:var(--text3);">평점 안정적 유지</td>
+          </tr>
+          <tr>
+            <td><div class="row-lbl">⭐ 저평점(3점↓) 리뷰</div></td>
+            <td>125건 / 4%</td>
+            <td class="val-jul">173건 / 4%</td>
+            <td><span class="delta-dn">▲ +48건</span></td>
+            <td style="font-size:10px;color:var(--text3);">비율은 4%로 동일</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ③ 통화 현황 -->
+  <div>
+    <div class="sec-hdr">
+      <div class="sec-acc" style="background:#7c3aed;height:20px;"></div>
+      <div class="sec-ttl">③ 통화 현황</div>
+      <div class="sec-num">채널톡 직접 집계 기준 · 7월</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;">
+      <div class="kpi-card">
+        <div class="kpi-lbl">전화 수</div>
+        <div class="kpi-val">1,103<span style="font-size:13px;color:var(--text3);"> 건</span></div>
+        <div class="kpi-cmp">전월 대비 &nbsp;<b class="dn">▼ -178건</b></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">총 통화 시간</div>
+        <div class="kpi-val sm">2,670분</div>
+        <div class="kpi-cmp">전월 대비 &nbsp;<b class="up">▼ -196분</b></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">평균 통화 시간</div>
+        <div class="kpi-val sm">2분 55초</div>
+        <div class="kpi-cmp">전월 대비 &nbsp;<b class="up">▼ -9초 단축</b></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;">
+      <div class="kpi-card">
+        <div class="kpi-lbl">응답률</div>
+        <div class="kpi-val" style="color:var(--green2);">83.2<span style="font-size:14px;">%</span></div>
+        <div class="kpi-cmp">전월 대비 &nbsp;<b class="up">▲ +10.3%p</b></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">서비스 레벨</div>
+        <div class="kpi-val">58.8<span style="font-size:14px;">%</span></div>
+        <div class="kpi-cmp">전월 대비 &nbsp;<b class="up">▲ +8.9%p</b></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">연결률</div>
+        <div class="kpi-val">81.7<span style="font-size:14px;">%</span></div>
+        <div class="kpi-cmp">전월 대비 &nbsp;<b class="up">▲ +8.4%p</b></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">평균 후처리 시간</div>
+        <div class="kpi-val sm">10분 16초</div>
+        <div class="kpi-cmp">전월 대비 &nbsp;<b class="up">▼ -2분 4초</b></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-ttl">부재중 전화 유형별 유입량 (7월)</div>
+      <div class="bar-list">
+        <div class="bar-row">
+          <div class="bar-lbl wide">링 울리는 중 끊김</div>
+          <div class="bar-track"><div class="bar-fill" style="width:100%;background:#ef4444;"></div></div>
+          <div class="bar-val">140</div>
+          <div class="bar-pct" style="width:56px;">▼ -105</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-lbl wide">대기열에서 끊김</div>
+          <div class="bar-track"><div class="bar-fill" style="width:20%;background:#f59e0b;"></div></div>
+          <div class="bar-val">28</div>
+          <div class="bar-pct" style="width:56px;">▼ -50</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-lbl wide">고객의 전화 종료</div>
+          <div class="bar-track"><div class="bar-fill" style="width:1%;background:#94a3b8;"></div></div>
+          <div class="bar-val">1</div>
+          <div class="bar-pct" style="width:56px;">0</div>
+        </div>
+      </div>
+      <div class="comment-box info">
+        <div class="comment-ai">🤖</div>
+        <div class="comment-txt"><strong>AI 분석 의견</strong> — 부재중 전화가 전월 대비 큰 폭으로 감소했습니다(링 울리는 중 끊김 ▼105건, 대기열 끊김 ▼50건). 응답률·연결률 상승과 같은 방향입니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ 반품·교환 현황 -->
+  <div>
+    <div class="sec-hdr">
+      <div class="sec-acc" style="background:var(--red2);height:20px;"></div>
+      <div class="sec-ttl">④ 반품·교환 현황</div>
+      <div class="sec-num">꿈비 기준 · 7월</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div class="kpi-card">
+        <div class="kpi-lbl">반품교환 합계</div>
+        <div class="kpi-val">1,911</div>
+        <div class="kpi-cmp">6월 2,033 &nbsp;<b class="up">▼ -122건</b></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">반품교환율</div>
+        <div class="kpi-val" style="color:var(--amber);">5.24<span style="font-size:14px;">%</span></div>
+        <div class="kpi-cmp">6월 4.58% &nbsp;<b class="dn">▲ +0.66%p</b></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">교환 / 반품</div>
+        <div class="kpi-val sm">1,106 / 805</div>
+        <div class="kpi-cmp">6월 1,232 / 801</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="card">
+        <div class="card-ttl">반품 모델 TOP 5 (꿈비 · 7월)</div>
+        <div class="bar-list">
+          <div class="bar-row">
+            <div class="bar-lbl">휴대용분유포트</div>
+            <div class="bar-track"><div class="bar-fill" style="width:100%;background:#ef4444;"></div></div>
+            <div class="bar-val">19</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-lbl">듀얼팬 쿨시트 베이지</div>
+            <div class="bar-track"><div class="bar-fill" style="width:68%;background:#f59e0b;"></div></div>
+            <div class="bar-val">13</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-lbl">(분리형) 분유포트</div>
+            <div class="bar-track"><div class="bar-fill" style="width:68%;background:#3b82f6;"></div></div>
+            <div class="bar-val">13</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-lbl">쿨링 커버 아이보리</div>
+            <div class="bar-track"><div class="bar-fill" style="width:63%;background:#8b5cf6;"></div></div>
+            <div class="bar-val">12</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-lbl">듀얼팬 쿨시트 아이스패밀리</div>
+            <div class="bar-track"><div class="bar-fill" style="width:21%;background:#0d9488;"></div></div>
+            <div class="bar-val">4</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-ttl">처분·검수 현황 (7월)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div>
+            <div style="font-size:10px;color:var(--text4);">검수 건수</div>
+            <div style="font-size:18px;font-weight:900;font-family:'Inter',sans-serif;">81건</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text4);">재상품화 금액</div>
+            <div style="font-size:18px;font-weight:900;font-family:'Inter',sans-serif;">196.5만</div>
+          </div>
+        </div>
+        <div class="bar-list">
+          <div class="bar-row"><div class="bar-lbl narrow">재상품화</div><div class="bar-track"><div class="bar-fill" style="width:100%;background:#22c55e;"></div></div><div class="bar-val">50건</div></div>
+          <div class="bar-row"><div class="bar-lbl narrow">폐기</div><div class="bar-track"><div class="bar-fill" style="width:50%;background:#ef4444;"></div></div><div class="bar-val">25건</div></div>
+          <div class="bar-row"><div class="bar-lbl narrow">원자재화</div><div class="bar-track"><div class="bar-fill" style="width:12%;background:#94a3b8;"></div></div><div class="bar-val">6건</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑤ 품질관리 현황 (데이터) -->
+  <div>
+    <div class="sec-hdr">
+      <div class="sec-acc" style="background:var(--amber);height:20px;"></div>
+      <div class="sec-ttl">⑤ 품질관리 현황</div>
+      <div class="sec-num">불량접수 7월 948건</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div class="kpi-card">
+        <div class="kpi-lbl">교환/환불</div>
+        <div class="kpi-val">719<span style="font-size:13px;color:var(--text3);"> 건</span></div>
+        <div class="kpi-cmp">6월 850건 &nbsp;<b class="up">▼ -131건</b></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">수리</div>
+        <div class="kpi-val">154<span style="font-size:13px;color:var(--text3);"> 건</span></div>
+        <div class="kpi-cmp">6월 171건 &nbsp;<b class="up">▼ -17건</b></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">자재출고</div>
+        <div class="kpi-val">75<span style="font-size:13px;color:var(--text3);"> 건</span></div>
+        <div class="kpi-cmp">6월 110건 &nbsp;<b class="up">▼ -35건</b></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div class="card">
+        <div class="card-ttl">불량 유형 TOP 10 (7월)</div>
+        <div class="bar-list">
+          <div class="bar-row"><div class="bar-lbl">회전불량</div><div class="bar-track"><div class="bar-fill" style="width:100%;background:#ef4444;"></div></div><div class="bar-val">212</div><div class="bar-pct">22.4%</div></div>
+          <div class="bar-row"><div class="bar-lbl">미작동</div><div class="bar-track"><div class="bar-fill" style="width:56%;background:#f59e0b;"></div></div><div class="bar-val">119</div><div class="bar-pct">12.6%</div></div>
+          <div class="bar-row"><div class="bar-lbl">전원불량</div><div class="bar-track"><div class="bar-fill" style="width:55%;background:#f97316;"></div></div><div class="bar-val">116</div><div class="bar-pct">12.2%</div></div>
+          <div class="bar-row"><div class="bar-lbl">충전불량</div><div class="bar-track"><div class="bar-fill" style="width:43%;background:#3b82f6;"></div></div><div class="bar-val">92</div><div class="bar-pct">9.7%</div></div>
+          <div class="bar-row"><div class="bar-lbl">누수</div><div class="bar-track"><div class="bar-fill" style="width:30%;background:#06b6d4;"></div></div><div class="bar-val">64</div><div class="bar-pct">6.8%</div></div>
+          <div class="bar-row"><div class="bar-lbl">파손</div><div class="bar-track"><div class="bar-fill" style="width:29%;background:#8b5cf6;"></div></div><div class="bar-val">62</div><div class="bar-pct">6.5%</div></div>
+          <div class="bar-row"><div class="bar-lbl">기구불량</div><div class="bar-track"><div class="bar-fill" style="width:20%;background:#a855f7;"></div></div><div class="bar-val">43</div><div class="bar-pct">4.5%</div></div>
+          <div class="bar-row"><div class="bar-lbl">소음</div><div class="bar-track"><div class="bar-fill" style="width:13%;background:#94a3b8;"></div></div><div class="bar-val">27</div><div class="bar-pct">2.8%</div></div>
+          <div class="bar-row"><div class="bar-lbl">온도센서불량</div><div class="bar-track"><div class="bar-fill" style="width:13%;background:#64748b;"></div></div><div class="bar-val">27</div><div class="bar-pct">2.8%</div></div>
+          <div class="bar-row"><div class="bar-lbl">디스플레이불량</div><div class="bar-track"><div class="bar-fill" style="width:11%;background:#475569;"></div></div><div class="bar-val">23</div><div class="bar-pct">2.4%</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-ttl">제품별 불량 접수 TOP 5 (7월)</div>
+        <div class="bar-list">
+          <div class="bar-row"><div class="bar-lbl">휴대용 분유포트</div><div class="bar-track"><div class="bar-fill" style="width:100%;background:#ef4444;"></div></div><div class="bar-val">442</div><div class="bar-pct">46.6%</div></div>
+          <div class="bar-row"><div class="bar-lbl">분유쉐이커</div><div class="bar-track"><div class="bar-fill" style="width:53%;background:#8b5cf6;"></div></div><div class="bar-val">236</div><div class="bar-pct">24.9%</div></div>
+          <div class="bar-row"><div class="bar-lbl">뭉침없이 조용한 분유쉐이커</div><div class="bar-track"><div class="bar-fill" style="width:16%;background:#94a3b8;"></div></div><div class="bar-val">71</div><div class="bar-pct">7.5%</div></div>
+          <div class="bar-row"><div class="bar-lbl">배터리 분리형 분유포트</div><div class="bar-track"><div class="bar-fill" style="width:13%;background:#1a56db;"></div></div><div class="bar-val">59</div><div class="bar-pct">6.2%</div></div>
+          <div class="bar-row"><div class="bar-lbl">쿨링 커버 아이보리</div><div class="bar-track"><div class="bar-fill" style="width:7%;background:#06b6d4;"></div></div><div class="bar-val">29</div><div class="bar-pct">3.1%</div></div>
+        </div>
+        <div class="comment-box info">
+          <div class="comment-ai">🤖</div>
+          <div class="comment-txt"><strong>AI 분석 의견</strong> — 6월 대비 불량 접수 총계는 전 항목(교환/환불·수리·자재출고)에서 모두 감소했습니다. 제품별·유형별 상세 원인 및 개선요청 사항은 별도 확정 후 추가됩니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑥ AS 처리 현황 -->
+  <div>
+    <div class="sec-hdr">
+      <div class="sec-acc" style="background:#7c3aed;height:20px;"></div>
+      <div class="sec-ttl">⑥ AS 처리 현황</div>
+      <div class="sec-num">7월</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="card">
+        <div class="card-ttl">처리 총계 및 비용</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div>
+            <div style="font-size:10px;color:var(--text4);margin-bottom:3px;">처리 총계</div>
+            <div style="font-size:20px;font-weight:900;font-family:'Inter',sans-serif;color:var(--text);">939건</div>
+            <div style="font-size:10.5px;color:var(--text3);">6월 1,141건 &nbsp;<span style="color:var(--green2);">▼ -202건</span></div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text4);margin-bottom:3px;">처리 비용 총계</div>
+            <div style="font-size:18px;font-weight:900;font-family:'Inter',sans-serif;color:var(--text);">631.1만</div>
+            <div style="font-size:10.5px;color:var(--text3);">6월 900.4만원</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;border-top:1px solid var(--border2);padding-top:10px;">
+          <div class="bar-list">
+            <div class="bar-row">
+              <div class="bar-lbl narrow">무상 처리</div>
+              <div class="bar-track"><div class="bar-fill" style="width:89%;background:#22c55e;"></div></div>
+              <div class="bar-val">831건</div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-lbl narrow">유상 처리</div>
+              <div class="bar-track"><div class="bar-fill" style="width:11%;background:#3b82f6;"></div></div>
+              <div class="bar-val">107건</div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-lbl narrow">수리출고</div>
+              <div class="bar-track"><div class="bar-fill" style="width:16%;background:#f59e0b;"></div></div>
+              <div class="bar-val">147건</div>
+            </div>
+            <div class="bar-row">
+              <div class="bar-lbl narrow">자재출고</div>
+              <div class="bar-track"><div class="bar-fill" style="width:8%;background:#8b5cf6;"></div></div>
+              <div class="bar-val">72건</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-ttl">교체 부품 TOP 5 (7월)</div>
+        <div class="bar-list" style="margin-top:4px;">
+          <div class="bar-row">
+            <div class="bar-lbl">하부커버</div>
+            <div class="bar-track"><div class="bar-fill" style="width:100%;background:#3b82f6;"></div></div>
+            <div class="bar-val">51건</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-lbl">점검</div>
+            <div class="bar-track"><div class="bar-fill" style="width:76%;background:#0d9488;"></div></div>
+            <div class="bar-val">39건</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-lbl">대체품</div>
+            <div class="bar-track"><div class="bar-fill" style="width:51%;background:#8b5cf6;"></div></div>
+            <div class="bar-val">26건</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-lbl">가열판</div>
+            <div class="bar-track"><div class="bar-fill" style="width:16%;background:#f59e0b;"></div></div>
+            <div class="bar-val">8건</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-lbl">세척펌프 / 재조립</div>
+            <div class="bar-track"><div class="bar-fill" style="width:10%;background:#94a3b8;"></div></div>
+            <div class="bar-val">5건</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑦ 스마트스토어 리뷰 -->
+  <div>
+    <div class="sec-hdr">
+      <div class="sec-acc" style="background:#f59e0b;height:20px;"></div>
+      <div class="sec-ttl">⑦ 스마트스토어 리뷰</div>
+      <div class="sec-num">7월 총 3,865건</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div class="kpi-card">
+        <div class="kpi-lbl">리뷰 수</div>
+        <div class="kpi-val">3,865</div>
+        <div class="kpi-cmp">6월 3,189 &nbsp;<b class="up">▲ +676건</b></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">평균 평점</div>
+        <div class="kpi-val" style="color:var(--amber);">4.81</div>
+        <div class="kpi-cmp">6월 4.82 &nbsp;<b class="neu">▼ -0.01</b></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">저평점 (3점↓)</div>
+        <div class="kpi-val">173건</div>
+        <div class="kpi-cmp">6월 125건 &nbsp;<b class="dn">▲ +48건</b></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">저평점 비율</div>
+        <div class="kpi-val">4<span style="font-size:14px;">%</span></div>
+        <div class="kpi-cmp">6월 동일 &nbsp;<b class="neu">— 유지</b></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-ttl">평점 분포 (7월)</div>
+      <div style="display:grid;gap:7px;max-width:520px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="font-size:10px;color:var(--text2);white-space:nowrap;flex-shrink:0;width:36px;">⭐×5</div>
+          <div class="bar-track"><div class="bar-fill" style="width:100%;background:#22c55e;"></div></div>
+          <div class="bar-val">3,398</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="font-size:10px;color:var(--text2);white-space:nowrap;flex-shrink:0;width:36px;">⭐×4</div>
+          <div class="bar-track"><div class="bar-fill" style="width:8.7%;background:#86efac;"></div></div>
+          <div class="bar-val">294</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="font-size:10px;color:var(--text2);white-space:nowrap;flex-shrink:0;width:36px;">⭐×3</div>
+          <div class="bar-track"><div class="bar-fill" style="width:3.2%;background:#fbbf24;"></div></div>
+          <div class="bar-val">109</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="font-size:10px;color:var(--text2);white-space:nowrap;flex-shrink:0;width:36px;">⭐×2</div>
+          <div class="bar-track"><div class="bar-fill" style="width:0.6%;background:#f97316;"></div></div>
+          <div class="bar-val">21</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="font-size:10px;color:var(--text2);white-space:nowrap;flex-shrink:0;width:36px;">⭐×1</div>
+          <div class="bar-track"><div class="bar-fill" style="width:1.3%;background:#ef4444;"></div></div>
+          <div class="bar-val">43</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  2026년 7월 월간 보고 · 엄마감동팀 &nbsp;·&nbsp; 작성: 2026.08.21 &nbsp;·&nbsp; 실적 데이터 기준 (품질이슈 서술 추후 추가) &nbsp;·&nbsp; 채널톡 직접 집계 기준
+</div>
+
+</body>
+</html>
